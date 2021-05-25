@@ -13,3 +13,12 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# IDEs
+.idea
+.vscode
+
+# Project specific ignore
+.env
+config.yaml
+meteor
