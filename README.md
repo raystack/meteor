@@ -7,53 +7,16 @@
 
 Meteor is a metadata collector service that helps to extract and sink metadata from the source to the destination.
 
-### Installation
+## Contribute
 
-#### Compiling from source
+Development of Meteor happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and improvements. Read below to learn how you can take part in improving Meteor.
 
-It requires the following dependencies:
+Read our [contributing guide](docs/contribute/contributing.md) to learn about our development process, how to propose bugfixes and improvements, and how to build and test your changes to Meteor.
 
-* Docker
-* Golang (version 1.14 or above)
-* Git
+To help you get your feet wet and get you familiar with our contribution process, we have a list of [good first issues](https://github.com/odpf/meteor/labels/good%20first%20issue) that contain bugs which have a relatively limited scope. This is a great place to get started.
 
-Run the application dependecies using Docker:
+This project exists thanks to all the [contributors](https://github.com/odpf/meteor/graphs/contributors).
 
-Update the configs(host etc.) as per your dev machine and docker configs.
 
-Run the following commands to compile from source
-
-```
-$ git clone git@github.com:odpf/meteor.git
-$ make build
-```
-
-To run tests locally
-
-```
-$ make test
-```
-
-To run tests locally with coverage
-
-```
-$ make test-coverage
-```
-
-To run server locally
-
-```
-$ go run .
-```
-
-#### Config
-
-The config file used by application is `config.yaml` which should be present at the root of this directory.
-
-For any variable the order of precedence is:
-
-1. Env variable
-2. Config file
-3. Default in Struct defined in the application code
-
-For list of all available configuration keys check the [configuration](docs/reference/configuration.md) reference.
+## License
+Meteor is [Apache 2.0](LICENSE) licensed.
