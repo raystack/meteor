@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/segmentio/kafka-go"
@@ -9,7 +10,12 @@ import (
 type KafkaExtractor struct{}
 
 func (e *KafkaExtractor) Extract(config map[string]interface{}) (result []map[string]interface{}, err error) {
-	conn, err := kafka.Dial("tcp", "localhost:9092")
+	broker, ok := config["broker"]
+	if !ok {
+		return result, errors.New("invalid config")
+	}
+
+	conn, err := kafka.Dial("tcp", fmt.Sprint(broker))
 	if err != nil {
 		return result, err
 	}
@@ -19,17 +25,22 @@ func (e *KafkaExtractor) Extract(config map[string]interface{}) (result []map[st
 	if err != nil {
 		return result, err
 	}
+	result = e.getTopicList(partitions)
+
+	return result, err
+}
+
+func (e *KafkaExtractor) getTopicList(partitions []kafka.Partition) (result []map[string]interface{}) {
 	m := map[string]struct{}{}
 	for _, p := range partitions {
 		m[p.Topic] = struct{}{}
 	}
 
-	for topic, val := range m {
-		fmt.Printf("%+v\n", val)
+	for topic := range m {
 		result = append(result, map[string]interface{}{
 			"topic": topic,
 		})
 	}
 
-	return result, err
+	return result
 }
