@@ -22,7 +22,7 @@ processors: # optional - metadata processors
 There are two ways to register recipe to Meteor.
 
 ### via .yaml files
-This is the simplest one with just by creating a `*_recipe.yaml` file and inside `/recipes` folder.
+This is the simplest one with just by creating a `*_recipes.yaml` file and inside `/recipes` folder.
 
 On startup, Meteor will load all those recipes inside `/recipes` folder and upsert them. Be noted that this process will replace all the changes made to the recipe if it were updated via Meteor API.
 
@@ -56,7 +56,7 @@ By default, recipes will be persisted locally inside `/_recipes` folder as .yaml
 
 ## Running a recipe
 
-A recipe itself will not do anything, it needs to be run to actually do something. To run a recipe, you can hit Meteor API with the recipe name and optionally provide an input to be processed with the recipe.
+A recipe itself will not do anything, it needs to be run to actually do something. To run a recipe, you can hit Meteor API with the recipe name and optionally provide an input to be processed with the recipes.
 
 Running a recipe requires an initial data to work with before processing anything. There are two ways to get the initial data, using Meteor’s built in extractor (via `source` field) or by passing it when creating a job as an input.
 
