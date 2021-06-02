@@ -3,6 +3,7 @@ package recipes_test
 import (
 	"testing"
 
+	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/recipes"
 	"github.com/stretchr/testify/assert"
 )
@@ -10,7 +11,7 @@ import (
 func TestMemoryStore(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		t.Run("should persist recipe", func(t *testing.T) {
-			recp := recipes.Recipe{
+			recp := domain.Recipe{
 				Name: "sample",
 			}
 
@@ -32,7 +33,7 @@ func TestMemoryStore(t *testing.T) {
 	t.Run("GetByName", func(t *testing.T) {
 		t.Run("should return error if recipe could not be found", func(t *testing.T) {
 			store := recipes.NewMemoryStore()
-			err := store.Create(recipes.Recipe{
+			err := store.Create(domain.Recipe{
 				Name: "sample",
 			})
 			if err != nil {
@@ -41,14 +42,14 @@ func TestMemoryStore(t *testing.T) {
 
 			_, err = store.GetByName("wrong-name")
 			assert.NotNil(t, err)
-			assert.Equal(t, recipes.NotFoundError{"wrong-name"}, err)
+			assert.Equal(t, recipes.NotFoundError{RecipeName: "wrong-name"}, err)
 		})
 
 		t.Run("should return recipe with the given name", func(t *testing.T) {
 			name := "sample"
 
 			store := recipes.NewMemoryStore()
-			err := store.Create(recipes.Recipe{
+			err := store.Create(domain.Recipe{
 				Name: "sample",
 			})
 			if err != nil {

@@ -3,6 +3,7 @@ package recipes
 import (
 	"io/ioutil"
 
+	"github.com/odpf/meteor/domain"
 	"gopkg.in/yaml.v3"
 )
 
@@ -10,7 +11,7 @@ type Reader struct {
 	Dirname string
 }
 
-func (rr *Reader) Read() (recipes []Recipe, err error) {
+func (rr *Reader) Read() (recipes []domain.Recipe, err error) {
 	yamls, err := rr.getFilesFromDir()
 	if err != nil {
 		return recipes, err
@@ -42,9 +43,9 @@ func (rr *Reader) getFilesFromDir() (yamls [][]byte, err error) {
 	return yamls, err
 }
 
-func (rr *Reader) parseYAMLsToRecipes(yamls [][]byte) (recipes []Recipe, err error) {
+func (rr *Reader) parseYAMLsToRecipes(yamls [][]byte) (recipes []domain.Recipe, err error) {
 	for _, yamlFile := range yamls {
-		var recipe Recipe
+		var recipe domain.Recipe
 		err = yaml.Unmarshal(yamlFile, &recipe)
 		if err != nil {
 			return recipes, err

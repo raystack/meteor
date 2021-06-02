@@ -1,29 +1,29 @@
-package runner_test
+package recipes_test
 
 import (
 	"testing"
 
+	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
-	"github.com/odpf/meteor/runner"
 	"github.com/odpf/meteor/sinks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestRunnerRun(t *testing.T) {
-	recipe := recipes.Recipe{
+func TestServiceRun(t *testing.T) {
+	recipe := domain.Recipe{
 		Name: "sample",
-		Source: recipes.Source{
+		Source: domain.SourceRecipe{
 			Type: "test-extractor",
 		},
-		Processors: []recipes.Processor{
+		Processors: []domain.ProcessorRecipe{
 			{Name: "test-processor", Config: map[string]interface{}{
 				"proc-foo": "proc-bar",
 			}},
 		},
-		Sinks: []recipes.Sink{
+		Sinks: []domain.SinkRecipe{
 			{Name: "mock-sink", Config: map[string]interface{}{
 				"url": "http://localhost:3000/data",
 			}},
@@ -49,31 +49,31 @@ func TestRunnerRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		expectedRun := &runner.Run{
+		expectedRun := &domain.Run{
 			Recipe: recipe,
-			Tasks: []runner.Task{
+			Tasks: []domain.Task{
 				{
-					Type:   runner.TaskTypeExtract,
+					Type:   domain.TaskTypeExtract,
 					Name:   recipe.Source.Type,
 					Config: recipe.Source.Config,
-					Status: runner.TaskStatusComplete,
+					Status: domain.TaskStatusComplete,
 				},
 				{
-					Type:   runner.TaskTypeProcess,
+					Type:   domain.TaskTypeProcess,
 					Name:   recipe.Processors[0].Name,
 					Config: recipe.Processors[0].Config,
-					Status: runner.TaskStatusComplete,
+					Status: domain.TaskStatusComplete,
 				},
 				{
-					Type:   runner.TaskTypeSink,
+					Type:   domain.TaskTypeSink,
 					Name:   recipe.Sinks[0].Name,
 					Config: recipe.Sinks[0].Config,
-					Status: runner.TaskStatusComplete,
+					Status: domain.TaskStatusComplete,
 				},
 			},
 		}
 
-		r := runner.New(extrStore, procStore, sinkStore)
+		r := recipes.NewService(extrStore, procStore, sinkStore)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -114,8 +114,8 @@ func TestRunnerRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		runner := runner.New(extrStore, procStore, sinkStore)
-		run, err := runner.Run(recipe)
+		service := recipes.NewService(extrStore, procStore, sinkStore)
+		run, err := service.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
 		}

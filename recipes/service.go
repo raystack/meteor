@@ -1,29 +1,29 @@
-package runner
+package recipes
 
 import (
 	"errors"
 
+	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/sinks"
 )
 
-type Runner struct {
+type Service struct {
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
 }
 
-func New(extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Runner {
-	return &Runner{
+func NewService(extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Service {
+	return &Service{
 		extractorStore: extractorStore,
 		processorStore: processorStore,
 		sinkStore:      sinkStore,
 	}
 }
 
-func (r *Runner) Run(recipe recipes.Recipe) (*Run, error) {
+func (r *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
 	run := r.buildRun(recipe)
 
 	for i := 0; i < len(run.Tasks); i++ {
@@ -38,15 +38,15 @@ func (r *Runner) Run(recipe recipes.Recipe) (*Run, error) {
 	return run, nil
 }
 
-func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (r *Service) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
 
 	switch task.Type {
-	case TaskTypeExtract:
+	case domain.TaskTypeExtract:
 		result, err = r.runExtractor(task.Name, task.Config)
-	case TaskTypeProcess:
+	case domain.TaskTypeProcess:
 		result, err = r.runProcessor(task.Name, data, task.Config)
-	case TaskTypeSink:
+	case domain.TaskTypeSink:
 		err = r.runSink(task.Name, data, task.Config)
 	default:
 		err = errors.New("invalid task type")
@@ -54,15 +54,15 @@ func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []ma
 
 	if err != nil {
 		err = newRunTaskError(*task, err)
-		task.Status = TaskStatusFailed
+		task.Status = domain.TaskStatusFailed
 	} else {
-		task.Status = TaskStatusComplete
+		task.Status = domain.TaskStatusComplete
 	}
 
 	return result, err
 }
 
-func (r *Runner) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (r *Service) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
 	extractor, err := r.extractorStore.Find(name)
 	if err != nil {
 		return result, err
@@ -71,7 +71,7 @@ func (r *Runner) runExtractor(name string, config map[string]interface{}) (resul
 	return extractor.Extract(config)
 }
 
-func (r *Runner) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (r *Service) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
 	processor, err := r.processorStore.Find(name)
 	if err != nil {
 		return result, err
@@ -80,7 +80,7 @@ func (r *Runner) runProcessor(name string, data []map[string]interface{}, config
 	return processor.Process(data, config)
 }
 
-func (r *Runner) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
+func (r *Service) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
 	sink, err := r.sinkStore.Find(name)
 	if err != nil {
 		return err
@@ -89,35 +89,35 @@ func (r *Runner) runSink(name string, data []map[string]interface{}, config map[
 	return sink.Sink(data, config)
 }
 
-func (r *Runner) buildRun(recipe recipes.Recipe) *Run {
-	var tasks []Task
+func (r *Service) buildRun(recipe domain.Recipe) *domain.Run {
+	var tasks []domain.Task
 
-	tasks = append(tasks, Task{
-		Type:   TaskTypeExtract,
-		Status: TaskStatusReady,
+	tasks = append(tasks, domain.Task{
+		Type:   domain.TaskTypeExtract,
+		Status: domain.TaskStatusReady,
 		Name:   recipe.Source.Type,
 		Config: recipe.Source.Config,
 	})
 
 	for _, processor := range recipe.Processors {
-		tasks = append(tasks, Task{
-			Type:   TaskTypeProcess,
-			Status: TaskStatusReady,
+		tasks = append(tasks, domain.Task{
+			Type:   domain.TaskTypeProcess,
+			Status: domain.TaskStatusReady,
 			Name:   processor.Name,
 			Config: processor.Config,
 		})
 	}
 
 	for _, sink := range recipe.Sinks {
-		tasks = append(tasks, Task{
-			Type:   TaskTypeSink,
-			Status: TaskStatusReady,
+		tasks = append(tasks, domain.Task{
+			Type:   domain.TaskTypeSink,
+			Status: domain.TaskStatusReady,
 			Name:   sink.Name,
 			Config: sink.Config,
 		})
 	}
 
-	return &Run{
+	return &domain.Run{
 		Recipe: recipe,
 		Tasks:  tasks,
 	}
