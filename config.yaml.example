@@ -1,0 +1,5 @@
+port: 8080
+newrelic:
+  enabled: false
+  appname: app
+  license: ____LICENSE_STRING_OF_40_CHARACTERS_____
