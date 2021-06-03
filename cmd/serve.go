@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/odpf/meteor/api"
 )
 
 var (
@@ -10,20 +12,12 @@ var (
 )
 
 func Serve() {
-	http.HandleFunc("/", handleRoot)
-	http.HandleFunc("/ping", handlePing)
+	router := api.NewRouter()
+	api.SetupRoutes(router)
 
 	fmt.Println("Listening on port :" + PORT)
-	err := http.ListenAndServe(":"+PORT, nil)
+	err := http.ListenAndServe(":"+PORT, router)
 	if err != nil {
 		fmt.Println(err)
 	}
-}
-
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello"))
-}
-
-func handlePing(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("pong"))
 }
