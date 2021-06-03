@@ -54,6 +54,10 @@ func (s *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
 	return run, nil
 }
 
+func (s *Service) Find(name string) (domain.Recipe, error) {
+	return s.recipeStore.GetByName(name)
+}
+
 func (s *Service) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
 

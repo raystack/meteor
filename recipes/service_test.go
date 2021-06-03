@@ -206,6 +206,51 @@ func TestServiceCreate(t *testing.T) {
 	})
 }
 
+func TestServiceFind(t *testing.T) {
+	t.Run("should return error if recipe not found", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		recipeName := "test"
+		expectedErr := recipes.NotFoundError{RecipeName: recipeName}
+		recipeStore.On("GetByName", recipeName).Return(domain.Recipe{}, expectedErr)
+		defer recipeStore.AssertExpectations(t)
+
+		_, err := service.Find(recipeName)
+
+		assert.Equal(t, expectedErr, err)
+	})
+	t.Run("should return error from store", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		recipeName := "test"
+		expectedErr := errors.New("test store error")
+		recipeStore.On("GetByName", recipeName).Return(domain.Recipe{}, expectedErr)
+		defer recipeStore.AssertExpectations(t)
+
+		_, err := service.Find(recipeName)
+
+		assert.Equal(t, expectedErr, err)
+	})
+	t.Run("should return recipe on success", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		recipeName := "test"
+		expectedRecipe := domain.Recipe{
+			Name: recipeName,
+		}
+		recipeStore.On("GetByName", recipeName).Return(expectedRecipe, nil)
+		defer recipeStore.AssertExpectations(t)
+
+		recipe, err := service.Find(recipeName)
+
+		assert.Equal(t, expectedRecipe, recipe)
+		assert.Nil(t, err)
+	})
+}
+
 func createRecipeService(recipeStore recipes.Store) *recipes.Service {
 	extractorStore := extractors.NewStore()
 	processorStore := processors.NewStore()
