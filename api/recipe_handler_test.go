@@ -103,8 +103,134 @@ func TestRecipeHandlerCreate(t *testing.T) {
 	})
 }
 
+func TestRecipeHandlerRun(t *testing.T) {
+	t.Run("should return 400 if json is invalid", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := "invalid-json"
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		assert.Equal(t, http.StatusBadRequest, rw.Result().StatusCode)
+	})
+
+	t.Run("should return 400 if recipe name is empty", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := `{"recipe_name": ""}`
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		assert.Equal(t, http.StatusBadRequest, rw.Result().StatusCode)
+	})
+
+	t.Run("should return 404 if recipe name not found", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := `{"recipe_name": "test"}`
+		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, recipes.NotFoundError{})
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		assert.Equal(t, http.StatusNotFound, rw.Result().StatusCode)
+	})
+
+	t.Run("should return 500 if service.Find returns any error", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := `{"recipe_name": "test"}`
+		expectedErr := errors.New("test store error")
+		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, expectedErr)
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		assert.Equal(t, http.StatusInternalServerError, rw.Result().StatusCode)
+	})
+
+	t.Run("should return 500 if service.Run returns any error", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := `{"recipe_name": "test"}`
+		recipe := domain.Recipe{
+			Name: "test",
+			Source: domain.SourceRecipe{
+				Type: "invalid",
+			},
+		}
+		expectedErr := errors.New("test store error")
+		recipeStore.On("GetByName", "test").Return(recipe, expectedErr)
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		assert.Equal(t, http.StatusInternalServerError, rw.Result().StatusCode)
+	})
+
+	t.Run("should return 200 and run object on success", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+
+		handler := createRecipeHandler(recipeStore)
+		payload := `{"recipe_name": "test"}`
+		extractorName := "test"
+		expectedRecipe := domain.Recipe{
+			Name: "test",
+			Source: domain.SourceRecipe{
+				Type: extractorName,
+			},
+		}
+		expectedResponseBody := domain.Run{
+			Recipe: expectedRecipe,
+			Tasks: []domain.Task{
+				{
+					Type:   domain.TaskTypeExtract,
+					Status: domain.TaskStatusComplete,
+					Name:   extractorName,
+				},
+			},
+		}
+		recipeStore.On("GetByName", "test").Return(expectedRecipe, nil)
+
+		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+		rw := httptest.NewRecorder()
+		handler.Run(rw, rr)
+
+		var actualResponseBody domain.Run
+		err := json.NewDecoder(rw.Body).Decode(&actualResponseBody)
+		if err != nil {
+			t.Error(err)
+		}
+
+		assert.Equal(t, http.StatusOK, rw.Result().StatusCode)
+		assert.Equal(t, expectedResponseBody, actualResponseBody)
+	})
+}
+
+type testExtractor struct{}
+
+func (e *testExtractor) Extract(config map[string]interface{}) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
 func createRecipeHandler(recipeStore recipes.Store) *api.RecipeHandler {
 	extractorStore := extractors.NewStore()
+	extractorStore.Populate(map[string]extractors.Extractor{
+		"test": &testExtractor{},
+	})
+
 	processorStore := processors.NewStore()
 	sinkStore := sinks.NewStore()
 	recipeService := recipes.NewService(

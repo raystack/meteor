@@ -15,6 +15,7 @@ func SetupRoutes(router *mux.Router, recipeHandler *RecipeHandler) {
 	router.Methods(http.MethodGet).Path("/ping").HandlerFunc(handlePing)
 
 	router.Methods(http.MethodPost).Path("/v1/recipes").HandlerFunc(recipeHandler.Create)
+	router.Methods(http.MethodPost).Path("/v1/run").HandlerFunc(recipeHandler.Run)
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {

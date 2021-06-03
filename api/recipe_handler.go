@@ -9,6 +9,10 @@ import (
 	"github.com/odpf/meteor/recipes"
 )
 
+type RecipeRunRequest struct {
+	RecipeName string `json:"recipe_name"`
+}
+
 type RecipeHandler struct {
 	recipeService *recipes.Service
 }
@@ -42,4 +46,37 @@ func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("recipe created"))
+}
+
+func (h *RecipeHandler) Run(w http.ResponseWriter, r *http.Request) {
+	var payload RecipeRunRequest
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if payload.RecipeName == "" {
+		http.Error(w, "recipe_name is required", http.StatusBadRequest)
+		return
+	}
+
+	recipe, err := h.recipeService.Find(payload.RecipeName)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(recipes.NotFoundError); ok {
+			status = http.StatusNotFound
+		}
+		http.Error(w, err.Error(), status)
+		return
+	}
+
+	run, err := h.recipeService.Run(recipe)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(run)
 }
