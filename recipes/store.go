@@ -33,6 +33,16 @@ func (store *MemoryStore) GetByName(name string) (recipe domain.Recipe, err erro
 }
 
 func (store *MemoryStore) Create(recipe domain.Recipe) error {
+	existing, err := store.GetByName(recipe.Name)
+	if err != nil {
+		if _, ok := err.(NotFoundError); !ok {
+			return err
+		}
+	}
+	if existing.Name == recipe.Name {
+		return ErrDuplicateRecipeName
+	}
+
 	store.list = append(store.list, recipe)
 	store.index[recipe.Name] = store.nextRow
 	store.nextRow++
