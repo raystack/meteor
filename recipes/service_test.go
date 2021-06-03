@@ -1,10 +1,12 @@
 package recipes_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
+	"github.com/odpf/meteor/mocks"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/sinks"
@@ -73,7 +75,7 @@ func TestServiceRun(t *testing.T) {
 			},
 		}
 
-		r := recipes.NewService(extrStore, procStore, sinkStore)
+		r := recipes.NewService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -114,7 +116,7 @@ func TestServiceRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		service := recipes.NewService(extrStore, procStore, sinkStore)
+		service := recipes.NewService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
 		run, err := service.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -122,6 +124,99 @@ func TestServiceRun(t *testing.T) {
 
 		assert.Equal(t, finalData, run.Data)
 	})
+}
+
+func TestServiceCreate(t *testing.T) {
+	validRecipe := domain.Recipe{
+		Name: "sample",
+		Sinks: []domain.SinkRecipe{
+			{Name: "mock-sink", Config: map[string]interface{}{
+				"url": "http://localhost:3000/data",
+			}},
+		},
+		Source: domain.SourceRecipe{
+			Type: "test",
+		},
+	}
+
+	t.Run("should return InvalidRecipe error if source is empty", func(t *testing.T) {
+		recipe := domain.Recipe{
+			Name: "sample",
+			Sinks: []domain.SinkRecipe{
+				{Name: "mock-sink", Config: map[string]interface{}{
+					"url": "http://localhost:3000/data",
+				}},
+			},
+		}
+
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		err := service.Create(recipe)
+		assert.IsType(t, recipes.InvalidRecipeError{}, err)
+	})
+
+	t.Run("should return InvalidRecipe error if sinks are less than one", func(t *testing.T) {
+		recipe := domain.Recipe{
+			Name: "sample",
+			Source: domain.SourceRecipe{
+				Type: "test",
+			},
+		}
+
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		err := service.Create(recipe)
+		assert.IsType(t, recipes.InvalidRecipeError{}, err)
+	})
+	t.Run("should return ErrDuplicateRecipeName if recipe name already exists", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		recipeStore.On("Create", validRecipe).Return(recipes.ErrDuplicateRecipeName)
+		defer recipeStore.AssertExpectations(t)
+
+		service := createRecipeService(recipeStore)
+
+		err := service.Create(validRecipe)
+		assert.Equal(t, recipes.ErrDuplicateRecipeName, err)
+	})
+
+	t.Run("should return error from store", func(t *testing.T) {
+		expectedErr := errors.New("test-error")
+
+		recipeStore := new(mocks.RecipeStore)
+		recipeStore.On("Create", validRecipe).Return(expectedErr)
+		defer recipeStore.AssertExpectations(t)
+
+		service := createRecipeService(recipeStore)
+
+		err := service.Create(validRecipe)
+		assert.Equal(t, expectedErr, err)
+	})
+
+	t.Run("should not return error on success", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		recipeStore.On("Create", validRecipe).Return(nil)
+		defer recipeStore.AssertExpectations(t)
+
+		service := createRecipeService(recipeStore)
+
+		err := service.Create(validRecipe)
+		assert.Nil(t, err)
+	})
+}
+
+func createRecipeService(recipeStore recipes.Store) *recipes.Service {
+	extractorStore := extractors.NewStore()
+	processorStore := processors.NewStore()
+	sinkStore := sinks.NewStore()
+
+	return recipes.NewService(
+		recipeStore,
+		extractorStore,
+		processorStore,
+		sinkStore,
+	)
 }
 
 type testProcessor struct{}

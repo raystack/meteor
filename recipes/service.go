@@ -3,6 +3,7 @@ package recipes
 import (
 	"errors"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
@@ -10,24 +11,39 @@ import (
 )
 
 type Service struct {
+	recipeStore    Store
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
+	validator      *validator.Validate
 }
 
-func NewService(extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Service {
+func NewService(recipeStore Store, extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Service {
+	validator := validator.New()
+
 	return &Service{
+		recipeStore:    recipeStore,
 		extractorStore: extractorStore,
 		processorStore: processorStore,
 		sinkStore:      sinkStore,
+		validator:      validator,
 	}
 }
 
-func (r *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
-	run := r.buildRun(recipe)
+func (s *Service) Create(recipe domain.Recipe) error {
+	err := s.validator.Struct(recipe)
+	if err != nil {
+		return InvalidRecipeError{err.Error()}
+	}
+
+	return s.recipeStore.Create(recipe)
+}
+
+func (s *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
+	run := s.buildRun(recipe)
 
 	for i := 0; i < len(run.Tasks); i++ {
-		data, err := r.runTask(&run.Tasks[i], run.Data)
+		data, err := s.runTask(&run.Tasks[i], run.Data)
 		run.Data = data
 
 		if err != nil {
@@ -38,16 +54,16 @@ func (r *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
 	return run, nil
 }
 
-func (r *Service) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (s *Service) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
 
 	switch task.Type {
 	case domain.TaskTypeExtract:
-		result, err = r.runExtractor(task.Name, task.Config)
+		result, err = s.runExtractor(task.Name, task.Config)
 	case domain.TaskTypeProcess:
-		result, err = r.runProcessor(task.Name, data, task.Config)
+		result, err = s.runProcessor(task.Name, data, task.Config)
 	case domain.TaskTypeSink:
-		err = r.runSink(task.Name, data, task.Config)
+		err = s.runSink(task.Name, data, task.Config)
 	default:
 		err = errors.New("invalid task type")
 	}
@@ -62,8 +78,8 @@ func (r *Service) runTask(task *domain.Task, data []map[string]interface{}) (res
 	return result, err
 }
 
-func (r *Service) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	extractor, err := r.extractorStore.Find(name)
+func (s *Service) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
+	extractor, err := s.extractorStore.Find(name)
 	if err != nil {
 		return result, err
 	}
@@ -71,8 +87,8 @@ func (r *Service) runExtractor(name string, config map[string]interface{}) (resu
 	return extractor.Extract(config)
 }
 
-func (r *Service) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	processor, err := r.processorStore.Find(name)
+func (s *Service) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
+	processor, err := s.processorStore.Find(name)
 	if err != nil {
 		return result, err
 	}
@@ -80,8 +96,8 @@ func (r *Service) runProcessor(name string, data []map[string]interface{}, confi
 	return processor.Process(data, config)
 }
 
-func (r *Service) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
-	sink, err := r.sinkStore.Find(name)
+func (s *Service) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
+	sink, err := s.sinkStore.Find(name)
 	if err != nil {
 		return err
 	}
@@ -89,7 +105,7 @@ func (r *Service) runSink(name string, data []map[string]interface{}, config map
 	return sink.Sink(data, config)
 }
 
-func (r *Service) buildRun(recipe domain.Recipe) *domain.Run {
+func (s *Service) buildRun(recipe domain.Recipe) *domain.Run {
 	var tasks []domain.Task
 
 	tasks = append(tasks, domain.Task{
