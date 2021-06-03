@@ -1,24 +1,24 @@
 package domain
 
 type SourceRecipe struct {
-	Type   string `validate:"required"`
-	Config map[string]interface{}
+	Type   string                 `json:"type" validate:"required"`
+	Config map[string]interface{} `json:"config"`
 }
 
 type SinkRecipe struct {
-	Name         string `validate:"required"`
-	BaseSinkName string
-	Config       map[string]interface{}
+	Name         string                 `json:"name" validate:"required"`
+	BaseSinkName string                 `json:"base_sink_name"`
+	Config       map[string]interface{} `json:"config"`
 }
 
 type ProcessorRecipe struct {
-	Name   string `validate:"required"`
-	Config map[string]interface{}
+	Name   string                 `json:"name" validate:"required"`
+	Config map[string]interface{} `json:"config"`
 }
 
 type Recipe struct {
-	Name       string       `validate:"required"`
-	Source     SourceRecipe `validate:"required"`
-	Sinks      []SinkRecipe `validate:"required,min=1"`
-	Processors []ProcessorRecipe
+	Name       string            `json:"name" validate:"required"`
+	Source     SourceRecipe      `json:"source" validate:"required"`
+	Sinks      []SinkRecipe      `json:"sinks" validate:"required,min=1"`
+	Processors []ProcessorRecipe `json:"processors"`
 }
