@@ -13,14 +13,14 @@ var (
 )
 
 type Task struct {
-	Type   string
-	Name   string
-	Config map[string]interface{}
-	Status string
+	Type   string                 `json:"type"`
+	Name   string                 `json:"name"`
+	Config map[string]interface{} `json:"config"`
+	Status string                 `json:"status"`
 }
 
 type Run struct {
-	Recipe Recipe
-	Tasks  []Task
-	Data   []map[string]interface{}
+	Recipe Recipe                   `json:"recipe"`
+	Tasks  []Task                   `json:"tasks"`
+	Data   []map[string]interface{} `json:"-"`
 }

@@ -1,9 +1,14 @@
 package recipes
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/odpf/meteor/domain"
+)
+
+var (
+	ErrDuplicateRecipeName = errors.New("recipe name already exists")
 )
 
 type NotFoundError struct {
@@ -12,6 +17,14 @@ type NotFoundError struct {
 
 func (err NotFoundError) Error() string {
 	return fmt.Sprintf("could not find recipe with name \"%s\"", err.RecipeName)
+}
+
+type InvalidRecipeError struct {
+	Message string
+}
+
+func (err InvalidRecipeError) Error() string {
+	return fmt.Sprintf("invalid recipe: \"%s\"", err.Message)
 }
 
 type RunTaskError struct {
