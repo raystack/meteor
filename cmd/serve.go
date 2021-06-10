@@ -7,35 +7,37 @@ import (
 	"path/filepath"
 
 	"github.com/odpf/meteor/api"
+	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/sinks"
 )
 
-var (
-	PORT = "3000"
-)
-
 func Serve() {
+	var err error
+
+	config, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 	recipeStore := initRecipeStore()
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
-
 	recipeService := recipes.NewService(
 		recipeStore,
 		extractorStore,
 		processorStore,
 		sinkStore,
 	)
-	recipeHandler := api.NewRecipeHandler(recipeService)
 
+	recipeHandler := api.NewRecipeHandler(recipeService)
 	router := api.NewRouter()
 	api.SetupRoutes(router, recipeHandler)
 
-	fmt.Println("Listening on port :" + PORT)
-	err := http.ListenAndServe(":"+PORT, router)
+	fmt.Println("Listening on port :" + config.Port)
+	err = http.ListenAndServe(":"+config.Port, router)
 	if err != nil {
 		fmt.Println(err)
 	}
