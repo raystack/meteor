@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/odpf/meteor/api"
 	"github.com/odpf/meteor/config"
@@ -44,20 +43,11 @@ func Serve() {
 	}
 }
 func initRecipeStore(recipeStorageURL string) recipes.Store {
-	path, err := filepath.Abs("./")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	path = filepath.Join(path, "_recipes")
-	reader := recipes.NewReader(path)
-	recipeList, err := reader.Read()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
 	store, err := rStore.New(recipeStorageURL)
-	for _, r := range recipeList {
-		store.Create(r)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
+
 	return store
 }
 func initExtractorStore() *extractors.Store {
