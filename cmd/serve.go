@@ -11,6 +11,7 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
+	rStore "github.com/odpf/meteor/recipes/store"
 	"github.com/odpf/meteor/sinks"
 )
 
@@ -21,7 +22,7 @@ func Serve() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	recipeStore := initRecipeStore()
+	recipeStore := initRecipeStore(config.RecipeStorageURL)
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
@@ -42,7 +43,7 @@ func Serve() {
 		fmt.Println(err)
 	}
 }
-func initRecipeStore() recipes.Store {
+func initRecipeStore(recipeStorageURL string) recipes.Store {
 	path, err := filepath.Abs("./")
 	if err != nil {
 		log.Fatal(err.Error())
@@ -53,7 +54,7 @@ func initRecipeStore() recipes.Store {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	store := recipes.NewMemoryStore()
+	store, err := rStore.New(recipeStorageURL)
 	for _, r := range recipeList {
 		store.Create(r)
 	}
