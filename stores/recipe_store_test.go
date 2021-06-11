@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/domain"
-	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/stores"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +23,7 @@ func TestStoreGetByName(t *testing.T) {
 
 		_, err = store.GetByName("wrong-name")
 		assert.NotNil(t, err)
-		assert.Equal(t, recipes.NotFoundError{RecipeName: "wrong-name"}, err)
+		assert.Equal(t, domain.RecipeNotFoundError{RecipeName: "wrong-name"}, err)
 	})
 
 	t.Run("should return recipe with the given name", func(t *testing.T) {

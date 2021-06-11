@@ -33,7 +33,7 @@ func NewService(recipeStore Store, extractorStore *extractors.Store, processorSt
 func (s *Service) Create(recipe domain.Recipe) error {
 	err := s.validator.Struct(recipe)
 	if err != nil {
-		return InvalidRecipeError{err.Error()}
+		return domain.InvalidRecipeError{err.Error()}
 	}
 
 	return s.recipeStore.Create(recipe)
@@ -140,5 +140,12 @@ func (s *Service) buildRun(recipe domain.Recipe) *domain.Run {
 	return &domain.Run{
 		Recipe: recipe,
 		Tasks:  tasks,
+	}
+}
+
+func newRunTaskError(task domain.Task, err error) domain.RunTaskError {
+	return domain.RunTaskError{
+		Task: task,
+		Err:  err,
 	}
 }

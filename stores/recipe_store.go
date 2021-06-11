@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/odpf/meteor/domain"
-	"github.com/odpf/meteor/recipes"
 
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
@@ -35,7 +34,7 @@ func (s *recipeStore) GetByName(name string) (recipe domain.Recipe, err error) {
 	r, err := s.bucket.NewReader(context.Background(), fileName, nil)
 	if err != nil {
 		if s.isBlobNotFoundError(err) {
-			return recipe, recipes.NotFoundError{RecipeName: name}
+			return recipe, domain.RecipeNotFoundError{RecipeName: name}
 		}
 		return recipe, err
 	}

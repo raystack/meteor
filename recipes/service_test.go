@@ -153,7 +153,7 @@ func TestServiceCreate(t *testing.T) {
 		service := createRecipeService(recipeStore)
 
 		err := service.Create(recipe)
-		assert.IsType(t, recipes.InvalidRecipeError{}, err)
+		assert.IsType(t, domain.InvalidRecipeError{}, err)
 	})
 
 	t.Run("should return InvalidRecipe error if sinks are less than one", func(t *testing.T) {
@@ -168,17 +168,17 @@ func TestServiceCreate(t *testing.T) {
 		service := createRecipeService(recipeStore)
 
 		err := service.Create(recipe)
-		assert.IsType(t, recipes.InvalidRecipeError{}, err)
+		assert.IsType(t, domain.InvalidRecipeError{}, err)
 	})
 	t.Run("should return ErrDuplicateRecipeName if recipe name already exists", func(t *testing.T) {
 		recipeStore := new(mocks.RecipeStore)
-		recipeStore.On("Create", validRecipe).Return(recipes.ErrDuplicateRecipeName)
+		recipeStore.On("Create", validRecipe).Return(domain.ErrDuplicateRecipeName)
 		defer recipeStore.AssertExpectations(t)
 
 		service := createRecipeService(recipeStore)
 
 		err := service.Create(validRecipe)
-		assert.Equal(t, recipes.ErrDuplicateRecipeName, err)
+		assert.Equal(t, domain.ErrDuplicateRecipeName, err)
 	})
 
 	t.Run("should return error from store", func(t *testing.T) {
@@ -212,7 +212,7 @@ func TestServiceFind(t *testing.T) {
 		service := createRecipeService(recipeStore)
 
 		recipeName := "test"
-		expectedErr := recipes.NotFoundError{RecipeName: recipeName}
+		expectedErr := domain.RecipeNotFoundError{RecipeName: recipeName}
 		recipeStore.On("GetByName", recipeName).Return(domain.Recipe{}, expectedErr)
 		defer recipeStore.AssertExpectations(t)
 

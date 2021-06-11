@@ -58,7 +58,7 @@ func TestRecipeHandlerCreate(t *testing.T) {
 
 	t.Run("should return 409 if recipe already exists", func(t *testing.T) {
 		recipeStore := new(mocks.RecipeStore)
-		recipeStore.On("Create", validRecipe).Return(recipes.ErrDuplicateRecipeName)
+		recipeStore.On("Create", validRecipe).Return(domain.ErrDuplicateRecipeName)
 		handler := createRecipeHandler(recipeStore)
 
 		jsonBytes, err := json.Marshal(validRecipe)
@@ -135,7 +135,7 @@ func TestRecipeHandlerRun(t *testing.T) {
 
 		handler := createRecipeHandler(recipeStore)
 		payload := `{"recipe_name": "test"}`
-		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, recipes.NotFoundError{})
+		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, domain.RecipeNotFoundError{})
 
 		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
 		rw := httptest.NewRecorder()

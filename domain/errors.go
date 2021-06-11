@@ -1,21 +1,19 @@
-package recipes
+package domain
 
 import (
 	"errors"
 	"fmt"
-
-	"github.com/odpf/meteor/domain"
 )
 
 var (
 	ErrDuplicateRecipeName = errors.New("recipe name already exists")
 )
 
-type NotFoundError struct {
+type RecipeNotFoundError struct {
 	RecipeName string
 }
 
-func (err NotFoundError) Error() string {
+func (err RecipeNotFoundError) Error() string {
 	return fmt.Sprintf("could not find recipe with name \"%s\"", err.RecipeName)
 }
 
@@ -28,21 +26,14 @@ func (err InvalidRecipeError) Error() string {
 }
 
 type RunTaskError struct {
-	task domain.Task
-	err  error
+	Task Task
+	Err  error
 }
 
 func (e RunTaskError) Error() string {
 	return fmt.Sprintf(
 		"error running %s task \"%s\": %s",
-		e.task.Type,
-		e.task.Name,
-		e.err)
-}
-
-func newRunTaskError(task domain.Task, err error) RunTaskError {
-	return RunTaskError{
-		task: task,
-		err:  err,
-	}
+		e.Task.Type,
+		e.Task.Name,
+		e.Err)
 }
