@@ -1,4 +1,4 @@
-package store
+package stores
 
 import (
 	"context"
@@ -15,22 +15,22 @@ import (
 	"gocloud.dev/gcerrors"
 )
 
-type store struct {
+type recipeStore struct {
 	bucket *blob.Bucket
 }
 
-func New(storageURL string) (*store, error) {
+func NewRecipeStore(storageURL string) (*recipeStore, error) {
 	bucket, err := blob.OpenBucket(context.Background(), storageURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return &store{
+	return &recipeStore{
 		bucket: bucket,
 	}, nil
 }
 
-func (s *store) GetByName(name string) (recipe domain.Recipe, err error) {
+func (s *recipeStore) GetByName(name string) (recipe domain.Recipe, err error) {
 	fileName := s.buildFileName(name)
 	r, err := s.bucket.NewReader(context.Background(), fileName, nil)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *store) GetByName(name string) (recipe domain.Recipe, err error) {
 	return
 }
 
-func (s *store) Create(recipe domain.Recipe) (err error) {
+func (s *recipeStore) Create(recipe domain.Recipe) (err error) {
 	fileName := s.buildFileName(recipe.Name)
 	w, err := s.bucket.NewWriter(context.Background(), fileName, nil)
 	if err != nil {
@@ -68,10 +68,10 @@ func (s *store) Create(recipe domain.Recipe) (err error) {
 	return
 }
 
-func (s *store) buildFileName(recipeName string) string {
+func (s *recipeStore) buildFileName(recipeName string) string {
 	return fmt.Sprintf("%s.json", recipeName)
 }
 
-func (s *store) isBlobNotFoundError(err error) bool {
+func (s *recipeStore) isBlobNotFoundError(err error) bool {
 	return strings.Contains(err.Error(), gcerrors.NotFound.String())
 }

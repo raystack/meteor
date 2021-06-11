@@ -1,17 +1,17 @@
-package store_test
+package stores_test
 
 import (
 	"testing"
 
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/recipes"
-	"github.com/odpf/meteor/recipes/store"
+	"github.com/odpf/meteor/stores"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStoreGetByName(t *testing.T) {
 	t.Run("should return error if recipe could not be found", func(t *testing.T) {
-		store, err := store.New("mem://")
+		store, err := stores.NewRecipeStore("mem://")
 		if err != nil {
 			t.Error(err)
 		}
@@ -30,7 +30,7 @@ func TestStoreGetByName(t *testing.T) {
 	t.Run("should return recipe with the given name", func(t *testing.T) {
 		name := "sample"
 
-		store, err := store.New("mem://")
+		store, err := stores.NewRecipeStore("mem://")
 		if err != nil {
 			t.Error(err)
 		}
@@ -56,7 +56,7 @@ func TestStoreCreate(t *testing.T) {
 			Name: "sample",
 		}
 
-		store, err := store.New("mem://")
+		store, err := stores.NewRecipeStore("mem://")
 		if err != nil {
 			t.Error(err)
 		}

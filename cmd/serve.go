@@ -10,8 +10,8 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
-	rStore "github.com/odpf/meteor/recipes/store"
 	"github.com/odpf/meteor/sinks"
+	"github.com/odpf/meteor/stores"
 )
 
 func Serve() {
@@ -43,7 +43,7 @@ func Serve() {
 	}
 }
 func initRecipeStore(recipeStorageURL string) recipes.Store {
-	store, err := rStore.New(recipeStorageURL)
+	store, err := stores.NewRecipeStore(recipeStorageURL)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
