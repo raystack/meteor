@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/odpf/meteor/domain"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 )
 
 type RecipeRunRequest struct {
@@ -14,10 +14,10 @@ type RecipeRunRequest struct {
 }
 
 type RecipeHandler struct {
-	recipeService *recipes.Service
+	recipeService *services.RecipeService
 }
 
-func NewRecipeHandler(recipeService *recipes.Service) *RecipeHandler {
+func NewRecipeHandler(recipeService *services.RecipeService) *RecipeHandler {
 	return &RecipeHandler{
 		recipeService: recipeService,
 	}

@@ -7,9 +7,10 @@ import (
 
 	"github.com/odpf/meteor/api"
 	"github.com/odpf/meteor/config"
+	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
 	"github.com/odpf/meteor/stores"
 )
@@ -25,7 +26,7 @@ func Serve() {
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
-	recipeService := recipes.NewService(
+	recipeService := services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,
@@ -42,7 +43,7 @@ func Serve() {
 		fmt.Println(err)
 	}
 }
-func initRecipeStore(recipeStorageURL string) recipes.Store {
+func initRecipeStore(recipeStorageURL string) domain.RecipeStore {
 	store, err := stores.NewRecipeStore(recipeStorageURL)
 	if err != nil {
 		log.Fatal(err.Error())
