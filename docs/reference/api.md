@@ -18,7 +18,7 @@ API to create a new recipe
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| payload | body |  | Yes | object |
+| payload | body |  | Yes | [CreateRecipeRequest](#createreciperequest) |
 
 ##### Responses
 
@@ -44,7 +44,7 @@ API to run an existing recipe
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
-| payload | body |  | Yes | object |
+| payload | body |  | Yes | [RunRecipeRequest](#runreciperequest) |
 
 ##### Responses
 
@@ -56,6 +56,21 @@ API to run an existing recipe
 | 500 | internal server error | [InternalServerError](#internalservererror) |
 
 ### Models
+
+#### CreateRecipeRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| name | string |  | Yes |
+| source | object |  | Yes |
+| processors | [ object ] |  | No |
+| sinks | [ object ] |  | Yes |
+
+#### RunRecipeRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| recipe_name | string |_Example:_ `"kafka-production"` | Yes |
 
 #### Recipe
 
@@ -93,12 +108,3 @@ API to run an existing recipe
 | ---- | ---- | ----------- | -------- |
 | recipe | [Recipe](#recipe) |  | No |
 | tasks | object |  | No |
-
-#### InternalServerError
-
-| Name | Type | Description | Required |
-| ---- | ---- | ----------- | -------- |
-| InternalServerError | string |  |  |
-
-**Example**
-<pre>internal server error</pre>

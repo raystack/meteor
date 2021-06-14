@@ -17,25 +17,7 @@ paths:
           name: payload
           required: true
           schema:
-            type: object
-            required:
-              - name
-              - source
-              - sinks
-            properties:
-              name:
-                type: string
-              source:
-                $ref: '#/definitions/Source'
-              processors:
-                type: array
-                items:
-                  $ref: '#/definitions/Processor'
-              sinks:
-                type: array
-                minItems: 1
-                items:
-                  $ref: '#/definitions/Sink'
+            $ref: "#/definitions/CreateRecipeRequest"
       responses:
         201:
           description: OK
