@@ -67,13 +67,7 @@ paths:
           name: payload
           required: true
           schema:
-            type: object
-            required:
-              - recipe_name
-            properties:
-              recipe_name:
-                type: string
-                example: kafka-production
+            $ref: "#/definitions/RunRecipeRequest"
       responses:
         200:
           description: OK
@@ -94,6 +88,63 @@ paths:
           schema:
             $ref: "#/definitions/InternalServerError"
 definitions:
+  CreateRecipeRequest:
+    type: object
+    required:
+      - name
+      - source
+      - sinks
+    properties:
+      name:
+        type: string
+      source:
+        type: object
+        required:
+          - type
+        properties:
+          type:
+            type: string
+            default: kafka
+          config:
+            type: object
+            nullable: true
+      processors:
+        type: array
+        nullable: true
+        items:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              default: enrich
+            config:
+              type: object
+              nullable: true
+      sinks:
+        type: array
+        minLength: 1
+        items:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              default: console
+            config:
+              type: object
+              nullable: true
+  RunRecipeRequest:
+    type: object
+    required:
+      - recipe_name
+    properties:
+      recipe_name:
+        type: string
+        minLength: 1
+        example: kafka-production
   Recipe:
     type: object
     properties:
@@ -164,6 +215,10 @@ definitions:
               - failed
           config:
             type: object
+responses:
   InternalServerError:
-    type: string
-    example: internal server error
+    description: internal server error
+    schema:
+      properties:
+        error:
+          type: string

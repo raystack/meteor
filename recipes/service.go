@@ -3,7 +3,6 @@ package recipes
 import (
 	"errors"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
@@ -15,25 +14,20 @@ type Service struct {
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
-	validator      *validator.Validate
 }
 
 func NewService(recipeStore Store, extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Service {
-	validator := validator.New()
-
 	return &Service{
 		recipeStore:    recipeStore,
 		extractorStore: extractorStore,
 		processorStore: processorStore,
 		sinkStore:      sinkStore,
-		validator:      validator,
 	}
 }
 
 func (s *Service) Create(recipe domain.Recipe) error {
-	err := s.validator.Struct(recipe)
-	if err != nil {
-		return InvalidRecipeError{err.Error()}
+	if len(recipe.Sinks) < 1 {
+		return InvalidRecipeError{"minimum 1 sink has to be defined"}
 	}
 
 	return s.recipeStore.Create(recipe)
