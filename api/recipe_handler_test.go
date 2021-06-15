@@ -14,7 +14,7 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/mocks"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,7 +58,7 @@ func TestRecipeHandlerCreate(t *testing.T) {
 
 	t.Run("should return 409 if recipe already exists", func(t *testing.T) {
 		recipeStore := new(mocks.RecipeStore)
-		recipeStore.On("Create", validRecipe).Return(recipes.ErrDuplicateRecipeName)
+		recipeStore.On("Create", validRecipe).Return(domain.ErrDuplicateRecipeName)
 		handler := createRecipeHandler(recipeStore)
 
 		jsonBytes, err := json.Marshal(validRecipe)
@@ -135,7 +135,7 @@ func TestRecipeHandlerRun(t *testing.T) {
 
 		handler := createRecipeHandler(recipeStore)
 		payload := `{"recipe_name": "test"}`
-		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, recipes.NotFoundError{})
+		recipeStore.On("GetByName", "test").Return(domain.Recipe{}, domain.RecipeNotFoundError{})
 
 		rr := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
 		rw := httptest.NewRecorder()
@@ -225,7 +225,7 @@ func (e *testExtractor) Extract(config map[string]interface{}) ([]map[string]int
 	return nil, nil
 }
 
-func createRecipeHandler(recipeStore recipes.Store) *api.RecipeHandler {
+func createRecipeHandler(recipeStore domain.RecipeStore) *api.RecipeHandler {
 	extractorStore := extractors.NewStore()
 	extractorStore.Populate(map[string]extractors.Extractor{
 		"test": &testExtractor{},
@@ -233,7 +233,7 @@ func createRecipeHandler(recipeStore recipes.Store) *api.RecipeHandler {
 
 	processorStore := processors.NewStore()
 	sinkStore := sinks.NewStore()
-	recipeService := recipes.NewService(
+	recipeService := services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,

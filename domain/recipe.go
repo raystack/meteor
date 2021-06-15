@@ -22,3 +22,8 @@ type Recipe struct {
 	Sinks      []SinkRecipe      `json:"sinks" validate:"required,min=1"`
 	Processors []ProcessorRecipe `json:"processors"`
 }
+
+type RecipeStore interface {
+	GetByName(string) (Recipe, error)
+	Create(Recipe) error
+}
