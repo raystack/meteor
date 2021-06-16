@@ -25,19 +25,14 @@ paths:
             type: string
             example: "recipe created"
         400:
-          description: validation error
-          schema:
-            type: string
-            example: "invalid json payload"
+          $ref: "#/responses/ValidationError"
         409:
           description: duplicate recipe name
           schema:
             type: string
             example: "duplicate recipe name"
         500:
-          description: internal server error
-          schema:
-            $ref: "#/definitions/InternalServerError"
+          $ref: "#/responses/InternalServerError"
   "/v1/run":
     post:
       summary: run a recipe
@@ -56,19 +51,14 @@ paths:
           schema:
             $ref: "#/definitions/Run"
         400:
-          description: validation error
-          schema:
-            type: string
-            example: "recipe_name is required"
+          $ref: "#/responses/ValidationError"
         404:
           description: recipe not found
           schema:
             type: string
             example: "recipe name not found"
         500:
-          description: internal server error
-          schema:
-            $ref: "#/definitions/InternalServerError"
+          $ref: "#/responses/InternalServerError"
   "/v1/secrets":
     put:
       summary: upsert a secret
@@ -88,13 +78,9 @@ paths:
             type: string
             example: "secret updated"
         400:
-          description: validation error
-          schema:
-            $ref: "#/responses/ValidationError"
+          $ref: "#/responses/ValidationError"
         500:
-          description: internal server error
-          schema:
-            $ref: "#/responses/InternalServerError"
+          $ref: "#/responses/InternalServerError"
 definitions:
   CreateRecipeRequest:
     type: object
@@ -239,13 +225,10 @@ responses:
   ValidationError:
     description: validation error
     schema:
-      properties:
-        errors:
-          type: string
-          example: "name in body must be of type string: \"null\""
+      type: string
+      example: "name in body must be of type string: \"null\""
   InternalServerError:
     description: internal server error
     schema:
-      properties:
-        error:
-          type: string
+      type: string
+      example: "internal server error"

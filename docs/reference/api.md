@@ -27,7 +27,7 @@ API to create a new recipe
 | 201 | OK | string |
 | 400 | validation error | string |
 | 409 | duplicate recipe name | string |
-| 500 | internal server error | [InternalServerError](#internalservererror) |
+| 500 | internal server error | string |
 
 ### /v1/run
 
@@ -53,7 +53,32 @@ API to run an existing recipe
 | 200 | OK | [Run](#run) |
 | 400 | validation error | string |
 | 404 | recipe not found | string |
-| 500 | internal server error | [InternalServerError](#internalservererror) |
+| 500 | internal server error | string |
+
+### /v1/secrets
+
+#### PUT
+##### Summary
+
+upsert a secret
+
+##### Description
+
+API to upsert a secret
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ---- |
+| payload | body |  | Yes | [UpsertSecretRequest](#upsertsecretrequest) |
+
+##### Responses
+
+| Code | Description | Schema |
+| ---- | ----------- | ------ |
+| 200 | OK | string |
+| 400 | validation error | string |
+| 500 | internal server error | string |
 
 ### Models
 
@@ -71,6 +96,13 @@ API to run an existing recipe
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
 | recipe_name | string |_Example:_ `"kafka-production"` | Yes |
+
+#### UpsertSecretRequest
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| name | string | _Example:_ `"mysql-cred"` | Yes |
+| data | object |  | Yes |
 
 #### Recipe
 
