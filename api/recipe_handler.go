@@ -25,13 +25,7 @@ func NewRecipeHandler(recipeService *services.RecipeService) *RecipeHandler {
 
 func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var recipe domain.Recipe
-	err := json.NewDecoder(r.Body).Decode(&recipe)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = validate("CreateRecipeRequest", &recipe)
+	err := decodeAndValidate(r.Body, "CreateRecipeRequest", &recipe)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -56,13 +50,7 @@ func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *RecipeHandler) Run(w http.ResponseWriter, r *http.Request) {
 	var payload RecipeRunRequest
-	err := json.NewDecoder(r.Body).Decode(&payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	err = validate("RunRecipeRequest", &payload)
+	err := decodeAndValidate(r.Body, "RunRecipeRequest", &payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
