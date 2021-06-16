@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
+	"github.com/odpf/meteor/secrets"
 	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
 	"github.com/odpf/meteor/stores"
@@ -26,11 +27,13 @@ func Serve() {
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
+	secretStore := initSecretStore(config.SecretStorageURL)
 	recipeService := services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,
 		sinkStore,
+		secretStore,
 	)
 
 	recipeHandler := api.NewRecipeHandler(recipeService)
@@ -64,5 +67,13 @@ func initProcessorStore() *processors.Store {
 func initSinkStore() *sinks.Store {
 	store := sinks.NewStore()
 	sinks.PopulateStore(store)
+	return store
+}
+func initSecretStore(secretStorageURL string) secrets.Store {
+	store, err := stores.NewSecretStore(secretStorageURL)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	return store
 }

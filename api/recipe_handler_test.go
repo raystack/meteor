@@ -233,11 +233,13 @@ func createRecipeHandler(recipeStore domain.RecipeStore) *api.RecipeHandler {
 
 	processorStore := processors.NewStore()
 	sinkStore := sinks.NewStore()
+	secretStore := new(mocks.SecretStore)
 	recipeService := services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,
 		sinkStore,
+		secretStore,
 	)
 
 	return api.NewRecipeHandler(recipeService)

@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/mocks"
 	"github.com/odpf/meteor/processors"
+	"github.com/odpf/meteor/secrets"
 	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +51,7 @@ func TestServiceRun(t *testing.T) {
 		sinkStore.Populate(map[string]sinks.Sink{
 			"mock-sink": sink,
 		})
+		secretStore := new(mocks.SecretStore)
 
 		expectedRun := &domain.Run{
 			Recipe: recipe,
@@ -75,7 +77,7 @@ func TestServiceRun(t *testing.T) {
 			},
 		}
 
-		r := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
+		r := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore, secretStore)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -115,14 +117,49 @@ func TestServiceRun(t *testing.T) {
 		sinkStore.Populate(map[string]sinks.Sink{
 			"mock-sink": sink,
 		})
+		secretStore := new(mocks.SecretStore)
 
-		service := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
+		service := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore, secretStore)
 		run, err := service.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
 		}
 
 		assert.Equal(t, finalData, run.Data)
+	})
+
+	t.Run("should map config value to secret value if referenced", func(t *testing.T) {
+		testRecipe := domain.Recipe{
+			Name: "sample",
+			Source: domain.SourceRecipe{
+				Type: "test-extractor",
+				Config: map[string]interface{}{
+					"id": "$secret.admin.username",
+				},
+			},
+		}
+
+		extr := new(testExtractor)
+		extrStore := extractors.NewStore()
+		extrStore.Populate(map[string]extractors.Extractor{
+			"test-extractor": extr,
+		})
+		procStore := processors.NewStore()
+		sinkStore := sinks.NewStore()
+		secretStore := new(mocks.SecretStore)
+		secretStore.On("Find", "admin").Return(secrets.Secret{
+			Data: map[string]interface{}{
+				"username": "John",
+			},
+		}, nil)
+
+		r := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore, secretStore)
+		_, err := r.Run(testRecipe)
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		secretStore.AssertExpectations(t)
 	})
 }
 
@@ -239,12 +276,14 @@ func createRecipeService(recipeStore domain.RecipeStore) *services.RecipeService
 	extractorStore := extractors.NewStore()
 	processorStore := processors.NewStore()
 	sinkStore := sinks.NewStore()
+	secretStore := new(mocks.SecretStore)
 
 	return services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,
 		sinkStore,
+		secretStore,
 	)
 }
 

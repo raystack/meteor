@@ -6,6 +6,7 @@ import (
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
+	"github.com/odpf/meteor/secrets"
 	"github.com/odpf/meteor/sinks"
 )
 
@@ -14,6 +15,7 @@ type RecipeService struct {
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
+	secretStore    secrets.Store
 }
 
 func NewRecipeService(
@@ -21,12 +23,14 @@ func NewRecipeService(
 	extractorStore *extractors.Store,
 	processorStore *processors.Store,
 	sinkStore *sinks.Store,
+	secretStore secrets.Store,
 ) *RecipeService {
 	return &RecipeService{
 		recipeStore:    recipeStore,
 		extractorStore: extractorStore,
 		processorStore: processorStore,
 		sinkStore:      sinkStore,
+		secretStore:    secretStore,
 	}
 }
 
@@ -59,6 +63,10 @@ func (s *RecipeService) Find(name string) (domain.Recipe, error) {
 
 func (s *RecipeService) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
+	err = secrets.MapConfig(task.Config, s.secretStore)
+	if err != nil {
+		return
+	}
 
 	switch task.Type {
 	case domain.TaskTypeExtract:

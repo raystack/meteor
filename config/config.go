@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Port             string `mapstructure:"PORT" default:"3000"`
 	RecipeStorageURL string `mapstructure:"RECIPE_STORAGE_URL" default:"mem://"`
+	SecretStorageURL string `mapstructure:"SECRET_STORAGE_URL" default:"mem://"`
 }
 
 // LoadConfig returns application configuration
