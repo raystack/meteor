@@ -31,6 +31,12 @@ func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = validate("CreateRecipeRequest", &recipe)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	err = h.recipeService.Create(recipe)
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -56,8 +62,9 @@ func (h *RecipeHandler) Run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if payload.RecipeName == "" {
-		http.Error(w, "recipe_name is required", http.StatusBadRequest)
+	err = validate("RunRecipeRequest", &payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

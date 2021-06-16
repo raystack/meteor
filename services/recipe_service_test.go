@@ -139,23 +139,6 @@ func TestServiceCreate(t *testing.T) {
 		},
 	}
 
-	t.Run("should return InvalidRecipe error if source is empty", func(t *testing.T) {
-		recipe := domain.Recipe{
-			Name: "sample",
-			Sinks: []domain.SinkRecipe{
-				{Name: "mock-sink", Config: map[string]interface{}{
-					"url": "http://localhost:3000/data",
-				}},
-			},
-		}
-
-		recipeStore := new(mocks.RecipeStore)
-		service := createRecipeService(recipeStore)
-
-		err := service.Create(recipe)
-		assert.IsType(t, domain.InvalidRecipeError{}, err)
-	})
-
 	t.Run("should return InvalidRecipe error if sinks are less than one", func(t *testing.T) {
 		recipe := domain.Recipe{
 			Name: "sample",
@@ -170,6 +153,7 @@ func TestServiceCreate(t *testing.T) {
 		err := service.Create(recipe)
 		assert.IsType(t, domain.InvalidRecipeError{}, err)
 	})
+
 	t.Run("should return ErrDuplicateRecipeName if recipe name already exists", func(t *testing.T) {
 		recipeStore := new(mocks.RecipeStore)
 		recipeStore.On("Create", validRecipe).Return(domain.ErrDuplicateRecipeName)

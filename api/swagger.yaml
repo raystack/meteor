@@ -1,0 +1,206 @@
+swagger: '2.0'
+info:
+  title: "Meteor"
+  description: "Metadata Collector API"
+  version: 0.1.0
+schemes: 
+  - "http"
+paths:
+  "/v1/recipes":
+    post:
+      summary: create a recipe
+      description: "API to create a new recipe"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: payload
+          required: true
+          schema:
+            $ref: "#/definitions/CreateRecipeRequest"
+      responses:
+        201:
+          description: OK
+          schema:
+            type: string
+            example: "recipe created"
+        400:
+          description: validation error
+          schema:
+            type: string
+            example: "invalid json payload"
+        409:
+          description: duplicate recipe name
+          schema:
+            type: string
+            example: "duplicate recipe name"
+        500:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/InternalServerError"
+  "/v1/run":
+    post:
+      summary: run a recipe
+      description: "API to run an existing recipe"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: payload
+          required: true
+          schema:
+            $ref: "#/definitions/RunRecipeRequest"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Run"
+        400:
+          description: validation error
+          schema:
+            type: string
+            example: "recipe_name is required"
+        404:
+          description: recipe not found
+          schema:
+            type: string
+            example: "recipe name not found"
+        500:
+          description: internal server error
+          schema:
+            $ref: "#/definitions/InternalServerError"
+definitions:
+  CreateRecipeRequest:
+    type: object
+    required:
+      - name
+      - source
+      - sinks
+    properties:
+      name:
+        type: string
+      source:
+        type: object
+        required:
+          - type
+        properties:
+          type:
+            type: string
+            default: kafka
+          config:
+            type: object
+            nullable: true
+      processors:
+        type: array
+        nullable: true
+        items:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              default: enrich
+            config:
+              type: object
+              nullable: true
+      sinks:
+        type: array
+        minLength: 1
+        items:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              default: console
+            config:
+              type: object
+              nullable: true
+  RunRecipeRequest:
+    type: object
+    required:
+      - recipe_name
+    properties:
+      recipe_name:
+        type: string
+        minLength: 1
+        example: kafka-production
+  Recipe:
+    type: object
+    properties:
+      name:
+        type: string
+      source:
+        $ref: '#/definitions/Source'
+      processors:
+        type: array
+        items:
+          $ref: '#/definitions/Processor'
+      sinks:
+        type: array
+        items:
+          $ref: '#/definitions/Sink'
+  Source:
+    type: object
+    required:
+      - type
+    properties:
+      type:
+        type: string
+        default: kafka
+      config:
+        type: object
+  Sink:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        default: console
+      config:
+        type: object
+  Processor:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        default: enrich
+      config:
+        type: object
+  Run:
+    type: object
+    properties:
+      recipe:
+        $ref: '#/definitions/Recipe'
+      tasks:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - extract
+              - process
+              - sink
+          name:
+            type: string
+            example: kafka
+          status:
+            type: string
+            enum:
+              - ready
+              - complete
+              - failed
+          config:
+            type: object
+responses:
+  InternalServerError:
+    description: internal server error
+    schema:
+      properties:
+        error:
+          type: string

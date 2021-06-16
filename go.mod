@@ -3,7 +3,10 @@ module github.com/odpf/meteor
 go 1.14
 
 require (
-	github.com/go-playground/validator/v10 v10.6.1
+	github.com/go-openapi/loads v0.20.2
+	github.com/go-openapi/spec v0.20.3
+	github.com/go-openapi/strfmt v0.20.0
+	github.com/go-openapi/validate v0.20.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/mcuadros/go-defaults v1.2.0
@@ -12,5 +15,4 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	gocloud.dev v0.23.0
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
