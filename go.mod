@@ -8,7 +8,11 @@ require (
 	github.com/go-openapi/strfmt v0.20.0
 	github.com/go-openapi/validate v0.20.1
 	github.com/gorilla/mux v1.8.0
+	github.com/jeremywohl/flatten v1.0.1
+	github.com/mcuadros/go-defaults v1.2.0
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/segmentio/kafka-go v0.4.16
+	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+	gocloud.dev v0.23.0
 )

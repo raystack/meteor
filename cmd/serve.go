@@ -4,57 +4,51 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/odpf/meteor/api"
+	"github.com/odpf/meteor/config"
+	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
-)
-
-var (
-	PORT = "3000"
+	"github.com/odpf/meteor/stores"
 )
 
 func Serve() {
-	recipeStore := initRecipeStore()
+	var err error
+
+	config, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	recipeStore := initRecipeStore(config.RecipeStorageURL)
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
-
-	recipeService := recipes.NewService(
+	recipeService := services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,
 		sinkStore,
 	)
-	recipeHandler := api.NewRecipeHandler(recipeService)
 
+	recipeHandler := api.NewRecipeHandler(recipeService)
 	router := api.NewRouter()
 	api.SetupRoutes(router, recipeHandler)
 
-	fmt.Println("Listening on port :" + PORT)
-	err := http.ListenAndServe(":"+PORT, router)
+	fmt.Println("Listening on port :" + config.Port)
+	err = http.ListenAndServe(":"+config.Port, router)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
-func initRecipeStore() recipes.Store {
-	path, err := filepath.Abs("./")
+func initRecipeStore(recipeStorageURL string) domain.RecipeStore {
+	store, err := stores.NewRecipeStore(recipeStorageURL)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	path = filepath.Join(path, "_recipes")
-	reader := recipes.NewReader(path)
-	recipeList, err := reader.Read()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	store := recipes.NewMemoryStore()
-	for _, r := range recipeList {
-		store.Create(r)
-	}
+
 	return store
 }
 func initExtractorStore() *extractors.Store {

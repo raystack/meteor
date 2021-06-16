@@ -1,4 +1,4 @@
-package recipes
+package services
 
 import (
 	"errors"
@@ -9,15 +9,20 @@ import (
 	"github.com/odpf/meteor/sinks"
 )
 
-type Service struct {
-	recipeStore    Store
+type RecipeService struct {
+	recipeStore    domain.RecipeStore
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
 }
 
-func NewService(recipeStore Store, extractorStore *extractors.Store, processorStore *processors.Store, sinkStore *sinks.Store) *Service {
-	return &Service{
+func NewRecipeService(
+	recipeStore domain.RecipeStore,
+	extractorStore *extractors.Store,
+	processorStore *processors.Store,
+	sinkStore *sinks.Store,
+) *RecipeService {
+	return &RecipeService{
 		recipeStore:    recipeStore,
 		extractorStore: extractorStore,
 		processorStore: processorStore,
@@ -25,15 +30,15 @@ func NewService(recipeStore Store, extractorStore *extractors.Store, processorSt
 	}
 }
 
-func (s *Service) Create(recipe domain.Recipe) error {
+func (s *RecipeService) Create(recipe domain.Recipe) error {
 	if len(recipe.Sinks) < 1 {
-		return InvalidRecipeError{"minimum 1 sink has to be defined"}
+		return domain.InvalidRecipeError{Message: "minimum 1 sink has to be defined"}
 	}
 
 	return s.recipeStore.Create(recipe)
 }
 
-func (s *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
+func (s *RecipeService) Run(recipe domain.Recipe) (*domain.Run, error) {
 	run := s.buildRun(recipe)
 
 	for i := 0; i < len(run.Tasks); i++ {
@@ -48,11 +53,11 @@ func (s *Service) Run(recipe domain.Recipe) (*domain.Run, error) {
 	return run, nil
 }
 
-func (s *Service) Find(name string) (domain.Recipe, error) {
+func (s *RecipeService) Find(name string) (domain.Recipe, error) {
 	return s.recipeStore.GetByName(name)
 }
 
-func (s *Service) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (s *RecipeService) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
 
 	switch task.Type {
@@ -76,7 +81,7 @@ func (s *Service) runTask(task *domain.Task, data []map[string]interface{}) (res
 	return result, err
 }
 
-func (s *Service) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (s *RecipeService) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
 	extractor, err := s.extractorStore.Find(name)
 	if err != nil {
 		return result, err
@@ -85,7 +90,7 @@ func (s *Service) runExtractor(name string, config map[string]interface{}) (resu
 	return extractor.Extract(config)
 }
 
-func (s *Service) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (s *RecipeService) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
 	processor, err := s.processorStore.Find(name)
 	if err != nil {
 		return result, err
@@ -94,7 +99,7 @@ func (s *Service) runProcessor(name string, data []map[string]interface{}, confi
 	return processor.Process(data, config)
 }
 
-func (s *Service) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
+func (s *RecipeService) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
 	sink, err := s.sinkStore.Find(name)
 	if err != nil {
 		return err
@@ -103,7 +108,7 @@ func (s *Service) runSink(name string, data []map[string]interface{}, config map
 	return sink.Sink(data, config)
 }
 
-func (s *Service) buildRun(recipe domain.Recipe) *domain.Run {
+func (s *RecipeService) buildRun(recipe domain.Recipe) *domain.Run {
 	var tasks []domain.Task
 
 	tasks = append(tasks, domain.Task{
@@ -134,5 +139,12 @@ func (s *Service) buildRun(recipe domain.Recipe) *domain.Run {
 	return &domain.Run{
 		Recipe: recipe,
 		Tasks:  tasks,
+	}
+}
+
+func newRunTaskError(task domain.Task, err error) domain.RunTaskError {
+	return domain.RunTaskError{
+		Task: task,
+		Err:  err,
 	}
 }

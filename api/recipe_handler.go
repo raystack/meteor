@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/odpf/meteor/domain"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 )
 
 type RecipeRunRequest struct {
@@ -14,10 +14,10 @@ type RecipeRunRequest struct {
 }
 
 type RecipeHandler struct {
-	recipeService *recipes.Service
+	recipeService *services.RecipeService
 }
 
-func NewRecipeHandler(recipeService *recipes.Service) *RecipeHandler {
+func NewRecipeHandler(recipeService *services.RecipeService) *RecipeHandler {
 	return &RecipeHandler{
 		recipeService: recipeService,
 	}
@@ -40,9 +40,9 @@ func (h *RecipeHandler) Create(w http.ResponseWriter, r *http.Request) {
 	err = h.recipeService.Create(recipe)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if _, ok := err.(recipes.InvalidRecipeError); ok {
+		if _, ok := err.(domain.InvalidRecipeError); ok {
 			status = http.StatusBadRequest
-		} else if errors.Is(err, recipes.ErrDuplicateRecipeName) {
+		} else if errors.Is(err, domain.ErrDuplicateRecipeName) {
 			status = http.StatusConflict
 		}
 
@@ -71,7 +71,7 @@ func (h *RecipeHandler) Run(w http.ResponseWriter, r *http.Request) {
 	recipe, err := h.recipeService.Find(payload.RecipeName)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if _, ok := err.(recipes.NotFoundError); ok {
+		if _, ok := err.(domain.RecipeNotFoundError); ok {
 			status = http.StatusNotFound
 		}
 		http.Error(w, err.Error(), status)

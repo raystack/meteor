@@ -1,4 +1,4 @@
-package recipes_test
+package services_test
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/mocks"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/services"
 	"github.com/odpf/meteor/sinks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -75,7 +75,7 @@ func TestServiceRun(t *testing.T) {
 			},
 		}
 
-		r := recipes.NewService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
+		r := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -116,7 +116,7 @@ func TestServiceRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		service := recipes.NewService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
+		service := services.NewRecipeService(&mocks.RecipeStore{}, extrStore, procStore, sinkStore)
 		run, err := service.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -151,18 +151,18 @@ func TestServiceCreate(t *testing.T) {
 		service := createRecipeService(recipeStore)
 
 		err := service.Create(recipe)
-		assert.IsType(t, recipes.InvalidRecipeError{}, err)
+		assert.IsType(t, domain.InvalidRecipeError{}, err)
 	})
 
 	t.Run("should return ErrDuplicateRecipeName if recipe name already exists", func(t *testing.T) {
 		recipeStore := new(mocks.RecipeStore)
-		recipeStore.On("Create", validRecipe).Return(recipes.ErrDuplicateRecipeName)
+		recipeStore.On("Create", validRecipe).Return(domain.ErrDuplicateRecipeName)
 		defer recipeStore.AssertExpectations(t)
 
 		service := createRecipeService(recipeStore)
 
 		err := service.Create(validRecipe)
-		assert.Equal(t, recipes.ErrDuplicateRecipeName, err)
+		assert.Equal(t, domain.ErrDuplicateRecipeName, err)
 	})
 
 	t.Run("should return error from store", func(t *testing.T) {
@@ -196,7 +196,7 @@ func TestServiceFind(t *testing.T) {
 		service := createRecipeService(recipeStore)
 
 		recipeName := "test"
-		expectedErr := recipes.NotFoundError{RecipeName: recipeName}
+		expectedErr := domain.RecipeNotFoundError{RecipeName: recipeName}
 		recipeStore.On("GetByName", recipeName).Return(domain.Recipe{}, expectedErr)
 		defer recipeStore.AssertExpectations(t)
 
@@ -235,12 +235,12 @@ func TestServiceFind(t *testing.T) {
 	})
 }
 
-func createRecipeService(recipeStore recipes.Store) *recipes.Service {
+func createRecipeService(recipeStore domain.RecipeStore) *services.RecipeService {
 	extractorStore := extractors.NewStore()
 	processorStore := processors.NewStore()
 	sinkStore := sinks.NewStore()
 
-	return recipes.NewService(
+	return services.NewRecipeService(
 		recipeStore,
 		extractorStore,
 		processorStore,

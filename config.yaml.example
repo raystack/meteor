@@ -1,5 +1,2 @@
-port: 8080
-newrelic:
-  enabled: false
-  appname: app
-  license: ____LICENSE_STRING_OF_40_CHARACTERS_____
+PORT: 3000
+RECIPE_STORAGE_URL: mem://
