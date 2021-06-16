@@ -37,8 +37,9 @@ func Serve() {
 	)
 
 	recipeHandler := api.NewRecipeHandler(recipeService)
+	secretHandler := api.NewSecretHandler(secretStore)
 	router := api.NewRouter()
-	api.SetupRoutes(router, recipeHandler)
+	api.SetupRoutes(router, recipeHandler, secretHandler)
 
 	fmt.Println("Listening on port :" + config.Port)
 	err = http.ListenAndServe(":"+config.Port, router)

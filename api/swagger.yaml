@@ -69,6 +69,32 @@ paths:
           description: internal server error
           schema:
             $ref: "#/definitions/InternalServerError"
+  "/v1/secrets":
+    put:
+      summary: upsert a secret
+      description: "API to upsert a secret"
+      produces:
+        - "application/json"
+      parameters:
+        - in: body
+          name: payload
+          required: true
+          schema:
+            $ref: "#/definitions/UpsertSecretRequest"
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+            example: "secret updated"
+        400:
+          description: validation error
+          schema:
+            $ref: "#/responses/ValidationError"
+        500:
+          description: internal server error
+          schema:
+            $ref: "#/responses/InternalServerError"
 definitions:
   CreateRecipeRequest:
     type: object
@@ -127,6 +153,18 @@ definitions:
         type: string
         minLength: 1
         example: kafka-production
+  UpsertSecretRequest:
+    type: object
+    required:
+      - name
+      - data
+    properties:
+      name:
+        type: string
+        minLength: 1
+        example: mysql-cred
+      data:
+        type: object
   Recipe:
     type: object
     properties:
@@ -198,6 +236,13 @@ definitions:
           config:
             type: object
 responses:
+  ValidationError:
+    description: validation error
+    schema:
+      properties:
+        errors:
+          type: string
+          example: "name in body must be of type string: \"null\""
   InternalServerError:
     description: internal server error
     schema:
