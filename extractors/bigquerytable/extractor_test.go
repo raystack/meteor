@@ -1,15 +1,15 @@
-package bigquerydataset_test
+package bigquerytable_test
 
 import (
 	"testing"
 
-	"github.com/odpf/meteor/extractors/bigquerydataset"
+	"github.com/odpf/meteor/extractors/bigquerytable"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		extractor := new(bigquerydataset.Extractor)
+		extractor := new(bigquerytable.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"project_id": "sample-project",
 		})
