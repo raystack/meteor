@@ -1,6 +1,6 @@
 module github.com/odpf/meteor
 
-go 1.14
+go 1.16
 
 require (
 	github.com/go-openapi/loads v0.20.2

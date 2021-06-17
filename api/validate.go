@@ -1,9 +1,11 @@
 package api
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 
 	"github.com/go-openapi/loads"
 	"github.com/go-openapi/spec"
@@ -11,6 +13,20 @@ import (
 	val "github.com/go-openapi/validate"
 	"github.com/mitchellh/mapstructure"
 )
+
+//go:embed swagger.yaml
+var swaggerFile []byte
+var swagger *loads.Document
+
+func init() {
+	var err error
+
+	version := "" // using library default version
+	swagger, err = loads.Analyzed(swaggerFile, version)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func decodeAndValidate(reader io.Reader, schemaName string, model interface{}) (err error) {
 	var payload map[string]interface{}
@@ -58,12 +74,7 @@ func mapPayloadToStruct(input map[string]interface{}, model interface{}) (err er
 }
 
 func getSchema(schemaName string) (schema spec.Schema, err error) {
-	doc, err := loads.Spec("./swagger.yaml")
-	if err != nil {
-		return
-	}
-
-	schema, ok := doc.Spec().Definitions[schemaName]
+	schema, ok := swagger.Spec().Definitions[schemaName]
 	if !ok {
 		return schema, errors.New("could not find schema for validating.")
 	}
