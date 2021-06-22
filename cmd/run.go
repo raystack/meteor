@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"log"
+	"os"
 
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/domain"
@@ -29,8 +31,7 @@ func Run() {
 		processorStore,
 		sinkStore,
 	)
-
-	recipe, err := recipeService.ReadFromFile("./sample-recipe.yaml")
+	recipe, err := recipeService.ReadFromFile(getRecipePathFromConsole())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,6 +40,16 @@ func Run() {
 		log.Fatal(err)
 	}
 }
+
+func getRecipePathFromConsole() string {
+	args := os.Args
+	if len(args) < 1 {
+		err := errors.New("empty file path")
+		log.Fatal(err)
+	}
+	return args[2]
+}
+
 func initRecipeStore(recipeStorageURL string) domain.RecipeStore {
 	store, err := stores.NewRecipeStore(recipeStorageURL)
 	if err != nil {
