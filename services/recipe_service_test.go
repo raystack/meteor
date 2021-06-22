@@ -235,6 +235,50 @@ func TestServiceFind(t *testing.T) {
 	})
 }
 
+func TestServiceReadFromFile(t *testing.T) {
+	t.Run("should return error if file is not found", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		_, err := service.ReadFromFile("./wrong-path.yaml")
+		assert.NotNil(t, err)
+	})
+
+	t.Run("should return error if recipe is not parsed correctly", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		_, err := service.ReadFromFile("./wrong-format.txt")
+		assert.NotNil(t, err)
+	})
+
+	t.Run("should return recipe from a path given in parameter", func(t *testing.T) {
+		recipeStore := new(mocks.RecipeStore)
+		service := createRecipeService(recipeStore)
+
+		recipe, err := service.ReadFromFile("./test-recipe.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		expectedRecipe := domain.Recipe{
+			Name: "test-recipe",
+			Source: domain.SourceRecipe{
+				Type: "test-source",
+				Config: map[string]interface{}{
+					"foo": "bar",
+				},
+			},
+			Sinks: []domain.SinkRecipe{
+				{
+					Name: "test-sink",
+				},
+			},
+		}
+
+		assert.Equal(t, expectedRecipe, recipe)
+	})
+}
+
 func createRecipeService(recipeStore domain.RecipeStore) *services.RecipeService {
 	extractorStore := extractors.NewStore()
 	processorStore := processors.NewStore()

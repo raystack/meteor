@@ -1,0 +1,7 @@
+name: test-recipe
+source:
+  type: test-source
+  config:
+    foo: bar
+sinks:
+  - name: test-sink

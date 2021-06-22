@@ -17,4 +17,5 @@ require (
 	github.com/stretchr/testify v1.7.0
 	gocloud.dev v0.23.0
 	google.golang.org/api v0.46.0
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

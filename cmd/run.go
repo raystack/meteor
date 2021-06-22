@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 
-	"github.com/odpf/meteor/api"
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
@@ -15,7 +12,7 @@ import (
 	"github.com/odpf/meteor/stores"
 )
 
-func Serve() {
+func Run() {
 	var err error
 
 	config, err := config.LoadConfig()
@@ -33,14 +30,13 @@ func Serve() {
 		sinkStore,
 	)
 
-	recipeHandler := api.NewRecipeHandler(recipeService)
-	router := api.NewRouter()
-	api.SetupRoutes(router, recipeHandler)
-
-	fmt.Println("Listening on port :" + config.Port)
-	err = http.ListenAndServe(":"+config.Port, router)
+	recipe, err := recipeService.ReadFromFile("./sample-recipe.yaml")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
+	}
+	_, err = recipeService.Run(recipe)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 func initRecipeStore(recipeStorageURL string) domain.RecipeStore {

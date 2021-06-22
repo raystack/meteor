@@ -2,11 +2,13 @@ package services
 
 import (
 	"errors"
+	"io/ioutil"
 
 	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/sinks"
+	"gopkg.in/yaml.v3"
 )
 
 type RecipeService struct {
@@ -55,6 +57,20 @@ func (s *RecipeService) Run(recipe domain.Recipe) (*domain.Run, error) {
 
 func (s *RecipeService) Find(name string) (domain.Recipe, error) {
 	return s.recipeStore.GetByName(name)
+}
+
+func (s *RecipeService) ReadFromFile(path string) (recipe domain.Recipe, err error) {
+	recipeBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return recipe, err
+	}
+
+	err = yaml.Unmarshal(recipeBytes, &recipe)
+	if err != nil {
+		return recipe, err
+	}
+
+	return recipe, err
 }
 
 func (s *RecipeService) runTask(task *domain.Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
