@@ -5,57 +5,40 @@ import (
 	"log"
 	"os"
 
-	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/services"
+	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/sinks"
-	"github.com/odpf/meteor/stores"
 )
 
 func Run() {
 	var err error
 
-	config, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-	recipeStore := initRecipeStore(config.RecipeStorageURL)
 	extractorStore := initExtractorStore()
 	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
-	recipeService := services.NewRecipeService(
-		recipeStore,
+	recipeRunner := recipes.NewRunner(
 		extractorStore,
 		processorStore,
 		sinkStore,
 	)
-
-	recipe, err := recipeService.ReadFromFile(readPathFromConsole())
+	recipeReader := recipes.NewReader()
+	recipe, err := recipeReader.Read(readPathFromConsole())
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = recipeService.Run(recipe)
+	_, err = recipeRunner.Run(recipe)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 func readPathFromConsole() string {
 	args := os.Args
-	if len(args) < 2 {
+	if len(args) < 3 {
 		err := errors.New("path missing")
 		log.Fatal(err)
 	}
 	return args[2]
-}
-func initRecipeStore(recipeStorageURL string) domain.RecipeStore {
-	store, err := stores.NewRecipeStore(recipeStorageURL)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	return store
 }
 func initExtractorStore() *extractors.Store {
 	store := extractors.NewStore()
