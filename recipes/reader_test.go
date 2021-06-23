@@ -3,7 +3,6 @@ package recipes_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/recipes"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,15 +29,15 @@ func TestReaderRead(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expectedRecipe := domain.Recipe{
+		expectedRecipe := recipes.Recipe{
 			Name: "test-recipe",
-			Source: domain.SourceRecipe{
+			Source: recipes.SourceRecipe{
 				Type: "test-source",
 				Config: map[string]interface{}{
 					"foo": "bar",
 				},
 			},
-			Sinks: []domain.SinkRecipe{
+			Sinks: []recipes.SinkRecipe{
 				{
 					Name: "test-sink",
 				},

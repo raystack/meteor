@@ -3,7 +3,6 @@ package recipes_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/domain"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
@@ -13,17 +12,17 @@ import (
 )
 
 func TestRunnerRun(t *testing.T) {
-	recipe := domain.Recipe{
+	recipe := recipes.Recipe{
 		Name: "sample",
-		Source: domain.SourceRecipe{
+		Source: recipes.SourceRecipe{
 			Type: "test-extractor",
 		},
-		Processors: []domain.ProcessorRecipe{
+		Processors: []recipes.ProcessorRecipe{
 			{Name: "test-processor", Config: map[string]interface{}{
 				"proc-foo": "proc-bar",
 			}},
 		},
-		Sinks: []domain.SinkRecipe{
+		Sinks: []recipes.SinkRecipe{
 			{Name: "mock-sink", Config: map[string]interface{}{
 				"url": "http://localhost:3000/data",
 			}},
@@ -49,26 +48,26 @@ func TestRunnerRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		expectedRun := &domain.Run{
+		expectedRun := &recipes.Run{
 			Recipe: recipe,
-			Tasks: []domain.Task{
+			Tasks: []recipes.Task{
 				{
-					Type:   domain.TaskTypeExtract,
+					Type:   recipes.TaskTypeExtract,
 					Name:   recipe.Source.Type,
 					Config: recipe.Source.Config,
-					Status: domain.TaskStatusComplete,
+					Status: recipes.TaskStatusComplete,
 				},
 				{
-					Type:   domain.TaskTypeProcess,
+					Type:   recipes.TaskTypeProcess,
 					Name:   recipe.Processors[0].Name,
 					Config: recipe.Processors[0].Config,
-					Status: domain.TaskStatusComplete,
+					Status: recipes.TaskStatusComplete,
 				},
 				{
-					Type:   domain.TaskTypeSink,
+					Type:   recipes.TaskTypeSink,
 					Name:   recipe.Sinks[0].Name,
 					Config: recipe.Sinks[0].Config,
-					Status: domain.TaskStatusComplete,
+					Status: recipes.TaskStatusComplete,
 				},
 			},
 		}

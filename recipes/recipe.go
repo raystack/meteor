@@ -1,4 +1,4 @@
-package domain
+package recipes
 
 type SourceRecipe struct {
 	Type   string                 `yaml:"type" validate:"required"`
@@ -21,9 +21,4 @@ type Recipe struct {
 	Source     SourceRecipe      `yaml:"source" validate:"required"`
 	Sinks      []SinkRecipe      `yaml:"sinks" validate:"required,min=1"`
 	Processors []ProcessorRecipe `yaml:"processors"`
-}
-
-type RecipeStore interface {
-	GetByName(string) (Recipe, error)
-	Create(Recipe) error
 }
