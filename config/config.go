@@ -12,6 +12,9 @@ import (
 type Config struct {
 	Port             string `mapstructure:"PORT" default:"3000"`
 	RecipeStorageURL string `mapstructure:"RECIPE_STORAGE_URL" default:"mem://"`
+	StatsdEnabled    bool   `mapstructure:"STATSD_ENABLED" default:"false"`
+	StatsdHost       string `mapstructure:"STATSD_HOST" default:"localhost:8125"`
+	StatsdPrefix     string `mapstructure:"STATSD_PREFIX" default:"meteor"`
 }
 
 // LoadConfig returns application configuration
