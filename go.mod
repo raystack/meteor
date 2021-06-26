@@ -15,6 +15,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.16
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
+	go.mongodb.org/mongo-driver v1.5.3
 	gocloud.dev v0.23.0
 	google.golang.org/api v0.46.0
 )
