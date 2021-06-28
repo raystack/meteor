@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -33,7 +32,6 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	clientOptions := options.Client().ApplyURI(uri)
 	collections, err := ListCollections(clientOptions)
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 	ListIndexes(clientOptions, collections)
@@ -45,7 +43,7 @@ func ListCollections(clientOptions *options.ClientOptions) (collection []string,
 	if err != nil {
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return
@@ -54,7 +52,6 @@ func ListCollections(clientOptions *options.ClientOptions) (collection []string,
 	db := client.Database("blog")
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	fmt.Println("Collections :-> ", collections)
@@ -64,23 +61,23 @@ func ListCollections(clientOptions *options.ClientOptions) (collection []string,
 func ListIndexes(clientOptions *options.ClientOptions, collections []string) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	db := client.Database("blog")
 	for i := 0; i < len(collections); i++ {
 		iv := db.Collection(collections[i]).Indexes()
 		cur, err := iv.List(ctx)
 		if err != nil {
-			log.Fatal(err)
+			return
 		}
 		var results []bson.M
 		if err := cur.All(context.TODO(), &results); err != nil {
-			log.Fatal(err)
+			return
 		}
 		fmt.Println(results)
 	}

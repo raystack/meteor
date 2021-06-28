@@ -50,7 +50,7 @@ func MockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 		log.Fatal(err)
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return
