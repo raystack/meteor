@@ -14,12 +14,19 @@ import (
 
 type Extractor struct{}
 
+type Result struct {
+	CollectionName string
+	DatabaseName   string
+	Indexes        []bson.D
+}
+
 type Config struct {
 	UserID   string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"host"`
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []Result, err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return
@@ -28,17 +35,17 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	if err != nil {
 		return
 	}
-	uri := "mongodb://" + config.UserID + ":" + config.Password + "@localhost:27017"
+	uri := "mongodb://" + config.UserID + ":" + config.Password + "@" + config.Host
 	clientOptions := options.Client().ApplyURI(uri)
-	collections, err := ListCollections(clientOptions)
+	result, err = ListCollections(clientOptions)
 	if err != nil {
 		return
 	}
-	ListIndexes(clientOptions, collections)
+	fmt.Println(result)
 	return result, err
 }
 
-func ListCollections(clientOptions *options.ClientOptions) (collection []string, err error) {
+func ListCollections(clientOptions *options.ClientOptions) (result []Result, err error) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		return
@@ -48,39 +55,48 @@ func ListCollections(clientOptions *options.ClientOptions) (collection []string,
 	if err != nil {
 		return
 	}
-
-	db := client.Database("blog")
-	collections, err := db.ListCollectionNames(ctx, bson.D{})
+	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
 	}
-	fmt.Println("Collections :-> ", collections)
-	return collections, err
-}
-
-func ListIndexes(clientOptions *options.ClientOptions, collections []string) {
-	client, err := mongo.NewClient(clientOptions)
-	if err != nil {
-		return
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		return
-	}
-	db := client.Database("blog")
-	for i := 0; i < len(collections); i++ {
-		iv := db.Collection(collections[i]).Indexes()
-		cur, err := iv.List(ctx)
+	var collections []string
+	for _, db_name := range databases {
+		db := client.Database(db_name)
+		collections, err = db.ListCollectionNames(ctx, bson.D{})
 		if err != nil {
 			return
 		}
-		var results []bson.M
-		if err := cur.All(context.TODO(), &results); err != nil {
-			return
+		for _, collection := range collections {
+			var row Result
+			row.CollectionName = collection
+			row.DatabaseName = db_name
+			row.Indexes = ListIndexes(clientOptions, collection, db_name)
+			result = append(result, row)
 		}
-		fmt.Println(results)
 	}
+	return result, err
+}
+
+func ListIndexes(clientOptions *options.ClientOptions, collection string, db_name string) (results []bson.D) {
+	client, err := mongo.NewClient(clientOptions)
+	if err != nil {
+		return
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		return
+	}
+	db := client.Database(db_name)
+	iv := db.Collection(collection).Indexes()
+	cur, err := iv.List(ctx)
+	if err != nil {
+		return
+	}
+	if err := cur.All(context.TODO(), &results); err != nil {
+		return
+	}
+	return
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
@@ -95,6 +111,8 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 	if config.Password == "" {
 		return errors.New("password is required")
 	}
-
+	if config.Host == "" {
+		return errors.New("host address is required")
+	}
 	return
 }
