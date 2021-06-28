@@ -142,7 +142,7 @@ func InsertBlogs(ctx context.Context, client *mongo.Client) (err error) {
 }
 
 func InsertConnections(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database("blog").Collection("connection")
+	collection := client.Database("MeteorMongoExtractorTest").Collection("connection")
 	_, insertErr := collection.InsertMany(ctx, connections)
 	if insertErr != nil {
 		return insertErr
@@ -160,7 +160,7 @@ func InsertConnections(ctx context.Context, client *mongo.Client) (err error) {
 }
 
 func InsertReach(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database("blog").Collection("reach")
+	collection := client.Database("MeteorMongoExtractorTest").Collection("reach")
 	_, insertErr := collection.InsertMany(ctx, reach)
 	if insertErr != nil {
 		return insertErr
