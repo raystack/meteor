@@ -153,7 +153,7 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	_ = db.Collection("startup_log").Drop(ctx)
 	db = client.Database(TestDB)
 	_ = db.Drop(ctx)
-	err = insertBlogs(ctx, client)
+	err = insertPosts(ctx, client)
 	if err != nil {
 		return
 	}
@@ -169,7 +169,7 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	return
 }
 
-func insertBlogs(ctx context.Context, client *mongo.Client) (err error) {
+func insertPosts(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database(TestDB).Collection("posts")
 	_, insertErr := collection.InsertMany(ctx, posts)
 	if insertErr != nil {
