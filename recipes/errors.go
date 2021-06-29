@@ -1,21 +1,8 @@
-package domain
+package recipes
 
 import (
-	"errors"
 	"fmt"
 )
-
-var (
-	ErrDuplicateRecipeName = errors.New("recipe name already exists")
-)
-
-type RecipeNotFoundError struct {
-	RecipeName string
-}
-
-func (err RecipeNotFoundError) Error() string {
-	return fmt.Sprintf("could not find recipe with name \"%s\"", err.RecipeName)
-}
 
 type InvalidRecipeError struct {
 	Message string
