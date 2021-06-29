@@ -40,13 +40,10 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	if err != nil {
 		return
 	}
-	// defer client.Disconnect(ctx)
-
 	result, err = e.listCollections(client, ctx)
 	if err != nil {
 		return
 	}
-	// fmt.Println(result)
 	return result, err
 }
 
