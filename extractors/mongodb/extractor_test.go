@@ -50,7 +50,10 @@ type Reach struct {
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
 		extractor := new(mongodb.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{})
+		_, err := extractor.Extract(map[string]interface{}{
+			"password": "abcd",
+			"host":     "localhost:27017",
+		})
 
 		assert.NotNil(t, err)
 	})
@@ -59,6 +62,7 @@ func TestExtract(t *testing.T) {
 		extractor := new(mongodb.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id": "Gaurav_Ubuntu",
+			"host":    "localhost:27017",
 		})
 
 		assert.NotNil(t, err)
@@ -67,36 +71,29 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		extractor := new(mongodb.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "Gaurav_Ubuntu",
+			"user_id":  "user",
 			"password": "abcd",
 		})
 
 		assert.NotNil(t, err)
 	})
 
-	t.Run("should return error when testing without mongo running", func(t *testing.T) {
+	t.Run("should return mockdata we generated with mongo running on localhost", func(t *testing.T) {
 		extractor := new(mongodb.Extractor)
 		uri := "mongodb://user:abcd@localhost:27017"
 		clientOptions := options.Client().ApplyURI(uri)
-		assertCheck := 0
-		err := MockDataGenerator(clientOptions)
-		if err != nil {
-			assertCheck = 1
-		}
+		err := mockDataGenerator(clientOptions)
+		assert.Nil(t, err)
 		_, err = extractor.Extract(map[string]interface{}{
 			"user_id":  "user",
 			"password": "abcd",
 			"host":     "localhost:27017",
 		})
-		if assertCheck == 1 {
-			assert.NotNil(t, err)
-		} else {
-			assert.Nil(t, err)
-		}
+		assert.Nil(t, err)
 	})
 }
 
-func MockDataGenerator(clientOptions *options.ClientOptions) (err error) {
+func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		log.Fatal(err)
@@ -107,15 +104,15 @@ func MockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	if err != nil {
 		return
 	}
-	err = InsertBlogs(ctx, client)
+	err = insertBlogs(ctx, client)
 	if err != nil {
 		return
 	}
-	err = InsertConnections(ctx, client)
+	err = insertConnections(ctx, client)
 	if err != nil {
 		return
 	}
-	err = InsertReach(ctx, client)
+	err = insertReach(ctx, client)
 	if err != nil {
 		return
 	}
@@ -123,7 +120,7 @@ func MockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	return
 }
 
-func InsertBlogs(ctx context.Context, client *mongo.Client) (err error) {
+func insertBlogs(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database("MeteorMongoExtractorTest").Collection("posts")
 	_, insertErr := collection.InsertMany(ctx, posts)
 	if insertErr != nil {
@@ -141,7 +138,7 @@ func InsertBlogs(ctx context.Context, client *mongo.Client) (err error) {
 	return
 }
 
-func InsertConnections(ctx context.Context, client *mongo.Client) (err error) {
+func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database("MeteorMongoExtractorTest").Collection("connection")
 	_, insertErr := collection.InsertMany(ctx, connections)
 	if insertErr != nil {
@@ -159,7 +156,7 @@ func InsertConnections(ctx context.Context, client *mongo.Client) (err error) {
 	return
 }
 
-func InsertReach(ctx context.Context, client *mongo.Client) (err error) {
+func insertReach(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database("MeteorMongoExtractorTest").Collection("reach")
 	_, insertErr := collection.InsertMany(ctx, reach)
 	if insertErr != nil {

@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -37,15 +36,14 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []Result, 
 	}
 	uri := "mongodb://" + config.UserID + ":" + config.Password + "@" + config.Host
 	clientOptions := options.Client().ApplyURI(uri)
-	result, err = ListCollections(clientOptions)
+	result, err = e.listCollections(clientOptions)
 	if err != nil {
 		return
 	}
-	fmt.Println(result)
 	return result, err
 }
 
-func ListCollections(clientOptions *options.ClientOptions) (result []Result, err error) {
+func (e *Extractor) listCollections(clientOptions *options.ClientOptions) (result []Result, err error) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		return
@@ -70,14 +68,14 @@ func ListCollections(clientOptions *options.ClientOptions) (result []Result, err
 			var row Result
 			row.CollectionName = collection
 			row.DatabaseName = db_name
-			row.Indexes = ListIndexes(clientOptions, collection, db_name)
+			row.Indexes = e.listIndexes(clientOptions, collection, db_name)
 			result = append(result, row)
 		}
 	}
 	return result, err
 }
 
-func ListIndexes(clientOptions *options.ClientOptions, collection string, db_name string) (results []bson.D) {
+func (e *Extractor) listIndexes(clientOptions *options.ClientOptions, collection string, db_name string) (results []bson.D) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		return
