@@ -13,6 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var TestDB string = "MeteorMongoExtractorTest"
+
 var posts = []interface{}{
 	bson.D{{"title", "World"}, {"body", "Hello World"}},
 	bson.D{{"title", "Mars"}, {"body", "Hello Mars"}},
@@ -82,15 +84,58 @@ func TestExtract(t *testing.T) {
 		extractor := new(mongodb.Extractor)
 		uri := "mongodb://user:abcd@localhost:27017"
 		clientOptions := options.Client().ApplyURI(uri)
+
 		err := mockDataGenerator(clientOptions)
-		assert.Nil(t, err)
-		_, err = extractor.Extract(map[string]interface{}{
+		if err != nil {
+			t.Fatal(err)
+		}
+		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":  "user",
 			"password": "abcd",
 			"host":     "localhost:27017",
 		})
-		assert.Nil(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected := getExpectedVal()
+		assert.Equal(t, result, expected)
 	})
+}
+
+func getExpectedVal() (expected []map[string]interface{}) {
+	expected = []map[string]interface{}{
+		{
+			"collection_name": "connection",
+			"database_name":   TestDB,
+			"document_count":  3,
+		},
+		{
+			"collection_name": "posts",
+			"database_name":   TestDB,
+			"document_count":  3,
+		},
+		{
+			"collection_name": "reach",
+			"database_name":   TestDB,
+			"document_count":  3,
+		},
+		{
+			"collection_name": "system.users",
+			"database_name":   "admin",
+			"document_count":  1,
+		},
+		{
+			"collection_name": "system.version",
+			"database_name":   "admin",
+			"document_count":  2,
+		},
+		{
+			"collection_name": "system.sessions",
+			"database_name":   "config",
+			"document_count":  0,
+		},
+	}
+	return
 }
 
 func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
@@ -99,11 +144,15 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 		log.Fatal(err)
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return
 	}
+	db := client.Database("local")
+	_ = db.Collection("startup_log").Drop(ctx)
+	db = client.Database(TestDB)
+	_ = db.Drop(ctx)
 	err = insertBlogs(ctx, client)
 	if err != nil {
 		return
@@ -121,7 +170,7 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 }
 
 func insertBlogs(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database("MeteorMongoExtractorTest").Collection("posts")
+	collection := client.Database(TestDB).Collection("posts")
 	_, insertErr := collection.InsertMany(ctx, posts)
 	if insertErr != nil {
 		return insertErr
@@ -139,7 +188,7 @@ func insertBlogs(ctx context.Context, client *mongo.Client) (err error) {
 }
 
 func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database("MeteorMongoExtractorTest").Collection("connection")
+	collection := client.Database(TestDB).Collection("connection")
 	_, insertErr := collection.InsertMany(ctx, connections)
 	if insertErr != nil {
 		return insertErr
@@ -157,7 +206,7 @@ func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
 }
 
 func insertReach(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database("MeteorMongoExtractorTest").Collection("reach")
+	collection := client.Database(TestDB).Collection("reach")
 	_, insertErr := collection.InsertMany(ctx, reach)
 	if insertErr != nil {
 		return insertErr

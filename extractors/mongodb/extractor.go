@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"sort"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -13,19 +14,13 @@ import (
 
 type Extractor struct{}
 
-type Result struct {
-	CollectionName string
-	DatabaseName   string
-	Indexes        []bson.D
-}
-
 type Config struct {
 	UserID   string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
 	Host     string `mapstructure:"host"`
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []Result, err error) {
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return
@@ -36,27 +31,31 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []Result, 
 	}
 	uri := "mongodb://" + config.UserID + ":" + config.Password + "@" + config.Host
 	clientOptions := options.Client().ApplyURI(uri)
-	result, err = e.listCollections(clientOptions)
-	if err != nil {
-		return
-	}
-	return result, err
-}
-
-func (e *Extractor) listCollections(clientOptions *options.ClientOptions) (result []Result, err error) {
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 4*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return
 	}
+	// defer client.Disconnect(ctx)
+
+	result, err = e.listCollections(client, ctx)
+	if err != nil {
+		return
+	}
+	// fmt.Println(result)
+	return result, err
+}
+
+func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (result []map[string]interface{}, err error) {
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
 	}
+	sort.Strings(databases)
 	var collections []string
 	for _, db_name := range databases {
 		db := client.Database(db_name)
@@ -64,37 +63,17 @@ func (e *Extractor) listCollections(clientOptions *options.ClientOptions) (resul
 		if err != nil {
 			return
 		}
+		sort.Strings(collections)
 		for _, collection := range collections {
-			var row Result
-			row.CollectionName = collection
-			row.DatabaseName = db_name
-			row.Indexes = e.listIndexes(clientOptions, collection, db_name)
+			row := make(map[string]interface{})
+			row["collection_name"] = collection
+			row["database_name"] = db_name
+			count, _ := db.Collection(collection).EstimatedDocumentCount(ctx)
+			row["document_count"] = int(count)
 			result = append(result, row)
 		}
 	}
 	return result, err
-}
-
-func (e *Extractor) listIndexes(clientOptions *options.ClientOptions, collection string, db_name string) (results []bson.D) {
-	client, err := mongo.NewClient(clientOptions)
-	if err != nil {
-		return
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		return
-	}
-	db := client.Database(db_name)
-	iv := db.Collection(collection).Indexes()
-	cur, err := iv.List(ctx)
-	if err != nil {
-		return
-	}
-	if err := cur.All(context.TODO(), &results); err != nil {
-		return
-	}
-	return
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
