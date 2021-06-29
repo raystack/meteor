@@ -4,6 +4,15 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+    mongo:
+      image: mongo:4.4.6
+      environment:
+        - MONGO_INITDB_ROOT_USERNAME=user
+        - MONGO_INITDB_ROOT_PASSWORD=abcd
+      restart: on-failure
+      ports:
+        - 27017:27017
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
