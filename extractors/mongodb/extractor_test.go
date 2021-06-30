@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var TestDB string = "MeteorMongoExtractorTest"
+var testDB string = "MeteorMongoExtractorTest"
 
 var posts = []interface{}{
 	bson.D{{"title", "World"}, {"body", "Hello World"}},
@@ -31,22 +31,6 @@ var reach = []interface{}{
 	bson.D{{"views", "500"}, {"likes", "200"}, {"comments", "50"}},
 	bson.D{{"views", "400"}, {"likes", "100"}, {"comments", "5"}},
 	bson.D{{"views", "800"}, {"likes", "300"}, {"comments", "80"}},
-}
-
-type Post struct {
-	Title string `bson:"title,omitempty"`
-	Body  string `bson:"body,omitempty"`
-}
-
-type Connection struct {
-	Name     string `bson:"name,omitempty"`
-	Relation string `bson:"relation,omitempty"`
-}
-
-type Reach struct {
-	Views    string `bson:"views,omitempty"`
-	Likes    string `bson:"likes,omitempty"`
-	Comments string `bson:"comments,omitempty"`
 }
 
 func TestExtract(t *testing.T) {
@@ -106,17 +90,17 @@ func getExpectedVal() (expected []map[string]interface{}) {
 	expected = []map[string]interface{}{
 		{
 			"collection_name": "connection",
-			"database_name":   TestDB,
+			"database_name":   testDB,
 			"document_count":  3,
 		},
 		{
 			"collection_name": "posts",
-			"database_name":   TestDB,
+			"database_name":   testDB,
 			"document_count":  3,
 		},
 		{
 			"collection_name": "reach",
-			"database_name":   TestDB,
+			"database_name":   testDB,
 			"document_count":  3,
 		},
 		{
@@ -151,7 +135,7 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	}
 	db := client.Database("local")
 	_ = db.Collection("startup_log").Drop(ctx)
-	db = client.Database(TestDB)
+	db = client.Database(testDB)
 	_ = db.Drop(ctx)
 	err = insertPosts(ctx, client)
 	if err != nil {
@@ -170,55 +154,28 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 }
 
 func insertPosts(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database(TestDB).Collection("posts")
+	collection := client.Database(testDB).Collection("posts")
 	_, insertErr := collection.InsertMany(ctx, posts)
 	if insertErr != nil {
 		return insertErr
-	}
-	cur, currErr := collection.Find(ctx, bson.D{})
-	if currErr != nil {
-		return currErr
-	}
-	defer cur.Close(ctx)
-	var postsDB []Post
-	if err = cur.All(ctx, &postsDB); err != nil {
-		return err
 	}
 	return
 }
 
 func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database(TestDB).Collection("connection")
+	collection := client.Database(testDB).Collection("connection")
 	_, insertErr := collection.InsertMany(ctx, connections)
 	if insertErr != nil {
 		return insertErr
-	}
-	cur, currErr := collection.Find(ctx, bson.D{})
-	if currErr != nil {
-		return currErr
-	}
-	defer cur.Close(ctx)
-	var connectionsDB []Connection
-	if err = cur.All(ctx, &connectionsDB); err != nil {
-		return err
 	}
 	return
 }
 
 func insertReach(ctx context.Context, client *mongo.Client) (err error) {
-	collection := client.Database(TestDB).Collection("reach")
+	collection := client.Database(testDB).Collection("reach")
 	_, insertErr := collection.InsertMany(ctx, reach)
 	if insertErr != nil {
 		return insertErr
-	}
-	cur, currErr := collection.Find(ctx, bson.D{})
-	if currErr != nil {
-		return currErr
-	}
-	defer cur.Close(ctx)
-	var reachDB []Reach
-	if err = cur.All(ctx, &reachDB); err != nil {
-		return err
 	}
 	return
 }

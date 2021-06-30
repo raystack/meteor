@@ -2,6 +2,7 @@ package recipes
 
 import (
 	"errors"
+	"time"
 
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/processors"
@@ -12,31 +13,44 @@ type Runner struct {
 	extractorStore *extractors.Store
 	processorStore *processors.Store
 	sinkStore      *sinks.Store
+	monitor        Monitor
 }
 
 func NewRunner(
 	extractorStore *extractors.Store,
 	processorStore *processors.Store,
-	sinkStore *sinks.Store) *Runner {
+	sinkStore *sinks.Store,
+	monitor Monitor) *Runner {
+	if monitor == nil {
+		monitor = new(defaultMonitor)
+	}
 	return &Runner{
 		extractorStore: extractorStore,
 		processorStore: processorStore,
 		sinkStore:      sinkStore,
+		monitor:        monitor,
 	}
 }
 
-func (r *Runner) Run(recipe Recipe) (*Run, error) {
-	run := r.buildRun(recipe)
+func (r *Runner) Run(recipe Recipe) (run *Run, err error) {
+	getDuration := r.startDuration()
+	run = r.buildRun(recipe)
+	success := true
 
 	for i := 0; i < len(run.Tasks); i++ {
 		data, err := r.runTask(&run.Tasks[i], run.Data)
 		run.Data = data
 
 		if err != nil {
-			return run, err
+			success = false
+			break
 		}
 	}
-	return run, nil
+
+	duration := getDuration()
+	r.monitor.RecordRun(recipe, duration, success)
+
+	return
 }
 func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
@@ -127,5 +141,12 @@ func (r *Runner) newRunTaskError(task Task, err error) RunTaskError {
 	return RunTaskError{
 		Task: task,
 		Err:  err,
+	}
+}
+
+func (r *Runner) startDuration() func() int {
+	start := time.Now()
+	return func() int {
+		return int(time.Now().Sub(start).Milliseconds())
 	}
 }

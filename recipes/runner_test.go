@@ -71,8 +71,7 @@ func TestRunnerRun(t *testing.T) {
 				},
 			},
 		}
-
-		r := recipes.NewRunner(extrStore, procStore, sinkStore)
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -113,13 +112,39 @@ func TestRunnerRun(t *testing.T) {
 			"mock-sink": sink,
 		})
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore)
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
 		run, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
 		}
 
 		assert.Equal(t, finalData, run.Data)
+	})
+
+	t.Run("should record metrics", func(t *testing.T) {
+		extrStore := extractors.NewStore()
+		extrStore.Populate(map[string]extractors.Extractor{
+			"test-extractor": new(testExtractor),
+		})
+		procStore := processors.NewStore()
+		procStore.Populate(map[string]processors.Processor{
+			"test-processor": new(testProcessor),
+		})
+		sink := new(mockSink)
+		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
+		sinkStore := sinks.NewStore()
+		sinkStore.Populate(map[string]sinks.Sink{
+			"mock-sink": sink,
+		})
+		monitor := new(mockMonitor)
+		monitor.On("RecordRun", recipe, mock.AnythingOfType("int"), true).Once()
+		defer monitor.AssertExpectations(t)
+
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, monitor)
+		_, err := r.Run(recipe)
+		if err != nil {
+			t.Error(err.Error())
+		}
 	})
 }
 
@@ -150,4 +175,12 @@ type mockSink struct {
 func (m *mockSink) Sink(data []map[string]interface{}, config map[string]interface{}) error {
 	args := m.Called(data, config)
 	return args.Error(0)
+}
+
+type mockMonitor struct {
+	mock.Mock
+}
+
+func (m *mockMonitor) RecordRun(recipe recipes.Recipe, durationInMs int, success bool) {
+	m.Called(recipe, durationInMs, success)
 }
