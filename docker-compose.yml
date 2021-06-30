@@ -1,0 +1,10 @@
+version: '3'
+services:
+  mongo:
+    image: mongo:4.4.6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=abcd
+    restart: on-failure
+    ports:
+      - 27017:27017
