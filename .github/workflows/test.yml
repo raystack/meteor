@@ -12,6 +12,14 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: user
           MONGO_INITDB_ROOT_PASSWORD: abcd
+      mysql:
+        image: mysql
+        ports:
+          - '3306:3306'
+        env:
+          MYSQL_USER: 'user'
+          MYSQL_PASSWORD: 'pass'
+          MYSQL_ROOT_PASSWORD: 'pass'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
