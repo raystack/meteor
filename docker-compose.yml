@@ -9,7 +9,7 @@ services:
     ports:
       - 27017:27017
   mysql:
-    image: mysql
+    image: mysql:8.0.25
     restart: always
     environment:
       MYSQL_USER: 'user'
