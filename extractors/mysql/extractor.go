@@ -32,7 +32,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	if err != nil {
 		return
 	}
-	db, err := sql.Open("mysql", config.UserID+":"+config.Password+"@tcp("+config.Host+")/")
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -89,10 +89,11 @@ func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []
 }
 
 func fieldInfo(dbName string, tableName string, db *sql.DB) (result []map[string]interface{}, err error) {
-	sqlStr := `SELECT COLUMN_NAME fName,column_comment fDesc,DATA_TYPE dataType,
-				IS_NULLABLE isNullable,IFNULL(CHARACTER_MAXIMUM_LENGTH,0) sLength
+	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
+				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
-				WHERE table_name = ?`
+				WHERE table_name = ?
+				ORDER BY COLUMN_NAME ASC`
 
 	rows, err := db.Query(sqlStr, tableName)
 	if err != nil {

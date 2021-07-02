@@ -12,9 +12,7 @@ services:
     image: mysql:8.0.25
     restart: always
     environment:
-      MYSQL_USER: 'user'
-      MYSQL_PASSWORD: 'pass'
-      MYSQL_ROOT_PASSWORD: 'pass'
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
     ports:
       - '3306:3306'
     expose:

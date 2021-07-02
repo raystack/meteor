@@ -17,9 +17,7 @@ jobs:
         ports:
           - '3306:3306'
         env:
-          MYSQL_USER: 'user'
-          MYSQL_PASSWORD: 'pass'
-          MYSQL_ROOT_PASSWORD: 'pass'
+          MYSQL_ALLOW_EMPTY_PASSWORD: true
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2

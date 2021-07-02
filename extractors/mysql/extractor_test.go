@@ -13,6 +13,9 @@ import (
 )
 
 const testDB = "mockdata_meteor_metadata_test"
+const user = "user"
+const pass = "pass"
+const globalhost = "%"
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
@@ -28,8 +31,8 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no password in config", func(t *testing.T) {
 		extractor := new(mysql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
-			"user_id": "user",
-			"host":    "localhost:27017",
+			"user_id": user,
+			"host":    "localhost:3306",
 		})
 
 		assert.NotNil(t, err)
@@ -38,8 +41,8 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		extractor := new(mysql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "user",
-			"password": "pass",
+			"user_id":  user,
+			"password": pass,
 		})
 
 		assert.NotNil(t, err)
@@ -47,13 +50,18 @@ func TestExtract(t *testing.T) {
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
 		extractor := new(mysql.Extractor)
-		err := mockDataGenerator()
+		db, err := sql.Open("mysql", "root@tcp(localhost:3306)/")
+		if err != nil {
+			return
+		}
+		err = mockDataGenerator(db)
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer cleanDatabase(db)
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "root",
-			"password": "pass",
+			"user_id":  user,
+			"password": pass,
 			"host":     "localhost:3306",
 		})
 		if err != nil {
@@ -71,21 +79,21 @@ func getExpectedVal() (expected []map[string]interface{}) {
 				{
 					"data_type":   "int",
 					"field_desc":  "",
-					"field_name":  "ApplicantID",
+					"field_name":  "applicant_id",
 					"is_nullable": "YES",
 					"length":      0,
 				},
 				{
 					"data_type":   "varchar",
 					"field_desc":  "",
-					"field_name":  "LastName",
+					"field_name":  "first_name",
 					"is_nullable": "YES",
 					"length":      255,
 				},
 				{
 					"data_type":   "varchar",
 					"field_desc":  "",
-					"field_name":  "FirstName",
+					"field_name":  "last_name",
 					"is_nullable": "YES",
 					"length":      255,
 				},
@@ -96,25 +104,25 @@ func getExpectedVal() (expected []map[string]interface{}) {
 		{
 			"columns": []map[string]interface{}{
 				{
+					"data_type":   "varchar",
+					"field_desc":  "",
+					"field_name":  "department",
+					"is_nullable": "YES",
+					"length":      255,
+				},
+				{
+					"data_type":   "varchar",
+					"field_desc":  "",
+					"field_name":  "job",
+					"is_nullable": "YES",
+					"length":      255,
+				},
+				{
 					"data_type":   "int",
 					"field_desc":  "",
-					"field_name":  "JobID",
+					"field_name":  "job_id",
 					"is_nullable": "YES",
 					"length":      0,
-				},
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "Job",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "Department",
-					"is_nullable": "YES",
-					"length":      255,
 				},
 			},
 			"database_name": "mockdata_meteor_metadata_test",
@@ -124,16 +132,12 @@ func getExpectedVal() (expected []map[string]interface{}) {
 	return
 }
 
-func mockDataGenerator() (err error) {
-	db, err := sql.Open("mysql", "root:pass@tcp(localhost:3306)/")
+func mockDataGenerator(db *sql.DB) (err error) {
+	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("DROP DATABASE IF EXISTS " + testDB)
-	if err != nil {
-		return
-	}
-	_, err = db.Exec("CREATE DATABASE " + testDB)
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
 	if err != nil {
 		return
 	}
@@ -142,9 +146,9 @@ func mockDataGenerator() (err error) {
 		return
 	}
 	table1 := "applicant"
-	var1 := "(ApplicantID int, LastName varchar(255), FirstName varchar(255))"
+	var1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
 	table2 := "jobs"
-	var2 := "(JobID int, Job varchar(255), Department varchar(255))"
+	var2 := "(job_id int, job varchar(255), department varchar(255))"
 	tableQuery := "CREATE TABLE "
 	err = createTable(tableQuery, table1, var1, db)
 	if err != nil {
@@ -154,15 +158,14 @@ func mockDataGenerator() (err error) {
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("CREATE USER IF NOT EXISTS 'user2'@'localhost:3306' IDENTIFIED BY 'pass';")
+	_, err = db.Exec("CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'pass';")
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("GRANT ALL PRIVILEGES ON *.* TO 'user2'@'localhost:3306';")
+	_, err = db.Exec("GRANT ALL PRIVILEGES ON *.* TO 'user'@'%';")
 	if err != nil {
 		return
 	}
-	db.Close()
 	return
 }
 
@@ -192,5 +195,18 @@ func populateTable(query string, table string, columns string, value string, db 
 	if err != nil {
 		return
 	}
+	return
+}
+
+func cleanDatabase(db *sql.DB) (err error) {
+	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
+	if err != nil {
+		return
+	}
+	_, err = db.Exec(fmt.Sprintf("DROP USER IF EXISTS %s@%s", user, globalhost))
+	if err != nil {
+		return
+	}
+	db.Close()
 	return
 }
