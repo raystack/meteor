@@ -21,7 +21,7 @@ func NewRunner(
 	processorStore *processors.Store,
 	sinkStore *sinks.Store,
 	monitor Monitor) *Runner {
-	if monitor == nil {
+	if isNilMonitor(monitor) {
 		monitor = new(defaultMonitor)
 	}
 	return &Runner{
