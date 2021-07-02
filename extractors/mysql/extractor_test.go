@@ -52,7 +52,7 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "user2",
+			"user_id":  "root",
 			"password": "pass",
 			"host":     "localhost:3306",
 		})
@@ -121,12 +121,11 @@ func getExpectedVal() (expected []map[string]interface{}) {
 			"table_name":    "jobs",
 		},
 	}
-	// expected = string(b)
 	return
 }
 
 func mockDataGenerator() (err error) {
-	db, err := sql.Open("mysql", "root:pass@tcp(127.0.0.1:3306)/")
+	db, err := sql.Open("mysql", "root:pass@tcp(localhost:3306)/")
 	if err != nil {
 		return
 	}
@@ -155,15 +154,15 @@ func mockDataGenerator() (err error) {
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("CREATE USER IF NOT EXISTS 'user2'@'172.25.0.1' IDENTIFIED BY 'pass';")
+	_, err = db.Exec("CREATE USER IF NOT EXISTS 'user2'@'localhost:3306' IDENTIFIED BY 'pass';")
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("GRANT ALL PRIVILEGES ON *.* TO 'user2'@'172.25.0.1';")
+	_, err = db.Exec("GRANT ALL PRIVILEGES ON *.* TO 'user2'@'localhost:3306';")
 	if err != nil {
 		return
 	}
-	defer db.Close()
+	db.Close()
 	return
 }
 
