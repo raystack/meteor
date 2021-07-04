@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	pluginSuffix = "meteor-plugin-"
+	pluginPrefix = "meteor-plugin-"
 )
 
 // This functions discovers plugins and populate processors with them
@@ -81,12 +81,12 @@ func populateStore(clients []*plugin.Client, store *processors.Store) (err error
 	return
 }
 func isPlugin(filename string) bool {
-	pluginSuffixLen := len(pluginSuffix)
-	if len(filename) <= pluginSuffixLen {
+	pluginPrefixLen := len(pluginPrefix)
+	if len(filename) <= pluginPrefixLen {
 		return false
 	}
 
-	return filename[:pluginSuffixLen] == pluginSuffix
+	return filename[:pluginPrefixLen] == pluginPrefix
 }
 func buildKillPluginsFn(clients []*plugin.Client) func() {
 	return func() {
