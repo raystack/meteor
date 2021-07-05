@@ -18,6 +18,14 @@ jobs:
           - '3306:3306'
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: true
+      postgres:
+        image: postgres:13.3
+        restart: always
+        ports:
+          - "5432:5432"
+        env:
+          - POSTGRES_USER: root
+          - POSTGRES_PASSWORD: pass
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
