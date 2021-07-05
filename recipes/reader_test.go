@@ -1,6 +1,7 @@
 package recipes_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/odpf/meteor/recipes"
@@ -40,6 +41,47 @@ func TestReaderRead(t *testing.T) {
 			Sinks: []recipes.SinkRecipe{
 				{
 					Name: "test-sink",
+				},
+			},
+		}
+
+		assert.Equal(t, expectedRecipe, recipe)
+	})
+
+	t.Run("should parse variable in recipe with value from env vars prefixed with METEOR_", func(t *testing.T) {
+		var (
+			username = "admin"
+			password = "1234"
+		)
+		os.Setenv("METEOR_SOURCE_USERNAME", username)
+		os.Setenv("METEOR_SOURCE_PASSWORD", password)
+		defer func() {
+			os.Unsetenv("METEOR_SOURCE_USERNAME")
+			os.Unsetenv("METEOR_SOURCE_PASSWORD")
+		}()
+
+		reader := recipes.NewReader()
+		recipe, err := reader.Read("./testdata/test-recipe-variables.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		expectedRecipe := recipes.Recipe{
+			Name: "test-recipe",
+			Source: recipes.SourceRecipe{
+				Type: "test-source",
+				Config: map[string]interface{}{
+					"username": username,
+					"password": password,
+				},
+			},
+			Sinks: []recipes.SinkRecipe{
+				{
+					Name: "test-sink",
+				},
+			},
+			Processors: []recipes.ProcessorRecipe{
+				{
+					Name: "test-processor",
 				},
 			},
 		}
