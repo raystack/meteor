@@ -13,6 +13,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/segmentio/kafka-go v0.4.16
