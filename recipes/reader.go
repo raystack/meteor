@@ -3,6 +3,7 @@ package recipes
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -39,6 +40,24 @@ func (r *Reader) Read(path string) (recipe Recipe, err error) {
 	err = yaml.Unmarshal(buff.Bytes(), &recipe)
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+func (r *Reader) ReadDir(path string) (recipes []Recipe, err error) {
+	dirEntries, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+
+	for _, dirEntry := range dirEntries {
+		recipe, err := r.Read(filepath.Join(path, dirEntry.Name()))
+		if err != nil {
+			continue
+		}
+
+		recipes = append(recipes, recipe)
 	}
 
 	return

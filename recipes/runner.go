@@ -53,6 +53,18 @@ func (r *Runner) Run(recipe Recipe) (run *Run, err error) {
 
 	return
 }
+
+func (r *Runner) RunMultiple(recipes []Recipe) (faileds []string, err error) {
+	faileds = []string{}
+	for _, recipe := range recipes {
+		_, err := r.Run(recipe)
+		if err != nil {
+			faileds = append(faileds, recipe.Name)
+		}
+	}
+	return
+}
+
 func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
 	result = data
 

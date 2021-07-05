@@ -21,10 +21,19 @@ var runCmd = &cobra.Command{
 		run(args[0])
 	},
 }
+var rundirCmd = &cobra.Command{
+	Use:   "rundir [directory-path]",
+	Short: "Run recipes inside a directory",
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		rundir(args[0])
+	},
+}
 
 func Execute() {
 	rootCmd.AddCommand(
 		runCmd,
+		rundirCmd,
 	)
 
 	if err := rootCmd.Execute(); err != nil {

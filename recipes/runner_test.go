@@ -11,23 +11,25 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var validRecipe = recipes.Recipe{
+	Name: "sample",
+	Source: recipes.SourceRecipe{
+		Type: "test-extractor",
+	},
+	Processors: []recipes.ProcessorRecipe{
+		{Name: "test-processor", Config: map[string]interface{}{
+			"proc-foo": "proc-bar",
+		}},
+	},
+	Sinks: []recipes.SinkRecipe{
+		{Name: "mock-sink", Config: map[string]interface{}{
+			"url": "http://localhost:3000/data",
+		}},
+	},
+}
+
 func TestRunnerRun(t *testing.T) {
-	recipe := recipes.Recipe{
-		Name: "sample",
-		Source: recipes.SourceRecipe{
-			Type: "test-extractor",
-		},
-		Processors: []recipes.ProcessorRecipe{
-			{Name: "test-processor", Config: map[string]interface{}{
-				"proc-foo": "proc-bar",
-			}},
-		},
-		Sinks: []recipes.SinkRecipe{
-			{Name: "mock-sink", Config: map[string]interface{}{
-				"url": "http://localhost:3000/data",
-			}},
-		},
-	}
+	recipe := validRecipe
 
 	t.Run("should return error on failed run", func(t *testing.T) {
 		extrStore := extractors.NewStore()
@@ -156,6 +158,86 @@ func TestRunnerRun(t *testing.T) {
 		if err != nil {
 			t.Error(err.Error())
 		}
+	})
+}
+
+func TestRunnerRunMultiple(t *testing.T) {
+	validRecipe2 := validRecipe
+	validRecipe2.Name = "sample-2"
+
+	t.Run("should return list of failed recipes when finished", func(t *testing.T) {
+		failedRecipe := recipes.Recipe{
+			Name: "failedRecipe",
+		}
+		recipeList := []recipes.Recipe{validRecipe, failedRecipe, validRecipe2}
+
+		extrStore := extractors.NewStore()
+		extrStore.Populate(map[string]extractors.Extractor{
+			"test-extractor": new(testExtractor),
+		})
+		procStore := processors.NewStore()
+		procStore.Populate(map[string]processors.Processor{
+			"test-processor": new(testProcessor),
+		})
+		sink := new(mockSink)
+		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
+		sinkStore := sinks.NewStore()
+		sinkStore.Populate(map[string]sinks.Sink{
+			"mock-sink": sink,
+		})
+
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		faileds, err := r.RunMultiple(recipeList)
+		assert.Nil(t, err)
+
+		expected := []string{
+			failedRecipe.Name,
+		}
+		assert.Equal(t, expected, faileds)
+	})
+
+	t.Run("should run all extractors, processors and sinks for all recipes", func(t *testing.T) {
+		validRecipe2.Sinks = []recipes.SinkRecipe{
+			{Name: "mock-sink-2"},
+		}
+
+		finalData := []map[string]interface{}{
+			{
+				"foo":  "bar",
+				"test": true,
+			},
+			{
+				"bar":  "foo",
+				"test": true,
+			},
+		}
+
+		recipeList := []recipes.Recipe{validRecipe, validRecipe2}
+
+		extrStore := extractors.NewStore()
+		extrStore.Populate(map[string]extractors.Extractor{
+			"test-extractor": new(testExtractor),
+		})
+		procStore := processors.NewStore()
+		procStore.Populate(map[string]processors.Processor{
+			"test-processor": new(testProcessor),
+		})
+		sink1 := new(mockSink)
+		sink2 := new(mockSink)
+		sink1.On("Sink", finalData, validRecipe.Sinks[0].Config).Return(nil).Once()
+		defer sink1.AssertExpectations(t)
+		sink2.On("Sink", finalData, validRecipe2.Sinks[0].Config).Return(nil).Once()
+		defer sink2.AssertExpectations(t)
+		sinkStore := sinks.NewStore()
+		sinkStore.Populate(map[string]sinks.Sink{
+			"mock-sink":   sink1,
+			"mock-sink-2": sink2,
+		})
+
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		faileds, err := r.RunMultiple(recipeList)
+		assert.Nil(t, err)
+		assert.Equal(t, []string{}, faileds)
 	})
 }
 
