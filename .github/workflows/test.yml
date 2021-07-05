@@ -20,9 +20,8 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: true
       postgres:
         image: postgres:13.3
-        restart: always
         ports:
-          - "5432:5432"
+          - 5432:5432
         env:
           - POSTGRES_USER: root
           - POSTGRES_PASSWORD: pass
