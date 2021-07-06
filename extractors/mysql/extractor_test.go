@@ -157,7 +157,7 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'pass';")
+	_, err = db.Exec(fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass))
 	if err != nil {
 		return
 	}
