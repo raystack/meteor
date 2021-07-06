@@ -39,14 +39,14 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 		return
 	}
 	defer db.Close()
-	result, err = getDatabases(db)
+	result, err = e.getDatabases(db)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
 	res, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		fmt.Println(err, "Show Database")
@@ -56,13 +56,13 @@ func getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = tableInfo(database, result, db)
+			result, _ = e.getTablesInfo(db, database, result)
 		}
 	}
 	return
 }
 
-func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []map[string]interface{}, err error) {
+func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string]interface{}) (_ []map[string]interface{}, err error) {
 	sqlStr := `SELECT table_name
 	FROM information_schema.tables
 	WHERE table_schema = 'public'
@@ -84,7 +84,7 @@ func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []
 			fmt.Println(err)
 			return
 		}
-		columns, err1 := fieldInfo(dbName, tableName, db)
+		columns, err1 := e.getTableFieldsInfo(db, dbName, tableName)
 		if err1 != nil {
 			fmt.Println(err1)
 			return
@@ -98,7 +98,7 @@ func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []
 	return result, err
 }
 
-func fieldInfo(dbName string, tableName string, db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName string) (result []map[string]interface{}, err error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
