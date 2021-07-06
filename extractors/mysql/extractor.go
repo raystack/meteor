@@ -8,8 +8,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Extractor struct{}
-
 type Config struct {
 	UserID   string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
@@ -22,6 +20,8 @@ var defaultDBList = []string{
 	"performance_schema",
 	"sys",
 }
+
+type Extractor struct{}
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
 	config, err := e.getConfig(configMap)
