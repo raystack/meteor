@@ -13,7 +13,7 @@ import (
 )
 
 const testDB = "mockdata_meteor_metadata_test"
-const user = "user"
+const user = "meteor_test_user"
 const pass = "pass"
 const globalhost = "%"
 
@@ -161,7 +161,7 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	_, err = db.Exec("GRANT ALL PRIVILEGES ON *.* TO 'user'@'%';")
+	_, err = db.Exec(fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user))
 	if err != nil {
 		return
 	}
