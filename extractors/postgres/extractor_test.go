@@ -12,7 +12,7 @@ import (
 )
 
 const testDB = "mockdata_meteor_metadata_test"
-const user = "user"
+const user = "meteor_test_user"
 const pass = "pass"
 
 func TestExtract(t *testing.T) {

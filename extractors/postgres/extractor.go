@@ -8,8 +8,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Extractor struct{}
-
 type Config struct {
 	UserID       string `mapstructure:"user_id"`
 	Password     string `mapstructure:"password"`
@@ -22,6 +20,8 @@ var defaultDBList = []string{
 	"postgres",
 	"root",
 }
+
+type Extractor struct{}
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
 	config, err := e.getConfig(configMap)
@@ -49,7 +49,6 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
 	res, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
-		fmt.Println(err, "Show Database")
 		return
 	}
 	for res.Next() {
@@ -69,24 +68,20 @@ func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string
 	ORDER BY table_name;`
 	_, err = db.Exec(fmt.Sprintf("SET search_path TO %s, public;", dbName))
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	rows, err := db.Query(sqlStr)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	for rows.Next() {
 		var tableName string
 		err = rows.Scan(&tableName)
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		columns, err1 := e.getTableFieldsInfo(db, dbName, tableName)
 		if err1 != nil {
-			fmt.Println(err1)
 			return
 		}
 		tableData := make(map[string]interface{})
@@ -112,7 +107,6 @@ func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName stri
 		var length int
 		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		row := make(map[string]interface{})
