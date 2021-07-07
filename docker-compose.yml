@@ -25,6 +25,7 @@ services:
       - POSTGRES_PASSWORD=pass
     ports:
       - "5432:5432"
+<<<<<<< HEAD
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
@@ -32,3 +33,5 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+=======
+>>>>>>> ffacf8f253fe40aa1d47a173cd93ff1cb11b3f38

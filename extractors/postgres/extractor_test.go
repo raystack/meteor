@@ -12,7 +12,7 @@ import (
 )
 
 const testDB = "mockdata_meteor_metadata_test"
-const user = "user"
+const user = "meteor_test_user"
 const pass = "pass"
 
 func TestExtract(t *testing.T) {
@@ -173,15 +173,14 @@ func mockDataGenerator(db *sql.DB) (err error) {
 		return
 	}
 	table1 := "applicant"
-	var1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
+	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
 	table2 := "jobs"
-	var2 := "(job_id int, job varchar(255), department varchar(255))"
-	tableQuery := "CREATE TABLE "
-	err = createTable(tableQuery, table1, var1, db)
+	columns2 := "(job_id int, job varchar(255), department varchar(255))"
+	err = createTable(db, table1, columns1)
 	if err != nil {
 		return
 	}
-	err = createTable(tableQuery, table2, var2, db)
+	err = createTable(db, table2, columns2)
 	if err != nil {
 		return
 	}
@@ -189,7 +188,8 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	return
 }
 
-func createTable(query string, table string, columns string, db *sql.DB) (err error) {
+func createTable(db *sql.DB, table string, columns string) (err error) {
+	query := "CREATE TABLE "
 	_, err = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 	if err != nil {
 		return
@@ -198,14 +198,13 @@ func createTable(query string, table string, columns string, db *sql.DB) (err er
 	if err != nil {
 		return
 	}
-	valueQuery := " INSERT INTO "
 	values1 := "(1, 'test1', 'test11');"
 	values2 := "(2, 'test2', 'test22');"
-	err = populateTable(valueQuery, table, columns, values1, db)
+	err = populateTable(db, table, values1)
 	if err != nil {
 		return
 	}
-	err = populateTable(valueQuery, table, columns, values2, db)
+	err = populateTable(db, table, values2)
 	if err != nil {
 		return
 	}
@@ -213,8 +212,9 @@ func createTable(query string, table string, columns string, db *sql.DB) (err er
 	return
 }
 
-func populateTable(query string, table string, columns string, value string, db *sql.DB) (err error) {
-	completeQuery := query + table + " VALUES " + value
+func populateTable(db *sql.DB, table string, values string) (err error) {
+	query := " INSERT INTO "
+	completeQuery := query + table + " VALUES " + values
 	_, err = db.Exec(completeQuery)
 	if err != nil {
 		return
