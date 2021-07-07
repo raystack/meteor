@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"errors"
 	"log"
-	"os"
 
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/extractors"
@@ -13,7 +11,7 @@ import (
 	"github.com/odpf/meteor/sinks"
 )
 
-func Run() {
+func run(recipeFile string) {
 	c, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -30,7 +28,7 @@ func Run() {
 		metricsMonitor,
 	)
 	recipeReader := recipes.NewReader()
-	recipe, err := recipeReader.Read(readPathFromConsole())
+	recipe, err := recipeReader.Read(recipeFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,14 +36,6 @@ func Run() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-func readPathFromConsole() string {
-	args := os.Args
-	if len(args) < 3 {
-		err := errors.New("path missing")
-		log.Fatal(err)
-	}
-	return args[2]
 }
 func initExtractorStore() *extractors.Store {
 	store := extractors.NewStore()

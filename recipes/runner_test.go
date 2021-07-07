@@ -29,6 +29,17 @@ func TestRunnerRun(t *testing.T) {
 		},
 	}
 
+	t.Run("should return error on failed run", func(t *testing.T) {
+		extrStore := extractors.NewStore()
+		procStore := processors.NewStore()
+		sinkStore := sinks.NewStore()
+
+		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		_, err := r.Run(recipe)
+
+		assert.NotNil(t, err)
+	})
+
 	t.Run("should return Run on finish", func(t *testing.T) {
 		extr := new(testExtractor)
 		proc := new(testProcessor)

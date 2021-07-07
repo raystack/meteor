@@ -21,7 +21,7 @@ func NewRunner(
 	processorStore *processors.Store,
 	sinkStore *sinks.Store,
 	monitor Monitor) *Runner {
-	if monitor == nil {
+	if isNilMonitor(monitor) {
 		monitor = new(defaultMonitor)
 	}
 	return &Runner{
@@ -38,7 +38,8 @@ func (r *Runner) Run(recipe Recipe) (run *Run, err error) {
 	success := true
 
 	for i := 0; i < len(run.Tasks); i++ {
-		data, err := r.runTask(&run.Tasks[i], run.Data)
+		var data []map[string]interface{}
+		data, err = r.runTask(&run.Tasks[i], run.Data)
 		run.Data = data
 
 		if err != nil {
