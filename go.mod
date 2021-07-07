@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/bigquery v1.8.0
 	cloud.google.com/go/storage v1.15.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
+	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/etsy/statsd v0.9.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

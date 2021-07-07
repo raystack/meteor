@@ -25,6 +25,13 @@ jobs:
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: pass
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        ports:
+          - 1433:1433
+        env:
+          SA_PASSWORD: P@ssword1234
+          ACCEPT_EULA: Y
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
