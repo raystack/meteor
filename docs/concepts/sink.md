@@ -21,7 +21,15 @@ sinks: # required - at least 1 sink defined
 ```
 
 ## Available Sinks
-- Console
+### Console
+```yaml
+name: sample-recipe
+sinks:
+  - name: console
+```
+Print metadata to stdout.
+
+## Upcoming sinks
 - HTTP
 - Kafka
 
@@ -42,14 +50,4 @@ sink:
     config:
       method: PUT
       url: "https://metadata-store.com/metadata"
-```
-
-### Sample usage in a recipe
-To use it, it will be as simple as using our built-in sinks.
-
-*sample_recipe.yaml*
-```yaml
-name: sample-recipe
-sinks:
-  - name: central-metadata-store
 ```

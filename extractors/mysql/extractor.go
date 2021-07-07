@@ -8,8 +8,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Extractor struct{}
-
 type Config struct {
 	UserID   string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
@@ -23,6 +21,8 @@ var defaultDBList = []string{
 	"sys",
 }
 
+type Extractor struct{}
+
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
@@ -34,14 +34,13 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	}
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-	result, err = getDatabases(db)
+	result, err = e.getDatabases(db)
 	return
 }
 
-func getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
 	res, err := db.Query("SHOW DATABASES;")
 	if err != nil {
 		return
@@ -50,32 +49,29 @@ func getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = tableInfo(database, result, db)
+			result, _ = e.getTablesInfo(database, result, db)
 		}
 	}
 	return
 }
 
-func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []map[string]interface{}, err error) {
+func (e *Extractor) getTablesInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []map[string]interface{}, err error) {
 	sqlStr := "SHOW TABLES;"
 	_, err = db.Exec(fmt.Sprintf("USE %s;", dbName))
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	rows, err := db.Query(sqlStr)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	for rows.Next() {
 		var tableName string
 		err = rows.Scan(&tableName)
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
-		columns, err1 := fieldInfo(dbName, tableName, db)
+		columns, err1 := e.getTableFieldsInfo(dbName, tableName, db)
 		if err1 != nil {
 			return
 		}
@@ -88,7 +84,7 @@ func tableInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []
 	return result, err
 }
 
-func fieldInfo(dbName string, tableName string, db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getTableFieldsInfo(dbName string, tableName string, db *sql.DB) (result []map[string]interface{}, err error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns

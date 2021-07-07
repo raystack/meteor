@@ -3,13 +3,19 @@
 * [Introduction](README.md)
 * [Changelog](https://github.com/odpf/meteor/blob/main/CHANGELOG.md)
 
+## Guides
+
+* [Configuration](guides/configuration.md)
+* [Source](guides/commands.md)
+
 ## Concepts
 
-* [Overview](concepts/overview.md)
-* [Internals](concepts/internals.md)
+* [Recipe](concepts/recipe.md)
+* [Source](concepts/source.md)
+* [Processor](concepts/processor.md)
+* [Sink](concepts/sink.md)
 
 ## Contribute
 
 * [Contribution Process](contribute/contributing.md)
-* [Development Guide](contribute/development-guide.md)
 
