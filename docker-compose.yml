@@ -17,3 +17,11 @@ services:
       - '3306:3306'
     expose:
       - '3306'
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=pass
+    ports:
+      - "5432:5432"
