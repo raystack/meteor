@@ -58,7 +58,7 @@ func TestExtract(t *testing.T) {
 		}
 		defer cleanDatabase(db)
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "sa",
+			"user_id":  user,
 			"password": pass,
 			"host":     "localhost:1433",
 		})
