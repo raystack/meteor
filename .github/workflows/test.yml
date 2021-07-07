@@ -12,6 +12,26 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: user
           MONGO_INITDB_ROOT_PASSWORD: abcd
+      mysql:
+        image: mysql:8.0.25
+        ports:
+          - '3306:3306'
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: true
+      postgres:
+        image: postgres:13.3
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: pass
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        ports:
+          - 1433:1433
+        env:
+          SA_PASSWORD: P@ssword1234
+          ACCEPT_EULA: Y
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2

@@ -45,3 +45,36 @@ Leaving `service_account_json` blank will default to [Google's default authentic
 | `user_id` | `string` | `user` | User ID to access the mongo server| *required* |
 | `password` | `string` | `abcd` | Password for the Mongo Server | *required* |
 | `host` | `string` | `localhost:27017` | The Host at which server is running | *required* |
+
+## MSSQL
+
+`mssql`
+
+### Configs
+| Key | Value | Example | Description |    |
+| :-- | :---- | :------ | :---------- | :- |
+| `user_id` | `string` | `sa` | User ID to access the mssql server| *required* |
+| `password` | `string` | `P@ssword1234` | Password for the mssql Server | *required* |
+| `host` | `string` | `localhost:1433` | The Host at which server is running | *required* |
+
+## MySQL
+
+`mysql`
+
+### Configs
+| Key | Value | Example | Description |    |
+| :-- | :---- | :------ | :---------- | :- |
+| `user_id` | `string` | `meteor_test_user` | User ID to access the mysql server| *required* |
+| `password` | `string` | `abcd` | Password for the mysql Server | *required* | `host` | `string` | `localhost:3306` | The Host at which server is running | *required* |
+
+## Postgres-sql
+
+`postgres`
+
+### Configs
+| Key | Value | Example | Description |    |
+| :-- | :---- | :------ | :---------- | :- |
+| `user_id` | `string` | `meteor_test_user` | User ID to access the postgres server| *required* |
+| `password` | `string` | `abcd` | Password for the postgres Server | *required* |
+| `host` | `string` | `localhost:5432` | The Host at which server is running | *required* |
+| `database_name` | `string` | `postgres` | The Database owned by user mentioned in Config, root user can skip | *optional* |
