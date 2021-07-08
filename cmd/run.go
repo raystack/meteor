@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
 	"github.com/odpf/meteor/sinks"
@@ -14,38 +13,46 @@ import (
 func run(recipeFile string) {
 	c, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	extractorStore := initExtractorStore()
-	processorStore := initProcessorStore()
 	sinkStore := initSinkStore()
 	metricsMonitor := initMetricsMonitor(c)
+	processorStore, killPlugins := initProcessorStore()
+	defer killPlugins()
 	recipeRunner := recipes.NewRunner(
 		extractorStore,
 		processorStore,
 		sinkStore,
 		metricsMonitor,
 	)
+
 	recipeReader := recipes.NewReader()
 	recipe, err := recipeReader.Read(recipeFile)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	_, err = recipeRunner.Run(recipe)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+
 }
 func initExtractorStore() *extractors.Store {
 	store := extractors.NewStore()
 	extractors.PopulateStore(store)
 	return store
 }
-func initProcessorStore() *processors.Store {
+func initProcessorStore() (*processors.Store, func()) {
 	store := processors.NewStore()
 	processors.PopulateStore(store)
-	return store
+	killPlugins, err := plugins.DiscoverPlugins(store)
+	if err != nil {
+		panic(err)
+	}
+
+	return store, killPlugins
 }
 func initSinkStore() *sinks.Store {
 	store := sinks.NewStore()
@@ -59,7 +66,7 @@ func initMetricsMonitor(c config.Config) *metrics.StatsdMonitor {
 
 	client, err := metrics.NewStatsdClient(c.StatsdHost)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	monitor := metrics.NewStatsdMonitor(client, c.StatsdPrefix)
 	return monitor

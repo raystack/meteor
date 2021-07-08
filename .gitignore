@@ -22,3 +22,6 @@
 .env
 config.yaml
 meteor
+
+# plugins
+meteor-plugin-*

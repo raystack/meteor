@@ -1,12 +1,14 @@
-FROM golang:1.16-alpine3.13 AS builder
-WORKDIR /go/src/github.com/odpf/meteor
+FROM golang:1.16-stretch as builder
+WORKDIR /build/
 COPY . .
-RUN apk add make bash
-RUN make dist
+RUN ["make"]
 
-FROM alpine:3.13
+FROM alpine:latest
 RUN apk --no-cache add ca-certificates bash
-WORKDIR /root/
-EXPOSE 8080
-COPY --from=builder /go/src/github.com/odpf/meteor/dist/linux-amd64/go-app .
-ENTRYPOINT ["./go-app"]
+WORKDIR /opt/meteor
+COPY --from=builder /build/meteor /opt/meteor/meteor
+
+# glibc compatibility library, since go binaries 
+# don't work well with musl libc that alpine uses
+RUN ["apk", "add", "libc6-compat"] 
+CMD ["./meteor"]

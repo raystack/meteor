@@ -10,6 +10,8 @@ require (
 	github.com/etsy/statsd v0.9.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/hashicorp/go-hclog v0.16.1
+	github.com/hashicorp/go-plugin v1.4.2
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
