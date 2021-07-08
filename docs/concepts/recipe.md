@@ -40,3 +40,25 @@ processors: # optional - metadata processors
 `processors[].name` defines what processor to use.
 
 `processors[].config` is an optional field. Each processor may require different configuration.
+
+## Dynamic recipe value
+
+Meteor reads recipe using [go template](https://golang.org/pkg/text/template/) which means you can put a variable instead of static value in a recipe.
+Environment variables with prefix `METEOR_` will be used as the template data for the recipe.
+
+recipe-with-variable.yaml
+```yaml
+name: sample-recipe
+source:
+  type: mongodb
+  config:
+    user_id: {{ .mongodb_user }}
+    password: "{{ .mongodb_pass }}" # wrap it with double quotes to make sure value is read as a string
+```
+
+sample usage
+```shell
+> export METEOR_MONGODB_USER=admin
+> export METEOR_MONGODB_PASS=1234
+> meteor run recipe-with-variable.yaml
+```
