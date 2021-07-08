@@ -5,6 +5,6 @@ import (
 	"github.com/odpf/meteor/processors"
 )
 
-func PopulateStore(store *processors.Store) {
-	store.Set("enrich", new(enrich.Processor))
+func PopulateFactory(factory *processors.Factory) {
+	factory.Set("enrich", enrich.New)
 }

@@ -19,7 +19,7 @@ var (
 // with the following format meteor-plugin-{plugin_name}
 //
 // in case of duplicate processor name, the latest would be used with no guarantee in order
-func DiscoverPlugins(store *processors.Store) (killPluginsFn func(), err error) {
+func DiscoverPlugins(factory *processors.Factory) (killPluginsFn func(), err error) {
 	binaries, err := findBinaries()
 	if err != nil {
 		return
@@ -30,7 +30,7 @@ func DiscoverPlugins(store *processors.Store) (killPluginsFn func(), err error) 
 	}
 	killPluginsFn = buildKillPluginsFn(clients)
 
-	err = populateStore(clients, store)
+	err = populateFactory(clients, factory)
 	if err != nil {
 		killPluginsFn() // kill plugins processes to prevent hanging processes
 		return
@@ -62,7 +62,7 @@ func createClients(binaries []string) (clients []*plugin.Client, err error) {
 	}
 	return
 }
-func populateStore(clients []*plugin.Client, store *processors.Store) (err error) {
+func populateFactory(clients []*plugin.Client, factory *processors.Factory) (err error) {
 	for _, client := range clients {
 		processor, err := dispense(client)
 		if err != nil {
@@ -73,7 +73,9 @@ func populateStore(clients []*plugin.Client, store *processors.Store) (err error
 			return err
 		}
 
-		store.Set(name, processor)
+		factory.Set(name, func() processors.Processor {
+			return processor
+		})
 	}
 	return
 }

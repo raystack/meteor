@@ -32,28 +32,26 @@ func TestRunnerRun(t *testing.T) {
 	recipe := validRecipe
 
 	t.Run("should return error on failed run", func(t *testing.T) {
-		extrStore := extractors.NewStore()
-		procStore := processors.NewStore()
-		sinkStore := sinks.NewStore()
+		extrFactory := extractors.NewFactory()
+		procFactory := processors.NewFactory()
+		sinkFactory := sinks.NewFactory()
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		_, err := r.Run(recipe)
 
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return Run on finish", func(t *testing.T) {
-		extr := new(testExtractor)
-		proc := new(testProcessor)
 		sink := new(mockSink)
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
 
-		extrStore := extractors.NewStore()
-		extrStore.Set("test-extractor", extr)
-		procStore := processors.NewStore()
-		procStore.Set("test-processor", proc)
-		sinkStore := sinks.NewStore()
-		sinkStore.Set("mock-sink", sink)
+		extrFactory := extractors.NewFactory()
+		extrFactory.Set("test-extractor", newTestExtractor)
+		procFactory := processors.NewFactory()
+		procFactory.Set("test-processor", newTestProcessor)
+		sinkFactory := sinks.NewFactory()
+		sinkFactory.Set("mock-sink", newTestSink(sink))
 
 		expectedRun := &recipes.Run{
 			Recipe: recipe,
@@ -78,7 +76,7 @@ func TestRunnerRun(t *testing.T) {
 				},
 			},
 		}
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		actual, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -100,20 +98,18 @@ func TestRunnerRun(t *testing.T) {
 			},
 		}
 
-		extr := new(testExtractor)
-		proc := new(testProcessor)
 		sink := new(mockSink)
 		sink.On("Sink", finalData, recipe.Sinks[0].Config).Return(nil)
 		defer sink.AssertExpectations(t)
 
-		extrStore := extractors.NewStore()
-		extrStore.Set("test-extractor", extr)
-		procStore := processors.NewStore()
-		procStore.Set("test-processor", proc)
-		sinkStore := sinks.NewStore()
-		sinkStore.Set("mock-sink", sink)
+		extrFactory := extractors.NewFactory()
+		extrFactory.Set("test-extractor", newTestExtractor)
+		procFactory := processors.NewFactory()
+		procFactory.Set("test-processor", newTestProcessor)
+		sinkFactory := sinks.NewFactory()
+		sinkFactory.Set("mock-sink", newTestSink(sink))
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		run, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -123,19 +119,19 @@ func TestRunnerRun(t *testing.T) {
 	})
 
 	t.Run("should record metrics", func(t *testing.T) {
-		extrStore := extractors.NewStore()
-		extrStore.Set("test-extractor", new(testExtractor))
-		procStore := processors.NewStore()
-		procStore.Set("test-processor", new(testProcessor))
+		extrFactory := extractors.NewFactory()
+		extrFactory.Set("test-extractor", newTestExtractor)
+		procFactory := processors.NewFactory()
+		procFactory.Set("test-processor", newTestProcessor)
 		sink := new(mockSink)
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
-		sinkStore := sinks.NewStore()
-		sinkStore.Set("mock-sink", sink)
+		sinkFactory := sinks.NewFactory()
+		sinkFactory.Set("mock-sink", newTestSink(sink))
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", recipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, monitor)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, monitor)
 		_, err := r.Run(recipe)
 		if err != nil {
 			t.Error(err.Error())
@@ -153,16 +149,16 @@ func TestRunnerRunMultiple(t *testing.T) {
 		}
 		recipeList := []recipes.Recipe{validRecipe, failedRecipe, validRecipe2}
 
-		extrStore := extractors.NewStore()
-		extrStore.Set("test-extractor", new(testExtractor))
-		procStore := processors.NewStore()
-		procStore.Set("test-processor", new(testProcessor))
+		extrFactory := extractors.NewFactory()
+		extrFactory.Set("test-extractor", newTestExtractor)
+		procFactory := processors.NewFactory()
+		procFactory.Set("test-processor", newTestProcessor)
 		sink := new(mockSink)
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
-		sinkStore := sinks.NewStore()
-		sinkStore.Set("mock-sink", sink)
+		sinkFactory := sinks.NewFactory()
+		sinkFactory.Set("mock-sink", newTestSink(sink))
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		faileds, err := r.RunMultiple(recipeList)
 		assert.Nil(t, err)
 
@@ -190,21 +186,21 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		recipeList := []recipes.Recipe{validRecipe, validRecipe2}
 
-		extrStore := extractors.NewStore()
-		extrStore.Set("test-extractor", new(testExtractor))
-		procStore := processors.NewStore()
-		procStore.Set("test-processor", new(testProcessor))
+		extrFactory := extractors.NewFactory()
+		extrFactory.Set("test-extractor", newTestExtractor)
+		procFactory := processors.NewFactory()
+		procFactory.Set("test-processor", newTestProcessor)
 		sink1 := new(mockSink)
 		sink2 := new(mockSink)
 		sink1.On("Sink", finalData, validRecipe.Sinks[0].Config).Return(nil).Once()
 		defer sink1.AssertExpectations(t)
 		sink2.On("Sink", finalData, validRecipe2.Sinks[0].Config).Return(nil).Once()
 		defer sink2.AssertExpectations(t)
-		sinkStore := sinks.NewStore()
-		sinkStore.Set("mock-sink", sink1)
-		sinkStore.Set("mock-sink-2", sink2)
+		sinkFactory := sinks.NewFactory()
+		sinkFactory.Set("mock-sink", newTestSink(sink1))
+		sinkFactory.Set("mock-sink-2", newTestSink(sink2))
 
-		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
+		r := recipes.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		faileds, err := r.RunMultiple(recipeList)
 		assert.Nil(t, err)
 		assert.Equal(t, []string{}, faileds)
@@ -212,6 +208,10 @@ func TestRunnerRunMultiple(t *testing.T) {
 }
 
 type testProcessor struct{}
+
+func newTestProcessor() processors.Processor {
+	return &testProcessor{}
+}
 
 func (t *testProcessor) Process(data []map[string]interface{}, config map[string]interface{}) ([]map[string]interface{}, error) {
 	for _, d := range data {
@@ -223,6 +223,10 @@ func (t *testProcessor) Process(data []map[string]interface{}, config map[string
 
 type testExtractor struct{}
 
+func newTestExtractor() extractors.Extractor {
+	return &testExtractor{}
+}
+
 func (t *testExtractor) Extract(config map[string]interface{}) ([]map[string]interface{}, error) {
 	data := []map[string]interface{}{
 		{"foo": "bar"},
@@ -233,6 +237,12 @@ func (t *testExtractor) Extract(config map[string]interface{}) ([]map[string]int
 
 type mockSink struct {
 	mock.Mock
+}
+
+func newTestSink(sink sinks.Sink) sinks.FactoryFn {
+	return func() sinks.Sink {
+		return sink
+	}
 }
 
 func (m *mockSink) Sink(data []map[string]interface{}, config map[string]interface{}) error {

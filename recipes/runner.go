@@ -10,25 +10,25 @@ import (
 )
 
 type Runner struct {
-	extractorStore *extractors.Store
-	processorStore *processors.Store
-	sinkStore      *sinks.Store
-	monitor        Monitor
+	extractorFactory *extractors.Factory
+	processorFactory *processors.Factory
+	sinkFactory      *sinks.Factory
+	monitor          Monitor
 }
 
 func NewRunner(
-	extractorStore *extractors.Store,
-	processorStore *processors.Store,
-	sinkStore *sinks.Store,
+	extractorFactory *extractors.Factory,
+	processorFactory *processors.Factory,
+	sinkFactory *sinks.Factory,
 	monitor Monitor) *Runner {
 	if isNilMonitor(monitor) {
 		monitor = new(defaultMonitor)
 	}
 	return &Runner{
-		extractorStore: extractorStore,
-		processorStore: processorStore,
-		sinkStore:      sinkStore,
-		monitor:        monitor,
+		extractorFactory: extractorFactory,
+		processorFactory: processorFactory,
+		sinkFactory:      sinkFactory,
+		monitor:          monitor,
 	}
 }
 
@@ -90,7 +90,7 @@ func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []ma
 }
 
 func (r *Runner) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	extractor, err := r.extractorStore.Get(name)
+	extractor, err := r.extractorFactory.Get(name)
 	if err != nil {
 		return result, err
 	}
@@ -99,7 +99,7 @@ func (r *Runner) runExtractor(name string, config map[string]interface{}) (resul
 }
 
 func (r *Runner) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	processor, err := r.processorStore.Get(name)
+	processor, err := r.processorFactory.Get(name)
 	if err != nil {
 		return result, err
 	}
@@ -108,7 +108,7 @@ func (r *Runner) runProcessor(name string, data []map[string]interface{}, config
 }
 
 func (r *Runner) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
-	sink, err := r.sinkStore.Get(name)
+	sink, err := r.sinkFactory.Get(name)
 	if err != nil {
 		return err
 	}

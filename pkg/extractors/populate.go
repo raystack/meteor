@@ -11,12 +11,12 @@ import (
 	"github.com/odpf/meteor/pkg/extractors/postgres"
 )
 
-func PopulateStore(store *extractors.Store) {
-	store.Set("kafka", new(kafka.Extractor))
-	store.Set("bigquerydataset", new(bigquerydataset.Extractor))
-	store.Set("bigquerytable", new(bigquerytable.Extractor))
-	store.Set("mysql", new(mysql.Extractor))
-	store.Set("mssql", new(mssql.Extractor))
-	store.Set("mongodb", new(mongodb.Extractor))
-	store.Set("postgres", new(postgres.Extractor))
+func PopulateFactory(factory *extractors.Factory) {
+	factory.Set("kafka", func() extractors.Extractor { return new(kafka.Extractor) })
+	factory.Set("bigquerydataset", func() extractors.Extractor { return new(bigquerydataset.Extractor) })
+	factory.Set("bigquerytable", func() extractors.Extractor { return new(bigquerytable.Extractor) })
+	factory.Set("mysql", func() extractors.Extractor { return new(mysql.Extractor) })
+	factory.Set("mssql", func() extractors.Extractor { return new(mssql.Extractor) })
+	factory.Set("mongodb", func() extractors.Extractor { return new(mongodb.Extractor) })
+	factory.Set("postgres", func() extractors.Extractor { return new(postgres.Extractor) })
 }

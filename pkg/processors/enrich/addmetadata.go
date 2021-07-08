@@ -1,8 +1,16 @@
 package enrich
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/odpf/meteor/processors"
+)
 
 type Processor struct{}
+
+func New() processors.Processor {
+	return new(Processor)
+}
 
 func (p *Processor) Process(
 	data []map[string]interface{},

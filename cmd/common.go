@@ -16,14 +16,14 @@ import (
 )
 
 func initRunner(config config.Config) (runner *recipes.Runner, cleanFn func()) {
-	extractorStore := initExtractorStore()
-	processorStore, killPluginsFn := initProcessorStore()
-	sinkStore := initSinkStore()
+	extractorFactory := initExtractorFactory()
+	processorFactory, killPluginsFn := initProcessorFactory()
+	sinkFactory := initSinkFactory()
 	metricsMonitor := initMetricsMonitor(config)
 	runner = recipes.NewRunner(
-		extractorStore,
-		processorStore,
-		sinkStore,
+		extractorFactory,
+		processorFactory,
+		sinkFactory,
 		metricsMonitor,
 	)
 	cleanFn = func() {
@@ -31,25 +31,25 @@ func initRunner(config config.Config) (runner *recipes.Runner, cleanFn func()) {
 	}
 	return
 }
-func initExtractorStore() *extractors.Store {
-	store := extractors.NewStore()
-	pkgExtractors.PopulateStore(store)
-	return store
+func initExtractorFactory() *extractors.Factory {
+	factory := extractors.NewFactory()
+	pkgExtractors.PopulateFactory(factory)
+	return factory
 }
-func initProcessorStore() (*processors.Store, func()) {
-	store := processors.NewStore()
-	pkgProcessors.PopulateStore(store)
-	killPlugins, err := plugins.DiscoverPlugins(store)
+func initProcessorFactory() (*processors.Factory, func()) {
+	factory := processors.NewFactory()
+	pkgProcessors.PopulateFactory(factory)
+	killPlugins, err := plugins.DiscoverPlugins(factory)
 	if err != nil {
 		panic(err)
 	}
 
-	return store, killPlugins
+	return factory, killPlugins
 }
-func initSinkStore() *sinks.Store {
-	store := sinks.NewStore()
-	pkgSinks.PopulateStore(store)
-	return store
+func initSinkFactory() *sinks.Factory {
+	factory := sinks.NewFactory()
+	pkgSinks.PopulateFactory(factory)
+	return factory
 }
 func initMetricsMonitor(c config.Config) *metrics.StatsdMonitor {
 	if !c.StatsdEnabled {

@@ -5,6 +5,6 @@ import (
 	"github.com/odpf/meteor/sinks"
 )
 
-func PopulateStore(store *sinks.Store) {
-	store.Set("console", new(console.Sink))
+func PopulateFactory(factory *sinks.Factory) {
+	factory.Set("console", console.New)
 }
