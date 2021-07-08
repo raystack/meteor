@@ -6,6 +6,7 @@ import (
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/metrics"
+	pkgExtractors "github.com/odpf/meteor/pkg/extractors"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
@@ -30,7 +31,7 @@ func initRunner(config config.Config) (runner *recipes.Runner, cleanFn func()) {
 }
 func initExtractorStore() *extractors.Store {
 	store := extractors.NewStore()
-	extractors.PopulateStore(store)
+	pkgExtractors.PopulateStore(store)
 	return store
 }
 func initProcessorStore() (*processors.Store, func()) {

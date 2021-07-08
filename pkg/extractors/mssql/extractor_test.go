@@ -1,4 +1,4 @@
-package postgres_test
+package mssql_test
 
 import (
 	"fmt"
@@ -6,38 +6,38 @@ import (
 
 	"database/sql"
 
-	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/extractors/postgres"
+	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/odpf/meteor/pkg/extractors/mssql"
+
 	"github.com/stretchr/testify/assert"
 )
 
 const testDB = "mockdata_meteor_metadata_test"
-const user = "meteor_test_user"
-const pass = "pass"
+const user = "sa"
+const pass = "P@ssword1234"
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
+		extractor := new(mssql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:5432",
+			"host":     "localhost:1433",
 		})
-
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
+		extractor := new(mssql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id": user,
-			"host":    "localhost:5432",
+			"host":    "localhost:1433",
 		})
 
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
+		extractor := new(mssql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
@@ -46,47 +46,25 @@ func TestExtract(t *testing.T) {
 		assert.NotNil(t, err)
 	})
 
-	t.Run("should not return error for root user without DB Name", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "root",
-			"password": pass,
-			"host":     "localhost:5432",
-		})
-		assert.Nil(t, err)
-	})
-
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
+		extractor := new(mssql.Extractor)
+		db, err := sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
 		if err != nil {
-			db.Close()
-			t.Fatal(err)
+			return
 		}
 		err = mockDataGenerator(db)
 		if err != nil {
-			db.Close()
 			t.Fatal(err)
 		}
-		db.Close()
-		db, err = sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
-		if err != nil {
-			db.Close()
-			t.Fatal(err)
-		}
+		defer cleanDatabase(db)
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":       user,
-			"password":      pass,
-			"host":          "localhost:5432",
-			"database_name": testDB,
+			"user_id":  user,
+			"password": pass,
+			"host":     "localhost:1433",
 		})
 		if err != nil {
-			cleanDatabase(db)
-			db.Close()
 			t.Fatal(err)
 		}
-		cleanDatabase(db)
-		db.Close()
 		expected := getExpectedVal()
 		assert.Equal(t, result, expected)
 	})
@@ -97,19 +75,19 @@ func getExpectedVal() (expected []map[string]interface{}) {
 		{
 			"columns": []map[string]interface{}{
 				{
-					"data_type":   "integer",
+					"data_type":   "int",
 					"field_name":  "applicant_id",
 					"is_nullable": "YES",
 					"length":      0,
 				},
 				{
-					"data_type":   "character varying",
+					"data_type":   "varchar",
 					"field_name":  "first_name",
 					"is_nullable": "YES",
 					"length":      255,
 				},
 				{
-					"data_type":   "character varying",
+					"data_type":   "varchar",
 					"field_name":  "last_name",
 					"is_nullable": "YES",
 					"length":      255,
@@ -121,19 +99,19 @@ func getExpectedVal() (expected []map[string]interface{}) {
 		{
 			"columns": []map[string]interface{}{
 				{
-					"data_type":   "character varying",
+					"data_type":   "varchar",
 					"field_name":  "department",
 					"is_nullable": "YES",
 					"length":      255,
 				},
 				{
-					"data_type":   "character varying",
+					"data_type":   "varchar",
 					"field_name":  "job",
 					"is_nullable": "YES",
 					"length":      255,
 				},
 				{
-					"data_type":   "integer",
+					"data_type":   "int",
 					"field_name":  "job_id",
 					"is_nullable": "YES",
 					"length":      0,
@@ -147,28 +125,15 @@ func getExpectedVal() (expected []map[string]interface{}) {
 }
 
 func mockDataGenerator(db *sql.DB) (err error) {
-	_, err = db.Exec(fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user))
+	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB))
 	if err != nil {
 		return
 	}
-	_, err = db.Exec(fmt.Sprintf(`CREATE ROLE "%s" WITH SUPERUSER LOGIN PASSWORD '%s';`, user, pass))
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s;", testDB))
 	if err != nil {
 		return
 	}
-	_, err = db.Exec(fmt.Sprintf(`SET ROLE "%s";`, user))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
-	if err != nil {
-		return
-	}
-	db.Close()
-	db, err = sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
+	_, err = db.Exec(fmt.Sprintf("USE %s;", testDB))
 	if err != nil {
 		return
 	}
@@ -184,27 +149,23 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	db.Close()
 	return
 }
 
 func createTable(db *sql.DB, table string, columns string) (err error) {
 	query := "CREATE TABLE "
-	_, err = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(query + table + columns + ";")
+	tableSchema := testDB + ".dbo." + table
+	_, err = db.Exec(query + tableSchema + columns + ";")
 	if err != nil {
 		return
 	}
 	values1 := "(1, 'test1', 'test11');"
 	values2 := "(2, 'test2', 'test22');"
-	err = populateTable(db, table, values1)
+	err = populateTable(db, tableSchema, values1)
 	if err != nil {
 		return
 	}
-	err = populateTable(db, table, values2)
+	err = populateTable(db, tableSchema, values2)
 	if err != nil {
 		return
 	}
@@ -213,7 +174,7 @@ func createTable(db *sql.DB, table string, columns string) (err error) {
 }
 
 func populateTable(db *sql.DB, table string, values string) (err error) {
-	query := " INSERT INTO "
+	query := "INSERT INTO "
 	completeQuery := query + table + " VALUES " + values
 	_, err = db.Exec(completeQuery)
 	if err != nil {
@@ -224,10 +185,6 @@ func populateTable(db *sql.DB, table string, values string) (err error) {
 
 func cleanDatabase(db *sql.DB) (err error) {
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user))
 	if err != nil {
 		return
 	}

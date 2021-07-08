@@ -1,4 +1,4 @@
-package extractors
+package kafka
 
 import (
 	"errors"
@@ -7,9 +7,9 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaExtractor struct{}
+type Extractor struct{}
 
-func (e *KafkaExtractor) Extract(config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (e *Extractor) Extract(config map[string]interface{}) (result []map[string]interface{}, err error) {
 	broker, ok := config["broker"]
 	if !ok {
 		return result, errors.New("invalid config")
@@ -30,7 +30,7 @@ func (e *KafkaExtractor) Extract(config map[string]interface{}) (result []map[st
 	return result, err
 }
 
-func (e *KafkaExtractor) getTopicList(partitions []kafka.Partition) (result []map[string]interface{}) {
+func (e *Extractor) getTopicList(partitions []kafka.Partition) (result []map[string]interface{}) {
 	m := map[string]struct{}{}
 	for _, p := range partitions {
 		m[p.Topic] = struct{}{}

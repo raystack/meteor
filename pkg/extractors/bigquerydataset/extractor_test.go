@@ -3,7 +3,7 @@ package bigquerydataset_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/extractors/bigquerydataset"
+	"github.com/odpf/meteor/pkg/extractors/bigquerydataset"
 	"github.com/stretchr/testify/assert"
 )
 

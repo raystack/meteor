@@ -3,7 +3,7 @@ package bigquerytable_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/extractors/bigquerytable"
+	"github.com/odpf/meteor/pkg/extractors/bigquerytable"
 	"github.com/stretchr/testify/assert"
 )
 
