@@ -19,11 +19,8 @@ func rundir(dirPath string) {
 	if err != nil {
 		panic(err)
 	}
-
-	runner := initRunner(c)
-	if err != nil {
-		panic(err)
-	}
+	runner, cleanFn := initRunner(c)
+	defer cleanFn()
 	faileds, err := runner.RunMultiple(recipeList)
 	if err != nil {
 		panic(err)
