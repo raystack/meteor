@@ -7,6 +7,8 @@ import (
 	"github.com/odpf/meteor/extractors"
 	"github.com/odpf/meteor/metrics"
 	pkgExtractors "github.com/odpf/meteor/pkg/extractors"
+	pkgProcessors "github.com/odpf/meteor/pkg/processors"
+	pkgSinks "github.com/odpf/meteor/pkg/sinks"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/processors"
 	"github.com/odpf/meteor/recipes"
@@ -36,7 +38,7 @@ func initExtractorStore() *extractors.Store {
 }
 func initProcessorStore() (*processors.Store, func()) {
 	store := processors.NewStore()
-	processors.PopulateStore(store)
+	pkgProcessors.PopulateStore(store)
 	killPlugins, err := plugins.DiscoverPlugins(store)
 	if err != nil {
 		panic(err)
@@ -46,7 +48,7 @@ func initProcessorStore() (*processors.Store, func()) {
 }
 func initSinkStore() *sinks.Store {
 	store := sinks.NewStore()
-	sinks.PopulateStore(store)
+	pkgSinks.PopulateStore(store)
 	return store
 }
 func initMetricsMonitor(c config.Config) *metrics.StatsdMonitor {

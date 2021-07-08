@@ -1,10 +1,10 @@
-package processors
+package enrich
 
 import "errors"
 
-type AddMetadataProcessor struct{}
+type Processor struct{}
 
-func (p *AddMetadataProcessor) Process(
+func (p *Processor) Process(
 	data []map[string]interface{},
 	config map[string]interface{},
 ) (
@@ -22,7 +22,7 @@ func (p *AddMetadataProcessor) Process(
 	return data, nil
 }
 
-func (p *AddMetadataProcessor) appendFields(d map[string]interface{}, metadata map[string]interface{}) {
+func (p *Processor) appendFields(d map[string]interface{}, metadata map[string]interface{}) {
 	for key, value := range metadata {
 		d[key] = value
 	}
