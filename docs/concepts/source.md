@@ -11,4 +11,4 @@ source:
      broker: broker:9092
 ```
 
-More info about available extractors can be found [here](../guides/extractors.md).
+More info about available extractors can be found [here](../reference/extractors.md).
