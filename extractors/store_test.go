@@ -14,16 +14,14 @@ func (p *mockExtractor) Extract(config map[string]interface{}) ([]map[string]int
 	return []map[string]interface{}{}, nil
 }
 
-func TestStoreFind(t *testing.T) {
+func TestStoreGet(t *testing.T) {
 	t.Run("should return not found error if extractor does not exist", func(t *testing.T) {
 		name := "wrong-name"
 
 		store := extractors.NewStore()
-		store.Populate(map[string]extractors.Extractor{
-			"mock": new(mockExtractor),
-		})
+		store.Set("mock", new(mockExtractor))
 
-		_, err := store.Find(name)
+		_, err := store.Get(name)
 		assert.Equal(t, extractors.NotFoundError{name}, err)
 	})
 
@@ -32,11 +30,9 @@ func TestStoreFind(t *testing.T) {
 		mockProc := new(mockExtractor)
 
 		store := extractors.NewStore()
-		store.Populate(map[string]extractors.Extractor{
-			name: mockProc,
-		})
+		store.Set(name, mockProc)
 
-		actual, err := store.Find(name)
+		actual, err := store.Get(name)
 		if err != nil {
 			t.Error(err.Error())
 		}
@@ -45,50 +41,22 @@ func TestStoreFind(t *testing.T) {
 	})
 }
 
-func TestStorePopulate(t *testing.T) {
-	t.Run("should populate store with extractors map", func(t *testing.T) {
+func TestStoreSet(t *testing.T) {
+	t.Run("should add extractor with given key", func(t *testing.T) {
 		mock1 := new(mockExtractor)
 		mock2 := new(mockExtractor)
 
 		store := extractors.NewStore()
-		store.Populate(map[string]extractors.Extractor{
-			"mock1": new(mockExtractor),
-			"mock2": new(mockExtractor),
-		})
+		store.Set("mock1", new(mockExtractor))
+		store.Set("mock2", new(mockExtractor))
 
-		mock1Actual, err := store.Find("mock1")
+		mock1Actual, err := store.Get("mock1")
 		if err != nil {
 			t.Error(err.Error())
 		}
 		assert.Equal(t, mock1, mock1Actual)
 
-		mock2Actual, err := store.Find("mock2")
-		if err != nil {
-			t.Error(err.Error())
-		}
-		assert.Equal(t, mock2, mock2Actual)
-	})
-
-	t.Run("should add extractors to existing map", func(t *testing.T) {
-		mock1 := new(mockExtractor)
-		mock2 := new(mockExtractor)
-
-		store := extractors.NewStore()
-		store.Populate(map[string]extractors.Extractor{
-			"mock1": new(mockExtractor),
-		})
-
-		store.Populate(map[string]extractors.Extractor{
-			"mock2": new(mockExtractor),
-		})
-
-		mock1Actual, err := store.Find("mock1")
-		if err != nil {
-			t.Error(err.Error())
-		}
-		assert.Equal(t, mock1, mock1Actual)
-
-		mock2Actual, err := store.Find("mock2")
+		mock2Actual, err := store.Get("mock2")
 		if err != nil {
 			t.Error(err.Error())
 		}

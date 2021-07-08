@@ -49,17 +49,11 @@ func TestRunnerRun(t *testing.T) {
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
 
 		extrStore := extractors.NewStore()
-		extrStore.Populate(map[string]extractors.Extractor{
-			"test-extractor": extr,
-		})
+		extrStore.Set("test-extractor", extr)
 		procStore := processors.NewStore()
-		procStore.Populate(map[string]processors.Processor{
-			"test-processor": proc,
-		})
+		procStore.Set("test-processor", proc)
 		sinkStore := sinks.NewStore()
-		sinkStore.Populate(map[string]sinks.Sink{
-			"mock-sink": sink,
-		})
+		sinkStore.Set("mock-sink", sink)
 
 		expectedRun := &recipes.Run{
 			Recipe: recipe,
@@ -113,17 +107,11 @@ func TestRunnerRun(t *testing.T) {
 		defer sink.AssertExpectations(t)
 
 		extrStore := extractors.NewStore()
-		extrStore.Populate(map[string]extractors.Extractor{
-			"test-extractor": extr,
-		})
+		extrStore.Set("test-extractor", extr)
 		procStore := processors.NewStore()
-		procStore.Populate(map[string]processors.Processor{
-			"test-processor": proc,
-		})
+		procStore.Set("test-processor", proc)
 		sinkStore := sinks.NewStore()
-		sinkStore.Populate(map[string]sinks.Sink{
-			"mock-sink": sink,
-		})
+		sinkStore.Set("mock-sink", sink)
 
 		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
 		run, err := r.Run(recipe)
@@ -136,19 +124,13 @@ func TestRunnerRun(t *testing.T) {
 
 	t.Run("should record metrics", func(t *testing.T) {
 		extrStore := extractors.NewStore()
-		extrStore.Populate(map[string]extractors.Extractor{
-			"test-extractor": new(testExtractor),
-		})
+		extrStore.Set("test-extractor", new(testExtractor))
 		procStore := processors.NewStore()
-		procStore.Populate(map[string]processors.Processor{
-			"test-processor": new(testProcessor),
-		})
+		procStore.Set("test-processor", new(testProcessor))
 		sink := new(mockSink)
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
 		sinkStore := sinks.NewStore()
-		sinkStore.Populate(map[string]sinks.Sink{
-			"mock-sink": sink,
-		})
+		sinkStore.Set("mock-sink", sink)
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", recipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
@@ -172,19 +154,13 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipes.Recipe{validRecipe, failedRecipe, validRecipe2}
 
 		extrStore := extractors.NewStore()
-		extrStore.Populate(map[string]extractors.Extractor{
-			"test-extractor": new(testExtractor),
-		})
+		extrStore.Set("test-extractor", new(testExtractor))
 		procStore := processors.NewStore()
-		procStore.Populate(map[string]processors.Processor{
-			"test-processor": new(testProcessor),
-		})
+		procStore.Set("test-processor", new(testProcessor))
 		sink := new(mockSink)
 		sink.On("Sink", mock.Anything, mock.Anything).Return(nil)
 		sinkStore := sinks.NewStore()
-		sinkStore.Populate(map[string]sinks.Sink{
-			"mock-sink": sink,
-		})
+		sinkStore.Set("mock-sink", sink)
 
 		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
 		faileds, err := r.RunMultiple(recipeList)
@@ -215,13 +191,9 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipes.Recipe{validRecipe, validRecipe2}
 
 		extrStore := extractors.NewStore()
-		extrStore.Populate(map[string]extractors.Extractor{
-			"test-extractor": new(testExtractor),
-		})
+		extrStore.Set("test-extractor", new(testExtractor))
 		procStore := processors.NewStore()
-		procStore.Populate(map[string]processors.Processor{
-			"test-processor": new(testProcessor),
-		})
+		procStore.Set("test-processor", new(testProcessor))
 		sink1 := new(mockSink)
 		sink2 := new(mockSink)
 		sink1.On("Sink", finalData, validRecipe.Sinks[0].Config).Return(nil).Once()
@@ -229,10 +201,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sink2.On("Sink", finalData, validRecipe2.Sinks[0].Config).Return(nil).Once()
 		defer sink2.AssertExpectations(t)
 		sinkStore := sinks.NewStore()
-		sinkStore.Populate(map[string]sinks.Sink{
-			"mock-sink":   sink1,
-			"mock-sink-2": sink2,
-		})
+		sinkStore.Set("mock-sink", sink1)
+		sinkStore.Set("mock-sink-2", sink2)
 
 		r := recipes.NewRunner(extrStore, procStore, sinkStore, nil)
 		faileds, err := r.RunMultiple(recipeList)

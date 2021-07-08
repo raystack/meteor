@@ -10,17 +10,15 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) Populate(extractors map[string]Extractor) {
-	for name, ext := range extractors {
-		s.extractors[name] = ext
-	}
-}
-
-func (s *Store) Find(name string) (Extractor, error) {
+func (s *Store) Get(name string) (Extractor, error) {
 	extractor, ok := s.extractors[name]
 	if !ok {
 		return nil, NotFoundError{name}
 	}
 
 	return extractor, nil
+}
+
+func (s *Store) Set(name string, extractor Extractor) {
+	s.extractors[name] = extractor
 }

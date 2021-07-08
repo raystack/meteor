@@ -63,7 +63,6 @@ func createClients(binaries []string) (clients []*plugin.Client, err error) {
 	return
 }
 func populateStore(clients []*plugin.Client, store *processors.Store) (err error) {
-	processorMap := make(map[string]processors.Processor)
 	for _, client := range clients {
 		processor, err := dispense(client)
 		if err != nil {
@@ -74,10 +73,8 @@ func populateStore(clients []*plugin.Client, store *processors.Store) (err error
 			return err
 		}
 
-		processorMap[name] = processor
+		store.Set(name, processor)
 	}
-
-	store.Populate(processorMap)
 	return
 }
 func isPlugin(filename string) bool {

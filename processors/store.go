@@ -10,17 +10,15 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) Populate(processors map[string]Processor) {
-	for name, proc := range processors {
-		s.processors[name] = proc
-	}
-}
-
-func (s *Store) Find(name string) (Processor, error) {
+func (s *Store) Get(name string) (Processor, error) {
 	processor, ok := s.processors[name]
 	if !ok {
 		return nil, NotFoundError{name}
 	}
 
 	return processor, nil
+}
+
+func (s *Store) Set(name string, processor Processor) {
+	s.processors[name] = processor
 }

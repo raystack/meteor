@@ -12,13 +12,11 @@ import (
 )
 
 func PopulateStore(store *extractors.Store) {
-	store.Populate(map[string]extractors.Extractor{
-		"kafka":           new(kafka.Extractor),
-		"bigquerydataset": new(bigquerydataset.Extractor),
-		"bigquerytable":   new(bigquerytable.Extractor),
-		"mysql":           new(mysql.Extractor),
-		"mssql":           new(mssql.Extractor),
-		"mongodb":         new(mongodb.Extractor),
-		"postgres":        new(postgres.Extractor),
-	})
+	store.Set("kafka", new(kafka.Extractor))
+	store.Set("bigquerydataset", new(bigquerydataset.Extractor))
+	store.Set("bigquerytable", new(bigquerytable.Extractor))
+	store.Set("mysql", new(mysql.Extractor))
+	store.Set("mssql", new(mssql.Extractor))
+	store.Set("mongodb", new(mongodb.Extractor))
+	store.Set("postgres", new(postgres.Extractor))
 }

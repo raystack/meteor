@@ -10,17 +10,15 @@ func NewStore() *Store {
 	}
 }
 
-func (s *Store) Populate(sinks map[string]Sink) {
-	for name, ext := range sinks {
-		s.sinks[name] = ext
-	}
-}
-
-func (s *Store) Find(name string) (Sink, error) {
+func (s *Store) Get(name string) (Sink, error) {
 	sink, ok := s.sinks[name]
 	if !ok {
 		return nil, NotFoundError{name}
 	}
 
 	return sink, nil
+}
+
+func (s *Store) Set(name string, sink Sink) {
+	s.sinks[name] = sink
 }

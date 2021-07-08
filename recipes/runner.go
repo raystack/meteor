@@ -90,7 +90,7 @@ func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []ma
 }
 
 func (r *Runner) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	extractor, err := r.extractorStore.Find(name)
+	extractor, err := r.extractorStore.Get(name)
 	if err != nil {
 		return result, err
 	}
@@ -99,7 +99,7 @@ func (r *Runner) runExtractor(name string, config map[string]interface{}) (resul
 }
 
 func (r *Runner) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	processor, err := r.processorStore.Find(name)
+	processor, err := r.processorStore.Get(name)
 	if err != nil {
 		return result, err
 	}
@@ -108,7 +108,7 @@ func (r *Runner) runProcessor(name string, data []map[string]interface{}, config
 }
 
 func (r *Runner) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
-	sink, err := r.sinkStore.Find(name)
+	sink, err := r.sinkStore.Get(name)
 	if err != nil {
 		return err
 	}
