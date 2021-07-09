@@ -35,6 +35,15 @@ Leaving `service_account_json` blank will default to [Google's default authentic
 #### *Notes*
 Leaving `service_account_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
 
+## ElasticSearch
+
+`elasticsearch`
+
+### Configs
+| Key | Value | Example | Description |    |
+| :-- | :---- | :------ | :---------- | :- |
+| `host` | `string` | `localhost:9200` | The Host at which server is running | *required* |
+
 ## MongoDB
 
 `mongodb`
