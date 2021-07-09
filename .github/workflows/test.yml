@@ -32,6 +32,13 @@ jobs:
         env:
           SA_PASSWORD: P@ssword1234
           ACCEPT_EULA: Y
+      elasticsearch:
+        image: elasticsearch:7.13.2
+        ports:
+          - 9200:9200
+        env:
+          discovery.type: single-node
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2

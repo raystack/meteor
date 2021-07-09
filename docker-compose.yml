@@ -32,3 +32,10 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+  elasticsearch:
+    image: elasticsearch:7.13.2
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
