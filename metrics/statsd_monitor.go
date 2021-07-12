@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	statsd "github.com/etsy/statsd/examples/go"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/core/recipe"
 )
 
 var (
@@ -26,7 +26,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 	}
 }
 
-func (m *StatsdMonitor) RecordRun(recipe recipes.Recipe, duration int, success bool) {
+func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration int, success bool) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, recipe, success),
 		int64(duration),
@@ -36,7 +36,7 @@ func (m *StatsdMonitor) RecordRun(recipe recipes.Recipe, duration int, success b
 	)
 }
 
-func (m *StatsdMonitor) createMetricName(metricName string, recipe recipes.Recipe, success bool) string {
+func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
 	var successText = "false"
 	if success {
 		successText = "true"

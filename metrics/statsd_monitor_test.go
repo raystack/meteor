@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/odpf/meteor/core/recipe"
 	"github.com/odpf/meteor/metrics"
-	"github.com/odpf/meteor/recipes"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -25,7 +25,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	statsdPrefix := "testprefix"
 
 	t.Run("should create metrics with the correct name and value", func(t *testing.T) {
-		recipe := recipes.Recipe{
+		recipe := recipe.Recipe{
 			Name: "test-recipe",
 		}
 		duration := 100
@@ -52,7 +52,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
-		recipe := recipes.Recipe{
+		recipe := recipe.Recipe{
 			Name: "test-recipe",
 		}
 		duration := 100

@@ -51,3 +51,5 @@ sink:
       method: PUT
       url: "https://metadata-store.com/metadata"
 ```
+
+More info about available sinks can be found [here](../reference/sinks.md).

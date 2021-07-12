@@ -15,6 +15,7 @@ We are always interested in adding new contributors. What we look for is a serie
 * You can modify the code
   * Add any new feature
   * Add new metadata extractors
+  * Add new processors
   * Add new sinks
   * Improve Health and Monitoring Metrics
   * Update deprecated libraries or tools
@@ -30,4 +31,6 @@ Please follow these practices for you change to get merged fast and smoothly:
 * Make sure your local build is running with all the tests and checkstyle passing.
 * If your change is related to user-facing protocols / configurations, you need to make the corresponding change in the documentation as well.
 * Docs live in the code repo under `docs` so that changes to that can be done in the same PR as changes to the code.
-
+* Adding a new extractor should follow [this guide](./guide.md#adding-a-new-extractor).
+* Adding a new processor should follow [this guide](./guide.md#adding-a-new-processor).
+* Adding a new sink should follow [this guide](./guide.md#adding-a-new-sink).
