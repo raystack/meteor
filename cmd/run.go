@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/core/recipe"
 )
 
 func run(recipeFile string) {
@@ -13,12 +13,12 @@ func run(recipeFile string) {
 
 	runner, cleanFn := initRunner(c)
 	defer cleanFn()
-	reader := recipes.NewReader()
-	recipe, err := reader.Read(recipeFile)
+	reader := recipe.NewReader()
+	rcp, err := reader.Read(recipeFile)
 	if err != nil {
 		panic(err)
 	}
-	_, err = runner.Run(recipe)
+	_, err = runner.Run(rcp)
 	if err != nil {
 		panic(err)
 	}

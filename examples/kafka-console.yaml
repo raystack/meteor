@@ -1,0 +1,12 @@
+name: sample-recipe
+source:
+  type: kafka
+  config:
+    broker: {{ .kafka_broker }}
+sinks:
+  - name: console
+processors:
+  - name: enrich
+    config:
+      customFieldA: foo
+      customFieldB: bar

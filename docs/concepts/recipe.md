@@ -25,21 +25,21 @@ processors: # optional - metadata processors
 
 `source` is a required field to tell Meteor how and where to extract the data from. Learn more [here](./source.md).
 
-`source.type` defines what source and extractor to use to fetch the metadata. ([Extractor list](../guides/extractors.md))
+`source.type` defines what source and extractor to use to fetch the metadata. ([Extractor list](../reference/extractors.md))
 
-`source.config` is an optional field. Each extractor may require different configuration. More info can be found [here](../guides/extractors.md).
+`source.config` is an optional field. Each extractor may require different configuration. More info can be found [here](../reference/extractors.md).
 
 `sinks` is a required field containing list of sinks to send the metadata to. Learn more [here](./sink.md).
 
-`sinks[].name` defines which sink you want to use.
+`sinks[].name` defines which sink you want to use. ([Sink list](../reference/sinks.md))
 
-`sinks[].config` is an optional field. Each sink may require different configuration.
+`sinks[].config` is an optional field. Each sink may require different configuration. More info can be found [here](../reference/sinks.md).
 
 `processors` is an optional field containing list of processors. Learn more about processor [here](./processor.md).
 
-`processors[].name` defines what processor to use.
+`processors[].name` defines what processor to use. ([Processor list](../reference/processors.md))
 
-`processors[].config` is an optional field. Each processor may require different configuration.
+`processors[].config` is an optional field. Each processor may require different configuration. More info can be found [here](../reference/processors.md).
 
 ## Dynamic recipe value
 

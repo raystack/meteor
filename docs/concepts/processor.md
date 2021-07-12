@@ -19,3 +19,5 @@ processors:
       fieldA: valueA
       fieldB: valueB
 ```
+
+More info about available processors can be found [here](../reference/processors.md).

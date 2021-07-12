@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/recipes"
+	"github.com/odpf/meteor/core/recipe"
 )
 
 // run recipes in a given directory path
@@ -14,7 +14,7 @@ func rundir(dirPath string) {
 		panic(err)
 	}
 
-	reader := recipes.NewReader()
+	reader := recipe.NewReader()
 	recipeList, err := reader.ReadDir(dirPath)
 	if err != nil {
 		panic(err)
