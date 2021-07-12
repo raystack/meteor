@@ -4,23 +4,23 @@ import (
 	"log"
 
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/extractors"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/core/processor"
+	"github.com/odpf/meteor/core/recipe"
+	"github.com/odpf/meteor/core/sink"
 	"github.com/odpf/meteor/metrics"
-	pkgExtractors "github.com/odpf/meteor/pkg/extractors"
-	pkgProcessors "github.com/odpf/meteor/pkg/processors"
-	pkgSinks "github.com/odpf/meteor/pkg/sinks"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/processors"
-	"github.com/odpf/meteor/recipes"
-	"github.com/odpf/meteor/sinks"
+	plugin "github.com/odpf/meteor/plugins/external"
+	extractorPlugins "github.com/odpf/meteor/plugins/extractors"
+	processorPlugins "github.com/odpf/meteor/plugins/processors"
+	sinkPlugins "github.com/odpf/meteor/plugins/sinks"
 )
 
-func initRunner(config config.Config) (runner *recipes.Runner, cleanFn func()) {
+func initRunner(config config.Config) (runner *recipe.Runner, cleanFn func()) {
 	extractorFactory := initExtractorFactory()
 	processorFactory, killPluginsFn := initProcessorFactory()
 	sinkFactory := initSinkFactory()
 	metricsMonitor := initMetricsMonitor(config)
-	runner = recipes.NewRunner(
+	runner = recipe.NewRunner(
 		extractorFactory,
 		processorFactory,
 		sinkFactory,
@@ -31,24 +31,24 @@ func initRunner(config config.Config) (runner *recipes.Runner, cleanFn func()) {
 	}
 	return
 }
-func initExtractorFactory() *extractors.Factory {
-	factory := extractors.NewFactory()
-	pkgExtractors.PopulateFactory(factory)
+func initExtractorFactory() *extractor.Factory {
+	factory := extractor.NewFactory()
+	extractorPlugins.PopulateFactory(factory)
 	return factory
 }
-func initProcessorFactory() (*processors.Factory, func()) {
-	factory := processors.NewFactory()
-	pkgProcessors.PopulateFactory(factory)
-	killPlugins, err := plugins.DiscoverPlugins(factory)
+func initProcessorFactory() (*processor.Factory, func()) {
+	factory := processor.NewFactory()
+	processorPlugins.PopulateFactory(factory)
+	killPlugins, err := plugin.DiscoverPlugins(factory)
 	if err != nil {
 		panic(err)
 	}
 
 	return factory, killPlugins
 }
-func initSinkFactory() *sinks.Factory {
-	factory := sinks.NewFactory()
-	pkgSinks.PopulateFactory(factory)
+func initSinkFactory() *sink.Factory {
+	factory := sink.NewFactory()
+	sinkPlugins.PopulateFactory(factory)
 	return factory
 }
 func initMetricsMonitor(c config.Config) *metrics.StatsdMonitor {
