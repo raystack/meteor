@@ -10,7 +10,7 @@ import (
 type mockSink struct {
 }
 
-func (p *mockSink) Sink(data []map[string]interface{}, config map[string]interface{}) error {
+func (p *mockSink) Sink(data interface{}, config map[string]interface{}) error {
 	return nil
 }
 

@@ -1,3 +1,5 @@
+//+build integration
+
 package mssql_test
 
 import (

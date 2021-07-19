@@ -10,7 +10,7 @@ import (
 
 var (
 	handshakeConfig = plugin.HandshakeConfig{
-		ProtocolVersion:  1,
+		ProtocolVersion:  2,
 		MagicCookieKey:   "METEOR_PLUGIN",
 		MagicCookieValue: "F$i^yqI.s]NIoHhR'fVV{=@ix-:gyN",
 	}

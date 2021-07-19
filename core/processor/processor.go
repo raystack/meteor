@@ -4,16 +4,8 @@ import (
 	"fmt"
 )
 
-type Model interface {
-	GetMetadataField()
-	SetMetadataField()
-}
-
-type Dataset struct{}
-type Job struct{}
-
 type Processor interface {
-	Process(data []map[string]interface{}, config map[string]interface{}) ([]map[string]interface{}, error)
+	Process(data interface{}, config map[string]interface{}) (interface{}, error)
 }
 
 type NotFoundError struct {

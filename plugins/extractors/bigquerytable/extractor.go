@@ -3,9 +3,12 @@ package bigquerytable
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -17,7 +20,11 @@ type Config struct {
 
 type Extractor struct{}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
+func New() extractor.TableExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return
@@ -40,7 +47,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	return
 }
 
-func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (results []map[string]interface{}, err error) {
+func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (results []meta.Table, err error) {
 	it := client.Datasets(ctx)
 
 	dataset, err := it.Next()
@@ -59,7 +66,7 @@ func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (r
 	return
 }
 
-func (e *Extractor) appendTablesMetadata(ctx context.Context, results []map[string]interface{}, dataset *bigquery.Dataset) ([]map[string]interface{}, error) {
+func (e *Extractor) appendTablesMetadata(ctx context.Context, results []meta.Table, dataset *bigquery.Dataset) ([]meta.Table, error) {
 	it := dataset.Tables(ctx)
 
 	table, err := it.Next()
@@ -74,11 +81,12 @@ func (e *Extractor) appendTablesMetadata(ctx context.Context, results []map[stri
 	return results, err
 }
 
-func (e *Extractor) mapTable(t *bigquery.Table) map[string]interface{} {
-	return map[string]interface{}{
-		"name":       t.TableID,
-		"dataset_id": t.DatasetID,
-		"project_id": t.ProjectID,
+func (e *Extractor) mapTable(t *bigquery.Table) meta.Table {
+	return meta.Table{
+		Urn:         fmt.Sprintf("%s.%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+		Name:        t.TableID,
+		Source:      "bigquery",
+		Description: t.DatasetID,
 	}
 }
 
