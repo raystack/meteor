@@ -11,8 +11,8 @@ import (
 )
 
 type Config struct {
-	ProjectID          string `mapstructure:"project_id"`
-	ServiceAccountJSON string `mapstructure:"service_account_json"`
+	ProjectID       string `mapstructure:"project_id"`
+	CredentialsJSON string `mapstructure:"credentials_json"`
 }
 
 type Extractor struct{}
@@ -83,11 +83,11 @@ func (e *Extractor) mapTable(t *bigquery.Table) map[string]interface{} {
 }
 
 func (e *Extractor) createClient(ctx context.Context, config Config) (*bigquery.Client, error) {
-	if config.ServiceAccountJSON == "" {
+	if config.CredentialsJSON == "" {
 		return bigquery.NewClient(ctx, config.ProjectID)
 	}
 
-	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.CredentialsJSON)))
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
