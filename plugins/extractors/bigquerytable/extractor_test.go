@@ -1,3 +1,5 @@
+//+build integration
+
 package bigquerytable_test
 
 import (

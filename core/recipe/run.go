@@ -20,7 +20,7 @@ type Task struct {
 }
 
 type Run struct {
-	Recipe Recipe                   `json:"recipe"`
-	Tasks  []Task                   `json:"tasks"`
-	Data   []map[string]interface{} `json:"-"`
+	Recipe Recipe        `json:"recipe"`
+	Tasks  []Task        `json:"tasks"`
+	Data   []interface{} `json:"-"`
 }
