@@ -6,6 +6,9 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 )
 
 type Config struct {
@@ -23,7 +26,11 @@ var defaultDBList = []string{
 
 type Extractor struct{}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
+func New() extractor.TableExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return
@@ -40,7 +47,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	return
 }
 
-func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 	res, err := db.Query("SHOW DATABASES;")
 	if err != nil {
 		return
@@ -55,7 +62,7 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, e
 	return
 }
 
-func (e *Extractor) getTablesInfo(dbName string, result []map[string]interface{}, db *sql.DB) (_ []map[string]interface{}, err error) {
+func (e *Extractor) getTablesInfo(dbName string, result []meta.Table, db *sql.DB) (_ []meta.Table, err error) {
 	sqlStr := "SHOW TABLES;"
 	_, err = db.Exec(fmt.Sprintf("USE %s;", dbName))
 	if err != nil {
@@ -71,20 +78,22 @@ func (e *Extractor) getTablesInfo(dbName string, result []map[string]interface{}
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getTableFieldsInfo(dbName, tableName, db)
+		columns, err1 := e.getColumns(dbName, tableName, db)
 		if err1 != nil {
 			return
 		}
-		tableData := make(map[string]interface{})
-		tableData["database_name"] = dbName
-		tableData["table_name"] = tableName
-		tableData["columns"] = columns
-		result = append(result, tableData)
+		result = append(result, meta.Table{
+			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
+			Name: tableName,
+			Schema: &facets.Columns{
+				Columns: columns,
+			},
+		})
 	}
 	return result, err
 }
 
-func (e *Extractor) getTableFieldsInfo(dbName string, tableName string, db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getColumns(dbName string, tableName string, db *sql.DB) (result []*facets.Column, err error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -96,19 +105,20 @@ func (e *Extractor) getTableFieldsInfo(dbName string, tableName string, db *sql.
 		return
 	}
 	for rows.Next() {
-		var fieldName, fieldDesc, dataType, isNull string
+		var fieldName, fieldDesc, dataType string
+		var isNull bool
 		var length int
 		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNull, &length)
 		if err != nil {
 			return
 		}
-		row := make(map[string]interface{})
-		row["field_name"] = fieldName
-		row["field_desc"] = fieldDesc
-		row["data_type"] = dataType
-		row["is_nullable"] = isNull
-		row["length"] = length
-		result = append(result, row)
+		result = append(result, &facets.Column{
+			Name:        fieldName,
+			DataType:    dataType,
+			Description: fieldDesc,
+			IsNullable:  isNull,
+			Length:      int64(length),
+		})
 	}
 	return result, nil
 }

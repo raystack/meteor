@@ -4,12 +4,18 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/segmentio/kafka-go"
 )
 
 type Extractor struct{}
 
-func (e *Extractor) Extract(config map[string]interface{}) (result []map[string]interface{}, err error) {
+func New() extractor.TopicExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(config map[string]interface{}) (result []meta.Topic, err error) {
 	broker, ok := config["broker"]
 	if !ok {
 		return result, errors.New("invalid config")
@@ -30,15 +36,16 @@ func (e *Extractor) Extract(config map[string]interface{}) (result []map[string]
 	return result, err
 }
 
-func (e *Extractor) getTopicList(partitions []kafka.Partition) (result []map[string]interface{}) {
+func (e *Extractor) getTopicList(partitions []kafka.Partition) (result []meta.Topic) {
 	m := map[string]struct{}{}
 	for _, p := range partitions {
 		m[p.Topic] = struct{}{}
 	}
 
 	for topic := range m {
-		result = append(result, map[string]interface{}{
-			"topic": topic,
+		result = append(result, meta.Topic{
+			Urn:  topic,
+			Name: topic,
 		})
 	}
 

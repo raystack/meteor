@@ -6,6 +6,9 @@ import (
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 )
 
 type Config struct {
@@ -23,8 +26,12 @@ var defaultDBList = []string{
 
 type Extractor struct{}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
-	config, err := e.getConfig(configMap)
+func New() extractor.TableExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err error) {
+	config, err := e.getConfig(c)
 	if err != nil {
 		return
 	}
@@ -32,6 +39,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	if err != nil {
 		return
 	}
+
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
 	if err != nil {
@@ -46,7 +54,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	return
 }
 
-func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 	res, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return
@@ -61,7 +69,7 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, e
 	return
 }
 
-func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string]interface{}) (_ []map[string]interface{}, err error) {
+func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []meta.Table) (_ []meta.Table, err error) {
 	sqlStr := `SELECT table_name
 	FROM information_schema.tables
 	WHERE table_schema = 'public'
@@ -80,20 +88,23 @@ func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getTableFieldsInfo(db, dbName, tableName)
+		columns, err1 := e.getColumns(db, dbName, tableName)
 		if err1 != nil {
 			return
 		}
-		tableData := make(map[string]interface{})
-		tableData["database_name"] = dbName
-		tableData["table_name"] = tableName
-		tableData["columns"] = columns
-		result = append(result, tableData)
+
+		result = append(result, meta.Table{
+			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
+			Name: tableName,
+			Schema: &facets.Columns{
+				Columns: columns,
+			},
+		})
 	}
 	return result, err
 }
 
-func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName string) (result []map[string]interface{}, err error) {
+func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (result []*facets.Column, err error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -103,18 +114,19 @@ func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName stri
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType, isNull string
+		var fieldName, dataType string
+		var isNull bool
 		var length int
 		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
 		if err != nil {
 			return
 		}
-		row := make(map[string]interface{})
-		row["field_name"] = fieldName
-		row["data_type"] = dataType
-		row["is_nullable"] = isNull
-		row["length"] = length
-		result = append(result, row)
+		result = append(result, &facets.Column{
+			Name:       fieldName,
+			DataType:   dataType,
+			IsNullable: isNull,
+			Length:     int64(length),
+		})
 	}
 	return result, nil
 }

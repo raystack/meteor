@@ -10,14 +10,14 @@ import (
 )
 
 type Runner struct {
-	extractorFactory *extractor.Factory
+	extractor        *extractor.Extractor
 	processorFactory *processor.Factory
 	sinkFactory      *sinks.Factory
 	monitor          Monitor
 }
 
 func NewRunner(
-	extractorFactory *extractor.Factory,
+	extractor *extractor.Extractor,
 	processorFactory *processor.Factory,
 	sinkFactory *sinks.Factory,
 	monitor Monitor) *Runner {
@@ -25,7 +25,7 @@ func NewRunner(
 		monitor = new(defaultMonitor)
 	}
 	return &Runner{
-		extractorFactory: extractorFactory,
+		extractor:        extractor,
 		processorFactory: processorFactory,
 		sinkFactory:      sinkFactory,
 		monitor:          monitor,
@@ -37,10 +37,9 @@ func (r *Runner) Run(recipe Recipe) (run *Run, err error) {
 	run = r.buildRun(recipe)
 	success := true
 
+	var data interface{}
 	for i := 0; i < len(run.Tasks); i++ {
-		var data []map[string]interface{}
-		data, err = r.runTask(&run.Tasks[i], run.Data)
-		run.Data = data
+		data, err = r.runTask(&run.Tasks[i], data)
 
 		if err != nil {
 			success = false
@@ -65,7 +64,7 @@ func (r *Runner) RunMultiple(recipes []Recipe) (faileds []string, err error) {
 	return
 }
 
-func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []map[string]interface{}, err error) {
+func (r *Runner) runTask(task *Task, data interface{}) (result interface{}, err error) {
 	result = data
 
 	switch task.Type {
@@ -89,16 +88,11 @@ func (r *Runner) runTask(task *Task, data []map[string]interface{}) (result []ma
 	return result, err
 }
 
-func (r *Runner) runExtractor(name string, config map[string]interface{}) (result []map[string]interface{}, err error) {
-	extractor, err := r.extractorFactory.Get(name)
-	if err != nil {
-		return result, err
-	}
-
-	return extractor.Extract(config)
+func (r *Runner) runExtractor(name string, config map[string]interface{}) (result interface{}, err error) {
+	return r.extractor.Extract(name, config)
 }
 
-func (r *Runner) runProcessor(name string, data []map[string]interface{}, config map[string]interface{}) (result []map[string]interface{}, err error) {
+func (r *Runner) runProcessor(name string, data interface{}, config map[string]interface{}) (result interface{}, err error) {
 	proc, err := r.processorFactory.Get(name)
 	if err != nil {
 		return result, err
@@ -107,7 +101,7 @@ func (r *Runner) runProcessor(name string, data []map[string]interface{}, config
 	return proc.Process(data, config)
 }
 
-func (r *Runner) runSink(name string, data []map[string]interface{}, config map[string]interface{}) (err error) {
+func (r *Runner) runSink(name string, data interface{}, config map[string]interface{}) (err error) {
 	sink, err := r.sinkFactory.Get(name)
 	if err != nil {
 		return err

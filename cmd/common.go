@@ -21,7 +21,7 @@ func initRunner(config config.Config) (runner *recipe.Runner, cleanFn func()) {
 	sinkFactory := initSinkFactory()
 	metricsMonitor := initMetricsMonitor(config)
 	runner = recipe.NewRunner(
-		extractorFactory,
+		extractor.New(extractorFactory),
 		processorFactory,
 		sinkFactory,
 		metricsMonitor,

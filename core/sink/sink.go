@@ -3,7 +3,7 @@ package sink
 import "fmt"
 
 type Sink interface {
-	Sink(data []map[string]interface{}, config map[string]interface{}) error
+	Sink(data interface{}, config map[string]interface{}) error
 }
 
 type NotFoundError struct {
