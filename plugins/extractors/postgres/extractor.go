@@ -2,26 +2,25 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/utils"
 )
-
-type Config struct {
-	UserID       string `mapstructure:"user_id"`
-	Password     string `mapstructure:"password"`
-	Host         string `mapstructure:"host"`
-	DatabaseName string `mapstructure:"database_name"`
-}
 
 var defaultDBList = []string{
 	"information_schema",
 	"postgres",
 	"root",
+}
+
+type Config struct {
+	UserID       string `mapstructure:"user_id" validate:"required"`
+	Password     string `mapstructure:"password" validate:"required"`
+	Host         string `mapstructure:"host" validate:"required"`
+	DatabaseName string `mapstructure:"database_name" default:"postgres"`
 }
 
 type Extractor struct{}
@@ -31,26 +30,25 @@ func New() extractor.TableExtractor {
 }
 
 func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err error) {
-	config, err := e.getConfig(c)
+	var config Config
+	err = utils.BuildConfig(c, &config)
 	if err != nil {
-		return
-	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
 	if err != nil {
-		db.Close()
 		return
 	}
 	defer db.Close()
+
 	result, err = e.getDatabases(db)
 	if err != nil {
 		return
 	}
+
 	return
 }
 
@@ -63,7 +61,10 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(db, database, result)
+			result, err = e.getTablesInfo(db, database, result)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -88,8 +89,9 @@ func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []meta.Table
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getColumns(db, dbName, tableName)
-		if err1 != nil {
+		var columns []*facets.Column
+		columns, err = e.getColumns(db, dbName, tableName)
+		if err != nil {
 			return
 		}
 
@@ -114,42 +116,28 @@ func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (res
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType string
-		var isNull bool
+		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
 		result = append(result, &facets.Column{
 			Name:       fieldName,
 			DataType:   dataType,
-			IsNullable: isNull,
+			IsNullable: e.isNullable(isNullableString),
 			Length:     int64(length),
 		})
 	}
 	return result, nil
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.UserID == "" {
-		return errors.New("user_id is required")
-	}
-	if config.Password == "" {
-		return errors.New("password is required")
-	}
-	if config.Host == "" {
-		return errors.New("host address is required")
-	}
-	if config.DatabaseName == "" {
-		config.DatabaseName = "postgres"
-	}
-	return
+	return false
 }
 
 func checkNotDefaultDatabase(database string) bool {

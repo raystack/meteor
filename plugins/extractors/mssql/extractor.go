@@ -2,26 +2,25 @@ package mssql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/utils"
 )
-
-type Config struct {
-	UserID   string `mapstructure:"user_id"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host"`
-}
 
 var defaultDBList = []string{
 	"master",
 	"msdb",
 	"model",
 	"tempdb",
+}
+
+type Config struct {
+	UserID   string `mapstructure:"user_id" validate:"required"`
+	Password string `mapstructure:"password" validate:"required"`
+	Host     string `mapstructure:"host" validate:"required"`
 }
 
 type Extractor struct{}
@@ -31,14 +30,12 @@ func New() extractor.TableExtractor {
 }
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
-	config, err := e.getConfig(configMap)
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
+
 	db, err := sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", config.UserID, config.Password, config.Host))
 	if err != nil {
 		return
@@ -60,7 +57,10 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(db, database, result)
+			result, err = e.getTablesInfo(db, database, result)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -109,39 +109,28 @@ func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (res
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType string
-		var isNull bool
+		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
 		result = append(result, &facets.Column{
 			Name:       fieldName,
 			DataType:   dataType,
-			IsNullable: isNull,
+			IsNullable: e.isNullable(isNullableString),
 			Length:     int64(length),
 		})
 	}
 	return result, nil
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.UserID == "" {
-		return errors.New("user_id is required")
-	}
-	if config.Password == "" {
-		return errors.New("password is required")
-	}
-	if config.Host == "" {
-		return errors.New("host address is required")
-	}
-	return
+	return false
 }
 
 func checkNotDefaultDatabase(database string) bool {
