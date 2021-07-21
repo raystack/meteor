@@ -35,11 +35,10 @@ func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err 
 	if err != nil {
 		return
 	}
-	err = e.validateConfig(config)
+	config, err = e.validateConfig(config)
 	if err != nil {
 		return
 	}
-
 	db, err := sql.Open("postgres", fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
@@ -149,20 +148,20 @@ func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, 
 	return
 }
 
-func (e *Extractor) validateConfig(config Config) (err error) {
+func (e *Extractor) validateConfig(config Config) (_ Config, err error) {
 	if config.UserID == "" {
-		return errors.New("user_id is required")
+		return config, errors.New("user_id is required")
 	}
 	if config.Password == "" {
-		return errors.New("password is required")
+		return config, errors.New("password is required")
 	}
 	if config.Host == "" {
-		return errors.New("host address is required")
+		return config, errors.New("host address is required")
 	}
 	if config.DatabaseName == "" {
 		config.DatabaseName = "postgres"
 	}
-	return
+	return config, nil
 }
 
 func checkNotDefaultDatabase(database string) bool {

@@ -4,6 +4,8 @@ package postgres_test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"database/sql"
@@ -12,6 +14,8 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +23,53 @@ const testDB = "mockdata_meteor_metadata_test"
 const user = "meteor_test_user"
 const pass = "pass"
 
+const port = "5432"
+
+func TestMain(m *testing.M) {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	opts := dockertest.RunOptions{
+		Repository: "postgres",
+		Tag:        "12.3",
+		Env: []string{
+			"POSTGRES_USER=root",
+			"POSTGRES_PASSWORD=pass",
+			"POSTGRES_DB=postgres",
+		},
+		ExposedPorts: []string{"5432"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"5432": {
+				{HostIP: "0.0.0.0", HostPort: port},
+			},
+		},
+	}
+
+	resource, err := pool.RunWithOptions(&opts)
+	if err != nil {
+		log.Fatalf("Could not start resource: %s", err.Error())
+	}
+	if err = pool.Retry(func() error {
+		db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
+		if err != nil {
+			return err
+		}
+		defer db.Close()
+		return db.Ping()
+	}); err != nil {
+		log.Fatalf("Could not connect to docker: %s", err.Error())
+	}
+	code := m.Run()
+	if err := pool.Purge(resource); err != nil {
+		log.Fatalf("Could not purge resource: %s", err)
+	}
+	os.Exit(code)
+}
+
 func TestExtract(t *testing.T) {
+
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
 		extractor := new(postgres.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
@@ -54,7 +104,7 @@ func TestExtract(t *testing.T) {
 		extractor := new(postgres.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id":  "root",
-			"password": pass,
+			"password": "pass",
 			"host":     "localhost:5432",
 		})
 		assert.Nil(t, err)
@@ -77,7 +127,6 @@ func TestExtract(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
 		expected := getExpectedVal()
 		assert.Equal(t, expected, result)
 	})
@@ -176,7 +225,7 @@ func mockDataGenerator() (err error) {
 }
 
 func setupDatabaseAndUser() (err error) {
-	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		return err
 	}
@@ -241,7 +290,7 @@ func populateTable(db *sql.DB, table string, values string) (err error) {
 }
 
 func cleanDatabase() (err error) {
-	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		return err
 	}

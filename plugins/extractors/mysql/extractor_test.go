@@ -1,5 +1,3 @@
-//+build integration
-
 package mysql_test
 
 import (
@@ -12,7 +10,6 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +23,7 @@ func TestExtract(t *testing.T) {
 		extractor := new(mysql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:27017",
+			"host":     "localhost:3306",
 		})
 
 		assert.NotNil(t, err)

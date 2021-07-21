@@ -21,8 +21,8 @@ services:
     image: postgres
     restart: always
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=pass
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
     ports:
       - "5432:5432"
   mssql:
