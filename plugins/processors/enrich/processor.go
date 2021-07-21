@@ -1,10 +1,8 @@
 package enrich
 
 import (
-	"errors"
-
 	"github.com/odpf/meteor/core/processor"
-	"github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/utils"
 )
 
 type Processor struct{}
@@ -21,10 +19,6 @@ func (p *Processor) Process(
 	err error,
 ) {
 	result = data
-
-	if config == nil {
-		return result, errors.New("invalid config")
-	}
 
 	err = utils.ModifyCustomProperties(data, func(custom map[string]string) (err error) {
 		for key, value := range config {
