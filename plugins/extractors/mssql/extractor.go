@@ -60,7 +60,10 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(db, database, result)
+			result, err = e.getTablesInfo(db, database, result)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -109,21 +112,28 @@ func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (res
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType string
-		var isNull bool
+		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
 		result = append(result, &facets.Column{
 			Name:       fieldName,
 			DataType:   dataType,
-			IsNullable: isNull,
+			IsNullable: e.isNullable(isNullableString),
 			Length:     int64(length),
 		})
 	}
 	return result, nil
+}
+
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
+
+	return false
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {

@@ -10,6 +10,8 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -49,16 +51,13 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extractor := new(mssql.Extractor)
-		db, err := sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
-		if err != nil {
-			return
-		}
-		err = mockDataGenerator(db)
+		err, cleanUp := setup()
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer cleanDatabase(db)
+		defer cleanUp()
+
+		extractor := new(mssql.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
@@ -68,65 +67,77 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		expected := getExpectedVal()
-		assert.Equal(t, result, expected)
+		assert.Equal(t, expected, result)
 	})
 }
 
-func getExpectedVal() (expected []map[string]interface{}) {
-	expected = []map[string]interface{}{
+func getExpectedVal() (expected []meta.Table) {
+	return []meta.Table{
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "int",
-					"field_name":  "applicant_id",
-					"is_nullable": "YES",
-					"length":      0,
-				},
-				{
-					"data_type":   "varchar",
-					"field_name":  "first_name",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "varchar",
-					"field_name":  "last_name",
-					"is_nullable": "YES",
-					"length":      255,
+			Urn:  "mockdata_meteor_metadata_test.applicant",
+			Name: "applicant",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						DataType:   "int",
+						Name:       "applicant_id",
+						IsNullable: true,
+						Length:     0,
+					},
+					{
+						DataType:   "varchar",
+						Name:       "first_name",
+						IsNullable: true,
+						Length:     255,
+					},
+					{
+						DataType:   "varchar",
+						Name:       "last_name",
+						IsNullable: true,
+						Length:     255,
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "applicant",
 		},
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "varchar",
-					"field_name":  "department",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "varchar",
-					"field_name":  "job",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "int",
-					"field_name":  "job_id",
-					"is_nullable": "YES",
-					"length":      0,
+			Urn:  "mockdata_meteor_metadata_test.jobs",
+			Name: "jobs",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						DataType:   "varchar",
+						Name:       "department",
+						IsNullable: true,
+						Length:     255,
+					},
+					{
+						DataType:   "varchar",
+						Name:       "job",
+						IsNullable: true,
+						Length:     255,
+					},
+					{
+						DataType:   "int",
+						Name:       "job_id",
+						IsNullable: true,
+						Length:     0,
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "jobs",
 		},
 	}
-	return
 }
 
-func mockDataGenerator(db *sql.DB) (err error) {
+func setup() (err error, cleanUp func()) {
+	db, err := sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
+	if err != nil {
+		return
+	}
+	cleanUp = func() {
+		cleanDatabase(db)
+		db.Close()
+	}
+
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB))
 	if err != nil {
 		return
