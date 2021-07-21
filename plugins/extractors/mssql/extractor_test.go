@@ -23,7 +23,6 @@ const (
 	testDB = "mockdata_meteor_metadata_test"
 	user   = "sa"
 	pass   = "P@ssword1234"
-	port   = "1433"
 )
 
 var db *sql.DB
@@ -34,7 +33,7 @@ func TestMain(m *testing.M) {
 		Repository: "mcr.microsoft.com/mssql/server",
 		Tag:        "2019-latest",
 		Env: []string{
-			"SA_PASSWORD=P@ssword1234",
+			"SA_PASSWORD=" + pass,
 			"ACCEPT_EULA=Y",
 		},
 		ExposedPorts: []string{"1433"},
@@ -45,7 +44,7 @@ func TestMain(m *testing.M) {
 		},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
+		db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@localhost:1433/", user, pass))
 		if err != nil {
 			return err
 		}
@@ -58,8 +57,10 @@ func TestMain(m *testing.M) {
 	if err := setup(); err != nil {
 		log.Fatal(err)
 	}
+
 	// run tests
 	code := m.Run()
+
 	// clean tests
 	db.Close()
 	if err := purgeFn(); err != nil {
@@ -163,10 +164,6 @@ func getExpectedVal() (expected []meta.Table) {
 	}
 }
 func setup() (err error) {
-	db, err := sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
-	if err != nil {
-		return
-	}
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB))
 	if err != nil {
 		return
