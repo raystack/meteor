@@ -11,6 +11,7 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -73,33 +74,33 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extractor := new(mysql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mysql.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:3306",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extractor := new(mysql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mysql.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:3306",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extractor := new(mysql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mysql.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {

@@ -2,26 +2,25 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins/utils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 )
-
-type Config struct {
-	UserID       string `mapstructure:"user_id"`
-	Password     string `mapstructure:"password"`
-	Host         string `mapstructure:"host"`
-	DatabaseName string `mapstructure:"database_name"`
-}
 
 var defaultDBList = []string{
 	"information_schema",
 	"postgres",
 	"root",
+}
+
+type Config struct {
+	UserID       string `mapstructure:"user_id" validate:"required"`
+	Password     string `mapstructure:"password" validate:"required"`
+	Host         string `mapstructure:"host" validate:"required"`
+	DatabaseName string `mapstructure:"database_name" default:"postgres"`
 }
 
 type Extractor struct{}
@@ -31,14 +30,12 @@ func New() extractor.TableExtractor {
 }
 
 func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err error) {
-	config, err := e.getConfig(c)
+	var config Config
+	err = utils.BuildConfig(c, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
-	config, err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
+
 	db, err := sql.Open("postgres", fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
@@ -141,27 +138,6 @@ func (e *Extractor) isNullable(value string) bool {
 	}
 
 	return false
-}
-
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
-
-func (e *Extractor) validateConfig(config Config) (_ Config, err error) {
-	if config.UserID == "" {
-		return config, errors.New("user_id is required")
-	}
-	if config.Password == "" {
-		return config, errors.New("password is required")
-	}
-	if config.Host == "" {
-		return config, errors.New("host address is required")
-	}
-	if config.DatabaseName == "" {
-		config.DatabaseName = "postgres"
-	}
-	return config, nil
 }
 
 func checkNotDefaultDatabase(database string) bool {

@@ -11,6 +11,7 @@ import (
 	"database/sql"
 
 	_ "github.com/lib/pq"
+	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -75,42 +76,43 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(postgres.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:5432",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(postgres.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:5432",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(postgres.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should not return error for root user without DB Name", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(postgres.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id":  "root",
 			"password": "pass",
 			"host":     "localhost:5432",
 		})
+
 		assert.Nil(t, err)
 	})
 
