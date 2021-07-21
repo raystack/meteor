@@ -4,82 +4,119 @@ package mongodb_test
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"testing"
-	"time"
 
+	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var testDB string = "MeteorMongoExtractorTest"
+var (
+	client *mongo.Client
+	testDB = "MeteorMongoExtractorTest"
+	user   = "user"
+	pass   = "abcd"
+	ctx    = context.TODO()
+)
 
-var posts = []interface{}{
-	bson.D{{"title", "World"}, {"body", "Hello World"}},
-	bson.D{{"title", "Mars"}, {"body", "Hello Mars"}},
-	bson.D{{"title", "Pluto"}, {"body", "Hello Pluto"}},
+func TestMain(m *testing.M) {
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "mongo",
+		Tag:        "4.4.6",
+		Env: []string{
+			"MONGO_INITDB_ROOT_USERNAME=" + user,
+			"MONGO_INITDB_ROOT_PASSWORD=" + pass,
+		},
+		ExposedPorts: []string{"27017"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"27017": {
+				{HostIP: "0.0.0.0", HostPort: "27017"},
+			},
+		},
+	}
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		uri := fmt.Sprintf("mongodb://%s:%s@%s", user, pass, "127.0.0.1:27017")
+		clientOptions := options.Client().ApplyURI(uri)
+		client, err = mongo.NewClient(clientOptions)
+		if err != nil {
+			return
+		}
+		err = client.Connect(ctx)
+		if err != nil {
+			return
+		}
+
+		return client.Ping(ctx, nil)
+	}
+	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := setup(); err != nil {
+		log.Fatal(err)
+	}
+
+	// run tests
+	code := m.Run()
+
+	// clean tests
+	if err := client.Disconnect(ctx); err != nil {
+		log.Fatal(err)
+	}
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
 }
-
-var connections = []interface{}{
-	bson.D{{"name", "Albert"}, {"relation", "mutual"}},
-	bson.D{{"name", "Josh"}, {"relation", "following"}},
-	bson.D{{"name", "Abish"}, {"relation", "follower"}},
-}
-
-var reach = []interface{}{
-	bson.D{{"views", "500"}, {"likes", "200"}, {"comments", "50"}},
-	bson.D{{"views", "400"}, {"likes", "100"}, {"comments", "5"}},
-	bson.D{{"views", "800"}, {"likes", "300"}, {"comments", "80"}},
-}
-
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extractor := new(mongodb.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mongodb.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"password": "abcd",
-			"host":     "localhost:27017",
+			"host":     "127.0.0.1:27017",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extractor := new(mongodb.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mongodb.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id": "Gaurav_Ubuntu",
-			"host":    "localhost:27017",
+			"host":    "127.0.0.1:27017",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extractor := new(mongodb.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr := new(mongodb.Extractor)
+		_, err := extr.Extract(map[string]interface{}{
 			"user_id":  "user",
 			"password": "abcd",
 		})
 
-		assert.NotNil(t, err)
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
-	t.Run("should return mockdata we generated with mongo running on localhost", func(t *testing.T) {
+	t.Run("should return mockdata we generated with mongo running on 127.0.0.1", func(t *testing.T) {
 		extractor := new(mongodb.Extractor)
-		uri := "mongodb://user:abcd@localhost:27017"
-		clientOptions := options.Client().ApplyURI(uri)
-
-		err := mockDataGenerator(clientOptions)
-		if err != nil {
-			t.Fatal(err)
-		}
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  "user",
-			"password": "abcd",
-			"host":     "localhost:27017",
+			"user_id":  user,
+			"password": pass,
+			"host":     "127.0.0.1:27017",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -115,17 +152,7 @@ func getExpectedVal() []meta.Table {
 	}
 }
 
-func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
-	client, err := mongo.NewClient(clientOptions)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		return
-	}
+func setup() (err error) {
 	db := client.Database("local")
 	_ = db.Collection("startup_log").Drop(ctx)
 	db = client.Database(testDB)
@@ -142,13 +169,16 @@ func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {
 	if err != nil {
 		return
 	}
-	client.Disconnect(ctx)
 	return
 }
 
 func insertPosts(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database(testDB).Collection("posts")
-	_, insertErr := collection.InsertMany(ctx, posts)
+	_, insertErr := collection.InsertMany(ctx, []interface{}{
+		bson.D{{"title", "World"}, {"body", "Hello World"}},
+		bson.D{{"title", "Mars"}, {"body", "Hello Mars"}},
+		bson.D{{"title", "Pluto"}, {"body", "Hello Pluto"}},
+	})
 	if insertErr != nil {
 		return insertErr
 	}
@@ -157,7 +187,11 @@ func insertPosts(ctx context.Context, client *mongo.Client) (err error) {
 
 func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database(testDB).Collection("connection")
-	_, insertErr := collection.InsertMany(ctx, connections)
+	_, insertErr := collection.InsertMany(ctx, []interface{}{
+		bson.D{{"name", "Albert"}, {"relation", "mutual"}},
+		bson.D{{"name", "Josh"}, {"relation", "following"}},
+		bson.D{{"name", "Abish"}, {"relation", "follower"}},
+	})
 	if insertErr != nil {
 		return insertErr
 	}
@@ -166,7 +200,11 @@ func insertConnections(ctx context.Context, client *mongo.Client) (err error) {
 
 func insertReach(ctx context.Context, client *mongo.Client) (err error) {
 	collection := client.Database(testDB).Collection("reach")
-	_, insertErr := collection.InsertMany(ctx, reach)
+	_, insertErr := collection.InsertMany(ctx, []interface{}{
+		bson.D{{"views", "500"}, {"likes", "200"}, {"comments", "50"}},
+		bson.D{{"views", "400"}, {"likes", "100"}, {"comments", "5"}},
+		bson.D{{"views", "800"}, {"likes", "300"}, {"comments", "80"}},
+	})
 	if insertErr != nil {
 		return insertErr
 	}
