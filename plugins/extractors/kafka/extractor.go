@@ -2,12 +2,16 @@ package kafka
 
 import (
 	"errors"
-	"fmt"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/segmentio/kafka-go"
 )
+
+type Config struct {
+	Broker string `json:"broker"`
+}
 
 type Extractor struct{}
 
@@ -15,39 +19,54 @@ func New() extractor.TopicExtractor {
 	return &Extractor{}
 }
 
-func (e *Extractor) Extract(config map[string]interface{}) (result []meta.Topic, err error) {
-	broker, ok := config["broker"]
-	if !ok {
-		return result, errors.New("invalid config")
+func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Topic, err error) {
+	// build config
+	config, err := e.getConfig(c)
+	if err != nil {
+		return
 	}
 
-	conn, err := kafka.Dial("tcp", fmt.Sprint(broker))
+	// create client
+	client, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"metadata.broker.list": config.Broker,
+	})
 	if err != nil {
 		return result, err
 	}
-	defer conn.Close()
 
-	partitions, err := conn.ReadPartitions()
+	// fetch and build metadata
+	metadata, err := client.GetMetadata(nil, true, 1000)
 	if err != nil {
 		return result, err
 	}
-	result = e.getTopicList(partitions)
+	for topic := range metadata.Topics {
+		result = append(result, meta.Topic{
+			Urn:    topic,
+			Name:   topic,
+			Source: "kafka",
+		})
+	}
 
 	return result, err
 }
 
-func (e *Extractor) getTopicList(partitions []kafka.Partition) (result []meta.Topic) {
-	m := map[string]struct{}{}
-	for _, p := range partitions {
-		m[p.Topic] = struct{}{}
+func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
+	err = mapstructure.Decode(configMap, &config)
+	if err != nil {
+		return
+	}
+	err = e.validateConfig(config)
+	if err != nil {
+		return config, extractor.InvalidConfigError{}
 	}
 
-	for topic := range m {
-		result = append(result, meta.Topic{
-			Urn:  topic,
-			Name: topic,
-		})
+	return
+}
+
+func (e *Extractor) validateConfig(config Config) error {
+	if config.Broker == "" {
+		return errors.New("broker is required")
 	}
 
-	return result
+	return nil
 }
