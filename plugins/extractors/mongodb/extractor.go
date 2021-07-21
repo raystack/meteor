@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/utils"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

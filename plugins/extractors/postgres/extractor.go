@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/utils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/utils"
 )
 
 var defaultDBList = []string{

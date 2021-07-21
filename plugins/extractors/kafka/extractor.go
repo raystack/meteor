@@ -1,26 +1,29 @@
 package kafka
 
 import (
-	"errors"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/utils"
 )
 
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 }
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func New() extractor.TopicExtractor {
-	return &Extractor{}
+func New(logger plugins.Logger) extractor.TopicExtractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Topic, err error) {
+	e.logger.Info("extracting kafka metadata...")
 	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -35,6 +38,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Top
 	if err != nil {
 		return result, err
 	}
+	defer client.Close()
 
 	// fetch and build metadata
 	metadata, err := client.GetMetadata(nil, true, 1000)
@@ -50,25 +54,4 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Top
 	}
 
 	return result, err
-}
-
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	if err != nil {
-		return
-	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return config, extractor.InvalidConfigError{}
-	}
-
-	return
-}
-
-func (e *Extractor) validateConfig(config Config) error {
-	if config.Broker == "" {
-		return errors.New("broker is required")
-	}
-
-	return nil
 }
