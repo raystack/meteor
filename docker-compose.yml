@@ -17,14 +17,6 @@ services:
       - '3306:3306'
     expose:
       - '3306'
-  postgres:
-    image: postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=secret
-    ports:
-      - "5432:5432"
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:

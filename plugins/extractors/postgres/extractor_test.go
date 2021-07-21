@@ -12,6 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/ory/dockertest/v3"
@@ -19,18 +20,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testDB = "mockdata_meteor_metadata_test"
-const user = "meteor_test_user"
-const pass = "pass"
+var db *sql.DB
 
-const port = "5432"
+const (
+	testDB = "mockdata_meteor_metadata_test"
+	user   = "meteor_test_user"
+	pass   = "pass"
+	port   = "5432"
+)
 
 func TestMain(m *testing.M) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
-
+	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "12.3",
@@ -46,30 +46,33 @@ func TestMain(m *testing.M) {
 			},
 		},
 	}
-
-	resource, err := pool.RunWithOptions(&opts)
-	if err != nil {
-		log.Fatalf("Could not start resource: %s", err.Error())
-	}
-	if err = pool.Retry(func() error {
-		db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	retryFn := func() (err error) {
+		db, err = sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
 		if err != nil {
 			return err
 		}
-		defer db.Close()
 		return db.Ping()
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err.Error())
 	}
+	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := setup(); err != nil {
+		log.Fatal(err)
+	}
+
+	// run tests
 	code := m.Run()
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
+
+	// clean tests
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
 	}
 	os.Exit(code)
 }
 
 func TestExtract(t *testing.T) {
-
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
 		extractor := new(postgres.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
@@ -111,12 +114,6 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
-		err := setup()
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer cleanDatabase()
-
 		extractor := new(postgres.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":       user,
@@ -194,7 +191,7 @@ func setup() (err error) {
 	if err != nil {
 		return
 	}
-	err = mockDataGenerator()
+	err = populateMockData()
 	if err != nil {
 		return
 	}
@@ -202,22 +199,22 @@ func setup() (err error) {
 	return
 }
 
-func mockDataGenerator() (err error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
+func populateMockData() (err error) {
+	userDB, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
 	if err != nil {
 		return
 	}
-	defer db.Close()
+	defer userDB.Close()
 
 	table1 := "applicant"
 	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
 	table2 := "jobs"
 	columns2 := "(job_id int, job varchar(255), department varchar(255))"
-	err = createTable(db, table1, columns1)
+	err = createTable(userDB, table1, columns1)
 	if err != nil {
 		return
 	}
-	err = createTable(db, table2, columns2)
+	err = createTable(userDB, table2, columns2)
 	if err != nil {
 		return
 	}
@@ -225,12 +222,6 @@ func mockDataGenerator() (err error) {
 }
 
 func setupDatabaseAndUser() (err error) {
-	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
@@ -286,24 +277,5 @@ func populateTable(db *sql.DB, table string, values string) (err error) {
 	if err != nil {
 		return
 	}
-	return
-}
-
-func cleanDatabase() (err error) {
-	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user))
-	if err != nil {
-		return
-	}
-
 	return
 }
