@@ -1,9 +1,9 @@
-# bigquerytable
+# bigquery
 
 ## Usage
 ```yaml
 source:
-  type: bigquerytable
+  type: bigquery
   config:
     project_id: google-project-id
     credentials_json:

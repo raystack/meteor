@@ -2,7 +2,7 @@ package extractors
 
 import (
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/extractors/bigquerytable"
+	"github.com/odpf/meteor/plugins/extractors/bigquery"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
@@ -15,7 +15,7 @@ func PopulateFactory(factory *extractor.Factory) {
 	factory.SetTopicExtractor("kafka", kafka.New)
 
 	// populate table extractors
-	factory.SetTableExtractor("bigquerytable", bigquerytable.New)
+	factory.SetTableExtractor("bigquery", bigquery.New)
 	factory.SetTableExtractor("mysql", mysql.New)
 	factory.SetTableExtractor("mssql", mssql.New)
 	factory.SetTableExtractor("mongodb", mongodb.New)
