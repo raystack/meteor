@@ -6,11 +6,12 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins/utils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 )
 
 type Config struct {
-	Broker string `json:"broker"`
+	Broker string `mapstructure:"broker" validate:"required"`
 }
 
 type Extractor struct{}
@@ -19,11 +20,12 @@ func New() extractor.TopicExtractor {
 	return &Extractor{}
 }
 
-func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Topic, err error) {
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Topic, err error) {
 	// build config
-	config, err := e.getConfig(c)
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
 
 	// create client
