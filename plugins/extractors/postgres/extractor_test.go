@@ -10,6 +10,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,24 +60,14 @@ func TestExtract(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
+	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
+		err := setup()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer cleanDatabase()
+
 		extractor := new(postgres.Extractor)
-		db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
-		if err != nil {
-			db.Close()
-			t.Fatal(err)
-		}
-		err = mockDataGenerator(db)
-		if err != nil {
-			db.Close()
-			t.Fatal(err)
-		}
-		db.Close()
-		db, err = sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
-		if err != nil {
-			db.Close()
-			t.Fatal(err)
-		}
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":       user,
 			"password":      pass,
@@ -83,97 +75,91 @@ func TestExtract(t *testing.T) {
 			"database_name": testDB,
 		})
 		if err != nil {
-			cleanDatabase(db)
-			db.Close()
 			t.Fatal(err)
 		}
-		cleanDatabase(db)
-		db.Close()
+
 		expected := getExpectedVal()
-		assert.Equal(t, result, expected)
+		assert.Equal(t, expected, result)
 	})
 }
 
-func getExpectedVal() (expected []map[string]interface{}) {
-	expected = []map[string]interface{}{
+func getExpectedVal() []meta.Table {
+	return []meta.Table{
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "integer",
-					"field_name":  "applicant_id",
-					"is_nullable": "YES",
-					"length":      0,
-				},
-				{
-					"data_type":   "character varying",
-					"field_name":  "first_name",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "character varying",
-					"field_name":  "last_name",
-					"is_nullable": "YES",
-					"length":      255,
+			Urn:  "mockdata_meteor_metadata_test.applicant",
+			Name: "applicant",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						DataType:   "integer",
+						Name:       "applicant_id",
+						IsNullable: true,
+						Length:     int64(0),
+					},
+					{
+						DataType:   "character varying",
+						Name:       "first_name",
+						IsNullable: true,
+						Length:     int64(255),
+					},
+					{
+						DataType:   "character varying",
+						Name:       "last_name",
+						IsNullable: true,
+						Length:     int64(255),
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "applicant",
 		},
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "character varying",
-					"field_name":  "department",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "character varying",
-					"field_name":  "job",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "integer",
-					"field_name":  "job_id",
-					"is_nullable": "YES",
-					"length":      0,
+			Urn:  "mockdata_meteor_metadata_test.jobs",
+			Name: "jobs",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						DataType:   "character varying",
+						Name:       "department",
+						IsNullable: true,
+						Length:     int64(255),
+					},
+					{
+						DataType:   "character varying",
+						Name:       "job",
+						IsNullable: true,
+						Length:     int64(255),
+					},
+					{
+						DataType:   "integer",
+						Name:       "job_id",
+						IsNullable: true,
+						Length:     int64(0),
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "jobs",
 		},
 	}
+}
+
+func setup() (err error) {
+	err = setupDatabaseAndUser()
+	if err != nil {
+		return
+	}
+	err = mockDataGenerator()
+	if err != nil {
+		return
+	}
+
 	return
 }
 
-func mockDataGenerator(db *sql.DB) (err error) {
-	_, err = db.Exec(fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user))
+func mockDataGenerator() (err error) {
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
 	if err != nil {
 		return
 	}
-	_, err = db.Exec(fmt.Sprintf(`CREATE ROLE "%s" WITH SUPERUSER LOGIN PASSWORD '%s';`, user, pass))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`SET ROLE "%s";`, user))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
-	if err != nil {
-		return
-	}
-	db.Close()
-	db, err = sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
-	if err != nil {
-		return
-	}
+	defer db.Close()
+
 	table1 := "applicant"
 	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
 	table2 := "jobs"
@@ -186,7 +172,37 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	db.Close()
+	return
+}
+
+func setupDatabaseAndUser() (err error) {
+	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
+	if err != nil {
+		return
+	}
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
+	if err != nil {
+		return
+	}
+	_, err = db.Exec(fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user))
+	if err != nil {
+		return
+	}
+	_, err = db.Exec(fmt.Sprintf(`CREATE ROLE "%s" WITH SUPERUSER LOGIN PASSWORD '%s';`, user, pass))
+	if err != nil {
+		return
+	}
+	_, err = db.Exec(fmt.Sprintf(`SET ROLE "%s";`, user))
+	if err != nil {
+		return
+	}
+
 	return
 }
 
@@ -224,7 +240,13 @@ func populateTable(db *sql.DB, table string, values string) (err error) {
 	return
 }
 
-func cleanDatabase(db *sql.DB) (err error) {
+func cleanDatabase() (err error) {
+	db, err := sql.Open("postgres", "postgres://root:pass@localhost:5432?sslmode=disable")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
@@ -233,6 +255,6 @@ func cleanDatabase(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	db.Close()
+
 	return
 }

@@ -40,17 +40,19 @@ func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err 
 		return
 	}
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
 	if err != nil {
-		db.Close()
 		return
 	}
 	defer db.Close()
+
 	result, err = e.getDatabases(db)
 	if err != nil {
 		return
 	}
+
 	return
 }
 
@@ -63,7 +65,10 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(db, database, result)
+			result, err = e.getTablesInfo(db, database, result)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -88,8 +93,9 @@ func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []meta.Table
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getColumns(db, dbName, tableName)
-		if err1 != nil {
+		var columns []*facets.Column
+		columns, err = e.getColumns(db, dbName, tableName)
+		if err != nil {
 			return
 		}
 
@@ -114,21 +120,28 @@ func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (res
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType string
-		var isNull bool
+		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
 		result = append(result, &facets.Column{
 			Name:       fieldName,
 			DataType:   dataType,
-			IsNullable: isNull,
+			IsNullable: e.isNullable(isNullableString),
 			Length:     int64(length),
 		})
 	}
 	return result, nil
+}
+
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
+
+	return false
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
