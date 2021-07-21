@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -84,44 +85,34 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		expected := getExpectedVal()
-		assert.Equal(t, result, expected)
+		assert.Equal(t, expected, result)
 	})
 }
 
-func getExpectedVal() (expected []map[string]interface{}) {
-	expected = []map[string]interface{}{
+func getExpectedVal() []meta.Table {
+	return []meta.Table{
 		{
-			"collection_name": "connection",
-			"database_name":   testDB,
-			"document_count":  3,
+			Urn:  testDB + "." + "connection",
+			Name: "connection",
+			Profile: &meta.TableProfile{
+				TotalRows: 3,
+			},
 		},
 		{
-			"collection_name": "posts",
-			"database_name":   testDB,
-			"document_count":  3,
+			Urn:  testDB + "." + "posts",
+			Name: "posts",
+			Profile: &meta.TableProfile{
+				TotalRows: 3,
+			},
 		},
 		{
-			"collection_name": "reach",
-			"database_name":   testDB,
-			"document_count":  3,
-		},
-		{
-			"collection_name": "system.users",
-			"database_name":   "admin",
-			"document_count":  1,
-		},
-		{
-			"collection_name": "system.version",
-			"database_name":   "admin",
-			"document_count":  2,
-		},
-		{
-			"collection_name": "system.sessions",
-			"database_name":   "config",
-			"document_count":  0,
+			Urn:  testDB + "." + "reach",
+			Name: "reach",
+			Profile: &meta.TableProfile{
+				TotalRows: 3,
+			},
 		},
 	}
-	return
 }
 
 func mockDataGenerator(clientOptions *options.ClientOptions) (err error) {

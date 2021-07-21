@@ -15,6 +15,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var defaultCollections = map[string]bool{
+	"system.users":    true,
+	"system.version":  true,
+	"system.sessions": true,
+}
+
 type Config struct {
 	UserID   string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
@@ -69,8 +75,13 @@ func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (
 		}
 		sort.Strings(collections)
 		for _, collection_name := range collections {
+			if e.collectionIsDefault(collection_name) {
+				continue
+			}
+
 			count, err := db.Collection(collection_name).EstimatedDocumentCount(ctx)
 			if err != nil {
+				fmt.Println(count)
 				return result, err
 			}
 			result = append(result, meta.Table{
@@ -83,6 +94,15 @@ func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (
 		}
 	}
 	return result, err
+}
+
+func (e *Extractor) collectionIsDefault(collectionName string) bool {
+	isDefault, ok := defaultCollections[collectionName]
+	if !ok {
+		return false
+	}
+
+	return isDefault
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
