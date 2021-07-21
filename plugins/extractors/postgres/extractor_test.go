@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	retryFn := func() (err error) {
+	retryFn := func(r *dockertest.Resource) (err error) {
 		db, err = sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
 		if err != nil {
 			return err
@@ -66,6 +66,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// clean tests
+	db.Close()
 	if err := purgeFn(); err != nil {
 		log.Fatal(err)
 	}

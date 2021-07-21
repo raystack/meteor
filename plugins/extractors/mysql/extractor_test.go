@@ -1,22 +1,75 @@
+//+build integration
+
 package mysql_test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
-const testDB = "mockdata_meteor_metadata_test"
-const user = "meteor_test_user"
-const pass = "pass"
-const globalhost = "%"
+var db *sql.DB
+
+const (
+	testDB     = "mockdata_meteor_metadata_test"
+	user       = "meteor_test_user"
+	pass       = "pass"
+	globalhost = "%"
+)
+
+func TestMain(m *testing.M) {
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "mysql",
+		Tag:        "8.0.25",
+		Env: []string{
+			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
+		},
+		ExposedPorts: []string{"3306"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"3306": {
+				{HostIP: "0.0.0.0", HostPort: "3306"},
+			},
+		},
+	}
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		db, err = sql.Open("mysql", "root@tcp(localhost:3306)/")
+		if err != nil {
+			return err
+		}
+		return db.Ping()
+	}
+	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := setup(); err != nil {
+		log.Fatal(err)
+	}
+
+	// run tests
+	code := m.Run()
+
+	// clean tests
+	db.Close()
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
+}
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
@@ -50,12 +103,6 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		err, cleanUp := mockDataGenerator()
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer cleanUp()
-
 		extractor := new(mysql.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
@@ -133,16 +180,7 @@ func getExpectedVal() []meta.Table {
 	}
 }
 
-func mockDataGenerator() (err error, cleanUp func()) {
-	db, err := sql.Open("mysql", "root@tcp(localhost:3306)/")
-	if err != nil {
-		return
-	}
-	cleanUp = func() {
-		cleanDatabase(db)
-		db.Close()
-	}
-
+func setup() (err error) {
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
@@ -159,11 +197,11 @@ func mockDataGenerator() (err error, cleanUp func()) {
 	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
 	table2 := "jobs"
 	columns2 := "(job_id int, job varchar(255), department varchar(255))"
-	err = createTable(db, table1, columns1)
+	err = createTable(table1, columns1)
 	if err != nil {
 		return
 	}
-	err = createTable(db, table2, columns2)
+	err = createTable(table2, columns2)
 	if err != nil {
 		return
 	}
@@ -179,7 +217,7 @@ func mockDataGenerator() (err error, cleanUp func()) {
 	return
 }
 
-func createTable(db *sql.DB, table string, columns string) (err error) {
+func createTable(table string, columns string) (err error) {
 	query := "CREATE TABLE "
 	_, err = db.Exec(query + table + columns + ";")
 	if err != nil {
@@ -206,18 +244,5 @@ func populateTable(table string, values string, db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
-	return
-}
-
-func cleanDatabase(db *sql.DB) (err error) {
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("DROP USER IF EXISTS %s@%s", user, globalhost))
-	if err != nil {
-		return
-	}
-	db.Close()
 	return
 }
