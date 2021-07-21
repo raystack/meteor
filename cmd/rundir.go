@@ -24,10 +24,10 @@ func rundir(dirPath string) {
 	runner, cleanFn := initRunner(c, log)
 	defer cleanFn()
 
-	faileds, err := runner.RunMultiple(recipeList)
+	failedRecipes, err := runner.RunMultiple(recipeList)
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.WithField("failed_recipes", faileds).Info("Done!")
+		log.WithField("failed_recipes", failedRecipes).Info("Done!")
 	}
 }
