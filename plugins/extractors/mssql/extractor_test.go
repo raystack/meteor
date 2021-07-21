@@ -3,23 +3,70 @@
 package mssql_test
 
 import (
-	"fmt"
-	"testing"
-
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
+	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
-
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
-const testDB = "mockdata_meteor_metadata_test"
-const user = "sa"
-const pass = "P@ssword1234"
+const (
+	testDB = "mockdata_meteor_metadata_test"
+	user   = "sa"
+	pass   = "P@ssword1234"
+	port   = "1433"
+)
 
+var db *sql.DB
+
+func TestMain(m *testing.M) {
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "mcr.microsoft.com/mssql/server",
+		Tag:        "2019-latest",
+		Env: []string{
+			"SA_PASSWORD=P@ssword1234",
+			"ACCEPT_EULA=Y",
+		},
+		ExposedPorts: []string{"1433"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"1433": {
+				{HostIP: "0.0.0.0", HostPort: "1433"},
+			},
+		},
+	}
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		db, err = sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
+		if err != nil {
+			return err
+		}
+		return db.Ping()
+	}
+	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := setup(); err != nil {
+		log.Fatal(err)
+	}
+	// run tests
+	code := m.Run()
+	// clean tests
+	db.Close()
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
+}
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
 		extractor := new(mssql.Extractor)
@@ -29,34 +76,23 @@ func TestExtract(t *testing.T) {
 		})
 		assert.NotNil(t, err)
 	})
-
 	t.Run("should return error if no password in config", func(t *testing.T) {
 		extractor := new(mssql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:1433",
 		})
-
 		assert.NotNil(t, err)
 	})
-
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		extractor := new(mssql.Extractor)
 		_, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
 		})
-
 		assert.NotNil(t, err)
 	})
-
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		err, cleanUp := setup()
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer cleanUp()
-
 		extractor := new(mssql.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
@@ -70,7 +106,6 @@ func TestExtract(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 }
-
 func getExpectedVal() (expected []meta.Table) {
 	return []meta.Table{
 		{
@@ -127,17 +162,11 @@ func getExpectedVal() (expected []meta.Table) {
 		},
 	}
 }
-
-func setup() (err error, cleanUp func()) {
+func setup() (err error) {
 	db, err := sql.Open("mssql", "sqlserver://sa:P@ssword1234@localhost:1433/")
 	if err != nil {
 		return
 	}
-	cleanUp = func() {
-		cleanDatabase(db)
-		db.Close()
-	}
-
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB))
 	if err != nil {
 		return
@@ -164,7 +193,6 @@ func setup() (err error, cleanUp func()) {
 	}
 	return
 }
-
 func createTable(db *sql.DB, table string, columns string) (err error) {
 	query := "CREATE TABLE "
 	tableSchema := testDB + ".dbo." + table
@@ -182,10 +210,8 @@ func createTable(db *sql.DB, table string, columns string) (err error) {
 	if err != nil {
 		return
 	}
-
 	return
 }
-
 func populateTable(db *sql.DB, table string, values string) (err error) {
 	query := "INSERT INTO "
 	completeQuery := query + table + " VALUES " + values
@@ -193,14 +219,5 @@ func populateTable(db *sql.DB, table string, values string) (err error) {
 	if err != nil {
 		return
 	}
-	return
-}
-
-func cleanDatabase(db *sql.DB) (err error) {
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	db.Close()
 	return
 }
