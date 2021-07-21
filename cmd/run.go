@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/core/recipe"
+	"github.com/odpf/meteor/logger"
 )
 
 func run(recipeFile string) {
@@ -10,8 +11,9 @@ func run(recipeFile string) {
 	if err != nil {
 		panic(err)
 	}
+	log := logger.New(c.LogLevel)
 
-	runner, cleanFn := initRunner(c)
+	runner, cleanFn := initRunner(c, log)
 	defer cleanFn()
 	reader := recipe.NewReader()
 	rcp, err := reader.Read(recipeFile)
@@ -20,6 +22,8 @@ func run(recipeFile string) {
 	}
 	_, err = runner.Run(rcp)
 	if err != nil {
-		panic(err)
+		log.Error(err)
+	} else {
+		log.Info("Done!")
 	}
 }

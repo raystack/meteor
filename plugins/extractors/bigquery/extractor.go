@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -18,13 +19,18 @@ type Config struct {
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
 }
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func New() extractor.TableExtractor {
-	return &Extractor{}
+func New(logger plugins.Logger) extractor.TableExtractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+	e.logger.Info("extracting kafka metadata...")
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return

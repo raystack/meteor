@@ -19,7 +19,9 @@ require (
 	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.4.1
+	github.com/pkg/errors v0.9.1
 	github.com/segmentio/kafka-go v0.4.16
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.2.0 // indirect

@@ -5,17 +5,23 @@ import (
 	"fmt"
 
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/segmentio/kafka-go"
 )
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func New() extractor.TopicExtractor {
-	return &Extractor{}
+func New(logger plugins.Logger) extractor.TopicExtractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func (e *Extractor) Extract(config map[string]interface{}) (result []meta.Topic, err error) {
+	e.logger.Info("extracting kafka metadata...")
 	broker, ok := config["broker"]
 	if !ok {
 		return result, errors.New("invalid config")
