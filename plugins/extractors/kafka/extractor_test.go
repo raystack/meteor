@@ -3,17 +3,21 @@
 package kafka_test
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/logger"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/assert"
 )
 
+var log = logger.NewWithWriter("info", ioutil.Discard)
+
 func TestExtractorExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		extr := kafka.New()
+		extr := kafka.New(log)
 		_, err := extr.Extract(map[string]interface{}{
 			"wrong-config": "wrong-value",
 		})
@@ -22,7 +26,7 @@ func TestExtractorExtract(t *testing.T) {
 	})
 
 	t.Run("should return list of topic metadata", func(t *testing.T) {
-		extractor := kafka.New()
+		extractor := kafka.New(log)
 		result, err := extractor.Extract(map[string]interface{}{
 			"broker": "localhost:9092",
 		})

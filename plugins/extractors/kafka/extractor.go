@@ -38,6 +38,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Top
 	if err != nil {
 		return result, err
 	}
+	defer client.Close()
 
 	// fetch and build metadata
 	metadata, err := client.GetMetadata(nil, true, 1000)

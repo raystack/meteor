@@ -10,12 +10,13 @@ import (
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
 type Config struct {
-	ProjectID          string `mapstructure:"project_id"`
+	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
 }
 
@@ -31,9 +32,10 @@ func New(logger plugins.Logger) extractor.TableExtractor {
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
 	e.logger.Info("extracting kafka metadata...")
-	config, err := e.getConfig(configMap)
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
 	err = e.validateConfig(config)
 	if err != nil {
@@ -98,6 +100,7 @@ func (e *Extractor) mapTable(t *bigquery.Table) meta.Table {
 
 func (e *Extractor) createClient(ctx context.Context, config Config) (*bigquery.Client, error) {
 	if config.ServiceAccountJSON == "" {
+		e.logger.Info("credentials are not specified, creating bigquery client using Default Credentials...")
 		return bigquery.NewClient(ctx, config.ProjectID)
 	}
 
