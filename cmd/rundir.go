@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	goLog "log"
+
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/core/recipe"
 	"github.com/odpf/meteor/logger"
@@ -10,17 +12,18 @@ import (
 func rundir(dirPath string) {
 	c, err := config.LoadConfig()
 	if err != nil {
-		panic(err)
+		goLog.Fatal(err)
 	}
 	log := logger.New(c.LogLevel)
 
 	reader := recipe.NewReader()
 	recipeList, err := reader.ReadDir(dirPath)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	runner, cleanFn := initRunner(c, log)
 	defer cleanFn()
+
 	faileds, err := runner.RunMultiple(recipeList)
 	if err != nil {
 		log.Error(err)
