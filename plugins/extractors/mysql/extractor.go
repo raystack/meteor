@@ -56,7 +56,10 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(database, result, db)
+			result, err = e.getTablesInfo(database, result, db)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -78,8 +81,9 @@ func (e *Extractor) getTablesInfo(dbName string, result []meta.Table, db *sql.DB
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getColumns(dbName, tableName, db)
-		if err1 != nil {
+		var columns []*facets.Column
+		columns, err = e.getColumns(dbName, tableName, db)
+		if err != nil {
 			return
 		}
 		result = append(result, meta.Table{
@@ -105,10 +109,9 @@ func (e *Extractor) getColumns(dbName string, tableName string, db *sql.DB) (res
 		return
 	}
 	for rows.Next() {
-		var fieldName, fieldDesc, dataType string
-		var isNull bool
+		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
@@ -116,11 +119,19 @@ func (e *Extractor) getColumns(dbName string, tableName string, db *sql.DB) (res
 			Name:        fieldName,
 			DataType:    dataType,
 			Description: fieldDesc,
-			IsNullable:  isNull,
+			IsNullable:  e.isNullable(isNullableString),
 			Length:      int64(length),
 		})
 	}
 	return result, nil
+}
+
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
+
+	return false
 }
 
 func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {

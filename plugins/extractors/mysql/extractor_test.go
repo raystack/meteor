@@ -10,6 +10,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -51,16 +53,13 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extractor := new(mysql.Extractor)
-		db, err := sql.Open("mysql", "root@tcp(localhost:3306)/")
-		if err != nil {
-			return
-		}
-		err = mockDataGenerator(db)
+		err, cleanUp := mockDataGenerator()
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer cleanDatabase(db)
+		defer cleanUp()
+
+		extractor := new(mysql.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
@@ -70,71 +69,83 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		expected := getExpectedVal()
-		assert.Equal(t, result, expected)
+		assert.Equal(t, expected, result)
 	})
 }
 
-func getExpectedVal() (expected []map[string]interface{}) {
-	expected = []map[string]interface{}{
+func getExpectedVal() []meta.Table {
+	return []meta.Table{
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "int",
-					"field_desc":  "",
-					"field_name":  "applicant_id",
-					"is_nullable": "YES",
-					"length":      0,
-				},
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "first_name",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "last_name",
-					"is_nullable": "YES",
-					"length":      255,
+			Urn:  "mockdata_meteor_metadata_test.applicant",
+			Name: "applicant",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						Name:        "applicant_id",
+						DataType:    "int",
+						Description: "",
+						IsNullable:  true,
+						Length:      0,
+					},
+					{
+						Name:        "first_name",
+						DataType:    "varchar",
+						Description: "",
+						IsNullable:  true,
+						Length:      255,
+					},
+					{
+						Name:        "last_name",
+						DataType:    "varchar",
+						Description: "",
+						IsNullable:  true,
+						Length:      255,
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "applicant",
 		},
 		{
-			"columns": []map[string]interface{}{
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "department",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "varchar",
-					"field_desc":  "",
-					"field_name":  "job",
-					"is_nullable": "YES",
-					"length":      255,
-				},
-				{
-					"data_type":   "int",
-					"field_desc":  "",
-					"field_name":  "job_id",
-					"is_nullable": "YES",
-					"length":      0,
+			Urn:  "mockdata_meteor_metadata_test.jobs",
+			Name: "jobs",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						Name:        "department",
+						DataType:    "varchar",
+						Description: "",
+						IsNullable:  true,
+						Length:      255,
+					},
+					{
+						Name:        "job",
+						DataType:    "varchar",
+						Description: "",
+						IsNullable:  true,
+						Length:      255,
+					},
+					{
+						Name:        "job_id",
+						DataType:    "int",
+						Description: "",
+						IsNullable:  true,
+						Length:      0,
+					},
 				},
 			},
-			"database_name": "mockdata_meteor_metadata_test",
-			"table_name":    "jobs",
 		},
 	}
-	return
 }
 
-func mockDataGenerator(db *sql.DB) (err error) {
+func mockDataGenerator() (err error, cleanUp func()) {
+	db, err := sql.Open("mysql", "root@tcp(localhost:3306)/")
+	if err != nil {
+		return
+	}
+	cleanUp = func() {
+		cleanDatabase(db)
+		db.Close()
+	}
+
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
@@ -167,6 +178,7 @@ func mockDataGenerator(db *sql.DB) (err error) {
 	if err != nil {
 		return
 	}
+
 	return
 }
 
