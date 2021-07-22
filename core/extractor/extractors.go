@@ -18,6 +18,10 @@ type DashboardExtractor interface {
 	Extract(config map[string]interface{}) (data []meta.Dashboard, err error)
 }
 
+type UserExtractor interface {
+	Extract(config map[string]interface{}) (data []meta.User, err error)
+}
+
 type NotFoundError struct {
 	Name string
 }

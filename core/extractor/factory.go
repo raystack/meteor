@@ -3,11 +3,13 @@ package extractor
 type TableFactoryFn func() TableExtractor
 type TopicFactoryFn func() TopicExtractor
 type DashboardFactoryFn func() DashboardExtractor
+type UserFactoryFn func() UserExtractor
 
 type Factory struct {
 	tableFnStore     map[string]TableFactoryFn
 	topicFnStore     map[string]TopicFactoryFn
 	dashboardFnStore map[string]DashboardFactoryFn
+	userFnStore      map[string]UserFactoryFn
 }
 
 func NewFactory() *Factory {
@@ -15,6 +17,7 @@ func NewFactory() *Factory {
 		tableFnStore:     make(map[string]TableFactoryFn),
 		topicFnStore:     make(map[string]TopicFactoryFn),
 		dashboardFnStore: make(map[string]DashboardFactoryFn),
+		userFnStore:      make(map[string]UserFactoryFn),
 	}
 }
 
@@ -34,6 +37,11 @@ func (f *Factory) Get(name string) (extractor interface{}, err error) {
 		return dashboardFn(), nil
 	}
 
+	userFn, ok := f.userFnStore[name]
+	if ok {
+		return userFn(), nil
+	}
+
 	return nil, NotFoundError{name}
 }
 
@@ -47,4 +55,8 @@ func (f *Factory) SetTopicExtractor(name string, fn TopicFactoryFn) {
 
 func (f *Factory) SetDashboardExtractor(name string, fn DashboardFactoryFn) {
 	f.dashboardFnStore[name] = fn
+}
+
+func (f *Factory) SetUserExtractor(name string, fn UserFactoryFn) {
+	f.userFnStore[name] = fn
 }
