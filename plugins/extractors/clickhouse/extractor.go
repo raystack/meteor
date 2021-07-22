@@ -4,18 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 
+	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
 )
 
-var defaultDBList = []string{
-	"information_schema",
-	"mysql",
-	"performance_schema",
-	"sys",
-}
+var db *sql.DB
 
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -36,53 +32,29 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 		return result, extractor.InvalidConfigError{}
 	}
 
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
+	db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&debug=true", config.Host, config.UserID))
 	if err != nil {
 		return
 	}
-	result, err = e.getDatabases(db)
+	result, err = e.getTables()
 	return
 }
 
-func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
-	res, err := db.Query("SHOW DATABASES;")
+func (e *Extractor) getTables() (result []meta.Table, err error) {
+	res, err := db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
 	}
 	for res.Next() {
-		var database string
-		res.Scan(&database)
-		if checkNotDefaultDatabase(database) {
-			result, err = e.getTablesInfo(database, result, db)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
+		var dbName, tableName string
+		res.Scan(&tableName, &dbName)
 
-func (e *Extractor) getTablesInfo(dbName string, result []meta.Table, db *sql.DB) (_ []meta.Table, err error) {
-	sqlStr := "SHOW TABLES;"
-	_, err = db.Exec(fmt.Sprintf("USE %s;", dbName))
-	if err != nil {
-		return
-	}
-	rows, err := db.Query(sqlStr)
-	if err != nil {
-		return
-	}
-	for rows.Next() {
-		var tableName string
-		err = rows.Scan(&tableName)
-		if err != nil {
-			return
-		}
 		var columns []*facets.Column
-		columns, err = e.getColumns(dbName, tableName, db)
+		columns, err = e.getColumnsInfo(dbName, tableName)
 		if err != nil {
 			return
 		}
+
 		result = append(result, meta.Table{
 			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 			Name: tableName,
@@ -91,51 +63,28 @@ func (e *Extractor) getTablesInfo(dbName string, result []meta.Table, db *sql.DB
 			},
 		})
 	}
-	return result, err
+	return
 }
 
-func (e *Extractor) getColumns(dbName string, tableName string, db *sql.DB) (result []*facets.Column, err error) {
-	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
-				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
-				FROM information_schema.columns
-				WHERE table_name = ?
-				ORDER BY COLUMN_NAME ASC`
+func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*facets.Column, err error) {
+	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
-	rows, err := db.Query(sqlStr, tableName)
+	rows, err := db.Query(sqlStr)
 	if err != nil {
 		return
 	}
 	for rows.Next() {
-		var fieldName, fieldDesc, dataType, isNullableString string
-		var length int
-		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
+		var colName, colDesc, dataType string
+		var temp1, temp2, temp3, temp4 string
+		err = rows.Scan(&colName, &dataType, &colDesc, &temp1, &temp2, &temp3, &temp4)
 		if err != nil {
 			return
 		}
 		result = append(result, &facets.Column{
-			Name:        fieldName,
+			Name:        colName,
 			DataType:    dataType,
-			Description: fieldDesc,
-			IsNullable:  e.isNullable(isNullableString),
-			Length:      int64(length),
+			Description: colDesc,
 		})
 	}
 	return result, nil
-}
-
-func (e *Extractor) isNullable(value string) bool {
-	if value == "YES" {
-		return true
-	}
-
-	return false
-}
-
-func checkNotDefaultDatabase(database string) bool {
-	for i := 0; i < len(defaultDBList); i++ {
-		if database == defaultDBList[i] {
-			return false
-		}
-	}
-	return true
 }

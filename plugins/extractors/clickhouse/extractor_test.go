@@ -34,12 +34,8 @@ const (
 func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository: "yandex/clickhouse-server",
-		Tag:        "21.7.4-alpine",
-		Env: []string{
-			"CLICKHOUSE_USER=" + user,
-			"CLICKHOUSE_PASSWORD=" + pass,
-		},
+		Repository:   "yandex/clickhouse-server",
+		Tag:          "21.7.4-alpine",
 		ExposedPorts: []string{"9000"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"9000": {
@@ -49,7 +45,7 @@ func TestMain(m *testing.M) {
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://127.0.0.1:%s?user=default&debug=true", port))
+		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://127.0.0.1:%s?username=default&debug=true", port))
 		if err != nil {
 			return err
 		}
@@ -108,7 +104,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
 		extractor := new(clickhouse.Extractor)
 		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  user,
+			"user_id":  "default",
 			"password": pass,
 			"host":     "127.0.0.1:9000",
 		})
@@ -129,24 +125,18 @@ func getExpectedVal() []meta.Table {
 				Columns: []*facets.Column{
 					{
 						Name:        "applicant_id",
-						DataType:    "int",
+						DataType:    "Int32",
 						Description: "",
-						IsNullable:  true,
-						Length:      0,
-					},
-					{
-						Name:        "first_name",
-						DataType:    "varchar",
-						Description: "",
-						IsNullable:  true,
-						Length:      255,
 					},
 					{
 						Name:        "last_name",
-						DataType:    "varchar",
+						DataType:    "String",
 						Description: "",
-						IsNullable:  true,
-						Length:      255,
+					},
+					{
+						Name:        "first_name",
+						DataType:    "String",
+						Description: "",
 					},
 				},
 			},
@@ -157,25 +147,19 @@ func getExpectedVal() []meta.Table {
 			Schema: &facets.Columns{
 				Columns: []*facets.Column{
 					{
-						Name:        "department",
-						DataType:    "varchar",
+						Name:        "job_id",
+						DataType:    "Int32",
 						Description: "",
-						IsNullable:  true,
-						Length:      255,
 					},
 					{
 						Name:        "job",
-						DataType:    "varchar",
+						DataType:    "String",
 						Description: "",
-						IsNullable:  true,
-						Length:      255,
 					},
 					{
-						Name:        "job_id",
-						DataType:    "int",
+						Name:        "department",
+						DataType:    "String",
 						Description: "",
-						IsNullable:  true,
-						Length:      0,
 					},
 				},
 			},
@@ -184,14 +168,6 @@ func getExpectedVal() []meta.Table {
 }
 
 func setup() (err error) {
-	_, err = db.Exec(fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user))
-	if err != nil {
-		return
-	}
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
 	if err != nil {
 		return
