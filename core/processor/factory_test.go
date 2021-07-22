@@ -1,6 +1,7 @@
 package processor_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/odpf/meteor/core/processor"
@@ -10,11 +11,12 @@ import (
 type mockProcessor struct {
 }
 
-func (p *mockProcessor) Process(data interface{}, config map[string]interface{}) (interface{}, error) {
-	return data, nil
+func (p *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
+	out <- in
+	return nil
 }
 
-func newMockProcessor() processor.Processor {
+func newMockProcessor() *mockProcessor {
 	return new(mockProcessor)
 }
 
@@ -23,7 +25,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "wrong-name"
 
 		factory := processor.NewFactory()
-		factory.Set("mock", newMockProcessor)
+		factory.Register("mock", newMockProcessor())
 
 		_, err := factory.Get(name)
 		assert.Equal(t, processor.NotFoundError{name}, err)
@@ -33,7 +35,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "mock"
 
 		factory := processor.NewFactory()
-		factory.Set(name, newMockProcessor)
+		factory.Register(name, newMockProcessor())
 
 		extr, err := factory.Get(name)
 		if err != nil {
@@ -45,11 +47,11 @@ func TestFactoryGet(t *testing.T) {
 	})
 }
 
-func TestFactorySet(t *testing.T) {
+func TestFactoryRegister(t *testing.T) {
 	t.Run("should add processor factory with given key", func(t *testing.T) {
 		factory := processor.NewFactory()
-		factory.Set("mock1", newMockProcessor)
-		factory.Set("mock2", newMockProcessor)
+		factory.Register("mock1", newMockProcessor())
+		factory.Register("mock2", newMockProcessor())
 
 		mock1, err := factory.Get("mock1")
 		if err != nil {

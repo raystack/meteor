@@ -24,7 +24,7 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.TableExtractor {
+func New(logger plugins.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}

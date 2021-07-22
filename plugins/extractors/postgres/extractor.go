@@ -25,7 +25,7 @@ type Config struct {
 
 type Extractor struct{}
 
-func New() extractor.TableExtractor {
+func New() *Extractor {
 	return &Extractor{}
 }
 

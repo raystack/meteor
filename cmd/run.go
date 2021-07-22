@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/odpf/meteor/plugins"
 	goLog "log"
 
 	"github.com/odpf/meteor/config"
@@ -14,19 +15,15 @@ func run(recipeFile string) {
 		goLog.Fatal(err)
 	}
 	log := logger.New(c.LogLevel)
+	plugins.Log.Level = log.Level
 
 	reader := recipe.NewReader()
 	rcp, err := reader.Read(recipeFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	runner, cleanFn := initRunner(c, log)
-	defer cleanFn()
-
-	_, err = runner.Run(rcp)
-	if err != nil {
-		log.Error(err)
-	} else {
-		log.Info("Done!")
+	if err = initRunner(c, log).Run(rcp); err != nil {
+		log.Fatal(err)
 	}
+	log.Info("Done!")
 }
