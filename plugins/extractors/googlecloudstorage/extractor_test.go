@@ -16,7 +16,7 @@ var log = logger.NewWithWriter("info", ioutil.Discard)
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		extr := bigquery.New(log)
+		extr := googlecloudstorage.New(log)
 		_, err := extr.Extract(map[string]interface{}{
 			"wrong-config": "sample-project",
 		})

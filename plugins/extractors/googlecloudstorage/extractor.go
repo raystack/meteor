@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 
 	"cloud.google.com/go/storage"
 	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -25,46 +25,13 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-type Bucket struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-	Urn          string
-	BucketName   string
-	Location     string
-	LocationType string
-	StorageClass string
-	Timestamps   *common.Timestamp
-	Tags         *facets.Tags
-	Event        *common.Event
-	Blobs        []Blob
-}
-type Blob struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-	Urn         string               `protobuf:"bytes,1,opt,name=urn,proto3" json:"urn,omitempty"`
-	Name        string               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Source      string               `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
-	Description string               `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	BucketUrn   string               `protobuf:"bytes,5,opt,name=bucket_urn,proto3" json:"bucket_urn,omitempty"`
-	Size        Integer              `protobuf:"bytes,6,opt,name=size,proto3" json:"size,omitempty"`
-	DeletedAt   *timestamp.Timestamp `protobuf:"bytes,7,opt,name=deleted_at,proto3" json:"deleted_at,omitempty"`
-	ExpiredAt   *timestamp.Timestamp `protobuf:"bytes,8,opt,name=expired_at,proto3" json:"expired_at,omitempty"`
-	Ownership   *facets.Ownership    `protobuf:"bytes,9,opt,name=ownership,proto3" json:"ownership,omitempty"`
-	Tags        *facets.Tags         `protobuf:"bytes,21,opt,name=tags,proto3" json:"tags,omitempty"`
-	Custom      *facets.Custom       `protobuf:"bytes,22,opt,name=custom,proto3" json:"custom,omitempty"`
-	Timestamps  *common.Timestamp    `protobuf:"bytes,23,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
-	Event       *common.Event        `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
-}
-
-func New(logger plugins.Logger) extractor.TableExtractor {
+func New(logger plugins.Logger) extractor.BucketExtractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []Bucket, err error) {
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Bucket, err error) {
 	e.logger.Info("extracting kafka metadata...")
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -89,54 +56,76 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []Bucket, 
 	return
 }
 
-func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string) ([]Bucket, err error) {
+func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string) ([]meta.Bucket, error) {
 	it := client.Buckets(ctx, projectID)
-	var results []Bucket
+	var results []meta.Bucket
 
 	bucket, err := it.Next()
 	for err == nil {
-		bucketName := bucket.Name
-		results, err = e.appendObjectsMetadata(ctx, bucketName, client)
 		if err != nil {
-			return
+			return nil, err
 		}
-
+		blobs, err := e.getBlobs(ctx, bucket.Name, client, projectID)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, e.mapBucket(bucket, projectID, blobs))
 		bucket, err = it.Next()
 	}
 	if err == iterator.Done {
 		err = nil
 	}
 
-	return
+	return results, nil
 }
 
-func (e *Extractor) appendObjectsMetadata(ctx context.Context, bucketName string, client *storage.Client) ([]Blob, error) {
+func (e *Extractor) getBlobs(ctx context.Context, bucketName string, client *storage.Client, projectID string) ([]meta.Blob, error) {
 	it := client.Bucket(bucketName).Objects(ctx, nil)
-	var results []Blob
+	var blobs []meta.Blob
 
 	object, err := it.Next()
 	for err == nil {
-		results = append(results, e.mapObject(object))
+		blobs = append(blobs, e.mapObject(object, projectID))
 		object, err = it.Next()
 	}
 	if err == iterator.Done {
 		err = nil
 	}
 
-	return results, err
+	return blobs, err
 }
 
-func (e *Extractor) mapTable(b *storage.BucketAttrs, projectID string) Bucket {
-	return Bucket{
-		Urn          : fmt.Sprintf("%s/%s", ProjectID, b.Name),
-		BucketName   : b.Name,
-		Location     : b.Location,
-		LocationType : b.LocationType,
-		StorageClass : b.StorageClass,
-		Timestamps   : &common.Timestamp{
-			CreatedAt: b.Created,
+func (e *Extractor) mapBucket(b *storage.BucketAttrs, projectID string, blobs []meta.Blob) meta.Bucket {
+	return meta.Bucket{
+		Urn:          fmt.Sprintf("%s/%s", projectID, b.Name),
+		BucketName:   b.Name,
+		Location:     b.Location,
+		LocationType: b.LocationType,
+		StorageClass: b.StorageClass,
+		Blobs:        blobs,
+		Source:       "google cloud storage",
+		//TODO
+		//Timestamps   : &common.Timestamp{
+		//	CreatedAt: &timestamp.Timestamp{},
+		//},
+		//Tags: &facets.Tags{},
+	}
+}
+
+func (e *Extractor) mapObject(blob *storage.ObjectAttrs, projectID string) meta.Blob {
+	return meta.Blob{
+		Urn:  fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
+		Name: blob.Name,
+		Size: blob.Size,
+		//DeletedAt: ,
+		//ExpiredAt
+		Ownership: &facets.Ownership{
+			Owners: []*facets.Owner{
+				{Name: blob.Owner},
+			},
 		},
-		Tags: b.Labels,
+		//Tags
+		//Timestamps
 	}
 }
 
