@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go/bigquery v1.8.0
 	cloud.google.com/go/storage v1.15.0 // indirect
+	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
@@ -14,6 +15,7 @@ require (
 	github.com/etsy/statsd v0.9.0
 	github.com/go-playground/validator/v10 v10.7.0
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/godror/godror v0.25.3
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/go-hclog v0.16.1

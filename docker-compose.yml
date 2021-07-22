@@ -18,3 +18,9 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
+  clickhouse:
+    image: yandex/clickhouse-server
+    ports:
+    - "8123:8123"
+    - "9000:9000"
+    
