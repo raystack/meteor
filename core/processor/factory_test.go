@@ -10,7 +10,7 @@ import (
 type mockProcessor struct {
 }
 
-func (p *mockProcessor) Process(data []map[string]interface{}, config map[string]interface{}) ([]map[string]interface{}, error) {
+func (p *mockProcessor) Process(data interface{}, config map[string]interface{}) (interface{}, error) {
 	return data, nil
 }
 

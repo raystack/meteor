@@ -1,15 +1,36 @@
 package extractor
 
-import "fmt"
+import (
+	"errors"
+)
 
-type Extractor interface {
-	Extract(config map[string]interface{}) (data []map[string]interface{}, err error)
+type Extractor struct {
+	factory *Factory
 }
 
-type NotFoundError struct {
-	Name string
+func New(factory *Factory) *Extractor {
+	return &Extractor{factory: factory}
 }
 
-func (err NotFoundError) Error() string {
-	return fmt.Sprintf("could not find extractor \"%s\"", err.Name)
+func (e *Extractor) Extract(name string, config map[string]interface{}) (data interface{}, err error) {
+	extr, err := e.factory.Get(name)
+	if err != nil {
+		return
+	}
+
+	switch extr := extr.(type) {
+	case TableExtractor:
+		data, err = extr.Extract(config)
+		break
+	case TopicExtractor:
+		data, err = extr.Extract(config)
+		break
+	case DashboardExtractor:
+		data, err = extr.Extract(config)
+		break
+	default:
+		err = errors.New("invalid extractor type")
+	}
+
+	return
 }

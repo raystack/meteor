@@ -2,18 +2,13 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/utils"
 )
-
-type Config struct {
-	UserID       string `mapstructure:"user_id"`
-	Password     string `mapstructure:"password"`
-	Host         string `mapstructure:"host"`
-	DatabaseName string `mapstructure:"database_name"`
-}
 
 var defaultDBList = []string{
 	"information_schema",
@@ -21,32 +16,43 @@ var defaultDBList = []string{
 	"root",
 }
 
+type Config struct {
+	UserID       string `mapstructure:"user_id" validate:"required"`
+	Password     string `mapstructure:"password" validate:"required"`
+	Host         string `mapstructure:"host" validate:"required"`
+	DatabaseName string `mapstructure:"database_name" default:"postgres"`
+}
+
 type Extractor struct{}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
-	config, err := e.getConfig(configMap)
+func New() extractor.TableExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err error) {
+	var config Config
+	err = utils.BuildConfig(c, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
 	if err != nil {
-		db.Close()
 		return
 	}
 	defer db.Close()
+
 	result, err = e.getDatabases(db)
 	if err != nil {
 		return
 	}
+
 	return
 }
 
-func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, err error) {
+func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
 	res, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return
@@ -55,13 +61,16 @@ func (e *Extractor) getDatabases(db *sql.DB) (result []map[string]interface{}, e
 		var database string
 		res.Scan(&database)
 		if checkNotDefaultDatabase(database) {
-			result, _ = e.getTablesInfo(db, database, result)
+			result, err = e.getTablesInfo(db, database, result)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
 }
 
-func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string]interface{}) (_ []map[string]interface{}, err error) {
+func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []meta.Table) (_ []meta.Table, err error) {
 	sqlStr := `SELECT table_name
 	FROM information_schema.tables
 	WHERE table_schema = 'public'
@@ -80,20 +89,24 @@ func (e *Extractor) getTablesInfo(db *sql.DB, dbName string, result []map[string
 		if err != nil {
 			return
 		}
-		columns, err1 := e.getTableFieldsInfo(db, dbName, tableName)
-		if err1 != nil {
+		var columns []*facets.Column
+		columns, err = e.getColumns(db, dbName, tableName)
+		if err != nil {
 			return
 		}
-		tableData := make(map[string]interface{})
-		tableData["database_name"] = dbName
-		tableData["table_name"] = tableName
-		tableData["columns"] = columns
-		result = append(result, tableData)
+
+		result = append(result, meta.Table{
+			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
+			Name: tableName,
+			Schema: &facets.Columns{
+				Columns: columns,
+			},
+		})
 	}
 	return result, err
 }
 
-func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName string) (result []map[string]interface{}, err error) {
+func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (result []*facets.Column, err error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -103,41 +116,28 @@ func (e *Extractor) getTableFieldsInfo(db *sql.DB, dbName string, tableName stri
 		return
 	}
 	for rows.Next() {
-		var fieldName, dataType, isNull string
+		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNull, &length)
+		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
 			return
 		}
-		row := make(map[string]interface{})
-		row["field_name"] = fieldName
-		row["data_type"] = dataType
-		row["is_nullable"] = isNull
-		row["length"] = length
-		result = append(result, row)
+		result = append(result, &facets.Column{
+			Name:       fieldName,
+			DataType:   dataType,
+			IsNullable: e.isNullable(isNullableString),
+			Length:     int64(length),
+		})
 	}
 	return result, nil
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
+func (e *Extractor) isNullable(value string) bool {
+	if value == "YES" {
+		return true
+	}
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.UserID == "" {
-		return errors.New("user_id is required")
-	}
-	if config.Password == "" {
-		return errors.New("password is required")
-	}
-	if config.Host == "" {
-		return errors.New("host address is required")
-	}
-	if config.DatabaseName == "" {
-		config.DatabaseName = "postgres"
-	}
-	return
+	return false
 }
 
 func checkNotDefaultDatabase(database string) bool {

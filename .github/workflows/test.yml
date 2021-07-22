@@ -4,41 +4,6 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:4.4.6
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_ROOT_USERNAME: user
-          MONGO_INITDB_ROOT_PASSWORD: abcd
-      mysql:
-        image: mysql:8.0.25
-        ports:
-          - '3306:3306'
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: true
-      postgres:
-        image: postgres:13.3
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: root
-          POSTGRES_PASSWORD: pass
-      mssql:
-        image: mcr.microsoft.com/mssql/server:2019-latest
-        ports:
-          - 1433:1433
-        env:
-          SA_PASSWORD: P@ssword1234
-          ACCEPT_EULA: Y
-      elasticsearch:
-        image: elasticsearch:7.13.2
-        ports:
-          - 9200:9200
-        env:
-          discovery.type: single-node
-          ES_JAVA_OPTS: -Xms512m -Xmx512m
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2

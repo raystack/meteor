@@ -1,37 +1,23 @@
 version: '3'
 services:
-  mongo:
-    image: mongo:4.4.6
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=user
-      - MONGO_INITDB_ROOT_PASSWORD=abcd
-    restart: on-failure
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
     ports:
-      - 27017:27017
-  mysql:
-    image: mysql:8.0.25
-    restart: always
+      - '2181:2181'
     environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
     ports:
-      - '3306:3306'
-    expose:
-      - '3306'
-  postgres:
-    image: postgres
-    restart: always
+      - '9092:9092'
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=pass
-    ports:
-      - "5432:5432"
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      - SA_PASSWORD=P@ssword1234
-      - ACCEPT_EULA=Y
-    ports:
-      - "1433:1433"
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
   elasticsearch:
     image: elasticsearch:7.13.2
     environment:

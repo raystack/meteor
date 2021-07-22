@@ -2,33 +2,43 @@ package mongodb
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sort"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Extractor struct{}
-
-type Config struct {
-	UserID   string `mapstructure:"user_id"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host"`
+var defaultCollections = map[string]bool{
+	"system.users":    true,
+	"system.version":  true,
+	"system.sessions": true,
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
-	config, err := e.getConfig(configMap)
+type Config struct {
+	UserID   string `mapstructure:"user_id" validate:"required"`
+	Password string `mapstructure:"password" validate:"required"`
+	Host     string `mapstructure:"host" validate:"required"`
+}
+
+type Extractor struct{}
+
+func New() extractor.TableExtractor {
+	return &Extractor{}
+}
+
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
+
 	uri := "mongodb://" + config.UserID + ":" + config.Password + "@" + config.Host
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.NewClient(clientOptions)
@@ -47,7 +57,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	return result, err
 }
 
-func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (result []map[string]interface{}, err error) {
+func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (result []meta.Table, err error) {
 	databases, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
@@ -61,32 +71,33 @@ func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (
 			return
 		}
 		sort.Strings(collections)
-		for _, collection := range collections {
-			row := make(map[string]interface{})
-			row["collection_name"] = collection
-			row["database_name"] = db_name
-			count, _ := db.Collection(collection).EstimatedDocumentCount(ctx)
-			row["document_count"] = int(count)
-			result = append(result, row)
+		for _, collection_name := range collections {
+			if e.collectionIsDefault(collection_name) {
+				continue
+			}
+
+			count, err := db.Collection(collection_name).EstimatedDocumentCount(ctx)
+			if err != nil {
+				fmt.Println(count)
+				return result, err
+			}
+			result = append(result, meta.Table{
+				Urn:  fmt.Sprintf("%s.%s", db_name, collection_name),
+				Name: collection_name,
+				Profile: &meta.TableProfile{
+					TotalRows: count,
+				},
+			})
 		}
 	}
 	return result, err
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
+func (e *Extractor) collectionIsDefault(collectionName string) bool {
+	isDefault, ok := defaultCollections[collectionName]
+	if !ok {
+		return false
+	}
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.UserID == "" {
-		return errors.New("user_id is required")
-	}
-	if config.Password == "" {
-		return errors.New("password is required")
-	}
-	if config.Host == "" {
-		return errors.New("host address is required")
-	}
-	return
+	return isDefault
 }

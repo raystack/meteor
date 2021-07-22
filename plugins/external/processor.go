@@ -17,7 +17,7 @@ type Processor interface {
 }
 
 type processorArgs struct {
-	Data   []map[string]interface{}
+	Data   interface{}
 	Config map[string]interface{}
 }
 
@@ -36,7 +36,7 @@ func (e *ProcessorRPC) Name() (name string, err error) {
 }
 
 // This function will be run on the host
-func (e *ProcessorRPC) Process(data []map[string]interface{}, config map[string]interface{}) (resp []map[string]interface{}, err error) {
+func (e *ProcessorRPC) Process(data interface{}, config map[string]interface{}) (resp []interface{}, err error) {
 	args, err := json.Marshal(processorArgs{
 		Data:   data,
 		Config: config,
@@ -69,7 +69,7 @@ func (s *ProcessorRPCServer) Name(args interface{}, name *string) (err error) {
 }
 
 // This function will be run on the remote plugin
-func (s *ProcessorRPCServer) Process(argsBytes []byte, res *[]map[string]interface{}) (err error) {
+func (s *ProcessorRPCServer) Process(argsBytes []byte, res *interface{}) (err error) {
 	var args processorArgs
 	err = json.Unmarshal(argsBytes, &args)
 	if err != nil {

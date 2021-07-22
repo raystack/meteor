@@ -1,12 +1,14 @@
 package recipe_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/core/processor"
 	"github.com/odpf/meteor/core/recipe"
 	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,6 +30,15 @@ var validRecipe = recipe.Recipe{
 	},
 }
 
+var finalData = []meta.Table{
+	{
+		Urn: "foo-1-bar",
+	},
+	{
+		Urn: "foo-2-bar",
+	},
+}
+
 func TestRunnerRun(t *testing.T) {
 	rcp := validRecipe
 
@@ -36,7 +47,7 @@ func TestRunnerRun(t *testing.T) {
 		procFactory := processor.NewFactory()
 		sinkFactory := sink.NewFactory()
 
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, nil)
 		_, err := r.Run(rcp)
 
 		assert.NotNil(t, err)
@@ -47,7 +58,7 @@ func TestRunnerRun(t *testing.T) {
 		mSink.On("Sink", mock.Anything, mock.Anything).Return(nil)
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Set("test-extractor", newTestExtractor)
+		extrFactory.SetTableExtractor("test-extractor", newSampleTableExtractor)
 		procFactory := processor.NewFactory()
 		procFactory.Set("test-processor", newTestProcessor)
 		sinkFactory := sink.NewFactory()
@@ -76,7 +87,7 @@ func TestRunnerRun(t *testing.T) {
 				},
 			},
 		}
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, nil)
 		actual, err := r.Run(rcp)
 		if err != nil {
 			t.Error(err.Error())
@@ -87,40 +98,27 @@ func TestRunnerRun(t *testing.T) {
 	})
 
 	t.Run("should run extractor, processors and sinks", func(t *testing.T) {
-		finalData := []map[string]interface{}{
-			{
-				"foo":  "bar",
-				"test": true,
-			},
-			{
-				"bar":  "foo",
-				"test": true,
-			},
-		}
-
 		mSink := new(mockSink)
 		mSink.On("Sink", finalData, rcp.Sinks[0].Config).Return(nil)
 		defer mSink.AssertExpectations(t)
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Set("test-extractor", newTestExtractor)
+		extrFactory.SetTableExtractor("test-extractor", newSampleTableExtractor)
 		procFactory := processor.NewFactory()
 		procFactory.Set("test-processor", newTestProcessor)
 		sinkFactory := sink.NewFactory()
 		sinkFactory.Set("mock-sink", newTestSink(mSink))
 
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
-		run, err := r.Run(rcp)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, nil)
+		_, err := r.Run(rcp)
 		if err != nil {
 			t.Error(err.Error())
 		}
-
-		assert.Equal(t, finalData, run.Data)
 	})
 
 	t.Run("should record metrics", func(t *testing.T) {
 		extrFactory := extractor.NewFactory()
-		extrFactory.Set("test-extractor", newTestExtractor)
+		extrFactory.SetTableExtractor("test-extractor", newSampleTableExtractor)
 		procFactory := processor.NewFactory()
 		procFactory.Set("test-processor", newTestProcessor)
 		mSink := new(mockSink)
@@ -131,7 +129,7 @@ func TestRunnerRun(t *testing.T) {
 		monitor.On("RecordRun", rcp, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, monitor)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, monitor)
 		_, err := r.Run(rcp)
 		if err != nil {
 			t.Error(err.Error())
@@ -150,7 +148,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Set("test-extractor", newTestExtractor)
+		extrFactory.SetTableExtractor("test-extractor", newSampleTableExtractor)
 		procFactory := processor.NewFactory()
 		procFactory.Set("test-processor", newTestProcessor)
 		mSink := new(mockSink)
@@ -158,7 +156,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sinkFactory := sink.NewFactory()
 		sinkFactory.Set("mock-sink", newTestSink(mSink))
 
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, nil)
 		faileds, err := r.RunMultiple(recipeList)
 		assert.Nil(t, err)
 
@@ -173,21 +171,10 @@ func TestRunnerRunMultiple(t *testing.T) {
 			{Name: "mock-sink-2"},
 		}
 
-		finalData := []map[string]interface{}{
-			{
-				"foo":  "bar",
-				"test": true,
-			},
-			{
-				"bar":  "foo",
-				"test": true,
-			},
-		}
-
 		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Set("test-extractor", newTestExtractor)
+		extrFactory.SetTableExtractor("test-extractor", newSampleTableExtractor)
 		procFactory := processor.NewFactory()
 		procFactory.Set("test-processor", newTestProcessor)
 		sink1 := new(mockSink)
@@ -200,37 +187,48 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sinkFactory.Set("mock-sink", newTestSink(sink1))
 		sinkFactory.Set("mock-sink-2", newTestSink(sink2))
 
-		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
+		r := recipe.NewRunner(extractor.New(extrFactory), procFactory, sinkFactory, nil)
 		faileds, err := r.RunMultiple(recipeList)
 		assert.Nil(t, err)
 		assert.Equal(t, []string{}, faileds)
 	})
 }
 
+// This test processor will append meta.Table.Urn with "-bar"
 type testProcessor struct{}
 
 func newTestProcessor() processor.Processor {
 	return &testProcessor{}
 }
 
-func (t *testProcessor) Process(data []map[string]interface{}, config map[string]interface{}) ([]map[string]interface{}, error) {
-	for _, d := range data {
-		d["test"] = true
+func (t *testProcessor) Process(data interface{}, config map[string]interface{}) (interface{}, error) {
+	tables, ok := data.([]meta.Table)
+	if !ok {
+		return nil, errors.New("invalid data type")
 	}
 
-	return data, nil
+	for i := 0; i < len(tables); i++ {
+		table := &tables[i]
+		table.Urn = table.Urn + "-bar"
+	}
+
+	return tables, nil
 }
 
-type testExtractor struct{}
+type sampleTableExtractor struct{}
 
-func newTestExtractor() extractor.Extractor {
-	return &testExtractor{}
+func newSampleTableExtractor() extractor.TableExtractor {
+	return &sampleTableExtractor{}
 }
 
-func (t *testExtractor) Extract(config map[string]interface{}) ([]map[string]interface{}, error) {
-	data := []map[string]interface{}{
-		{"foo": "bar"},
-		{"bar": "foo"},
+func (t *sampleTableExtractor) Extract(config map[string]interface{}) ([]meta.Table, error) {
+	data := []meta.Table{
+		{
+			Urn: "foo-1",
+		},
+		{
+			Urn: "foo-2",
+		},
 	}
 	return data, nil
 }
@@ -245,7 +243,7 @@ func newTestSink(s sink.Sink) sink.FactoryFn {
 	}
 }
 
-func (m *mockSink) Sink(data []map[string]interface{}, config map[string]interface{}) error {
+func (m *mockSink) Sink(data interface{}, config map[string]interface{}) error {
 	args := m.Called(data, config)
 	return args.Error(0)
 }

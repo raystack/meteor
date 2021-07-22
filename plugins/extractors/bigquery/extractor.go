@@ -1,26 +1,41 @@
-package bigquerytable
+package bigquery
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
 type Config struct {
-	ProjectID          string `mapstructure:"project_id"`
+	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
 }
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
-	config, err := e.getConfig(configMap)
+func New(logger plugins.Logger) extractor.TableExtractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
+func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+	e.logger.Info("extracting kafka metadata...")
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return result, extractor.InvalidConfigError{}
 	}
 	err = e.validateConfig(config)
 	if err != nil {
@@ -40,7 +55,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	return
 }
 
-func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (results []map[string]interface{}, err error) {
+func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (results []meta.Table, err error) {
 	it := client.Datasets(ctx)
 
 	dataset, err := it.Next()
@@ -59,7 +74,7 @@ func (e *Extractor) getMetadata(ctx context.Context, client *bigquery.Client) (r
 	return
 }
 
-func (e *Extractor) appendTablesMetadata(ctx context.Context, results []map[string]interface{}, dataset *bigquery.Dataset) ([]map[string]interface{}, error) {
+func (e *Extractor) appendTablesMetadata(ctx context.Context, results []meta.Table, dataset *bigquery.Dataset) ([]meta.Table, error) {
 	it := dataset.Tables(ctx)
 
 	table, err := it.Next()
@@ -74,16 +89,18 @@ func (e *Extractor) appendTablesMetadata(ctx context.Context, results []map[stri
 	return results, err
 }
 
-func (e *Extractor) mapTable(t *bigquery.Table) map[string]interface{} {
-	return map[string]interface{}{
-		"name":       t.TableID,
-		"dataset_id": t.DatasetID,
-		"project_id": t.ProjectID,
+func (e *Extractor) mapTable(t *bigquery.Table) meta.Table {
+	return meta.Table{
+		Urn:         fmt.Sprintf("%s.%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+		Name:        t.TableID,
+		Source:      "bigquery",
+		Description: t.DatasetID,
 	}
 }
 
 func (e *Extractor) createClient(ctx context.Context, config Config) (*bigquery.Client, error) {
 	if config.ServiceAccountJSON == "" {
+		e.logger.Info("credentials are not specified, creating bigquery client using Default Credentials...")
 		return bigquery.NewClient(ctx, config.ProjectID)
 	}
 
