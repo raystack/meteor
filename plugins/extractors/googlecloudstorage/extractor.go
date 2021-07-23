@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
 	"github.com/mitchellh/mapstructure"
@@ -14,6 +16,10 @@ import (
 	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+)
+
+const (
+	metadataSource = "googlecloudstorage"
 )
 
 type Config struct {
@@ -80,9 +86,9 @@ func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, pro
 	return results, nil
 }
 
-func (e *Extractor) getBlobs(ctx context.Context, bucketName string, client *storage.Client, projectID string) ([]meta.Blob, error) {
+func (e *Extractor) getBlobs(ctx context.Context, bucketName string, client *storage.Client, projectID string) (*facets.Blobs, error) {
 	it := client.Bucket(bucketName).Objects(ctx, nil)
-	var blobs []meta.Blob
+	var blobs []*facets.Blob
 
 	object, err := it.Next()
 	for err == nil {
@@ -93,40 +99,45 @@ func (e *Extractor) getBlobs(ctx context.Context, bucketName string, client *sto
 		err = nil
 	}
 
-	return blobs, err
+	blobsResult := &facets.Blobs{
+		Blobs: blobs,
+	}
+	return blobsResult, err
 }
 
-func (e *Extractor) mapBucket(b *storage.BucketAttrs, projectID string, blobs []meta.Blob) meta.Bucket {
+func (e *Extractor) mapBucket(b *storage.BucketAttrs, projectID string, blobs *facets.Blobs) meta.Bucket {
 	return meta.Bucket{
-		Urn:          fmt.Sprintf("%s/%s", projectID, b.Name),
-		BucketName:   b.Name,
-		Location:     b.Location,
-		LocationType: b.LocationType,
-		StorageClass: b.StorageClass,
-		Blobs:        blobs,
-		Source:       "google cloud storage",
-		//TODO
-		//Timestamps   : &common.Timestamp{
-		//	CreatedAt: &timestamp.Timestamp{},
-		//},
-		//Tags: &facets.Tags{},
+		Urn:         fmt.Sprintf("%s/%s", projectID, b.Name),
+		Name:        b.Name,
+		Location:    b.Location,
+		StorageType: b.StorageClass,
+		Blobs:       blobs,
+		Source:      metadataSource,
+		Timestamps: &common.Timestamp{
+			CreatedAt: timestamppb.New(b.Created),
+		},
+		Tags: &facets.Tags{
+			Tags: b.Labels,
+		},
 	}
 }
 
-func (e *Extractor) mapObject(blob *storage.ObjectAttrs, projectID string) meta.Blob {
-	return meta.Blob{
-		Urn:  fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
-		Name: blob.Name,
-		Size: blob.Size,
-		//DeletedAt: ,
-		//ExpiredAt
+func (e *Extractor) mapObject(blob *storage.ObjectAttrs, projectID string) *facets.Blob {
+	return &facets.Blob{
+		Urn:       fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
+		Name:      blob.Name,
+		Size:      blob.Size,
+		DeletedAt: timestamppb.New(blob.Deleted),
+		ExpiredAt: timestamppb.New(blob.RetentionExpirationTime),
 		Ownership: &facets.Ownership{
 			Owners: []*facets.Owner{
 				{Name: blob.Owner},
 			},
 		},
-		//Tags
-		//Timestamps
+		Timestamps: &common.Timestamp{
+			CreatedAt: timestamppb.New(blob.Created),
+			UpdatedAt: timestamppb.New(blob.Updated),
+		},
 	}
 }
 
