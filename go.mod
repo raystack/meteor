@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/bigtable v1.10.1
 	cloud.google.com/go/storage v1.15.0 // indirect
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
@@ -38,7 +39,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	google.golang.org/api v0.46.0
+	google.golang.org/api v0.47.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
