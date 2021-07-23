@@ -3,7 +3,6 @@ package bigtable
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"sync"
@@ -29,6 +28,15 @@ func New(logger plugins.Logger) extractor.TableExtractor {
 	}
 }
 
+type InstancesFetcher interface {
+	Instances(context.Context) ([]*bigtable.InstanceInfo, error)
+}
+
+var (
+	instanceAdminClientCreator = createInstanceAdminClient
+	instanceInfoGetter         = getInstancesInfo
+)
+
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
 	e.logger.Info("extracting bigtable metadata...")
 	var config Config
@@ -36,42 +44,37 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 	if err != nil {
 		return result, extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
 
 	ctx := context.Background()
-	instanceAdminClient, err := e.createInstanceAdminClient(ctx, config)
+	instanceAdminClient, err := instanceAdminClientCreator(ctx, config)
 	if err != nil {
 		return
 	}
-	instanceNames, err := e.getInstancesInfo(ctx, instanceAdminClient)
+	instanceNames, err := instanceInfoGetter(ctx, instanceAdminClient)
 	if err != nil {
 		return
 	}
-	result, err = e.getTablesInfo(ctx, instanceNames, config)
+	result, err = e.getTablesInfo(ctx, instanceNames, config.ProjectID)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func (e *Extractor) getInstancesInfo(ctx context.Context, client *bigtable.InstanceAdminClient) (results []string, err error) {
+func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNames []string, err error) {
 	instanceInfos, err := client.Instances(ctx)
 	if err != nil {
-		return nil, err
+		return
 	}
-	var instanceNames []string
 	for i := 0; i < len(instanceInfos); i++ {
 		instanceNames = append(instanceNames, instanceInfos[i].Name)
 	}
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, config Config) (results []meta.Table, err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []meta.Table, err error) {
 	for _, instance := range instances {
-		adminClient, err := e.createAdminClient(ctx, instance, config)
+		adminClient, err := e.createAdminClient(ctx, instance, projectID)
 		if err != nil {
 			return nil, err
 		}
@@ -86,9 +89,9 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, confi
 				}
 				customProps := make(map[string]string)
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				customProps["columnfamily"] = string(familyInfoBytes)
+				customProps["column_family"] = string(familyInfoBytes)
 				results = append(results, meta.Table{
-					Urn:    fmt.Sprintf("%s.%s.%s", config.ProjectID, instance, table),
+					Urn:    fmt.Sprintf("%s.%s.%s", projectID, instance, table),
 					Name:   table,
 					Source: "bigtable",
 					Custom: &facets.Custom{
@@ -103,18 +106,10 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, confi
 	return
 }
 
-func (e *Extractor) createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.InstanceAdminClient, error) {
+func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.InstanceAdminClient, error) {
 	return bigtable.NewInstanceAdminClient(ctx, config.ProjectID)
 }
 
-func (e *Extractor) createAdminClient(ctx context.Context, instance string, config Config) (*bigtable.AdminClient, error) {
-	return bigtable.NewAdminClient(ctx, config.ProjectID, instance)
-}
-
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.ProjectID == "" {
-		return errors.New("project_id is required")
-	}
-
-	return
+func (e *Extractor) createAdminClient(ctx context.Context, instance string, projectID string) (*bigtable.AdminClient, error) {
+	return bigtable.NewAdminClient(ctx, projectID, instance)
 }
