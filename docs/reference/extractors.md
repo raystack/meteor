@@ -10,3 +10,6 @@
 
 ## Topic Extractors
 * [Kafka](../../plugins/extractors/kafka/README.md)
+
+## Bucket Extractors
+* [Google Cloud Storage](../../plugins/extractors/googlecloudstorage/README.md)
