@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"sync"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/core/extractor"
@@ -75,25 +76,30 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, confi
 			return nil, err
 		}
 		tables, err := adminClient.Tables(ctx)
+		wg := sync.WaitGroup{}
 		for _, table := range tables {
-			tableInfo, err := adminClient.TableInfo(ctx, table)
-			if err != nil {
-				return nil, err
-			}
-			customProps := make(map[string]string)
-			familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-			customProps["columnfamily"] = string(familyInfoBytes)
-			results = append(results, meta.Table{
-				Urn:    fmt.Sprintf("%s.%s.%s", config.ProjectID, instance, table),
-				Name:   table,
-				Source: "bigtable",
-				Custom: &facets.Custom{
-					CustomProperties: customProps,
-				},
-			})
+			wg.Add(1)
+			go func(table string) {
+				tableInfo, err := adminClient.TableInfo(ctx, table)
+				if err != nil {
+					return
+				}
+				customProps := make(map[string]string)
+				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
+				customProps["columnfamily"] = string(familyInfoBytes)
+				results = append(results, meta.Table{
+					Urn:    fmt.Sprintf("%s.%s.%s", config.ProjectID, instance, table),
+					Name:   table,
+					Source: "bigtable",
+					Custom: &facets.Custom{
+						CustomProperties: customProps,
+					},
+				})
+				wg.Done()
+			}(table)
 		}
+		wg.Wait()
 	}
-
 	return
 }
 
