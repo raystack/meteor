@@ -32,7 +32,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 		return result, extractor.InvalidConfigError{}
 	}
 
-	db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&debug=true", config.Host, config.UserID))
+	db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", config.Host, config.UserID, config.Password))
 	if err != nil {
 		return
 	}

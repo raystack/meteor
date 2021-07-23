@@ -1,5 +1,3 @@
-//+build integration
-
 package clickhouse_test
 
 import (
@@ -32,11 +30,18 @@ const (
 )
 
 func TestMain(m *testing.M) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository:   "yandex/clickhouse-server",
 		Tag:          "21.7.4-alpine",
 		ExposedPorts: []string{"9000"},
+		Mounts: []string{
+			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.xml:rw", pwd),
+		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"9000": {
 				{HostIP: "0.0.0.0", HostPort: port},
@@ -45,7 +50,7 @@ func TestMain(m *testing.M) {
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://127.0.0.1:%s?username=default&debug=true", port))
+		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://127.0.0.1:%s?username=default&password=pass&debug=true", port))
 		if err != nil {
 			return err
 		}
