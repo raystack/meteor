@@ -1,9 +1,12 @@
 package extractors
 
 import (
+	"net/http"
+
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery"
+	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/plugins/extractors/bigtable"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
@@ -30,7 +33,9 @@ func PopulateFactory(factory *extractor.Factory, logger plugins.Logger) {
 	factory.SetTableExtractor("mssql", mssql.New)
 	factory.SetTableExtractor("mongodb", mongodb.New)
 	factory.SetTableExtractor("postgres", postgres.New)
-
+	factory.SetDashboardExtractor("grafana", func() extractor.DashboardExtractor {
+		return grafana.New(&http.Client{}, logger)
+  })
 	factory.SetTableExtractor("bigtable", func() extractor.TableExtractor {
 		return bigtable.New(logger)
 	})
