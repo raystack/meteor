@@ -1,3 +1,5 @@
+//+build integration
+
 package bigtable
 
 import (
@@ -5,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"os"
@@ -12,10 +15,46 @@ import (
 
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
 var log = logger.NewWithWriter("info", ioutil.Discard)
+
+func TestMain(m *testing.M) {
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "shopify/bigtable-emulator",
+		Env: []string{
+			"BIGTABLE_EMULATOR_HOST=localhost:9035",
+		},
+		ExposedPorts: []string{"9035"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"9035": {
+				{HostIP: "0.0.0.0", HostPort: "9035"},
+			},
+		},
+		Cmd: []string{"-cf", "dev.records.data,dev.records.metadata"},
+	}
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		_, err = bigtable.NewAdminClient(context.Background(), "dev", "dev")
+		return
+	}
+	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// run tests
+	code := m.Run()
+
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
+}
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
