@@ -6,6 +6,7 @@
 * [MS SQL](../../plugins/extractors/mssql/README.md)
 * [MySQL](../../plugins/extractors/mysql/README.md)
 * [PostgresDB](../../plugins/extractors/postgres/README.md)
+* [BigTable](../../plugins/extractors/bigtable/README.md)
 
 ## Topic Extractors
 * [Kafka](../../plugins/extractors/kafka/README.md)
