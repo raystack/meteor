@@ -1,11 +1,12 @@
-# bigquery
+# google cloud storage
 
 ## Usage
 ```yaml
 source:
-  type: bigquery
+  type: googlecloudstorage
   config:
     project_id: google-project-id
+    extract_blob: true
     credentials_json:
       {
         "type": "service_account",
@@ -23,29 +24,40 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
+| `extract_blob` | `boolean` | `true` | Extract blob metadata inside a bucket | *optional* |
 | `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
 
 ### *Notes*
-Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the Google Cloud Storage project.
 
 ## Outputs
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `project_id.dataset_name.table_name` |
-| `name` | `table_name` |
-| `source` | `bigquery` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+| `urn` | `project_id/bucket_name` |
+| `name` | `bucket_name` |
+| `source` | `googlecloudstorage` |
+| `location` | `ASIA` |
+| `storage_type` | `STANDARD` |
+| `tags` | []{`key`:`value`} |
+| `timestamps.created_at.seconds` | `1551082913` |
+| `timestamps.created_at.nanos` | `1551082913` |
+
+
 
 ### Column
 | Field | Sample Value |
 | :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
+| `urn` | `project_id/bucket_name/blob_path` |
+| `name` | `blob_path` |
+| `size` | `311` |
+| `deleted_at.seconds` | `1551082913` |
+| `expired_at.seconds` | `1551082913` |
+| `tags` | []{`key`:`value`} |
+| `ownership.owners` | []{`name`:`serviceaccountname@project.gserviceaccount.com`} |
+| `timestamps.created_at.seconds` | `1551082913` |
+| `timestamps.created_at.nanos` | `1551082913` |
+| `timestamps.updated_at.seconds` | `1551082913` |
+| `timestamps.updated_at.nanos` | `1551082913` |
 
 ## Contributing
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
