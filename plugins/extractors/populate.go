@@ -26,6 +26,7 @@ func PopulateFactory(factory *extractor.Factory, logger plugins.Logger) {
 	factory.SetTableExtractor("bigquery", func() extractor.TableExtractor {
 		return bigquery.New(logger)
 	})
+	factory.SetTableExtractor("clickhouse", clickhouse.New)
 	factory.SetTableExtractor("csv", func() extractor.TableExtractor {
 		return csv.New(logger)
 	})
