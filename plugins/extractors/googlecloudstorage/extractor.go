@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -25,6 +26,7 @@ const (
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
+	ExtractBlob        bool   `mapstructure:"extract_blob"`
 }
 
 type Extractor struct {
@@ -38,7 +40,7 @@ func New(logger plugins.Logger) extractor.BucketExtractor {
 }
 
 func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Bucket, err error) {
-	e.logger.Info("extracting kafka metadata...")
+	e.logger.Info("extracting google cloud storage metadata...")
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
@@ -54,7 +56,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Buc
 	if err != nil {
 		return
 	}
-	result, err = e.getMetadata(ctx, client, config.ProjectID)
+	result, err = e.getMetadata(ctx, client, config.ProjectID, config.ExtractBlob)
 	if err != nil {
 		return
 	}
@@ -62,8 +64,9 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Buc
 	return
 }
 
-func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string) ([]meta.Bucket, error) {
+func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string, ExtractBlob bool) ([]meta.Bucket, error) {
 	e.logger.Info(fmt.Sprintf("Extracting buckets metadata for %s", projectID))
+
 	it := client.Buckets(ctx, projectID)
 	var results []meta.Bucket
 
@@ -75,11 +78,16 @@ func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, pro
 		if err != nil {
 			return nil, err
 		}
-		e.logger.Info(fmt.Sprintf("Extracting blobs metadata for %s", bucket.Name))
-		blobs, err := e.getBlobs(ctx, bucket.Name, client, projectID)
-		if err != nil {
-			return nil, err
+		var blobs *facets.Blobs
+
+		if ExtractBlob {
+			e.logger.Info(fmt.Sprintf("Extracting blobs metadata for %s", bucket.Name))
+			blobs, err = e.getBlobs(ctx, bucket.Name, client, projectID)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		results = append(results, e.mapBucket(bucket, projectID, blobs))
 	}
 
@@ -163,6 +171,7 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 	if config.ProjectID == "" {
 		return errors.New("project_id is required")
 	}
+	fmt.Println(config.ExtractBlob)
 
 	return
 }
