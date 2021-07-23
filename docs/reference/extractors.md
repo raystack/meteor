@@ -12,5 +12,8 @@
 ## Topic Extractors
 * [Kafka](../../plugins/extractors/kafka/README.md)
 
+## User Extractors
+* [Github](../../plugins/extractors/github/README.md)
+
 ## Bucket Extractors
 * [Google Cloud Storage](../../plugins/extractors/googlecloudstorage/README.md)

@@ -17,6 +17,9 @@ type DashboardExtractor interface {
 	Extract(config map[string]interface{}) (data []meta.Dashboard, err error)
 }
 
+type UserExtractor interface {
+	Extract(config map[string]interface{}) (data []meta.User, err error)
+}
 type BucketExtractor interface {
 	Extract(config map[string]interface{}) (data []meta.Bucket, err error)
 }
