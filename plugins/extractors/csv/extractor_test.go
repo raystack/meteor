@@ -25,10 +25,11 @@ func TestExtract(t *testing.T) {
 func TestGetFiles(t *testing.T) {
 	t.Run("should return files from config with fileName", func(t *testing.T) {
 		c := Config{FilePath: "test.csv"}
-		files := getFiles(c)
+		files, err := getCSVFiles(c)
 		expectedResult := []string{"test.csv"}
 
 		assert.Equal(t, expectedResult, files)
+		assert.Equal(t, nil, err)
 	})
 }
 
@@ -50,7 +51,7 @@ func TestCreateMetaTable(t *testing.T) {
 	t.Run("should build table from columns", func(t *testing.T) {
 		var columns []*facets.Column
 
-		table := createMetaTable("test.csv", columns)
+		table := createMetaTable("test.csv", "test/filePath", columns)
 		assert.Equal(t, "csv", table.Source)
 		assert.Equal(t, "test.csv", table.Name)
 		assert.Equal(t, columns, table.Schema.Columns)

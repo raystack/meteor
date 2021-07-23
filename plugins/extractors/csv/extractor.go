@@ -4,7 +4,10 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
 	"io"
+	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 
 	"encoding/csv"
 	"github.com/odpf/meteor/core/extractor"
@@ -27,12 +30,11 @@ func New(logger plugins.Logger) extractor.TableExtractor {
 	}
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(configMap map[string]interface{}) (results []meta.Table, err error) {
 	e.logger.Info("extracting csv metadata...")
 	var config Config
 
 	err = utils.BuildConfig(configMap, &config)
-	var results []meta.Table
 	if err != nil {
 		return results, extractor.InvalidConfigError{}
 	}
@@ -42,7 +44,8 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 	if err != nil {
 		return results, err
 	}
-	files := getFiles(config)
+	files, err := getCSVFiles(config)
+
 	for _, file := range files {
 		csvFile, err := os.Open(file)
 		if err != nil {
@@ -61,16 +64,32 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 			e.logger.Error("Not able convert to columns")
 			continue
 		}
-		results = append(result, createMetaTable(file, columns))
+
+		stat, err := csvFile.Stat()
+
+		results = append(results, createMetaTable(stat.Name(), file, columns))
+
 	}
 
-	// todo : how to handle files which are not csv files
-	// todo : how to handle directory
 	return results, err
 }
 
-func getFiles(config Config) []string {
-	return []string{config.FilePath}
+func getCSVFiles(config Config) (files []string, err error) {
+	if config.DirectoryPath != "" {
+		fileInfos, err := ioutil.ReadDir(config.DirectoryPath)
+
+		if err != nil {
+			return files, err
+		}
+		for _, fileInfo := range fileInfos {
+			ext := filepath.Ext(fileInfo.Name())
+			if ext == ".csv" {
+				files = append(files, path.Join(config.DirectoryPath, fileInfo.Name()))
+			}
+		}
+		return files, err
+	}
+	return []string{config.FilePath}, err
 }
 
 func validateConfig(config Config) error {
@@ -80,12 +99,15 @@ func validateConfig(config Config) error {
 	return nil
 }
 
-func createMetaTable(fileName string, columns []*facets.Column) meta.Table {
+func createMetaTable(fileName string, filePath string, columns []*facets.Column) meta.Table {
 	metaTable := meta.Table{
 		Name:   fileName,
 		Source: "csv",
 		Schema: &facets.Columns{
 			Columns: columns,
+		},
+		Custom: &facets.Custom{
+			CustomProperties: map[string]string{"FilePath": filePath},
 		},
 	}
 	return metaTable
