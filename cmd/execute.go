@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/odpf/meteor/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -35,11 +36,11 @@ func generateExtractorFun() *cobra.Command {
 	var extractorName string
 
 	var generateExtractorCmd = &cobra.Command{
-		Use:   "rungen [type]",
+		Use:   "generate-extractor [type]",
 		Short: "Scaffold a extractor file",
 		// Args:  cobra.MinimumNArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			generateExtractor(extractorType, extractorName)
+			generator.GenerateExtractor(extractorType, extractorName)
 		},
 	}
 	generateExtractorCmd.PersistentFlags().StringVar(&extractorType, "type", "", "type of extractor [table,topic]")
