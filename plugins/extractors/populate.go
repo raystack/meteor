@@ -1,10 +1,14 @@
 package extractors
 
 import (
+	"net/http"
+
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery"
 	"github.com/odpf/meteor/plugins/extractors/googlecloudstorage"
+	"github.com/odpf/meteor/plugins/extractors/grafana"
+	"github.com/odpf/meteor/plugins/extractors/bigtable"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
@@ -32,5 +36,11 @@ func PopulateFactory(factory *extractor.Factory, logger plugins.Logger) {
 	factory.SetTableExtractor("postgres", postgres.New)
 	factory.SetBucketExtractor("googlecloudstorage", func() extractor.BucketExtractor {
 		return googlecloudstorage.New(logger)
+  })
+	factory.SetDashboardExtractor("grafana", func() extractor.DashboardExtractor {
+		return grafana.New(&http.Client{}, logger)
+  })
+	factory.SetTableExtractor("bigtable", func() extractor.TableExtractor {
+		return bigtable.New(logger)
 	})
 }
