@@ -15,6 +15,8 @@ require (
 	github.com/confluentinc/confluent-kafka-go v1.7.0
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
+	github.com/elastic/go-elasticsearch v0.0.0
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
 	github.com/etsy/statsd v0.9.0
 	github.com/go-playground/validator/v10 v10.7.0
 	github.com/go-sql-driver/mysql v1.6.0
