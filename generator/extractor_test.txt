@@ -1,0 +1,10 @@
+package <extractor>_test
+
+import (
+	"testing"
+
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestExtract(t *testing.T) {}

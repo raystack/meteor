@@ -27,6 +27,8 @@ func (e *Extractor) Extract(name string, config map[string]interface{}) (data in
 		data, err = extr.Extract(config)
 	case UserExtractor:
 		data, err = extr.Extract(config)
+	case BucketExtractor:
+		data, err = extr.Extract(config)
 	default:
 		err = errors.New("invalid extractor type")
 	}
