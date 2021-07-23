@@ -3,8 +3,9 @@ module github.com/odpf/meteor
 go 1.16
 
 require (
+	cloud.google.com/go v0.81.0
 	cloud.google.com/go/bigquery v1.8.0
-	cloud.google.com/go/storage v1.15.0 // indirect
+	cloud.google.com/go/storage v1.15.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
+	github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
 	github.com/jeremywohl/flatten v1.0.1

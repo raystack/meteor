@@ -57,23 +57,24 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Buc
 }
 
 func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string) ([]meta.Bucket, error) {
+	e.logger.Info(fmt.Sprintf("Extracting buckets metadata for %s", projectID))
 	it := client.Buckets(ctx, projectID)
 	var results []meta.Bucket
 
-	bucket, err := it.Next()
-	for err == nil {
+	for {
+		bucket, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
 			return nil, err
 		}
+		e.logger.Info(fmt.Sprintf("Extracting blobs metadata for %s", bucket.Name))
 		blobs, err := e.getBlobs(ctx, bucket.Name, client, projectID)
 		if err != nil {
 			return nil, err
 		}
 		results = append(results, e.mapBucket(bucket, projectID, blobs))
-		bucket, err = it.Next()
-	}
-	if err == iterator.Done {
-		err = nil
 	}
 
 	return results, nil
