@@ -6,6 +6,7 @@ import (
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery"
+	"github.com/odpf/meteor/plugins/extractors/clickhouse"
 	"github.com/odpf/meteor/plugins/extractors/googlecloudstorage"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/plugins/extractors/bigtable"
@@ -27,6 +28,7 @@ func PopulateFactory(factory *extractor.Factory, logger plugins.Logger) {
 	factory.SetTableExtractor("bigquery", func() extractor.TableExtractor {
 		return bigquery.New(logger)
 	})
+	factory.SetTableExtractor("clickhouse", clickhouse.New)
 	factory.SetTableExtractor("csv", func() extractor.TableExtractor {
 		return csv.New(logger)
 	})
