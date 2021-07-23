@@ -2,7 +2,6 @@ package extractor
 
 import (
 	"fmt"
-
 	"github.com/odpf/meteor/proto/odpf/meta"
 )
 
@@ -16,6 +15,10 @@ type TopicExtractor interface {
 
 type DashboardExtractor interface {
 	Extract(config map[string]interface{}) (data []meta.Dashboard, err error)
+}
+
+type BucketExtractor interface {
+	Extract(config map[string]interface{}) (data []meta.Bucket, err error)
 }
 
 type NotFoundError struct {

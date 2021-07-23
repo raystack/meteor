@@ -28,6 +28,9 @@ func (e *Extractor) Extract(name string, config map[string]interface{}) (data in
 	case DashboardExtractor:
 		data, err = extr.Extract(config)
 		break
+	case BucketExtractor:
+		data, err = extr.Extract(config)
+		break
 	default:
 		err = errors.New("invalid extractor type")
 	}
