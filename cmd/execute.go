@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/odpf/meteor/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +31,30 @@ var rundirCmd = &cobra.Command{
 	},
 }
 
+func generateExtractorFun() *cobra.Command {
+	var extractorType string
+	var extractorName string
+
+	var generateExtractorCmd = &cobra.Command{
+		Use:   "generate-extractor [type]",
+		Short: "Scaffold a extractor file",
+		// Args:  cobra.MinimumNArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			generator.GenerateExtractor(extractorType, extractorName)
+		},
+	}
+	generateExtractorCmd.PersistentFlags().StringVar(&extractorType, "type", "", "type of extractor [table,topic]")
+	generateExtractorCmd.MarkFlagRequired("extractorType")
+	generateExtractorCmd.PersistentFlags().StringVar(&extractorName, "extractor", "", "name of extractor")
+	generateExtractorCmd.MarkFlagRequired("extractorName")
+
+	return generateExtractorCmd
+}
 func Execute() {
 	rootCmd.AddCommand(
 		runCmd,
 		rundirCmd,
+		generateExtractorFun(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
