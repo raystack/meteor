@@ -2,4 +2,5 @@ package sinks
 
 import (
 	_ "github.com/odpf/meteor/plugins/sinks/console"
+	_ "github.com/odpf/meteor/plugins/sinks/kafka"
 )
