@@ -19,7 +19,7 @@ func PopulateFactory(factory *extractor.Factory, logger plugins.Logger) {
 
 	// populate table extractors
 	factory.SetTableExtractor("bigquery", func() extractor.TableExtractor {
-		return bigquery.New(logger)
+		return bigquery.New(logger, nil, nil)
 	})
 	factory.SetTableExtractor("mysql", mysql.New)
 	factory.SetTableExtractor("mssql", mssql.New)
