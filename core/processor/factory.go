@@ -1,26 +1,45 @@
 package processor
 
-type FactoryFn func() Processor
+import (
+	"fmt"
+	"github.com/odpf/meteor/core"
+	"github.com/pkg/errors"
+)
+
+var (
+	Catalog = NewFactory()
+)
 
 type Factory struct {
-	fnStore map[string]FactoryFn
+	fnStore map[string]core.Processor
 }
 
 func NewFactory() *Factory {
 	return &Factory{
-		fnStore: make(map[string]FactoryFn),
+		fnStore: make(map[string]core.Processor),
 	}
 }
 
-func (f *Factory) Get(name string) (Processor, error) {
-	factoryFn, ok := f.fnStore[name]
-	if !ok {
-		return nil, NotFoundError{name}
+func (f *Factory) Get(name string) (core.Processor, error) {
+	if processor, ok := f.fnStore[name]; ok {
+		return processor, nil
 	}
-
-	return factoryFn(), nil
+	return nil, NotFoundError{name}
 }
 
-func (f *Factory) Set(name string, fn FactoryFn) {
-	f.fnStore[name] = fn
+func (f *Factory) Register(name string, processor core.Processor) (err error) {
+	if _, ok := f.fnStore[name]; ok {
+		return errors.Errorf("duplicate processor: %s", name)
+	}
+	f.fnStore[name] = processor
+	return nil
+}
+
+
+type NotFoundError struct {
+	Name string
+}
+
+func (err NotFoundError) Error() string {
+	return fmt.Sprintf("could not find processor \"%s\"", err.Name)
 }

@@ -3,8 +3,8 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-
 	"github.com/odpf/meteor/core/extractor"
+
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
@@ -25,7 +25,7 @@ type Config struct {
 
 type Extractor struct{}
 
-func New() extractor.TableExtractor {
+func New() *Extractor {
 	return &Extractor{}
 }
 

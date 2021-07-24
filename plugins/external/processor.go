@@ -2,17 +2,17 @@ package plugins
 
 import (
 	"encoding/json"
+	"github.com/odpf/meteor/core"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/odpf/meteor/core/processor"
 )
 
 // Processor is wrapper for processor.Processor
 // it requires Name() to return the name of the processor
 // it is needed for referencing it in a recipe
 type Processor interface {
-	processor.Processor
+	core.Processor
 	Name() (string, error)
 }
 
@@ -75,10 +75,12 @@ func (s *ProcessorRPCServer) Process(argsBytes []byte, res *interface{}) (err er
 	if err != nil {
 		return
 	}
-	*res, err = s.Impl.Process(args.Data, args.Config)
-	if err != nil {
-		return
-	}
+
+	//TODO: runtime processors are broken
+	//*res, err = s.Impl.Process(args.Config)
+	//if err != nil {
+	//	return
+	//}
 	return
 }
 

@@ -1,7 +1,9 @@
 package recipe
 
 import (
-	"errors"
+	"context"
+	"go.uber.org/multierr"
+	"sync"
 	"time"
 
 	"github.com/odpf/meteor/core/extractor"
@@ -10,14 +12,17 @@ import (
 )
 
 type Runner struct {
-	extractor        *extractor.Extractor
+	extractorFactory        *extractor.Factory
 	processorFactory *processor.Factory
 	sinkFactory      *sinks.Factory
 	monitor          Monitor
+
+	wg *sync.WaitGroup
+	errChan chan error
 }
 
 func NewRunner(
-	extractor *extractor.Extractor,
+	extractorFactory *extractor.Factory,
 	processorFactory *processor.Factory,
 	sinkFactory *sinks.Factory,
 	monitor Monitor) *Runner {
@@ -25,58 +30,127 @@ func NewRunner(
 		monitor = new(defaultMonitor)
 	}
 	return &Runner{
-		extractor:        extractor,
+		extractorFactory:        extractorFactory,
 		processorFactory: processorFactory,
 		sinkFactory:      sinkFactory,
 		monitor:          monitor,
 	}
 }
 
-func (r *Runner) Run(recipe Recipe) (run *Run, err error) {
+func (r *Runner) Run(recipe Recipe) (err error) {
+	r.wg = new(sync.WaitGroup)
+	r.errChan = make(chan error)
 	getDuration := r.startDuration()
-	run = r.buildRun(recipe)
 	success := true
 
-	var data interface{}
-	for i := 0; i < len(run.Tasks); i++ {
-		data, err = r.runTask(&run.Tasks[i], data)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		if err != nil {
-			success = false
-			break
+	// run all sinks
+	var sinkOuts []chan interface{}
+	for _, sink := range recipe.Sinks {
+		task := &Task{
+			Type:   TaskTypeSink,
+			Status: TaskStatusReady,
+			Name:   sink.Name,
+			Config: sink.Config,
 		}
+		r.wg.Add(1)
+		currentSink := make(chan interface{})
+		sinkOuts = append(sinkOuts, currentSink)
+
+		go r.runSink(ctx, task, currentSink)
 	}
 
-	duration := getDuration()
-	r.monitor.RecordRun(recipe, duration, success)
+	// run extract
+	extractOut := make(chan interface{})
+	extractTask := &Task{
+		Type:   TaskTypeExtract,
+		Status: TaskStatusReady,
+		Name:   recipe.Source.Type,
+		Config: recipe.Source.Config,
+	}
+	r.wg.Add(1)
+	go r.runExtractor(ctx, extractTask, extractOut)
 
-	return
+	// run processors
+	processIn := extractOut
+	var processorOuts []chan interface{}
+	for _, processor := range recipe.Processors {
+		r.wg.Add(1)
+		task := &Task{
+			Type:   TaskTypeProcess,
+			Status: TaskStatusReady,
+			Name:   processor.Name,
+			Config: processor.Config,
+		}
+		processOut := make(chan interface{})
+		processorOuts = append(processorOuts, processOut)
+		go r.runProcessor(ctx, task, processIn, processOut)
+		processIn = processOut
+	}
+
+	go func() {
+		// fan out service for sinks
+		for val := range processIn {
+			for _, so := range sinkOuts {
+				so <- val
+			}
+		}
+
+		// close all fanned-out syncer
+		for _, so := range sinkOuts {
+			close(so)
+		}
+	}()
+
+	// err accumulator
+	errWg := new(sync.WaitGroup)
+	var errs []error
+	errWg.Add(1)
+	go func() {
+		for err := range r.errChan{
+			errs = append(errs, err)
+
+			// its safe to call cancel multiple times
+			cancel()
+		}
+		errWg.Done()
+	}()
+
+	// wait for pipeline to finish
+	r.wg.Wait()
+
+	// close err accumulator
+	close(r.errChan)
+	errWg.Wait()
+
+	r.monitor.RecordRun(recipe, getDuration(), success)
+	return multierr.Combine(errs...)
 }
 
 func (r *Runner) RunMultiple(recipes []Recipe) (faileds []string, err error) {
 	faileds = []string{}
 	for _, recipe := range recipes {
-		_, err := r.Run(recipe)
-		if err != nil {
+		if err := r.Run(recipe); err != nil {
 			faileds = append(faileds, recipe.Name)
 		}
 	}
 	return
 }
 
-func (r *Runner) runTask(task *Task, data interface{}) (result interface{}, err error) {
-	result = data
+func (r *Runner) runExtractor(ctx context.Context, task *Task, extractOut chan interface{}) {
+	defer r.wg.Done()
 
-	switch task.Type {
-	case TaskTypeExtract:
-		result, err = r.runExtractor(task.Name, task.Config)
-	case TaskTypeProcess:
-		result, err = r.runProcessor(task.Name, data, task.Config)
-	case TaskTypeSink:
-		err = r.runSink(task.Name, data, task.Config)
-	default:
-		err = errors.New("invalid task type")
+	extractor, err := r.extractorFactory.Get(task.Name)
+	if err != nil {
+		r.errChan <- err
+		close(extractOut)
+		return
 	}
+
+	err = extractor.Extract(ctx, task.Config, extractOut)
+	close(extractOut)
 
 	if err != nil {
 		err = r.newRunTaskError(*task, err)
@@ -85,62 +159,55 @@ func (r *Runner) runTask(task *Task, data interface{}) (result interface{}, err 
 		task.Status = TaskStatusComplete
 	}
 
-	return result, err
-}
-
-func (r *Runner) runExtractor(name string, config map[string]interface{}) (result interface{}, err error) {
-	return r.extractor.Extract(name, config)
-}
-
-func (r *Runner) runProcessor(name string, data interface{}, config map[string]interface{}) (result interface{}, err error) {
-	proc, err := r.processorFactory.Get(name)
 	if err != nil {
-		return result, err
+		r.errChan <- err
 	}
-
-	return proc.Process(data, config)
 }
 
-func (r *Runner) runSink(name string, data interface{}, config map[string]interface{}) (err error) {
-	sink, err := r.sinkFactory.Get(name)
+func (r *Runner) runProcessor(ctx context.Context, task *Task, in <-chan interface{}, out chan<- interface{}) {
+	defer r.wg.Done()
+
+	proc, err := r.processorFactory.Get(task.Name)
 	if err != nil {
-		return err
+		r.errChan <- err
+		close(out)
+		return
 	}
 
-	return sink.Sink(data, config)
+	err = proc.Process(ctx, task.Config, in, out)
+	close(out)
+
+	if err != nil {
+		err = r.newRunTaskError(*task, err)
+		task.Status = TaskStatusFailed
+	} else {
+		task.Status = TaskStatusComplete
+	}
+
+	if err != nil {
+		r.errChan <- err
+	}
 }
 
-func (r *Runner) buildRun(recipe Recipe) *Run {
-	var tasks []Task
+func (r *Runner) runSink(ctx context.Context, task *Task, in <-chan interface{}){
+	defer r.wg.Done()
 
-	tasks = append(tasks, Task{
-		Type:   TaskTypeExtract,
-		Status: TaskStatusReady,
-		Name:   recipe.Source.Type,
-		Config: recipe.Source.Config,
-	})
-
-	for _, processor := range recipe.Processors {
-		tasks = append(tasks, Task{
-			Type:   TaskTypeProcess,
-			Status: TaskStatusReady,
-			Name:   processor.Name,
-			Config: processor.Config,
-		})
+	sink, err := r.sinkFactory.Get(task.Name)
+	if err != nil {
+		r.errChan <- err
+		return
 	}
 
-	for _, sink := range recipe.Sinks {
-		tasks = append(tasks, Task{
-			Type:   TaskTypeSink,
-			Status: TaskStatusReady,
-			Name:   sink.Name,
-			Config: sink.Config,
-		})
+	err = sink.Sink(ctx, task.Config, in)
+	if err != nil {
+		err = r.newRunTaskError(*task, err)
+		task.Status = TaskStatusFailed
+	} else {
+		task.Status = TaskStatusComplete
 	}
 
-	return &Run{
-		Recipe: recipe,
-		Tasks:  tasks,
+	if err != nil {
+		r.errChan <- err
 	}
 }
 

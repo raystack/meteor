@@ -1,6 +1,7 @@
 package sink_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/odpf/meteor/core/sink"
@@ -10,11 +11,11 @@ import (
 type mockSink struct {
 }
 
-func (p *mockSink) Sink(data interface{}, config map[string]interface{}) error {
+func (p *mockSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) error {
 	return nil
 }
 
-func newMockSink() sink.Sink {
+func newMockSink() *mockSink {
 	return &mockSink{}
 }
 
@@ -23,7 +24,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "wrong-name"
 
 		factory := sink.NewFactory()
-		factory.Set("mock", newMockSink)
+		factory.Register("mock", newMockSink())
 
 		_, err := factory.Get(name)
 		assert.Equal(t, sink.NotFoundError{name}, err)
@@ -33,7 +34,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "mock"
 
 		factory := sink.NewFactory()
-		factory.Set(name, newMockSink)
+		factory.Register(name, newMockSink())
 
 		extr, err := factory.Get(name)
 		if err != nil {
@@ -48,8 +49,8 @@ func TestFactoryGet(t *testing.T) {
 func TestFactorySet(t *testing.T) {
 	t.Run("should add sink factory with given key", func(t *testing.T) {
 		factory := sink.NewFactory()
-		factory.Set("mock1", newMockSink)
-		factory.Set("mock2", newMockSink)
+		factory.Register("mock1", newMockSink())
+		factory.Register("mock2", newMockSink())
 
 		mock1, err := factory.Get("mock1")
 		if err != nil {
