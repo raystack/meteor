@@ -1,0 +1,8 @@
+name: date-kafka-recipe
+source:
+  type: date
+sinks:
+  - name: kafka
+    config:
+      brokers: localhost:9092
+      topic: test-1

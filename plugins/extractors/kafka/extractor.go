@@ -4,6 +4,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
+
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
 )
@@ -16,7 +17,7 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.TopicExtractor {
+func New(logger plugins.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}

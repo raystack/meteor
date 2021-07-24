@@ -21,13 +21,14 @@ func (e *Extractor) Extract(name string, config map[string]interface{}) (data in
 	switch extr := extr.(type) {
 	case TableExtractor:
 		data, err = extr.Extract(config)
-		break
 	case TopicExtractor:
 		data, err = extr.Extract(config)
-		break
 	case DashboardExtractor:
 		data, err = extr.Extract(config)
-		break
+	case UserExtractor:
+		data, err = extr.Extract(config)
+	case BucketExtractor:
+		data, err = extr.Extract(config)
 	default:
 		err = errors.New("invalid extractor type")
 	}

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/odpf/meteor/plugins"
 	goLog "log"
 
 	"github.com/odpf/meteor/config"
@@ -15,19 +16,17 @@ func rundir(dirPath string) {
 		goLog.Fatal(err)
 	}
 	log := logger.New(c.LogLevel)
+	plugins.Log.Level = log.Level
 
 	reader := recipe.NewReader()
 	recipeList, err := reader.ReadDir(dirPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	runner, cleanFn := initRunner(c, log)
-	defer cleanFn()
-
-	failedRecipes, err := runner.RunMultiple(recipeList)
+	
+	failedRecipes, err := initRunner(c, log).RunMultiple(recipeList)
 	if err != nil {
-		log.Error(err)
-	} else {
-		log.WithField("failed_recipes", failedRecipes).Info("Done!")
+		log.Fatal(err)
 	}
+	log.WithField("failed_recipes", failedRecipes).Info("Done!")
 }

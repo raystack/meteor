@@ -19,8 +19,8 @@ Meteor is a metadata collector tool that helps to extract and sink metadata from
 Explore the following resources to get started with Meteor:
 
 * [Usage Guides](docs/guides/usage.md) will help you get started on Meteor.
-* [Concepts](docs/concepts/README.md) describes all important Meteor concepts.
-* [Contribute](docs/contribute/contribution.md) contains resources for anyone who wants to contribute to Meteor.
+* [Concepts](docs/concepts/overview.md) describes all important Meteor concepts.
+* [Contribute](docs/contribute/contributing.md) contains resources for anyone who wants to contribute to Meteor.
 
 ## Contribute
 

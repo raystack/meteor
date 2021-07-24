@@ -73,9 +73,9 @@ func populateProcessorFactory(clients []*plugin.Client, factory *processor.Facto
 			return err
 		}
 
-		factory.Set(name, func() processor.Processor {
-			return proc
-		})
+		if err = factory.Register(name, proc); err != nil {
+			return err
+		}
 	}
 	return
 }

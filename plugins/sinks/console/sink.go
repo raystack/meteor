@@ -1,21 +1,45 @@
 package console
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
-
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/sink"
 )
 
 type Sink struct{}
 
-func New() sink.Sink {
+func New() core.Syncer {
 	return new(Sink)
 }
 
-func (sink *Sink) Sink(data interface{}, config map[string]interface{}) (err error) {
-	jsonBytes, err := json.Marshal(data)
+func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {
+	for val := range out {
+		if err := s.Process(val); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Sink) Process(value interface{}) error {
+	jsonParcel, ok := value.(core.JSONCodec);
+	if !ok {
+		return errors.New("unsupported payload")
+	}
+
+	jsonBytes, err := jsonParcel.ToJSON()
+	if err != nil {
+		return err
+	}
 	fmt.Println(string(jsonBytes))
 
-	return err
+	return nil
+}
+
+func init() {
+	if err := sink.Catalog.Register("console", New()); err != nil {
+		panic(err)
+	}
 }

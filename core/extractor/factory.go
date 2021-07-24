@@ -1,50 +1,45 @@
 package extractor
 
-type TableFactoryFn func() TableExtractor
-type TopicFactoryFn func() TopicExtractor
-type DashboardFactoryFn func() DashboardExtractor
+<<<<<<< HEAD
+import (
+	"fmt"
+	"github.com/odpf/meteor/core"
+	"github.com/pkg/errors"
+)
+
+var (
+	Catalog = NewFactory()
+)
 
 type Factory struct {
-	tableFnStore     map[string]TableFactoryFn
-	topicFnStore     map[string]TopicFactoryFn
-	dashboardFnStore map[string]DashboardFactoryFn
+	fnStore          map[string]core.Extractor
 }
 
 func NewFactory() *Factory {
 	return &Factory{
-		tableFnStore:     make(map[string]TableFactoryFn),
-		topicFnStore:     make(map[string]TopicFactoryFn),
-		dashboardFnStore: make(map[string]DashboardFactoryFn),
+		fnStore: map[string]core.Extractor{},
 	}
 }
 
-func (f *Factory) Get(name string) (extractor interface{}, err error) {
-	tableFn, ok := f.tableFnStore[name]
-	if ok {
-		return tableFn(), nil
+func (f *Factory) Get(name string) (core.Extractor, error) {
+	if extractor, ok := f.fnStore[name]; ok {
+		return extractor, nil
 	}
-
-	topicFn, ok := f.topicFnStore[name]
-	if ok {
-		return topicFn(), nil
-	}
-
-	dashboardFn, ok := f.dashboardFnStore[name]
-	if ok {
-		return dashboardFn(), nil
-	}
-
 	return nil, NotFoundError{name}
 }
 
-func (f *Factory) SetTableExtractor(name string, fn TableFactoryFn) {
-	f.tableFnStore[name] = fn
+func (f *Factory) Register(name string, extractor core.Extractor) (err error) {
+	if _, ok := f.fnStore[name]; ok {
+		return errors.Errorf("duplicate extractor: %s", name)
+	}
+	f.fnStore[name] = extractor
+	return nil
 }
 
-func (f *Factory) SetTopicExtractor(name string, fn TopicFactoryFn) {
-	f.topicFnStore[name] = fn
+type NotFoundError struct {
+	Name string
 }
 
-func (f *Factory) SetDashboardExtractor(name string, fn DashboardFactoryFn) {
-	f.dashboardFnStore[name] = fn
+func (err NotFoundError) Error() string {
+	return fmt.Sprintf("could not find extractor \"%s\"", err.Name)
 }
