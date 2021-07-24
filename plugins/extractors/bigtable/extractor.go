@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"sync"
+
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/core/extractor"

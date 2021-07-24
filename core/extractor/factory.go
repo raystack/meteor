@@ -1,8 +1,6 @@
 package extractor
 
-<<<<<<< HEAD
 import (
-	"fmt"
 	"github.com/odpf/meteor/core"
 	"github.com/pkg/errors"
 )
@@ -12,7 +10,7 @@ var (
 )
 
 type Factory struct {
-	fnStore          map[string]core.Extractor
+	fnStore map[string]core.Extractor
 }
 
 func NewFactory() *Factory {
@@ -34,12 +32,4 @@ func (f *Factory) Register(name string, extractor core.Extractor) (err error) {
 	}
 	f.fnStore[name] = extractor
 	return nil
-}
-
-type NotFoundError struct {
-	Name string
-}
-
-func (err NotFoundError) Error() string {
-	return fmt.Sprintf("could not find extractor \"%s\"", err.Name)
 }
