@@ -2,8 +2,9 @@ package console
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
+
 	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/sink"
 )
@@ -24,16 +25,12 @@ func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-ch
 }
 
 func (s *Sink) Process(value interface{}) error {
-	jsonParcel, ok := value.(core.JSONCodec);
-	if !ok {
-		return errors.New("unsupported payload")
-	}
-
-	jsonBytes, err := jsonParcel.ToJSON()
+	data, err := json.Marshal(value)
 	if err != nil {
-		return err
+		fmt.Println(fmt.Sprint(value))
+		return nil
 	}
-	fmt.Println(string(jsonBytes))
+	fmt.Println(string(data))
 
 	return nil
 }

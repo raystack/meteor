@@ -1,6 +1,7 @@
 package grafana
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,19 +22,12 @@ type Extractor struct {
 	logger     plugins.Logger
 }
 
-func New(httpClient *http.Client, logger plugins.Logger) extractor.DashboardExtractor {
-	return &Extractor{
-		httpClient: httpClient,
-		logger:     logger,
-	}
-}
-
-func (e *Extractor) Extract(configMap map[string]interface{}) (data []meteorMeta.Dashboard, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting kafka metadata...")
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return data, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 	err = e.validateConfig(config)
 	if err != nil {
@@ -48,10 +42,12 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (data []meteorMeta
 	if err != nil {
 		return
 	}
-	data = make([]meteorMeta.Dashboard, len(dashboardDetails))
+	data := make([]meteorMeta.Dashboard, len(dashboardDetails))
 	for i, dashboardDetail := range dashboardDetails {
 		data[i] = e.grafanaDashboardToMeteorDashboard(dashboardDetail)
 	}
+
+	out <- data
 	return
 }
 
@@ -98,4 +94,13 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 		return errors.New("api_key is required")
 	}
 	return
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("grafana", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

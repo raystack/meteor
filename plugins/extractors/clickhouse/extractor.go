@@ -1,11 +1,13 @@
 package clickhouse
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
@@ -19,24 +21,23 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
-type Extractor struct{}
-
-func New() extractor.TableExtractor {
-	return &Extractor{}
+type Extractor struct {
+	logger plugins.Logger
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", config.Host, config.UserID, config.Password))
 	if err != nil {
 		return
 	}
-	result, err = e.getTables()
+	result, _ := e.getTables()
+	out <- result
 	return
 }
 
@@ -87,4 +88,13 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*f
 		})
 	}
 	return result, nil
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("clickhouse", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

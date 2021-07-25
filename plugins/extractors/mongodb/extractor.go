@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,17 +26,15 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
-type Extractor struct{}
-
-func New() *Extractor {
-	return &Extractor{}
+type Extractor struct {
+	logger plugins.Logger
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	uri := "mongodb://" + config.UserID + ":" + config.Password + "@" + config.Host
@@ -45,16 +43,16 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 	if err != nil {
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 4*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
 		return
 	}
-	result, err = e.listCollections(client, ctx)
+	result, err := e.listCollections(client, ctx)
 	if err != nil {
 		return
 	}
-	return result, err
+	out <- result
+	return nil
 }
 
 func (e *Extractor) listCollections(client *mongo.Client, ctx context.Context) (result []meta.Table, err error) {
@@ -100,4 +98,12 @@ func (e *Extractor) collectionIsDefault(collectionName string) bool {
 	}
 
 	return isDefault
+}
+
+func init() {
+	if err := extractor.Catalog.Register("mongodb", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

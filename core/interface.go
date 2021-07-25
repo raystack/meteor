@@ -13,11 +13,3 @@ type Processor interface {
 type Syncer interface {
 	Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error)
 }
-
-type JSONCodec interface {
-	ToJSON() ([]byte, error)
-}
-type ProtoCodec interface {
-	ToProto() ([]byte, error)
-}
-

@@ -1,4 +1,4 @@
-package googlecloudstorage
+package gcs
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/utils"
@@ -33,34 +32,26 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.BucketExtractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Bucket, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting google cloud storage metadata...")
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 	err = e.validateConfig(config)
 	if err != nil {
 		return
 	}
-
-	ctx := context.Background()
 	client, err := e.createClient(ctx, config)
 	if err != nil {
 		return
 	}
-	result, err = e.getMetadata(ctx, client, config.ProjectID, config.ExtractBlob)
+	result, err := e.getMetadata(ctx, client, config.ProjectID, config.ExtractBlob)
 	if err != nil {
 		return
 	}
-
+	out <- result
 	return
 }
 
@@ -158,15 +149,6 @@ func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.C
 	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 func (e *Extractor) validateConfig(config Config) (err error) {
 	if config.ProjectID == "" {
 		return errors.New("project_id is required")
@@ -174,4 +156,13 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 	fmt.Println(config.ExtractBlob)
 
 	return
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("gcs", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

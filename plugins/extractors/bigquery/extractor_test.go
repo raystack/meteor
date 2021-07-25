@@ -1,25 +1,26 @@
-//+build integration
+// +build integration
 
 package bigquery_test
 
 import (
-	"io/ioutil"
+	"context"
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
-	"github.com/odpf/meteor/plugins/extractors/bigquery"
+	_ "github.com/odpf/meteor/plugins/extractors/bigquery"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
-
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		extr := bigquery.New(log)
-		_, err := extr.Extract(map[string]interface{}{
+
+		extr, _ := extractor.Catalog.Get("bigquery")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+		err := extr.Extract(ctx, map[string]interface{}{
 			"wrong-config": "sample-project",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})

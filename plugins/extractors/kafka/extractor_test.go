@@ -17,22 +17,31 @@ var log = logger.NewWithWriter("info", ioutil.Discard)
 
 func TestExtractorExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		extr := kafka.New(log)
-		_, err := extr.Extract(map[string]interface{}{
+
+		extr, _ := extractor.Catalog.Get("kafka")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"wrong-config": "wrong-value",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return list of topic metadata", func(t *testing.T) {
-		extractor := kafka.New(log)
-		result, err := extractor.Extract(map[string]interface{}{
-			"broker": "localhost:9092",
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"broker": "localhost:9092",
+			}, extractOut)
+			close(extractOut)
+		}()
 
 		expected := []meta.Topic{
 			{
@@ -54,7 +63,11 @@ func TestExtractorExtract(t *testing.T) {
 
 		// We need this function because the extractor cannot guarantee order
 		// so comparing expected slice and result slice will not be consistant
-		assertResults(t, expected, result)
+
+		for v := range extractOut {
+			assertResults(t, expected, result)
+		}
+
 	})
 }
 

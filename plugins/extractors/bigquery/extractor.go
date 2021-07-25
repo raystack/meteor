@@ -2,16 +2,12 @@ package bigquery
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"regexp"
+	"html/template"
 	"strings"
 	"sync"
 
-	"text/template"
-
 	"cloud.google.com/go/bigquery"
-	"github.com/mitchellh/mapstructure"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -32,110 +28,96 @@ type Extractor struct {
 	logger plugins.Logger
 	client *bigquery.Client
 	ctx    context.Context
+	cfg    Config
 }
 
-func New(logger plugins.Logger, client *bigquery.Client, ctx context.Context) extractor.TableExtractor {
-	return &Extractor{
-		logger: logger,
-		client: client,
-		ctx:    ctx,
-	}
-}
+func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+	e.logger.Info("extracting table metadata from big query table")
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
-	e.logger.Info("extracting bigquery metadata...")
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	var cfg Config
+	err = utils.BuildConfig(config, &cfg)
+
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
+
+	client, err := e.createClient(ctx, cfg)
+
+	e.client = client
+	e.ctx = ctx
+	e.cfg = cfg
+
 	if err != nil {
+		e.logger.Error(err)
 		return
 	}
 
-	if e.ctx == nil {
-		e.ctx = context.Background()
-	}
-
-	if e.client == nil {
-		e.client, err = e.createClient(config)
-		if err != nil {
-			return
+	// Fetch and iterate over datesets
+	it := client.Datasets(ctx)
+	for {
+		ds, err := it.Next()
+		if err == iterator.Done {
+			break
 		}
-	}
-	result, err = e.getMetadata(config)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (e *Extractor) getMetadata(config Config) (results []meta.Table, err error) {
-	it := e.client.Datasets(e.ctx)
-
-	dataset, err := it.Next()
-	for err == nil {
-		results, err = e.appendTablesMetadata(results, dataset, config)
 		if err != nil {
-			return
+			e.logger.Error(err)
+			continue
 		}
 
-		dataset, err = it.Next()
-	}
-	if err == iterator.Done {
-		err = nil
-	}
-
-	return
-}
-
-func (e *Extractor) appendTablesMetadata(results []meta.Table, dataset *bigquery.Dataset, config Config) ([]meta.Table, error) {
-	it := dataset.Tables(e.ctx)
-
-	table, err := it.Next()
-	for err == nil {
-		if config.TablePattern != "" {
-			fullTableID := fmt.Sprintf("%s.%s", table.DatasetID, table.TableID)
-			res, _ := regexp.MatchString(config.TablePattern, fullTableID)
-			if res {
-				tableResult, err := e.mapTable(table, config.ProfileColumn)
-				if err == nil {
-					results = append(results, tableResult)
-				}
+		// Fetch and iterate over tables
+		tb := ds.Tables(ctx)
+		for {
+			table, err := tb.Next()
+			if err == iterator.Done {
+				break
 			}
+			if err != nil {
+				e.logger.Error(err)
+				continue
+			}
+			out <- e.fetchMetadata(table)
 		}
-		table, err = it.Next()
-	}
-	if err == iterator.Done {
-		err = nil
 	}
 
-	return results, err
+	return
+
 }
 
-func (e *Extractor) mapTable(t *bigquery.Table, profileColumn bool) (result meta.Table, err error) {
-	tableMetadata, err := e.client.Dataset(t.DatasetID).Table(t.TableID).Metadata(e.ctx)
-	result = meta.Table{
+// Create big query client
+func (e *Extractor) createClient(ctx context.Context, config Config) (*bigquery.Client, error) {
+	if config.ServiceAccountJSON == "" {
+		e.logger.Info("credentials are not specified, creating bigquery client using default credentials...")
+		return bigquery.NewClient(ctx, config.ProjectID)
+	}
+
+	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+}
+
+// Build the bigquery table metadata
+func (e *Extractor) fetchMetadata(t *bigquery.Table) meta.Table {
+	return meta.Table{
 		Urn:         fmt.Sprintf("%s.%s.%s", t.ProjectID, t.DatasetID, t.TableID),
 		Name:        t.TableID,
 		Source:      "bigquery",
 		Description: t.DatasetID,
-		Schema:      e.extractSchema(tableMetadata.Schema, tableMetadata, profileColumn),
+		Schema:      e.extractSchema(t),
 	}
-	return result, err
 }
 
-func (e *Extractor) extractSchema(col []*bigquery.FieldSchema, t *bigquery.TableMetadata, profileColumn bool) (columns *facets.Columns) {
+// Extract table schema
+func (e *Extractor) extractSchema(t *bigquery.Table) (columns *facets.Columns) {
+
+	mt, _ := t.Metadata(e.ctx)
+	col := mt.Schema
 	var columnList []*facets.Column
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+
 	wg.Add(len(col))
 	for _, b := range col {
 		go func(s *bigquery.FieldSchema) {
 			defer wg.Done()
-			column := e.mapColumn(s, t, profileColumn)
+			column := e.mapColumn(s, mt)
 			mu.Lock()
 			columnList = append(columnList, column)
 			mu.Unlock()
@@ -147,10 +129,10 @@ func (e *Extractor) extractSchema(col []*bigquery.FieldSchema, t *bigquery.Table
 	}
 }
 
-func (e *Extractor) mapColumn(col *bigquery.FieldSchema, t *bigquery.TableMetadata, profileColumn bool) *facets.Column {
+func (e *Extractor) mapColumn(col *bigquery.FieldSchema, mt *bigquery.TableMetadata) *facets.Column {
 	var columnProfile *facets.ColumnProfile
-	if profileColumn {
-		columnProfile, _ = e.findColumnProfile(col, t)
+	if e.cfg.ProfileColumn {
+		columnProfile, _ = e.findColumnProfile(col, mt)
 	}
 	return &facets.Column{
 		Name:        col.Name,
@@ -233,28 +215,11 @@ func (e *Extractor) getResult(iter *bigquery.RowIterator) (ResultRow, error) {
 	return row, err
 }
 
-func (e *Extractor) createClient(config Config) (*bigquery.Client, error) {
-	if config.ServiceAccountJSON == "" {
-		e.logger.Info("credentials are not specified, creating bigquery client using Default Credentials...")
-		return bigquery.NewClient(e.ctx, config.ProjectID)
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("bigquery", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
 	}
-
-	return bigquery.NewClient(e.ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
-}
-
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.ProjectID == "" {
-		return errors.New("project_id is required")
-	}
-
-	return
 }

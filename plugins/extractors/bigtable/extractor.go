@@ -23,12 +23,6 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.TableExtractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
 type InstancesFetcher interface {
 	Instances(context.Context) ([]*bigtable.InstanceInfo, error)
 }
@@ -38,15 +32,15 @@ var (
 	instanceInfoGetter         = getInstancesInfo
 )
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting bigtable metadata...")
+
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
-	ctx := context.Background()
 	instanceAdminClient, err := instanceAdminClientCreator(ctx, config)
 	if err != nil {
 		return
@@ -55,10 +49,11 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Tab
 	if err != nil {
 		return
 	}
-	result, err = e.getTablesInfo(ctx, instanceNames, config.ProjectID)
+	result, err := e.getTablesInfo(ctx, instanceNames, config.ProjectID)
 	if err != nil {
 		return
 	}
+	out <- result
 	return
 }
 
@@ -79,7 +74,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 		if err != nil {
 			return nil, err
 		}
-		tables, err := adminClient.Tables(ctx)
+		tables, _ := adminClient.Tables(ctx)
 		wg := sync.WaitGroup{}
 		for _, table := range tables {
 			wg.Add(1)
@@ -113,4 +108,13 @@ func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.In
 
 func (e *Extractor) createAdminClient(ctx context.Context, instance string, projectID string) (*bigtable.AdminClient, error) {
 	return bigtable.NewAdminClient(ctx, projectID, instance)
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("bigtable", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

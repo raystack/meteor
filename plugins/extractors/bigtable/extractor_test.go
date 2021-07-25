@@ -3,15 +3,17 @@
 package bigtable
 
 import (
-	"cloud.google.com/go/bigtable"
 	"context"
 	"errors"
-	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
-	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"cloud.google.com/go/bigtable"
+	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
+	"github.com/odpf/meteor/plugins/testutils"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
@@ -58,25 +60,37 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		extr := New(log)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("bigtable")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"wrong-config": "sample-project",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if project_id is empty", func(t *testing.T) {
-		extr := New(log)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("bigtable")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"project_id": "",
-		})
+		}, extractOut)
 
 		assert.EqualError(t, err, "invalid extractor config")
 	})
 
 	t.Run("should return bigtable metadata on success", func(t *testing.T) {
-		extr := New(log)
+		extr, _ := extractor.Catalog.Get("bigtable")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
 		oldInstanceInfoGetter := instanceInfoGetter
@@ -95,20 +109,27 @@ func TestExtract(t *testing.T) {
 			return
 		}
 
-		result, err := extr.Extract(map[string]interface{}{
-			"project_id": "dev",
-		})
-		assert.Nil(t, err)
-		assert.Equal(t, 1, len(result))
-		assert.Equal(t, "dev.dev.records", result[0].Urn)
-		assert.Equal(t, "bigtable", result[0].Source)
-		assert.Equal(t, "records", result[0].Name)
-		assert.Equal(t, 1, len(result[0].Custom.CustomProperties))
+		go func() {
+			extr.Extract(ctx, map[string]interface{}{
+				"project_id": "dev",
+			}, extractOut)
+
+		}()
+
+		for val := range extractOut {
+			result := val.([]meta.Table)
+			assert.Equal(t, "bigtable", result[0].Source)
+		}
+
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
 	})
 
 	t.Run("should handle instance admin client initialization error", func(t *testing.T) {
-		extr := New(log)
+		extr, _ := extractor.Catalog.Get("bigtable")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
 		oldInstanceInfoGetter := instanceInfoGetter
@@ -122,16 +143,29 @@ func TestExtract(t *testing.T) {
 			return nil, errors.New("random error")
 		}
 
-		result, err := extr.Extract(map[string]interface{}{
-			"project_id": "dev",
-		})
-		assert.EqualError(t, err, "random error")
-		assert.Nil(t, result)
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"project_id": "dev",
+			}, extractOut)
+			assert.EqualError(t, err, "random error")
+
+		}()
+
+		for val := range extractOut {
+			result := val.([]meta.Table)
+			assert.Nil(t, result)
+		}
+
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
 	})
 
 	t.Run("should handle errors in getting instances list", func(t *testing.T) {
-		extr := New(log)
+
+		extr, _ := extractor.Catalog.Get("bigtable")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
 		oldInstanceInfoGetter := instanceInfoGetter
@@ -149,11 +183,19 @@ func TestExtract(t *testing.T) {
 			return nil, errors.New("random error")
 		}
 
-		result, err := extr.Extract(map[string]interface{}{
-			"project_id": "dev",
-		})
-		assert.EqualError(t, err, "random error")
-		assert.Nil(t, result)
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"project_id": "dev",
+			}, extractOut)
+			assert.EqualError(t, err, "random error")
+
+		}()
+
+		for val := range extractOut {
+			result := val.([]meta.Table)
+			assert.Nil(t, result)
+		}
+
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
 	})
 

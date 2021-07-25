@@ -1,4 +1,4 @@
-//+build integration
+// +build integration
 
 package elastic_test
 
@@ -32,7 +32,12 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
-		extractor := new(elastic.Extractor)
+
+		extr, _ := extractor.Catalog.Get("elastic")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
 		cfg := elasticsearch.Config{
 			Addresses: []string{
 				"http://localhost:9200",
@@ -51,14 +56,16 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer cleanUp(client)
-		result, err := extractor.Extract(map[string]interface{}{
-			"host": host,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		expected := getExpectedVal()
-		assert.Equal(t, expected, result)
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"host": host,
+			}, extractOut)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected := getExpectedVal()
+			assert.Equal(t, expected, result)
+		}()
 	})
 }
 

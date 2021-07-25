@@ -1,21 +1,26 @@
 package elastic
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 )
 
 type Config struct {
 	Host string `mapstructure:"host"`
 }
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[string]interface{}, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	config, err := e.getConfig(configMap)
 	if err != nil {
 		return
@@ -33,10 +38,11 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []map[stri
 	if err != nil {
 		return
 	}
-	result, err = e.listIndexes(client)
+	result, err := e.listIndexes(client)
 	if err != nil {
 		return
 	}
+	out <- result
 	return
 }
 
@@ -109,4 +115,13 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 		return errors.New("atleast one host address is required")
 	}
 	return
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("elastic", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

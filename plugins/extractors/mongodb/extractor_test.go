@@ -82,47 +82,67 @@ func TestMain(m *testing.M) {
 }
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr := new(mongodb.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mongodb")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"password": "abcd",
 			"host":     "127.0.0.1:27017",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr := new(mongodb.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mongodb")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id": "Gaurav_Ubuntu",
 			"host":    "127.0.0.1:27017",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr := new(mongodb.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mongodb")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id":  "user",
 			"password": "abcd",
-		})
+		}, extractOut)
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with mongo running on 127.0.0.1", func(t *testing.T) {
-		extractor := new(mongodb.Extractor)
-		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     "127.0.0.1:27017",
-		})
-		if err != nil {
-			t.Fatal(err)
+		extr, _ := extractor.Catalog.Get("mongodb")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			result, err := extr.Extract(map[string]interface{}{
+				"user_id":  user,
+				"password": pass,
+				"host":     "127.0.0.1:27017",
+			})
+
+		}()
+
+		for v := range extractOut {
+			expected := getExpectedVal()
+			assert.Equal(t, expected, result)
 		}
-		expected := getExpectedVal()
-		assert.Equal(t, expected, result)
+
 	})
 }
 

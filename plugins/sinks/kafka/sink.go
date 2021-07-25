@@ -2,8 +2,10 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/sink"
@@ -21,7 +23,7 @@ func New() core.Syncer {
 	return new(Sink)
 }
 
-// TODO
+// Kafka sink
 func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {
 
 	producer, err := getProducer(config)
@@ -59,22 +61,20 @@ func getProducer(config map[string]interface{}) (*kafka.Producer, error) {
 }
 
 func (s *Sink) Push(producer *kafka.Producer, deliveryChan chan kafka.Event, value interface{}, config map[string]interface{}) error {
-	valueData, ok := value.(core.JSONCodec)
+	data, err := json.Marshal(value)
 
-	if !ok {
-		return errors.New("payload is not a protobuf")
-	}
-	msgVal, err := valueData.ToJSON()
 	if err != nil {
-		return err
+		return errors.New("payload is not a protobuf")
 	}
 
 	topic, _ := config["topic"].(string)
 
 	err = producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic},
-		Value:          msgVal,
+		Value:          data,
 	}, nil)
+	if err != nil {
+		return err
+	}
 	return nil
-
 }
