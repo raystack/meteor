@@ -1,22 +1,23 @@
-package csv
+//+build integration
+
+package csv_test
 
 import (
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"gotest.tools/v3/assert"
 )
 
 var log = logger.NewWithWriter("info", ioutil.Discard)
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
-		extr := New(log)
-		_, err := extr.Extract(map[string]interface{}{
-		})
+		_, err := csv.Extract(map[string]interface{}{})
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
@@ -24,7 +25,7 @@ func TestExtract(t *testing.T) {
 
 func TestGetFiles(t *testing.T) {
 	t.Run("should return files from config with fileName", func(t *testing.T) {
-		c := Config{FilePath: "test.csv"}
+		c := csv.Config{FilePath: "test.csv"}
 		files, err := getCSVFiles(c)
 		expectedResult := []string{"test.csv"}
 

@@ -1,10 +1,13 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
+	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
@@ -23,33 +26,34 @@ type Config struct {
 	DatabaseName string `mapstructure:"database_name" default:"postgres"`
 }
 
-type Extractor struct{}
-
-func New() extractor.TableExtractor {
-	return &Extractor{}
+type Extractor struct {
+	logger plugins.Logger
 }
 
-func (e *Extractor) Extract(c map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+
 	var config Config
-	err = utils.BuildConfig(c, &config)
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	db, err := sql.Open("postgres", fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable",
 		config.UserID, config.Password, config.Host, config.DatabaseName))
 	if err != nil {
-		return
+		return err
 	}
 	defer db.Close()
 
-	result, err = e.getDatabases(db)
+	result, err := e.getDatabases(db)
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	out <- result
+
+	return nil
 }
 
 func (e *Extractor) getDatabases(db *sql.DB) (result []meta.Table, err error) {
@@ -133,11 +137,7 @@ func (e *Extractor) getColumns(db *sql.DB, dbName string, tableName string) (res
 }
 
 func (e *Extractor) isNullable(value string) bool {
-	if value == "YES" {
-		return true
-	}
-
-	return false
+	return value == "YES"
 }
 
 func checkNotDefaultDatabase(database string) bool {
@@ -147,4 +147,13 @@ func checkNotDefaultDatabase(database string) bool {
 		}
 	}
 	return true
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("postgres", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

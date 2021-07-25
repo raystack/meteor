@@ -1,9 +1,12 @@
 package kafka
 
 import (
+	"context"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
+
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
 )
@@ -16,19 +19,13 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.TopicExtractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Topic, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting kafka metadata...")
 	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	// create client
@@ -36,22 +33,30 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Top
 		"metadata.broker.list": config.Broker,
 	})
 	if err != nil {
-		return result, err
+		return err
 	}
 	defer client.Close()
 
 	// fetch and build metadata
 	metadata, err := client.GetMetadata(nil, true, 1000)
 	if err != nil {
-		return result, err
+		return err
 	}
 	for topic := range metadata.Topics {
-		result = append(result, meta.Topic{
+		out <- meta.Topic{
 			Urn:    topic,
 			Name:   topic,
 			Source: "kafka",
-		})
+		}
 	}
 
-	return result, err
+	return nil
+}
+
+func init() {
+	if err := extractor.Catalog.Register("kafka", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

@@ -1,13 +1,12 @@
 package enrich
 
 import (
-	"github.com/odpf/meteor/core/processor"
 	"github.com/odpf/meteor/utils"
 )
 
 type Processor struct{}
 
-func New() processor.Processor {
+func New() *Processor {
 	return new(Processor)
 }
 

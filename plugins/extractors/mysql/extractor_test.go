@@ -3,6 +3,7 @@
 package mysql_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +13,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -74,47 +74,66 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr := new(mysql.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:3306",
-		})
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr := new(mysql.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:3306",
-		})
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr := new(mysql.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
-		})
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extractor := new(mysql.Extractor)
-		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     "localhost:3306",
-		})
-		if err != nil {
-			t.Fatal(err)
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"user_id":  user,
+				"password": pass,
+				"host":     "localhost:3306",
+			}, extractOut)
+			close(extractOut)
+			assert.Nil(t, err)
+		}()
+
+		for val := range extractOut {
+			expected := getExpectedVal()
+			assert.Equal(t, expected, val)
 		}
-		expected := getExpectedVal()
-		assert.Equal(t, expected, result)
+
 	})
 }
 

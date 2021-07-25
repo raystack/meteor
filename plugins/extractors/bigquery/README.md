@@ -6,6 +6,8 @@ source:
   type: bigquery
   config:
     project_id: google-project-id
+    table_pattern: gofood.fact_
+    profile_column: true
     credentials_json:
       {
         "type": "service_account",
@@ -24,6 +26,8 @@ source:
 | :-- | :---- | :------ | :---------- | :- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
 | `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
+| `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
+| `profile_column` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 
 ### *Notes*
 Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
@@ -46,6 +50,7 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `data_type` | `decimal` |
 | `is_nullable` | `true` |
 | `length` | `12,2` |
+| `profile` | `{"min":...,"max": ...,"unique": ...}` |
 
 ## Contributing
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

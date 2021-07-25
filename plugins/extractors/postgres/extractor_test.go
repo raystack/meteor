@@ -3,6 +3,7 @@
 package postgres_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +13,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/plugins/extractors/postgres"
+	_ "github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -76,59 +77,88 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr := new(postgres.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:5432",
-		})
+		}, make(chan interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr := new(postgres.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:5432",
-		})
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr := new(postgres.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := extr.Extract(ctx, map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
-		})
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
 	t.Run("should not return error for root user without DB Name", func(t *testing.T) {
-		extr := new(postgres.Extractor)
-		_, err := extr.Extract(map[string]interface{}{
-			"user_id":  "root",
-			"password": "pass",
-			"host":     "localhost:5432",
-		})
 
-		assert.Nil(t, err)
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			err := extr.Extract(ctx, map[string]interface{}{
+				"user_id":  "root",
+				"password": "pass",
+				"host":     "localhost:5432",
+			}, extractOut)
+			close(extractOut)
+			assert.Nil(t, err)
+		}()
+
+		for v := range extractOut {
+			fmt.Println(v)
+		}
+
 	})
 
 	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
-		extractor := new(postgres.Extractor)
-		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":       user,
-			"password":      pass,
-			"host":          "localhost:5432",
-			"database_name": testDB,
-		})
-		if err != nil {
-			t.Fatal(err)
+		extr, _ := extractor.Catalog.Get("postgres")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			extr.Extract(ctx, map[string]interface{}{
+				"user_id":       user,
+				"password":      pass,
+				"host":          "localhost:5432",
+				"database_name": testDB,
+			}, extractOut)
+			close(extractOut)
+		}()
+
+		for val := range extractOut {
+			expected := getExpectedVal()
+			assert.Equal(t, expected, val)
 		}
-		expected := getExpectedVal()
-		assert.Equal(t, expected, result)
+
 	})
 }
 
@@ -198,7 +228,6 @@ func setup() (err error) {
 	if err != nil {
 		return
 	}
-
 	return
 }
 

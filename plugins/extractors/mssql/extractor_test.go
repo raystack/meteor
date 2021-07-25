@@ -70,41 +70,60 @@ func TestMain(m *testing.M) {
 }
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extractor := new(mssql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mssql")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extractor.Extract(ctx, map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:1433",
-		})
+		}, extractOut)
 		assert.NotNil(t, err)
 	})
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extractor := new(mssql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mssql")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extractor.Extract(ctx, map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:1433",
-		})
+		}, extractOut)
 		assert.NotNil(t, err)
 	})
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extractor := new(mssql.Extractor)
-		_, err := extractor.Extract(map[string]interface{}{
+		extr, _ := extractor.Catalog.Get("mssql")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		err := extractor.Extract(ctx, map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
-		})
+		}, extractOut)
 		assert.NotNil(t, err)
 	})
 	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extractor := new(mssql.Extractor)
-		result, err := extractor.Extract(map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     "localhost:1433",
-		})
-		if err != nil {
-			t.Fatal(err)
+		extr, _ := extractor.Catalog.Get("mssql")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		extractOut := make(chan interface{})
+
+		go func() {
+			err := extractor.Extract(map[string]interface{}{
+				"user_id":  user,
+				"password": pass,
+				"host":     "localhost:1433",
+			})
+		}()
+
+		for val := range extractOut {
+			expected := getExpectedVal()
+			assert.Equal(t, expected, val)
 		}
-		expected := getExpectedVal()
-		assert.Equal(t, expected, result)
+
 	})
 }
 func getExpectedVal() (expected []meta.Table) {

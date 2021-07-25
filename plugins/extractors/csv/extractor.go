@@ -1,15 +1,18 @@
 package csv
 
 import (
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
-	"github.com/odpf/meteor/utils"
+	"context"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/utils"
+
 	"encoding/csv"
+
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -24,25 +27,19 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) extractor.TableExtractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
-func (e *Extractor) Extract(configMap map[string]interface{}) (results []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting csv metadata...")
-	var config Config
 
+	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return results, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	err = validateConfig(config)
 
 	if err != nil {
-		return results, err
+		return err
 	}
 	files, err := getCSVFiles(config)
 
@@ -65,13 +62,21 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (results []meta.Ta
 			continue
 		}
 
-		stat, err := csvFile.Stat()
+		stat, _ := csvFile.Stat()
 
-		results = append(results, createMetaTable(stat.Name(), file, columns))
+		out <- createMetaTable(stat.Name(), file, columns)
 
 	}
 
-	return results, err
+	return nil
+}
+
+// Validate configurations for csv extractor
+func validateConfig(config Config) error {
+	if config.FilePath == "" && config.DirectoryPath == "" {
+		return extractor.InvalidConfigError{}
+	}
+	return nil
 }
 
 func getCSVFiles(config Config) (files []string, err error) {
@@ -92,15 +97,8 @@ func getCSVFiles(config Config) (files []string, err error) {
 	return []string{config.FilePath}, err
 }
 
-func validateConfig(config Config) error {
-	if config.FilePath == "" && config.DirectoryPath == "" {
-		return extractor.InvalidConfigError{}
-	}
-	return nil
-}
-
-func createMetaTable(fileName string, filePath string, columns []*facets.Column) meta.Table {
-	metaTable := meta.Table{
+func createMetaTable(fileName string, filePath string, columns []*facets.Column) *meta.Table {
+	return &meta.Table{
 		Name:   fileName,
 		Source: "csv",
 		Schema: &facets.Columns{
@@ -110,7 +108,6 @@ func createMetaTable(fileName string, filePath string, columns []*facets.Column)
 			CustomProperties: map[string]string{"FilePath": filePath},
 		},
 	}
-	return metaTable
 }
 
 func readCSVFile(r io.Reader) (columns []string, err error) {
@@ -126,4 +123,13 @@ func getColumns(csvColumns []string) (result []*facets.Column, err error) {
 		})
 	}
 	return result, nil
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("csv", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }

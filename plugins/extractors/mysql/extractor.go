@@ -1,10 +1,12 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
@@ -23,24 +25,27 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
-type Extractor struct{}
+type Extractor struct {
+	logger plugins.Logger
+}
 
-func New() extractor.TableExtractor {
+func New() *Extractor {
 	return &Extractor{}
 }
 
-func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.Table, err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return extractor.InvalidConfigError{}
 	}
 
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
 	if err != nil {
 		return
 	}
-	result, err = e.getDatabases(db)
+	result, err := e.getDatabases(db)
+	out <- result
 	return
 }
 
@@ -124,11 +129,7 @@ func (e *Extractor) getColumns(dbName string, tableName string, db *sql.DB) (res
 }
 
 func (e *Extractor) isNullable(value string) bool {
-	if value == "YES" {
-		return true
-	}
-
-	return false
+	return value == "YES"
 }
 
 func checkNotDefaultDatabase(database string) bool {
@@ -138,4 +139,13 @@ func checkNotDefaultDatabase(database string) bool {
 		}
 	}
 	return true
+}
+
+// Register the extractor to catalog
+func init() {
+	if err := extractor.Catalog.Register("mysql", &Extractor{
+		logger: plugins.Log,
+	}); err != nil {
+		panic(err)
+	}
 }
