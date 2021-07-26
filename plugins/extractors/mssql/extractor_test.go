@@ -3,13 +3,18 @@
 package mssql_test
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/logger"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -68,65 +73,102 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
+
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("mssql")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extractor.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:1433",
-		}, extractOut)
-		assert.NotNil(t, err)
+		}, make(chan<- interface{}))
+
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("mssql")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extractor.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:1433",
-		}, extractOut)
-		assert.NotNil(t, err)
+		}, make(chan<- interface{}))
+
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("mssql")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extractor.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
-		}, extractOut)
-		assert.NotNil(t, err)
+		}, make(chan<- interface{}))
+
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
-	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("mssql")
+	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		out := make(chan interface{})
 
 		go func() {
-			err := extractor.Extract(map[string]interface{}{
+			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  user,
 				"password": pass,
 				"host":     "localhost:1433",
-			})
+			}, out)
+			close(out)
+
+			assert.Nil(t, err)
 		}()
 
-		for val := range extractOut {
-			expected := getExpectedVal()
-			assert.Equal(t, expected, val)
+		var results []meta.Table
+		for d := range out {
+			table, ok := d.(meta.Table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
+
+			results = append(results, table)
 		}
 
+		assert.Equal(t, len(getExpected()), len(results))
 	})
 }
-func getExpectedVal() (expected []meta.Table) {
+
+func setup() (err error) {
+	err = execute(db, []string{
+		fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB),
+		fmt.Sprintf("CREATE DATABASE %s;", testDB),
+		fmt.Sprintf("USE %s;", testDB),
+	})
+	if err != nil {
+		return
+	}
+
+	err = execute(db, []string{
+		fmt.Sprintf("CREATE TABLE %s.dbo.applicant (applicant_id int, last_name varchar(255), first_name varchar(255));", testDB),
+		fmt.Sprintf("INSERT INTO %s.dbo.applicant VALUES (1, 'test1', 'test11');", testDB),
+		fmt.Sprintf("CREATE TABLE %s.dbo.jobs (job_id int, job varchar(255), department varchar(255));", testDB),
+		fmt.Sprintf("INSERT INTO %s.dbo.jobs VALUES (2, 'test2', 'test22');", testDB),
+	})
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func execute(db *sql.DB, queries []string) (err error) {
+	for _, query := range queries {
+		_, err = db.Exec(query)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func newExtractor() *mssql.Extractor {
+	return mssql.New(
+		logger.NewWithWriter("info", ioutil.Discard),
+	)
+}
+
+func getExpected() (expected []meta.Table) {
 	return []meta.Table{
 		{
 			Urn:  "mockdata_meteor_metadata_test.applicant",
@@ -181,59 +223,4 @@ func getExpectedVal() (expected []meta.Table) {
 			},
 		},
 	}
-}
-func setup() (err error) {
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s;", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s;", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("USE %s;", testDB))
-	if err != nil {
-		return
-	}
-	table1 := "applicant"
-	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
-	table2 := "jobs"
-	columns2 := "(job_id int, job varchar(255), department varchar(255))"
-	err = createTable(db, table1, columns1)
-	if err != nil {
-		return
-	}
-	err = createTable(db, table2, columns2)
-	if err != nil {
-		return
-	}
-	return
-}
-func createTable(db *sql.DB, table string, columns string) (err error) {
-	query := "CREATE TABLE "
-	tableSchema := testDB + ".dbo." + table
-	_, err = db.Exec(query + tableSchema + columns + ";")
-	if err != nil {
-		return
-	}
-	values1 := "(1, 'test1', 'test11');"
-	values2 := "(2, 'test2', 'test22');"
-	err = populateTable(db, tableSchema, values1)
-	if err != nil {
-		return
-	}
-	err = populateTable(db, tableSchema, values2)
-	if err != nil {
-		return
-	}
-	return
-}
-func populateTable(db *sql.DB, table string, values string) (err error) {
-	query := "INSERT INTO "
-	completeQuery := query + table + " VALUES " + values
-	_, err = db.Exec(completeQuery)
-	if err != nil {
-		return
-	}
-	return
 }
