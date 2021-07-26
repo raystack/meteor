@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -53,8 +54,10 @@ func (d *Extractor) Process() (*facets.Custom, error) {
 }
 
 func init() {
-	if err := extractor.Catalog.Register("date", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("date", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

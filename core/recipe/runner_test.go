@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/core/processor"
 	"github.com/odpf/meteor/core/recipe"
@@ -57,11 +58,11 @@ func TestRunnerRun(t *testing.T) {
 		mSink := new(mockPassthroughSink)
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Register("test-extractor", newMockExtractor())
+		extrFactory.Register("test-extractor", newMockExtractor)
 		procFactory := processor.NewFactory()
-		procFactory.Register("test-processor", newMockProcessor())
+		procFactory.Register("test-processor", newMockProcessor)
 		sinkFactory := sink.NewFactory()
-		sinkFactory.Register("mock-sink", mSink)
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
 		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		err := r.Run(rcp)
@@ -74,12 +75,12 @@ func TestRunnerRun(t *testing.T) {
 
 	t.Run("should record metrics", func(t *testing.T) {
 		extrFactory := extractor.NewFactory()
-		extrFactory.Register("test-extractor", newMockExtractor())
+		extrFactory.Register("test-extractor", newMockExtractor)
 		procFactory := processor.NewFactory()
-		procFactory.Register("test-processor", newMockProcessor())
+		procFactory.Register("test-processor", newMockProcessor)
 		mSink := new(mockPassthroughSink)
 		sinkFactory := sink.NewFactory()
-		sinkFactory.Register("mock-sink", mSink)
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", rcp, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
@@ -103,11 +104,11 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Register("test-extractor", newMockExtractor())
+		extrFactory.Register("test-extractor", newMockExtractor)
 		procFactory := processor.NewFactory()
-		procFactory.Register("test-processor", newMockProcessor())
+		procFactory.Register("test-processor", newMockProcessor)
 		sinkFactory := sink.NewFactory()
-		sinkFactory.Register("mock-sink", new(mockPassthroughSink))
+		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)))
 
 		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		fails, err := r.RunMultiple(recipeList)
@@ -127,14 +128,14 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
 
 		extrFactory := extractor.NewFactory()
-		extrFactory.Register("test-extractor", newMockExtractor())
+		extrFactory.Register("test-extractor", newMockExtractor)
 		procFactory := processor.NewFactory()
-		procFactory.Register("test-processor", newMockProcessor())
+		procFactory.Register("test-processor", newMockProcessor)
 		sink1 := new(mockPassthroughSink)
 		sink2 := new(mockPassthroughSink)
 		sinkFactory := sink.NewFactory()
-		sinkFactory.Register("mock-sink", sink1)
-		sinkFactory.Register("mock-sink-2", sink2)
+		sinkFactory.Register("mock-sink", newMockSinkFn(sink1))
+		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2))
 
 		r := recipe.NewRunner(extrFactory, procFactory, sinkFactory, nil)
 		fails, err := r.RunMultiple(recipeList)
@@ -148,12 +149,12 @@ func TestRunnerRunMultiple(t *testing.T) {
 // This test processor will append meta.Table.Urn with "-bar"
 type mockProcessor struct{}
 
-func newMockProcessor() *mockProcessor {
+func newMockProcessor() core.Processor {
 	return &mockProcessor{}
 }
 
-func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (error) {
-	data := <- in
+func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
+	data := <-in
 	tables, ok := data.([]meta.Table)
 	if !ok {
 		return errors.New("invalid data type")
@@ -170,11 +171,11 @@ func (t *mockProcessor) Process(ctx context.Context, config map[string]interface
 
 type mockExtractor struct{}
 
-func newMockExtractor() *mockExtractor {
+func newMockExtractor() core.Extractor {
 	return &mockExtractor{}
 }
 
-func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (error) {
+func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
 	out <- []meta.Table{
 		{
 			Urn: "foo-1",
@@ -187,12 +188,17 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 }
 
 type mockPassthroughSink struct {
-
 	result interface{}
 }
 
+func newMockSinkFn(sink core.Syncer) func() core.Syncer {
+	return func() core.Syncer {
+		return sink
+	}
+}
+
 func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) error {
-	m.result = <- in
+	m.result = <-in
 	return nil
 }
 

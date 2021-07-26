@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
 
@@ -127,8 +128,10 @@ func getColumns(csvColumns []string) (result []*facets.Column, err error) {
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("csv", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("csv", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

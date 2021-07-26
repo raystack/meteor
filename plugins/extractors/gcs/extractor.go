@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -160,8 +161,10 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("gcs", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("gcs", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

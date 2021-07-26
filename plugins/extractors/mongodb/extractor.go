@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -101,8 +102,10 @@ func (e *Extractor) collectionIsDefault(collectionName string) bool {
 }
 
 func init() {
-	if err := extractor.Catalog.Register("mongodb", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("mongodb", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

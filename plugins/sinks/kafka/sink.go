@@ -14,13 +14,11 @@ import (
 type Sink struct{}
 
 func init() {
-	if err := sink.Catalog.Register("kafka", New()); err != nil {
+	if err := sink.Catalog.Register("kafka", func() core.Syncer {
+		return &Sink{}
+	}); err != nil {
 		panic(err)
 	}
-}
-
-func New() core.Syncer {
-	return new(Sink)
 }
 
 // Kafka sink

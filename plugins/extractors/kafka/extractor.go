@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 
@@ -54,8 +55,10 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 }
 
 func init() {
-	if err := extractor.Catalog.Register("kafka", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("kafka", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

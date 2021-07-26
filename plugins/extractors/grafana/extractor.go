@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	meteorMeta "github.com/odpf/meteor/proto/odpf/meta"
@@ -98,8 +99,10 @@ func (e *Extractor) validateConfig(config Config) (err error) {
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("grafana", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("grafana", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

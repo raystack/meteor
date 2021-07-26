@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v37/github"
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -59,8 +60,10 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("github", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("github", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

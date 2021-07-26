@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 
@@ -146,8 +147,10 @@ func checkNotDefaultDatabase(database string) bool {
 }
 
 func init() {
-	if err := extractor.Catalog.Register("mssql", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("mssql", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}
