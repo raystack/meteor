@@ -14,12 +14,14 @@ import (
 	"github.com/odpf/meteor/utils"
 )
 
+var defaults = []string{"information_schema", "root", "postgres"}
+
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
 	Host     string `mapstructure:"host" validate:"required"`
 	Database string `mapstructure:"database" default:"postgres"`
-	Exclude  string `mapstructure:"exclude" default:"information_schema,root,postgres"`
+	Exclude  string `mapstructure:"exclude"`
 }
 
 type Extractor struct {
@@ -84,10 +86,12 @@ func (e *Extractor) getDatabases(cfg Config, db *sql.DB) (list []string, err err
 		return nil, err
 	}
 
+	excludeList := append(defaults, strings.Split(cfg.Exclude, ",")...)
+
 	for res.Next() {
 		var database string
 		res.Scan(&database)
-		if exclude(cfg, database) {
+		if exclude(excludeList, database) {
 			continue
 		}
 		list = append(list, database)
@@ -181,8 +185,7 @@ func connection(cfg Config, database string) (db *sql.DB, err error) {
 }
 
 // Exclude checks if the database is in the ignored databases
-func exclude(cfg Config, database string) bool {
-	names := strings.Split(cfg.Exclude, ",")
+func exclude(names []string, database string) bool {
 	for _, b := range names {
 		if b == database {
 			return true
