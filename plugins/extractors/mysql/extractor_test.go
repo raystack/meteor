@@ -4,7 +4,9 @@ package mysql_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -13,6 +15,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -24,10 +28,8 @@ import (
 var db *sql.DB
 
 const (
-	testDB     = "mockdata_meteor_metadata_test"
-	user       = "meteor_test_user"
-	pass       = "pass"
-	globalhost = "%"
+	user = "meteor_test_user"
+	pass = "pass"
 )
 
 func TestMain(m *testing.M) {
@@ -74,11 +76,7 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		err := extr.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     "localhost:3306",
 		}, make(chan<- interface{}))
@@ -87,11 +85,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		err := extr.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": user,
 			"host":    "localhost:3306",
 		}, make(chan<- interface{}))
@@ -100,11 +94,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		err := extr.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
 		}, make(chan<- interface{}))
@@ -112,32 +102,82 @@ func TestExtract(t *testing.T) {
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
-	t.Run("should return mockdata we generated with mysql running on localhost", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
+	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-
 		defer cancel()
-		extractOut := make(chan interface{})
+		out := make(chan interface{})
 
 		go func() {
-			err := extr.Extract(ctx, map[string]interface{}{
+			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  user,
 				"password": pass,
 				"host":     "localhost:3306",
-			}, extractOut)
-			close(extractOut)
+			}, out)
+			close(out)
+
 			assert.Nil(t, err)
 		}()
 
-		for val := range extractOut {
-			expected := getExpectedVal()
-			assert.Equal(t, expected, val)
+		var results []meta.Table
+		for d := range out {
+			table, ok := d.(meta.Table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
+
+			results = append(results, table)
 		}
 
+		assert.Equal(t, getExpected(), results)
 	})
 }
 
-func getExpectedVal() []meta.Table {
+func setup() (err error) {
+	testDB := "mockdata_meteor_metadata_test"
+
+	// create database, user and grant access
+	err = execute(db, []string{
+		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
+		fmt.Sprintf("CREATE DATABASE %s", testDB),
+		fmt.Sprintf("USE %s;", testDB),
+		fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass),
+		fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user),
+	})
+	if err != nil {
+		return
+	}
+
+	// create and populate tables
+	err = execute(db, []string{
+		"CREATE TABLE applicant (applicant_id int, last_name varchar(255), first_name varchar(255));",
+		"INSERT INTO applicant VALUES (1, 'test1', 'test11');",
+		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",
+		"INSERT INTO jobs VALUES (2, 'test2', 'test22');",
+	})
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func execute(db *sql.DB, queries []string) (err error) {
+	for _, query := range queries {
+		_, err = db.Exec(query)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func newExtractor() *mysql.Extractor {
+	return mysql.New(
+		logger.NewWithWriter("info", ioutil.Discard),
+	)
+}
+
+func getExpected() []meta.Table {
 	return []meta.Table{
 		{
 			Urn:  "mockdata_meteor_metadata_test.applicant",
@@ -198,71 +238,4 @@ func getExpectedVal() []meta.Table {
 			},
 		},
 	}
-}
-
-func setup() (err error) {
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("USE %s;", testDB))
-	if err != nil {
-		return
-	}
-	table1 := "applicant"
-	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
-	table2 := "jobs"
-	columns2 := "(job_id int, job varchar(255), department varchar(255))"
-	err = createTable(table1, columns1)
-	if err != nil {
-		return
-	}
-	err = createTable(table2, columns2)
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user))
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func createTable(table string, columns string) (err error) {
-	query := "CREATE TABLE "
-	_, err = db.Exec(query + table + columns + ";")
-	if err != nil {
-		return
-	}
-	values1 := "(1, 'test1', 'test11');"
-	values2 := "(2, 'test2', 'test22');"
-	err = populateTable(table, values1, db)
-	if err != nil {
-		return
-	}
-	err = populateTable(table, values2, db)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func populateTable(table string, values string, db *sql.DB) (err error) {
-	query := " INSERT INTO "
-	completeQuery := query + table + " VALUES " + values
-	_, err = db.Exec(completeQuery)
-	if err != nil {
-		return
-	}
-	return
 }
