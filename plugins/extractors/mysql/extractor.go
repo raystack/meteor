@@ -27,7 +27,8 @@ type Config struct {
 }
 
 type Extractor struct {
-	out chan<- interface{}
+	out         chan<- interface{}
+	excludedDbs map[string]bool
 
 	// dependencies
 	logger plugins.Logger
@@ -49,11 +50,15 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		return extractor.InvalidConfigError{}
 	}
 
+	// build excluded database list
+	e.buildExcludedDBs()
+
 	// create client
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
 	if err != nil {
 		return
 	}
+	defer db.Close()
 
 	// extraction process
 	err = e.extract(db)
@@ -86,7 +91,7 @@ func (e *Extractor) extract(db *sql.DB) (err error) {
 // Extract tables from a given database
 func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
 	// skip if database is default
-	if !checkNotDefaultDatabase(database) {
+	if e.isExcludedDB(database) {
 		return
 	}
 
@@ -123,6 +128,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 		return
 	}
 
+	// push table to channel
 	e.out <- meta.Table{
 		Urn:  fmt.Sprintf("%s.%s", database, tableName),
 		Name: tableName,
@@ -166,17 +172,22 @@ func (e *Extractor) extractColumns(db *sql.DB, tableName string) (columns []*fac
 	return
 }
 
-func (e *Extractor) isNullable(value string) bool {
-	return value == "YES"
+func (e *Extractor) buildExcludedDBs() {
+	excludedMap := make(map[string]bool)
+	for _, db := range defaultDBList {
+		excludedMap[db] = true
+	}
+
+	e.excludedDbs = excludedMap
 }
 
-func checkNotDefaultDatabase(database string) bool {
-	for i := 0; i < len(defaultDBList); i++ {
-		if database == defaultDBList[i] {
-			return false
-		}
-	}
-	return true
+func (e *Extractor) isExcludedDB(database string) bool {
+	_, ok := e.excludedDbs[database]
+	return ok
+}
+
+func (e *Extractor) isNullable(value string) bool {
+	return value == "YES"
 }
 
 // Register the extractor to catalog
