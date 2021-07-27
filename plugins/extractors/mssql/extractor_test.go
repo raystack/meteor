@@ -125,7 +125,7 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		assert.Equal(t, len(getExpected()), len(results))
+		assert.Equal(t, getExpected(), results)
 	})
 }
 
