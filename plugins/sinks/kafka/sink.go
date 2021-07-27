@@ -2,79 +2,68 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/golang/protobuf/proto"
 	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/utils"
+	"github.com/pkg/errors"
 )
 
 type Sink struct{}
-
-func init() {
-	if err := sink.Catalog.Register("kafka", New()); err != nil {
-		panic(err)
-	}
-}
 
 func New() core.Syncer {
 	return new(Sink)
 }
 
-// Kafka sink
-func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {
+type Config struct {
+	Brokers string `mapstructure:"brokers" validate:"required"`
+	Topic string `mapstructure:"topic" validate:"required"`
+}
 
-	producer, err := getProducer(config)
-	if err != nil {
+func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error) {
+	kafkaConf := &Config{}
+	if err := utils.BuildConfig(config, kafkaConf); err != nil {
 		return err
 	}
-	deliveryChan := make(chan kafka.Event)
-	defer close(deliveryChan)
-	for val := range out {
-		if err := s.Push(producer, deliveryChan, val, config); err != nil {
+	producer, err := getProducer(kafkaConf.Brokers)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create kafka producer")
+	}
+	defer producer.Flush(5000)
+	for val := range in {
+		if err := s.push(producer, val, kafkaConf.Topic); err != nil {
 			return err
 		}
 	}
-	producer.Flush(5000)
 	return nil
 }
 
-func getProducer(config map[string]interface{}) (*kafka.Producer, error) {
-	if config["brokers"] == nil {
-		return nil, errors.New("missing required configs: 'brokers'")
-	}
-	if config["topic"] == nil {
-		return nil, errors.New("missing required configs: 'topic'")
-	}
-
-	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": kafka.ConfigValue(config["brokers"].(string)),
-		"acks":              "all"})
-
-	if err != nil {
-		err = fmt.Errorf("failed to create kafka producer: %w", err)
-		return nil, err
-	}
-	return p, nil
+func getProducer(brokers string) (*kafka.Producer, error) {
+	producerConf := &kafka.ConfigMap{}
+	producerConf.SetKey("bootstrap.servers", brokers)
+	producerConf.SetKey("acks", "all")
+	return kafka.NewProducer(producerConf)
 }
 
-func (s *Sink) Push(producer *kafka.Producer, deliveryChan chan kafka.Event, value interface{}, config map[string]interface{}) error {
-	data, err := json.Marshal(value)
-
+func (s *Sink) push(producer *kafka.Producer, value interface{}, topic string) error {
+	protoBytes, err := proto.Marshal(value.(proto.Message))
 	if err != nil {
-		return errors.New("payload is not a protobuf")
+		return errors.Wrap(err, "failed to serialize payload as a protobuf message")
 	}
-
-	topic, _ := config["topic"].(string)
 
 	err = producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic},
-		Value:          data,
+		Value:          protoBytes,
 	}, nil)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func init() {
+	if err := sink.Catalog.Register("kafka", New()); err != nil {
+		panic(err)
+	}
 }

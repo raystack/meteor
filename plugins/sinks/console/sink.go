@@ -25,13 +25,11 @@ func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-ch
 }
 
 func (s *Sink) Process(value interface{}) error {
-	data, err := json.Marshal(value)
+	jsonBytes, err := json.Marshal(value)
 	if err != nil {
-		fmt.Println(fmt.Sprint(value))
-		return nil
+		return err
 	}
-	fmt.Println(string(data))
-
+	fmt.Println(string(jsonBytes))
 	return nil
 }
 
