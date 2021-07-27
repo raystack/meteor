@@ -23,7 +23,7 @@ func rundir(dirPath string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	failedRecipes, err := initRunner(c, log).RunMultiple(recipeList)
 	if err != nil {
 		log.Fatal(err)
