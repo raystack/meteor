@@ -2,12 +2,13 @@ package date
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"github.com/odpf/meteor/proto/odpf/meta/common"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
 )
 
 const (
@@ -42,14 +43,15 @@ func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	}
 }
 
-func (d *Extractor) Process() (*facets.Custom, error) {
+func (d *Extractor) Process() (*common.Event, error) {
 	// simulate we did some heavy workload here
 	time.Sleep(500 * time.Millisecond)
 	// ...
-
-	return &facets.Custom{CustomProperties: map[string]string{
-		"Value": fmt.Sprintf("Timestamp: %s", time.Now().String()),
-	}}, nil
+	return &common.Event{
+		Action:      "hello!",
+		Description: "sample message",
+		Timestamp:   timestamppb.New(time.Now()),
+	}, nil
 }
 
 func init() {

@@ -5,4 +5,12 @@ sinks:
   - name: kafka
     config:
       brokers: localhost:9092
-      topic: test-1
+
+      # kafka topic name
+      topic: test
+
+      # Use this path to find value that will be used to set kafka key proto
+      # message.
+      # Only supports root level key at the moment
+      # Should be a string
+      key_path: ".Action"
