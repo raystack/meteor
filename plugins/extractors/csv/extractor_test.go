@@ -3,82 +3,122 @@
 package csv_test
 
 import (
+	"context"
+	"errors"
 	"io/ioutil"
-	"strings"
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/plugins/extractors/csv"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
-	"gotest.tools/v3/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 var log = logger.NewWithWriter("info", ioutil.Discard)
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
-		_, err := csv.Extract(map[string]interface{}{})
+		config := map[string]interface{}{}
+		err := csv.New(log).Extract(
+			context.TODO(),
+			config,
+			make(chan<- interface{}))
 		assert.Equal(t, extractor.InvalidConfigError{}, err)
 	})
 
-}
+	t.Run("should extract data if path is a file", func(t *testing.T) {
+		config := map[string]interface{}{
+			"path": "./testdata/test.csv",
+		}
+		out := make(chan interface{})
+		go func() {
+			err := csv.New(log).Extract(
+				context.TODO(),
+				config,
+				out)
+			close(out)
+			assert.NoError(t, err)
+		}()
 
-func TestGetFiles(t *testing.T) {
-	t.Run("should return files from config with fileName", func(t *testing.T) {
-		c := csv.Config{FilePath: "test.csv"}
-		files, err := getCSVFiles(c)
-		expectedResult := []string{"test.csv"}
+		var results []meta.Table
+		for d := range out {
+			table, ok := d.(meta.Table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
 
-		assert.Equal(t, expectedResult, files)
-		assert.Equal(t, nil, err)
+			results = append(results, table)
+		}
+
+		expected := []meta.Table{
+			{
+				Urn:    "test.csv",
+				Name:   "test.csv",
+				Source: "csv",
+				Schema: &facets.Columns{
+					Columns: []*facets.Column{
+						{Name: "name"},
+						{Name: "age"},
+						{Name: "phone"},
+					},
+				},
+			},
+		}
+		assert.Equal(t, expected, results)
 	})
-}
 
-func TestValidateConfig(t *testing.T) {
-	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
-		c := Config{}
-		err := validateConfig(c)
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
-	})
+	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
+		config := map[string]interface{}{
+			"path": "./testdata",
+		}
+		out := make(chan interface{})
+		go func() {
+			err := csv.New(log).Extract(
+				context.TODO(),
+				config,
+				out)
+			close(out)
+			assert.NoError(t, err)
+		}()
 
-	t.Run("should return nil if config is validated correctly", func(t *testing.T) {
-		c := Config{FilePath: "test.csv"}
-		err := validateConfig(c)
-		assert.Equal(t, nil, err)
-	})
-}
+		var results []meta.Table
+		for d := range out {
+			table, ok := d.(meta.Table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
 
-func TestCreateMetaTable(t *testing.T) {
-	t.Run("should build table from columns", func(t *testing.T) {
-		var columns []*facets.Column
+			results = append(results, table)
+		}
 
-		table := createMetaTable("test.csv", "test/filePath", columns)
-		assert.Equal(t, "csv", table.Source)
-		assert.Equal(t, "test.csv", table.Name)
-		assert.Equal(t, columns, table.Schema.Columns)
-	})
-}
-
-func TestReadCSVFile(t *testing.T) {
-	t.Run("should return columns from a csv file", func(t *testing.T) {
-		reader := strings.NewReader("a,b,c")
-		content, err := readCSVFile(reader)
-		assert.Equal(t, nil, err)
-		assert.Equal(t, []string{"a", "b", "c"}, content)
-	})
-	t.Run("should ignore the white spaces", func(t *testing.T) {
-		reader := strings.NewReader("a, b, c")
-		content, err := readCSVFile(reader)
-		assert.Equal(t, nil, err)
-		assert.Equal(t, []string{"a", "b", "c"}, content)
-	})
-}
-
-func TestGetColumns(t *testing.T) {
-	t.Run("should convert csv columns to column facets", func(t *testing.T) {
-		var columns []*facets.Column
-		result, err := getColumns([]string{})
-		assert.Equal(t, nil, err)
-		assert.Equal(t, columns, result)
+		expected := []meta.Table{
+			{
+				Urn:    "test-2.csv",
+				Name:   "test-2.csv",
+				Source: "csv",
+				Schema: &facets.Columns{
+					Columns: []*facets.Column{
+						{Name: "order"},
+						{Name: "transaction_id"},
+						{Name: "total_price"},
+					},
+				},
+			},
+			{
+				Urn:    "test.csv",
+				Name:   "test.csv",
+				Source: "csv",
+				Schema: &facets.Columns{
+					Columns: []*facets.Column{
+						{Name: "name"},
+						{Name: "age"},
+						{Name: "phone"},
+					},
+				},
+			},
+		}
+		assert.Equal(t, expected, results)
 	})
 }
