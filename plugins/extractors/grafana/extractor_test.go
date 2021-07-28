@@ -3,12 +3,16 @@
 package grafana_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -16,13 +20,39 @@ import (
 )
 
 var log = logger.NewWithWriter("info", ioutil.Discard)
+var testServer *httptest.Server
+
+func TestMain(m *testing.M) {
+	testServer = NewTestServer()
+
+	// run tests
+	code := m.Run()
+
+	testServer.Close()
+	os.Exit(code)
+}
 
 func TestExtract(t *testing.T) {
-	testServer := NewTestServer()
-	defer func() { testServer.Close() }()
+	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
+		err := grafana.New(log).Extract(context.TODO(), map[string]interface{}{
+			"base_url": "",
+			"api_key":  "qwerty123",
+		}, make(chan interface{}))
+
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
+	})
+
+	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
+		err := grafana.New(log).Extract(context.TODO(), map[string]interface{}{
+			"base_url": testServer.URL,
+			"api_key":  "",
+		}, make(chan interface{}))
+
+		assert.Equal(t, extractor.InvalidConfigError{}, err)
+	})
 
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
-		extractor := grafana.New(testServer.Client(), log)
+		extractor := grafana.New(log)
 
 		expectedData := []meta.Dashboard{
 			{
@@ -81,13 +111,28 @@ func TestExtract(t *testing.T) {
 			},
 		}
 
-		actualData, err := extractor.Extract(map[string]interface{}{
-			"base_url": testServer.URL,
-			"api_key":  "qwerty123",
-		})
+		out := make(chan interface{})
+		go func() {
+			err := extractor.Extract(context.TODO(), map[string]interface{}{
+				"base_url": testServer.URL,
+				"api_key":  "qwerty123",
+			}, out)
+			close(out)
+
+			assert.NoError(t, err)
+		}()
+
+		var actualData []meta.Dashboard
+		for d := range out {
+			dashboard, ok := d.(meta.Dashboard)
+			if !ok {
+				t.Fatal(errors.New("invalid metadata format"))
+			}
+
+			actualData = append(actualData, dashboard)
+		}
 
 		assert.EqualValues(t, expectedData, actualData)
-		assert.NoError(t, err)
 	})
 }
 

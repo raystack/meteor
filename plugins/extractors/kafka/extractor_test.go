@@ -77,7 +77,7 @@ func TestExtractorExtract(t *testing.T) {
 		for d := range out {
 			topic, ok := d.(meta.Topic)
 			if !ok {
-				t.Fatal(errors.New("invalid table format"))
+				t.Fatal(errors.New("invalid metadata format"))
 			}
 			results = append(results, topic)
 		}
