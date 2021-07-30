@@ -7,6 +7,8 @@
 
 Meteor is a metadata collector tool that helps to extract and sink metadata from the source to the destination.
 
+<p align="center"><img src="./docs/assets/overview.svg" /></p>
+
 ## Key Features
 
 * **Metadata Extractions** Easily orchestrate your metadata extraction via recipe and Meteor's built-in features.
