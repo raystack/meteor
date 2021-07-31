@@ -1,5 +1,3 @@
-//+build integration
-
 package elastic_test
 
 import (
@@ -21,16 +19,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const host = "http://localhost:9200"
+const (
+	host = "http://localhost:9200"
+	pass = "secret_pass"
+	user = "elastic_meteor"
+)
 
-var client *elasticsearch.Client
-var ctx = context.Background()
+var (
+	client *elasticsearch.Client
+	ctx    = context.Background()
+)
 
 func TestMain(m *testing.M) {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			"http://localhost:9200",
 		},
+		Username: user,
+		Password: pass,
 	}
 	var err error
 	client, err = elasticsearch.NewClient(cfg)
@@ -45,6 +51,9 @@ func TestMain(m *testing.M) {
 		Env: []string{
 			"discovery.type=single-node",
 			"ES_JAVA_OPTS=-Xms512m -Xmx512m",
+			"ELASTIC_USER=" + user,
+			"ELASTIC_PASSWORD=" + pass,
+			"xpack.security.enabled=false",
 		},
 		ExposedPorts: []string{"9200"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
@@ -103,7 +112,9 @@ func TestExtract(t *testing.T) {
 		}
 		go func() {
 			err := extr.Extract(ctx, map[string]interface{}{
-				"host": host,
+				"host":     host,
+				"user":     user,
+				"password": pass,
 			}, extractOut)
 			if err != nil {
 				log.Fatal(err)
