@@ -1,4 +1,4 @@
-# bigquery
+# grafana
 
 ## Usage
 
