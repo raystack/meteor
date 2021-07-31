@@ -24,6 +24,35 @@ Explore the following resources to get started with Meteor:
 * [Concepts](docs/concepts/overview.md) describes all important Meteor concepts.
 * [Contribute](docs/contribute/contributing.md) contains resources for anyone who wants to contribute to Meteor.
 
+## Running locally
+
+```sh
+# Clone the repo
+$ git clone https://github.com/odpf/meteor.git
+
+# Install all the golang dependencies
+$ go mod tidy
+
+# Build meteor binary file
+$ make build
+
+# Run meteor on a recipe file
+$ ./meteor run sample-recipe.yaml
+
+# Run meteor on multiple recipes in a directory
+$ ./meteor rundir directory-path
+```
+
+## Running tests 
+```sh
+# Running all unit tests, excluding extractors
+$ make test
+
+# Run integration test for any extractor
+$ cd plugins/extractors/<name-of-extractor>
+$ go test -tags=integration
+```
+
 ## Contribute
 
 Development of Meteor happens in the open on GitHub, and we are grateful to the community for contributing bugfixes and improvements. Read below to learn how you can take part in improving Meteor.
