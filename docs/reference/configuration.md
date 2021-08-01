@@ -4,7 +4,7 @@ This page contains reference for all the application configurations for Meteor.
 
 ## Table of Contents
 
-* [Generic](configuration.md#-generic)
+* [Generic](configuration.md#generic)
 
 ## Generic
 
