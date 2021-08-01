@@ -1,8 +1,9 @@
 # Sink
 
-You can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same metadata extraction.
+`sinks` are used to define the medium of consuming the metadata being extracted.You need to specify atleast one sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same metadata extraction. The given examples shows you its correct usage for http and kafka.
 
 ## Sample usage in a recipe
+
 ```yaml
 name: sample-recipe
 sinks: # required - at least 1 sink defined
@@ -21,28 +22,36 @@ sinks: # required - at least 1 sink defined
 ```
 
 ## Available Sinks
-### Console
+
+* ### Console
+
 ```yaml
 name: sample-recipe
 sinks:
   - name: console
 ```
+
 Print metadata to stdout.
 
 ## Upcoming sinks
+
 - HTTP
 - Kafka
 
 ## Serializer
+
 By default, metadata would be serialized into JSON format before sinking. To send it using other formats, a serializer needs to be defined in the sink config.
 
 ## Custom Sink
+
 Meteor will have built-in sinks like Kafka and HTTP where users can just utilise directly. We will also allow creating custom sinks for DRY purposes.
 
-This will be useful if you find yourself sinking multiple metadata source to one place.
+It will be useful if you can find yourself sinking multiple metadata source to one place.
 
 ### Sample Custom Sink
+
 *central_metadata_store_sink.yaml*
+
 ```yaml
 name: central-metadata-store # unique sink name as an ID
 sink:
