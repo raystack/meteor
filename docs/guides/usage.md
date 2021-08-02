@@ -15,3 +15,10 @@ Once we have a recipe. We can easily run it using below command.
 meteor run sample-recipe.yaml
 ```
 This will run the recipe using its details. More information about the command can be found [here](../reference/commands.md#run-a-single-recipe).
+
+## Running multiple recipes from directory
+One can store all his recipes in a single directory and know our ```path-to-recipes```, which is the path to the directory. We can easily run it using below command.
+```
+meteor rundir path-to-recipes
+```
+This will run the recipe using its details. More information about the command can be found [here](../reference/commands.md#run-a-single-recipe).

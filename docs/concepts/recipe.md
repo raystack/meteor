@@ -3,6 +3,7 @@
 A recipe is an instruction on how to fetch, process and sink metadata.
 
 Recipe is a yaml file with the below information.
+
 ```yaml
 name: main-kafka-production # unique recipe name as an ID
 source: # required - for fetching input from sources
@@ -43,10 +44,11 @@ processors: # optional - metadata processors
 
 ## Dynamic recipe value
 
-Meteor reads recipe using [go template](https://golang.org/pkg/text/template/) which means you can put a variable instead of static value in a recipe.
+Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe.
 Environment variables with prefix `METEOR_` will be used as the template data for the recipe.
 
-recipe-with-variable.yaml
+*recipe-with-variable.yaml*
+
 ```yaml
 name: sample-recipe
 source:
@@ -57,8 +59,11 @@ source:
 ```
 
 sample usage
+
 ```shell
+#setup environment variables
 > export METEOR_MONGODB_USER=admin
 > export METEOR_MONGODB_PASS=1234
+#run the recipe
 > meteor run recipe-with-variable.yaml
 ```
