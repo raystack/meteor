@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/processor"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func (p *mockProcessor) Process(ctx context.Context, config map[string]interface
 	return nil
 }
 
-func newMockProcessor() *mockProcessor {
+func newMockProcessor() core.Processor {
 	return new(mockProcessor)
 }
 
@@ -25,7 +26,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "wrong-name"
 
 		factory := processor.NewFactory()
-		factory.Register("mock", newMockProcessor())
+		factory.Register("mock", newMockProcessor)
 
 		_, err := factory.Get(name)
 		assert.Equal(t, processor.NotFoundError{name}, err)
@@ -35,7 +36,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "mock"
 
 		factory := processor.NewFactory()
-		factory.Register(name, newMockProcessor())
+		factory.Register(name, newMockProcessor)
 
 		extr, err := factory.Get(name)
 		if err != nil {
@@ -50,8 +51,8 @@ func TestFactoryGet(t *testing.T) {
 func TestFactoryRegister(t *testing.T) {
 	t.Run("should add processor factory with given key", func(t *testing.T) {
 		factory := processor.NewFactory()
-		factory.Register("mock1", newMockProcessor())
-		factory.Register("mock2", newMockProcessor())
+		factory.Register("mock1", newMockProcessor)
+		factory.Register("mock2", newMockProcessor)
 
 		mock1, err := factory.Get("mock1")
 		if err != nil {

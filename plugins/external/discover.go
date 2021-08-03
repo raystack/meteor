@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-plugin"
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/processor"
 )
 
@@ -73,7 +74,9 @@ func populateProcessorFactory(clients []*plugin.Client, factory *processor.Facto
 			return err
 		}
 
-		if err = factory.Register(name, proc); err != nil {
+		if err = factory.Register(name, func() core.Processor {
+			return proc
+		}); err != nil {
 			return err
 		}
 	}

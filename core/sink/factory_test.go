@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/sink"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +16,7 @@ func (p *mockSink) Sink(ctx context.Context, config map[string]interface{}, in <
 	return nil
 }
 
-func newMockSink() *mockSink {
+func newMockSink() core.Syncer {
 	return &mockSink{}
 }
 
@@ -24,7 +25,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "wrong-name"
 
 		factory := sink.NewFactory()
-		factory.Register("mock", newMockSink())
+		factory.Register("mock", newMockSink)
 
 		_, err := factory.Get(name)
 		assert.Equal(t, sink.NotFoundError{name}, err)
@@ -34,7 +35,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "mock"
 
 		factory := sink.NewFactory()
-		factory.Register(name, newMockSink())
+		factory.Register(name, newMockSink)
 
 		extr, err := factory.Get(name)
 		if err != nil {
@@ -49,8 +50,8 @@ func TestFactoryGet(t *testing.T) {
 func TestFactorySet(t *testing.T) {
 	t.Run("should add sink factory with given key", func(t *testing.T) {
 		factory := sink.NewFactory()
-		factory.Register("mock1", newMockSink())
-		factory.Register("mock2", newMockSink())
+		factory.Register("mock1", newMockSink)
+		factory.Register("mock2", newMockSink)
 
 		mock1, err := factory.Get("mock1")
 		if err != nil {

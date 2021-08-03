@@ -16,6 +16,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+type Config struct {
+	Brokers string `mapstructure:"brokers" validate:"required"`
+	Topic   string `mapstructure:"topic" validate:"required"`
+	KeyPath string `mapstructure:"key_path"`
+}
+
 type ProtoReflector interface {
 	ProtoReflect() protoreflect.Message
 }
@@ -24,12 +30,6 @@ type Sink struct{}
 
 func New() core.Syncer {
 	return new(Sink)
-}
-
-type Config struct {
-	Brokers string `mapstructure:"brokers" validate:"required"`
-	Topic   string `mapstructure:"topic" validate:"required"`
-	KeyPath string `mapstructure:"key_path"`
 }
 
 func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error) {
@@ -155,7 +155,9 @@ func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 }
 
 func init() {
-	if err := sink.Catalog.Register("kafka", New()); err != nil {
+	if err := sink.Catalog.Register("kafka", func() core.Syncer {
+		return &Sink{}
+	}); err != nil {
 		panic(err)
 	}
 }

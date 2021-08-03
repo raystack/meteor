@@ -2,14 +2,17 @@ package csv
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/utils"
+	"github.com/pkg/errors"
 
 	"encoding/csv"
 
@@ -19,116 +22,121 @@ import (
 )
 
 type Config struct {
-	DirectoryPath string `mapstructure:"directory"`
-	FilePath      string `mapstructure:"file"`
+	Path string `mapstructure:"path" validate:"required"`
 }
 
 type Extractor struct {
 	logger plugins.Logger
 }
 
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.logger.Info("extracting csv metadata...")
+func New(logger plugins.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
 
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
 		return extractor.InvalidConfigError{}
 	}
 
-	err = validateConfig(config)
-
+	// build file paths to read from
+	filePaths, err := e.buildFilePaths(config.Path)
 	if err != nil {
-		return err
-	}
-	files, err := getCSVFiles(config)
-
-	for _, file := range files {
-		csvFile, err := os.Open(file)
-		if err != nil {
-			e.logger.Error("unable to open the csv file ", file)
-			continue
-		}
-		defer csvFile.Close()
-		content, err := readCSVFile(csvFile)
-
-		if err != nil {
-			e.logger.Error("Not able to read csv file")
-			continue
-		}
-		columns, err := getColumns(content)
-		if err != nil {
-			e.logger.Error("Not able convert to columns")
-			continue
-		}
-
-		stat, _ := csvFile.Stat()
-
-		out <- createMetaTable(stat.Name(), file, columns)
-
+		return
 	}
 
-	return nil
+	return e.extract(filePaths, out)
 }
 
-// Validate configurations for csv extractor
-func validateConfig(config Config) error {
-	if config.FilePath == "" && config.DirectoryPath == "" {
-		return extractor.InvalidConfigError{}
+func (e *Extractor) extract(filePaths []string, out chan<- interface{}) (err error) {
+	for _, filePath := range filePaths {
+		table, err := e.buildTable(filePath)
+		if err != nil {
+			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
+		}
+
+		out <- table
 	}
-	return nil
+
+	return
 }
 
-func getCSVFiles(config Config) (files []string, err error) {
-	if config.DirectoryPath != "" {
-		fileInfos, err := ioutil.ReadDir(config.DirectoryPath)
+func (e *Extractor) buildTable(filePath string) (table meta.Table, err error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		err = errors.New("unable to open the csv file")
+		return
+	}
+	defer file.Close()
+	content, err := e.readCSVFile(file)
+	if err != nil {
+		err = errors.New("unable to read csv file content")
+		return
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		err = errors.New("unable to read csv file stat")
+		return
+	}
 
+	fileName := stat.Name()
+	table = meta.Table{
+		Urn:    fileName,
+		Name:   fileName,
+		Source: "csv",
+		Schema: &facets.Columns{
+			Columns: e.buildColumns(content),
+		},
+	}
+	return
+}
+
+func (e *Extractor) readCSVFile(r io.Reader) (columns []string, err error) {
+	reader := csv.NewReader(r)
+	reader.TrimLeadingSpace = true
+	return reader.Read()
+}
+
+func (e *Extractor) buildColumns(csvColumns []string) (result []*facets.Column) {
+	for _, singleColumn := range csvColumns {
+		result = append(result, &facets.Column{
+			Name: singleColumn,
+		})
+	}
+	return result
+}
+
+func (e *Extractor) buildFilePaths(filePath string) (files []string, err error) {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return
+	}
+
+	if fileInfo.IsDir() {
+		fileInfos, err := ioutil.ReadDir(filePath)
 		if err != nil {
 			return files, err
 		}
 		for _, fileInfo := range fileInfos {
 			ext := filepath.Ext(fileInfo.Name())
 			if ext == ".csv" {
-				files = append(files, path.Join(config.DirectoryPath, fileInfo.Name()))
+				files = append(files, path.Join(filePath, fileInfo.Name()))
 			}
 		}
 		return files, err
 	}
-	return []string{config.FilePath}, err
-}
 
-func createMetaTable(fileName string, filePath string, columns []*facets.Column) *meta.Table {
-	return &meta.Table{
-		Name:   fileName,
-		Source: "csv",
-		Schema: &facets.Columns{
-			Columns: columns,
-		},
-		Custom: &facets.Custom{
-			CustomProperties: map[string]string{"FilePath": filePath},
-		},
-	}
-}
-
-func readCSVFile(r io.Reader) (columns []string, err error) {
-	reader := csv.NewReader(r)
-	reader.TrimLeadingSpace = true
-	return reader.Read()
-}
-
-func getColumns(csvColumns []string) (result []*facets.Column, err error) {
-	for _, singleColumn := range csvColumns {
-		result = append(result, &facets.Column{
-			Name: singleColumn,
-		})
-	}
-	return result, nil
+	return []string{filePath}, err
 }
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("csv", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("csv", func() core.Extractor {
+		return New(plugins.Log)
 	}); err != nil {
 		panic(err)
 	}

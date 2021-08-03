@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 
 	"cloud.google.com/go/bigtable"
@@ -112,8 +113,10 @@ func (e *Extractor) createAdminClient(ctx context.Context, instance string, proj
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("bigtable", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("bigtable", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

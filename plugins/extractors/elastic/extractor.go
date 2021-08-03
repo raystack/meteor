@@ -3,41 +3,49 @@ package elastic
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/utils"
 )
 
 type Config struct {
-	Host string `mapstructure:"host"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"host" validate:"required"`
 }
 
 type Extractor struct {
+	out    chan<- interface{}
 	logger plugins.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	config, err := e.getConfig(configMap)
+	e.out = out
+
+	//build config
+	var config Config
+	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return
+		return extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
+
+	//build elasticsearch client
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			config.Host,
 		},
+		Username: config.User,
+		Password: config.Password,
 	}
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		return
 	}
+
 	result, err := e.listIndexes(client)
 	if err != nil {
 		return
@@ -105,22 +113,12 @@ func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (r
 	return
 }
 
-func (e *Extractor) getConfig(configMap map[string]interface{}) (config Config, err error) {
-	err = mapstructure.Decode(configMap, &config)
-	return
-}
-
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.Host == "" {
-		return errors.New("atleast one host address is required")
-	}
-	return
-}
-
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("elastic", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("elastic", func() core.Extractor {
+		return &Extractor{
+			logger: plugins.Log,
+		}
 	}); err != nil {
 		panic(err)
 	}

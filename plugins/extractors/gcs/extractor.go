@@ -2,9 +2,9 @@ package gcs
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -29,88 +29,82 @@ type Config struct {
 }
 
 type Extractor struct {
+	client *storage.Client
+
+	// dependencies
 	logger plugins.Logger
 }
 
+func New(logger plugins.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.logger.Info("extracting google cloud storage metadata...")
+	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
 		return extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
-	if err != nil {
-		return
-	}
+
+	// create client
 	client, err := e.createClient(ctx, config)
 	if err != nil {
 		return
 	}
-	result, err := e.getMetadata(ctx, client, config.ProjectID, config.ExtractBlob)
-	if err != nil {
-		return
-	}
-	out <- result
-	return
+	e.client = client
+
+	return e.extract(ctx, out, config)
 }
 
-func (e *Extractor) getMetadata(ctx context.Context, client *storage.Client, projectID string, ExtractBlob bool) ([]meta.Bucket, error) {
-	e.logger.Info(fmt.Sprintf("Extracting buckets metadata for %s", projectID))
-
-	it := client.Buckets(ctx, projectID)
-	var results []meta.Bucket
-
+func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config Config) (err error) {
+	it := e.client.Buckets(ctx, config.ProjectID)
 	for {
 		bucket, err := it.Next()
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
-		var blobs *facets.Blobs
 
-		if ExtractBlob {
-			e.logger.Info(fmt.Sprintf("Extracting blobs metadata for %s", bucket.Name))
-			blobs, err = e.getBlobs(ctx, bucket.Name, client, projectID)
+		var blobs []*facets.Blob
+		if config.ExtractBlob {
+			blobs, err = e.extractBlobs(ctx, bucket.Name, config.ProjectID)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 
-		results = append(results, e.mapBucket(bucket, projectID, blobs))
+		out <- e.buildBucket(bucket, config.ProjectID, blobs)
 	}
 
-	return results, nil
+	return
 }
 
-func (e *Extractor) getBlobs(ctx context.Context, bucketName string, client *storage.Client, projectID string) (*facets.Blobs, error) {
-	it := client.Bucket(bucketName).Objects(ctx, nil)
-	var blobs []*facets.Blob
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*facets.Blob, err error) {
+	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
 	object, err := it.Next()
 	for err == nil {
-		blobs = append(blobs, e.mapObject(object, projectID))
+		blobs = append(blobs, e.buildBlob(object, projectID))
 		object, err = it.Next()
 	}
 	if err == iterator.Done {
 		err = nil
 	}
 
-	blobsResult := &facets.Blobs{
-		Blobs: blobs,
-	}
-	return blobsResult, err
+	return
 }
 
-func (e *Extractor) mapBucket(b *storage.BucketAttrs, projectID string, blobs *facets.Blobs) meta.Bucket {
-	return meta.Bucket{
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*facets.Blob) (bucket meta.Bucket) {
+	bucket = meta.Bucket{
 		Urn:         fmt.Sprintf("%s/%s", projectID, b.Name),
 		Name:        b.Name,
 		Location:    b.Location,
 		StorageType: b.StorageClass,
-		Blobs:       blobs,
 		Source:      metadataSource,
 		Timestamps: &common.Timestamp{
 			CreatedAt: timestamppb.New(b.Created),
@@ -119,9 +113,16 @@ func (e *Extractor) mapBucket(b *storage.BucketAttrs, projectID string, blobs *f
 			Tags: b.Labels,
 		},
 	}
+	if blobs != nil {
+		bucket.Blobs = &facets.Blobs{
+			Blobs: blobs,
+		}
+	}
+
+	return
 }
 
-func (e *Extractor) mapObject(blob *storage.ObjectAttrs, projectID string) *facets.Blob {
+func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *facets.Blob {
 	return &facets.Blob{
 		Urn:       fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
 		Name:      blob.Name,
@@ -149,19 +150,10 @@ func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.C
 	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
 }
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.ProjectID == "" {
-		return errors.New("project_id is required")
-	}
-	fmt.Println(config.ExtractBlob)
-
-	return
-}
-
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("gcs", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("gcs", func() core.Extractor {
+		return New(plugins.Log)
 	}); err != nil {
 		panic(err)
 	}

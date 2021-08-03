@@ -2,10 +2,10 @@ package grafana
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	meteorMeta "github.com/odpf/meteor/proto/odpf/meta"
@@ -18,36 +18,46 @@ type Config struct {
 }
 
 type Extractor struct {
-	httpClient *http.Client
-	logger     plugins.Logger
+	client *Client
+
+	// dependencies
+	logger plugins.Logger
+}
+
+func New(logger plugins.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.logger.Info("extracting kafka metadata...")
+	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
 		return extractor.InvalidConfigError{}
 	}
-	err = e.validateConfig(config)
+
+	// build client
+	e.client = NewClient(&http.Client{}, config)
+
+	return e.extract(out)
+}
+
+func (e *Extractor) extract(out chan<- interface{}) (err error) {
+	uids, err := e.client.SearchAllDashboardUIDs()
 	if err != nil {
 		return
 	}
-	client := NewClient(e.httpClient, config)
-	uids, err := client.SearchAllDashboardUIDs()
+	dashboardDetails, err := e.client.GetAllDashboardDetails(uids)
 	if err != nil {
 		return
-	}
-	dashboardDetails, err := client.GetAllDashboardDetails(uids)
-	if err != nil {
-		return
-	}
-	data := make([]meteorMeta.Dashboard, len(dashboardDetails))
-	for i, dashboardDetail := range dashboardDetails {
-		data[i] = e.grafanaDashboardToMeteorDashboard(dashboardDetail)
 	}
 
-	out <- data
+	for _, dashboardDetail := range dashboardDetails {
+		out <- e.grafanaDashboardToMeteorDashboard(dashboardDetail)
+	}
+
 	return
 }
 
@@ -86,20 +96,10 @@ func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, 
 	}
 }
 
-func (e *Extractor) validateConfig(config Config) (err error) {
-	if config.BaseURL == "" {
-		return errors.New("base_url is required")
-	}
-	if config.APIKey == "" {
-		return errors.New("api_key is required")
-	}
-	return
-}
-
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("grafana", &Extractor{
-		logger: plugins.Log,
+	if err := extractor.Catalog.Register("grafana", func() core.Extractor {
+		return New(plugins.Log)
 	}); err != nil {
 		panic(err)
 	}
