@@ -14,24 +14,53 @@ import (
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	broker = "localhost:9092"
+	broker = "localhost:9093"
 )
 
 func TestMain(m *testing.M) {
-	// create client
-	client, err := kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
-		"metadata.broker.list": broker,
-	})
+	var client *kafkaLib.AdminClient
+	ctx := context.TODO()
+	// client, err := kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
+	// 	"bootstrap.servers": broker,
+	// })
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "moeenz/docker-kafka-kraft",
+		Tag:        "229159a4a45b",
+		Env: []string{
+			"KRAFT_CONTAINER_HOST_NAME=1",
+		},
+		ExposedPorts: []string{"9093"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"9093": {
+				{HostIP: "localhost", HostPort: "9093"},
+			},
+		},
+	}
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		// create client
+		client, err = kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
+			"bootstrap.servers": broker,
+		})
+		return err
+	}
+	err, purgeContainer := testutils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx := context.TODO()
 	// setup and populate kafka for testing
 	if err := setup(ctx, client); err != nil {
 		log.Fatal(err)
@@ -46,6 +75,10 @@ func TestMain(m *testing.M) {
 	}
 	client.Close()
 
+	// purge container
+	if err := purgeContainer(); err != nil {
+		log.Fatal(err)
+	}
 	os.Exit(code)
 }
 
