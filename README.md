@@ -7,6 +7,8 @@
 
 Meteor is a metadata collector tool that helps to extract and sink metadata from the source to the destination.
 
+<p align="center"><img src="./docs/assets/overview.svg" /></p>
+
 ## Key Features
 
 * **Metadata Extractions** Easily orchestrate your metadata extraction via recipe and Meteor's built-in features.
@@ -19,8 +21,37 @@ Meteor is a metadata collector tool that helps to extract and sink metadata from
 Explore the following resources to get started with Meteor:
 
 * [Usage Guides](docs/guides/usage.md) will help you get started on Meteor.
-* [Concepts](docs/concepts/overview.md) describes all important Meteor concepts.
+* [Concepts](docs/concepts) describes all important Meteor concepts.
 * [Contribute](docs/contribute/contributing.md) contains resources for anyone who wants to contribute to Meteor.
+
+## Running locally
+
+```sh
+# Clone the repo
+$ git clone https://github.com/odpf/meteor.git
+
+# Install all the golang dependencies
+$ go mod tidy
+
+# Build meteor binary file
+$ make build
+
+# Run meteor on a recipe file
+$ ./meteor run sample-recipe.yaml
+
+# Run meteor on multiple recipes in a directory
+$ ./meteor rundir directory-path
+```
+
+## Running tests 
+```sh
+# Running all unit tests, excluding extractors
+$ make test
+
+# Run integration test for any extractor
+$ cd plugins/extractors/<name-of-extractor>
+$ go test -tags=integration
+```
 
 ## Contribute
 
