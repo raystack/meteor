@@ -1,4 +1,4 @@
-# mysql
+# metabase
 
 ## Usage
 
@@ -23,21 +23,16 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `my_database.my_table` |
-| `name` | `my_table` |
-| `source` | `mysql` |
+| `urn` | `metabase.dashboard_name` |
+| `name` | `dashboard_name` |
+| `source` | `metabase` |
 | `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+| `schema` | [][Chart](#chart) |
 
-### Column
+### Chart
 | Field | Sample Value |
 | :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
+
 
 ## Contributing
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
