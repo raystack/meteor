@@ -47,18 +47,17 @@ func (r *Runner) Run(recipe Recipe) (run Run) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// run extractors
-	{
-		outChannel := channel
-		go func() {
-			err := r.runExtractor(ctx, recipe.Source, outChannel)
-			if err != nil {
-				run.Error = r.buildTaskError(TaskTypeExtract, recipe.Source.Type, err)
-			}
 
-			close(outChannel)
-		}()
-	}
+	// run extractors
+	extrChannel := channel
+	go func() {
+		err := r.runExtractor(ctx, recipe.Source, extrChannel)
+		if err != nil {
+			run.Error = r.buildTaskError(TaskTypeExtract, recipe.Source.Type, err)
+		}
+
+		close(extrChannel)
+	}()
 
 	// run processors
 	for _, processorRecipe := range recipe.Processors {
