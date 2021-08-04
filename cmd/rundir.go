@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/odpf/meteor/plugins"
 	goLog "log"
+
+	"github.com/odpf/meteor/plugins"
 
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/core/recipe"
@@ -24,9 +25,6 @@ func rundir(dirPath string) {
 		log.Fatal(err)
 	}
 
-	failedRecipes, err := initRunner(c, log).RunMultiple(recipeList)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.WithField("failed_recipes", failedRecipes).Info("Done!")
+	runs := initRunner(c, log).RunMultiple(recipeList)
+	log.WithField("runs", runs).Info("Done!")
 }

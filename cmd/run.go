@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/odpf/meteor/plugins"
 	goLog "log"
+
+	"github.com/odpf/meteor/plugins"
 
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/core/recipe"
@@ -22,8 +23,10 @@ func run(recipeFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = initRunner(c, log).Run(rcp); err != nil {
-		log.Fatal(err)
+
+	run := initRunner(c, log).Run(rcp)
+	if run.Error != nil {
+		log.Fatal(run.Error)
 	}
 	log.Info("Done!")
 }
