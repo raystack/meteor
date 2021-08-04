@@ -56,7 +56,6 @@ func run(recipeFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(rcp)
 	if err = initRunner(c, log).Run(rcp); err != nil {
 		log.Fatal(err)
 	}
