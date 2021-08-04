@@ -1,5 +1,3 @@
-//+build integration
-
 package metabase_test
 
 import (
@@ -131,12 +129,16 @@ func setup() (err error) {
 	if err != nil {
 		return
 	}
-	setupData, err := unmarshalResponse(res)
+	type response struct {
+		Token string `json:"setup-token"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	setup_token := setupData["setup-token"]
-	err = setUser(setup_token.(string))
+	setup_token := data.Token
+	err = setUser(setup_token)
 	if err != nil {
 		return
 	}
@@ -171,11 +173,15 @@ func setUser(setup_token string) (err error) {
 	if err != nil {
 		return
 	}
-	data, err := unmarshalResponse(res)
+	type response struct {
+		ID string `json:"id"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	session_id = data["id"].(string)
+	session_id = data.ID
 	err = getSessionID()
 	return
 }
@@ -193,11 +199,15 @@ func getSessionID() (err error) {
 	if err != nil {
 		return
 	}
-	body, err := unmarshalResponse(res)
+	type response struct {
+		ID string `json:"id"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	session_id = body["id"].(string)
+	session_id = data.ID
 	return
 }
 
@@ -228,11 +238,15 @@ func addCollection() (err error) {
 	if err != nil {
 		return
 	}
-	body, err := unmarshalResponse(res)
+	type response struct {
+		ID int `json:"id"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	collection_id = int(body["id"].(float64))
+	collection_id = data.ID
 	return
 }
 
@@ -250,11 +264,15 @@ func addDashboard() (err error) {
 	if err != nil {
 		return
 	}
-	body, err := unmarshalResponse(res)
+	type response struct {
+		ID int `json:"id"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	dashboard_id = int(body["id"].(float64))
+	dashboard_id = data.ID
 	err = addCard(dashboard_id)
 	if err != nil {
 		return
@@ -275,11 +293,15 @@ func addCard(id int) (err error) {
 	if err != nil {
 		return
 	}
-	body, err := unmarshalResponse(res)
+	type response struct {
+		ID int `json:"id"`
+	}
+	var data response
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	card_id = int(body["id"].(float64))
+	card_id = data.ID
 	return
 }
 
@@ -301,7 +323,7 @@ func newRequest(method, url string, body io.Reader) (res *http.Response, err err
 	return
 }
 
-func unmarshalResponse(res *http.Response) (data map[string]interface{}, err error) {
+func unmarshalResponse(res *http.Response, data interface{}) (err error) {
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return
