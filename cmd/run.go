@@ -80,9 +80,6 @@ func rundir(dirPath string) {
 	plugins.Log.Level = log.Level
 
 	runs := initRunner(c, log).RunMultiple(recipeList)
-	if err != nil {
-		log.Fatal(err)
-	}
 	log.WithField("runs", runs).Info("Done!")
 }
 
