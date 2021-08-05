@@ -27,12 +27,18 @@ source:
 | `name` | `dashboard_name` |
 | `source` | `metabase` |
 | `description` | `table description` |
-| `schema` | [][Chart](#chart) |
+| `charts` | [][Chart](#chart) |
 
 ### Chart
+
 | Field | Sample Value |
 | :---- | :---- |
+| `urn` | `metabase.dashboard_name.card_name` |
+| `source` | `metabase` |
+| `dashboard_urn` | `metabase.dashboard_name` |
+| `dashboard_source` | `metabase` |
 
 
 ## Contributing
+
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
