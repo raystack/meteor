@@ -1,6 +1,10 @@
 package enrich
 
 import (
+	"context"
+
+	"github.com/odpf/meteor/core"
+	"github.com/odpf/meteor/core/processor"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -10,25 +14,35 @@ func New() *Processor {
 	return new(Processor)
 }
 
-func (p *Processor) Process(
-	data interface{},
-	config map[string]interface{},
-) (
-	result interface{},
-	err error,
-) {
-	result = data
-
-	err = utils.ModifyCustomProperties(data, func(custom map[string]string) (err error) {
-		for key, value := range config {
-			stringVal, ok := value.(string)
-			if ok {
-				custom[key] = stringVal
-			}
-		}
-
-		return
-	})
+func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
+	for data := range in {
+		out <- p.process(data, config)
+	}
 
 	return
+}
+
+func (p *Processor) process(data interface{}, config map[string]interface{}) interface{} {
+	customProps := utils.GetCustomProperties(data)
+	if customProps == nil {
+		return data
+	}
+
+	// update custom properties using value from config
+	for key, value := range config {
+		stringVal, ok := value.(string)
+		if ok {
+			customProps[key] = stringVal
+		}
+	}
+
+	// save custom properties
+	result := utils.SetCustomProperties(data, customProps)
+	return result
+}
+
+func init() {
+	processor.Catalog.Register("enrich", func() core.Processor {
+		return New()
+	})
 }

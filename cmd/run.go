@@ -24,7 +24,6 @@ func RunCmd() *cobra.Command {
 		Example: "meteor run recipe.yaml",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-
 			fi, err := os.Stat(args[0])
 			if err != nil {
 				fmt.Println(err)
@@ -56,10 +55,12 @@ func run(recipeFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = initRunner(c, log).Run(rcp); err != nil {
-		log.Fatal(err)
+
+	run := initRunner(c, log).Run(rcp)
+	if run.Error != nil {
+		log.Fatal(run.Error)
 	}
-	log.Println("! Done")
+	log.WithField("run", run).Info("Done!")
 }
 
 // Run a directory of recipes
@@ -78,11 +79,8 @@ func rundir(dirPath string) {
 	log := logger.New(c.LogLevel)
 	plugins.Log.Level = log.Level
 
-	failedRecipes, err := initRunner(c, log).RunMultiple(recipeList)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.WithField("failed_recipes", failedRecipes).Info("Done!")
+	runs := initRunner(c, log).RunMultiple(recipeList)
+	log.WithField("runs", runs).Info("Done!")
 }
 
 func initRunner(config config.Config, logger plugins.Logger) (runner *recipe.Runner) {
