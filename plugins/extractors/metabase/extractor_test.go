@@ -1,5 +1,3 @@
-//+build integration
-
 package metabase_test
 
 import (
@@ -20,7 +18,6 @@ import (
 	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/logger"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
-	_ "github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/ory/dockertest/v3"
@@ -123,7 +120,6 @@ func TestExtract(t *testing.T) {
 		for val := range extractOut {
 			urns = append(urns, val.(meta.Dashboard).Urn)
 		}
-		fmt.Println(urns)
 		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
 	})
 }
