@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -20,15 +21,37 @@ import (
 
 var (
 	client = &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 2 * time.Second,
 	}
 	session_id = ""
 )
 
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	UserID    string `mapstructure:"user_id" validate:"required"`
+	Password  string `mapstructure:"password" validate:"required"`
+	Host      string `mapstructure:"host" validate:"required"`
+	SessionID string `mapstructure:"session_id"`
+}
+
+type responseID struct {
+	ID string `json:"id"`
+}
+
+type Dashboard struct {
+	ID          int `json:"id"`
+	Urn         string
+	Name        string  `json:"name"`
+	Source      string  `default:"metabase"`
+	Description string  `json:"description"`
+	Charts      []Chart `json:"ordered_cards"`
+}
+
+type Chart struct {
+	ID           int `json:"card_id"`
+	Urn          string
+	Source       string `default:"metabase"`
+	DashboardUrn string
+	DashboardID  int `json:"dashboard_id"`
 }
 
 type Extractor struct {
@@ -52,24 +75,69 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		return extractor.InvalidConfigError{}
 	}
 	// get session id for further api calls in metabase
-	err = e.getSessionID(cfg)
+	if cfg.SessionID == "" {
+		err = e.getSessionID(cfg)
+		if err != nil {
+			return
+		}
+	} else {
+		session_id = cfg.SessionID
+	}
+	var dashboards []Dashboard
+	err = e.getDashboardsList(cfg, &dashboards)
 	if err != nil {
 		return
 	}
-	dashboards, err := e.getDashboards(cfg)
-	if err != nil {
-		return
-	}
-	// data := make([]meteorMeta.Dashboard, len(dashboards))
 	for _, dashboard := range dashboards {
+		dashboardInfo, err := e.getDashboardInfo(strconv.Itoa(dashboard.ID), cfg, dashboard.Name)
+		if err != nil {
+			return err
+		}
+		Charts := make([]*meteorMeta.Chart, len(dashboardInfo.Charts))
+		for i, chart := range dashboardInfo.Charts {
+			c := e.metabaseCardToMeteorChart(chart.Source, chart.DashboardUrn, chart.Urn)
+			Charts[i] = &c
+		}
 		e.out <- meteorMeta.Dashboard{
-			Urn:         fmt.Sprintf("metabase.%s", dashboard),
-			Name:        dashboard["name"].(string),
+			Urn:         fmt.Sprintf("metabase.%s", dashboard.Name),
+			Name:        dashboard.Name,
 			Source:      "metabase",
-			Description: dashboard["description"].(string),
+			Description: dashboard.Description,
+			Charts:      Charts,
 		}
 	}
 	return nil
+}
+
+func (e *Extractor) metabaseCardToMeteorChart(source, dashboardUrn, Urn string) meteorMeta.Chart {
+	return meteorMeta.Chart{
+		Urn:             Urn,
+		Source:          source,
+		DashboardUrn:    dashboardUrn,
+		DashboardSource: "metabase",
+	}
+}
+
+func (e *Extractor) getDashboardInfo(id string, cfg Config, name string) (data Dashboard, err error) {
+	res, err := newRequest("GET", cfg.Host+"/api/dashboard/"+id, nil)
+	if err != nil {
+		return
+	}
+	err = unmarshalResponse(res, &data)
+	if err != nil {
+		return
+	}
+	var tempCards []Chart
+	for _, card := range data.Charts {
+		var tempCard Chart
+		tempCard.Source = "metabase"
+		tempCard.ID = card.ID
+		tempCard.Urn = "metabase." + id + "." + strconv.Itoa(card.ID)
+		tempCard.DashboardUrn = "metabase." + name
+		tempCards = append(tempCards, tempCard)
+	}
+	data.Charts = tempCards
+	return
 }
 
 func (e *Extractor) getSessionID(cfg Config) (err error) {
@@ -85,20 +153,21 @@ func (e *Extractor) getSessionID(cfg Config) (err error) {
 	if err != nil {
 		return
 	}
-	body, err := unmarshalResponse(res)
+	var data responseID
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
-	session_id = body["id"].(string)
+	session_id = data.ID
 	return
 }
 
-func (e *Extractor) getDashboards(cfg Config) (body []map[string]interface{}, err error) {
-	res, err := newRequest("GET", cfg.Host+"/api/dashboard", nil)
+func (e *Extractor) getDashboardsList(cfg Config, data interface{}) (err error) {
+	res, err := newRequest("GET", cfg.Host+"/api/dashboard/", nil)
 	if err != nil {
 		return
 	}
-	body, err = unmarshalArray(res)
+	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
 	}
@@ -125,16 +194,7 @@ func newRequest(method, url string, body io.Reader) (res *http.Response, err err
 }
 
 // Converts http response to map
-func unmarshalResponse(res *http.Response) (data map[string]interface{}, err error) {
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &data)
-	return
-}
-
-func unmarshalArray(res *http.Response) (data []map[string]interface{}, err error) {
+func unmarshalResponse(res *http.Response, data interface{}) (err error) {
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return
@@ -145,7 +205,7 @@ func unmarshalArray(res *http.Response) (data []map[string]interface{}, err erro
 
 // Registers the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("mysql", func() core.Extractor {
+	if err := extractor.Catalog.Register("metabase", func() core.Extractor {
 		return New(plugins.Log)
 	}); err != nil {
 		panic(err)

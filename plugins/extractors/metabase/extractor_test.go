@@ -22,9 +22,10 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	_ "github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
+	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"gotest.tools/v3/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -43,7 +44,7 @@ const (
 
 var (
 	client = &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 2 * time.Second,
 	}
 	session_id    = ""
 	collection_id = 1
@@ -93,6 +94,7 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
+
 func TestExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
@@ -109,14 +111,20 @@ func TestExtract(t *testing.T) {
 		extractOut := make(chan interface{})
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"user_id":  email,
-				"password": pass,
-				"host":     url,
+				"user_id":    email,
+				"password":   pass,
+				"host":       url,
+				"session_id": session_id,
 			}, extractOut)
 			close(extractOut)
-
-			assert.NilError(t, err)
+			assert.NoError(t, err)
 		}()
+		var urns []string
+		for val := range extractOut {
+			urns = append(urns, val.(meta.Dashboard).Urn)
+		}
+		fmt.Println(urns)
+		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
 	})
 }
 
