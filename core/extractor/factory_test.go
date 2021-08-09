@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/registry"
+	"github.com/odpf/meteor/core/extractor"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,17 +24,17 @@ func TestFactoryGet(t *testing.T) {
 	t.Run("should return not found error if extractor does not exist", func(t *testing.T) {
 		name := "wrong-name"
 
-		factory := registry.NewFactory()
+		factory := extractor.NewFactory()
 		factory.Register("mock", newMockExtractor)
 
 		_, err := factory.Get(name)
-		assert.Equal(t, registry.NotFoundError{name}, err)
+		assert.Equal(t, extractor.NotFoundError{name}, err)
 	})
 
 	t.Run("should return a new instance of extractor with given name", func(t *testing.T) {
 		name := "mock"
 
-		factory := registry.NewFactory()
+		factory := extractor.NewFactory()
 		factory.Register(name, newMockExtractor)
 
 		extr, err := factory.Get(name)
@@ -49,7 +49,7 @@ func TestFactoryGet(t *testing.T) {
 
 func TestFactoryRegister(t *testing.T) {
 	t.Run("should add extractor factory with given key", func(t *testing.T) {
-		factory := registry.NewFactory()
+		factory := extractor.NewFactory()
 		factory.Register("mock1", newMockExtractor)
 		factory.Register("mock2", newMockExtractor)
 

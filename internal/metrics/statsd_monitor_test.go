@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/meteor/internal/metrics"
 	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/mock"
 )
