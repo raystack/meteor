@@ -51,6 +51,14 @@ var (
 	dashboard_id  = 0
 )
 
+type responseID struct {
+	ID int `json:"id"`
+}
+
+type sessionID struct {
+	ID string `json:"id"`
+}
+
 func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
@@ -137,10 +145,10 @@ func setup() (err error) {
 	if err != nil {
 		return
 	}
-	type response struct {
+	type responseToken struct {
 		Token string `json:"setup-token"`
 	}
-	var data response
+	var data responseToken
 	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
@@ -181,10 +189,8 @@ func setUser(setup_token string) (err error) {
 	if err != nil {
 		return
 	}
-	type response struct {
-		ID string `json:"id"`
-	}
-	var data response
+
+	var data sessionID
 	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
@@ -207,10 +213,7 @@ func getSessionID() (err error) {
 	if err != nil {
 		return
 	}
-	type response struct {
-		ID string `json:"id"`
-	}
-	var data response
+	var data sessionID
 	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
@@ -246,10 +249,7 @@ func addCollection() (err error) {
 	if err != nil {
 		return
 	}
-	type response struct {
-		ID int `json:"id"`
-	}
-	var data response
+	var data responseID
 	err = unmarshalResponse(res, &data)
 	if err != nil {
 		return
