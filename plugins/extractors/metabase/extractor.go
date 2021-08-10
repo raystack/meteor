@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -110,15 +109,11 @@ func (e *Extractor) getSessionID() (err error) {
 		"username": e.cfg.UserID,
 		"password": e.cfg.Password,
 	}
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
 	type responseID struct {
 		ID string `json:"id"`
 	}
 	var data responseID
-	err = e.makeRequest("POST", e.cfg.Host+"/api/session", bytes.NewBuffer(jsonValue), data)
+	err = e.makeRequest("POST", e.cfg.Host+"/api/session", values, data)
 	if err != nil {
 		return
 	}
@@ -127,7 +122,12 @@ func (e *Extractor) getSessionID() (err error) {
 }
 
 // helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(method, url string, body io.Reader, data interface{}) (err error) {
+func (e *Extractor) makeRequest(method, url string, values map[string]interface{}, data interface{}) (err error) {
+	jsonValue, err := json.Marshal(values)
+	if err != nil {
+		return
+	}
+	body := bytes.NewBuffer(jsonValue)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return
@@ -146,7 +146,7 @@ func (e *Extractor) makeRequest(method, url string, body io.Reader, data interfa
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(b, data)
+	err = json.Unmarshal(b, &data)
 	return
 }
 

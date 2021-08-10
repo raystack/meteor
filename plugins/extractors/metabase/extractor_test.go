@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -145,7 +144,7 @@ func setup() (err error) {
 		Token string `json:"setup-token"`
 	}
 	var data responseToken
-	err = newRequest("GET", url+"/api/session/properties", nil, &data)
+	err = makeRequest("GET", url+"/api/session/properties", nil, &data)
 	if err != nil {
 		return
 	}
@@ -176,13 +175,8 @@ func setUser(setup_token string) (err error) {
 			"allow_tracking": "true",
 		},
 	}
-
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
 	var data sessionID
-	err = newRequest("POST", url+"/api/setup", bytes.NewBuffer(jsonValue), &data)
+	err = makeRequest("POST", url+"/api/setup", values, &data)
 	if err != nil {
 		return
 	}
@@ -196,12 +190,8 @@ func getSessionID() (err error) {
 		"username": email,
 		"password": pass,
 	}
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
 	var data sessionID
-	err = newRequest("POST", url+"/api/session", bytes.NewBuffer(jsonValue), &data)
+	err = makeRequest("POST", url+"/api/session", values, &data)
 	if err != nil {
 		return
 	}
@@ -227,13 +217,8 @@ func addCollection() (err error) {
 		"color":       collection_color,
 		"description": collection_description,
 	}
-
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
 	var data responseID
-	err = newRequest("POST", url+"/api/collection", bytes.NewBuffer(jsonValue), &data)
+	err = makeRequest("POST", url+"/api/collection", values, &data)
 	if err != nil {
 		return
 	}
@@ -247,12 +232,9 @@ func addDashboard() (err error) {
 		"description":   dashboard_description,
 		"collection_id": collection_id,
 	}
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
+
 	var data responseID
-	err = newRequest("POST", url+"/api/dashboard", bytes.NewBuffer(jsonValue), &data)
+	err = makeRequest("POST", url+"/api/dashboard", values, &data)
 	if err != nil {
 		return
 	}
@@ -268,16 +250,12 @@ func addCard(id int) (err error) {
 	values := map[string]interface{}{
 		"id": id,
 	}
-	jsonValue, err := json.Marshal(values)
-	if err != nil {
-		return
-	}
 	x := strconv.Itoa(id)
 	type response struct {
 		ID int `json:"id"`
 	}
 	var data response
-	err = newRequest("POST", url+"/api/dashboard/"+x+"/cards", bytes.NewBuffer(jsonValue), &data)
+	err = makeRequest("POST", url+"/api/dashboard/"+x+"/cards", values, &data)
 	if err != nil {
 		return
 	}
@@ -285,7 +263,12 @@ func addCard(id int) (err error) {
 	return
 }
 
-func newRequest(method, url string, body io.Reader, data interface{}) (err error) {
+func makeRequest(method, url string, values map[string]interface{}, data interface{}) (err error) {
+	jsonValue, err := json.Marshal(values)
+	if err != nil {
+		return
+	}
+	body := bytes.NewBuffer(jsonValue)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return
