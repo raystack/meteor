@@ -141,15 +141,11 @@ func newExtractor() *metabase.Extractor {
 }
 
 func setup() (err error) {
-	res, err := newRequest("GET", url+"/api/session/properties", nil)
-	if err != nil {
-		return
-	}
 	type responseToken struct {
 		Token string `json:"setup-token"`
 	}
 	var data responseToken
-	err = unmarshalResponse(res, &data)
+	err = newRequest("GET", url+"/api/session/properties", nil, &data)
 	if err != nil {
 		return
 	}
@@ -185,13 +181,8 @@ func setUser(setup_token string) (err error) {
 	if err != nil {
 		return
 	}
-	res, err := newRequest("POST", url+"/api/setup", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		return
-	}
-
 	var data sessionID
-	err = unmarshalResponse(res, &data)
+	err = newRequest("POST", url+"/api/setup", bytes.NewBuffer(jsonValue), &data)
 	if err != nil {
 		return
 	}
@@ -209,12 +200,8 @@ func getSessionID() (err error) {
 	if err != nil {
 		return
 	}
-	res, err := newRequest("POST", url+"/api/session", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		return
-	}
 	var data sessionID
-	err = unmarshalResponse(res, &data)
+	err = newRequest("POST", url+"/api/session", bytes.NewBuffer(jsonValue), &data)
 	if err != nil {
 		return
 	}
@@ -245,12 +232,8 @@ func addCollection() (err error) {
 	if err != nil {
 		return
 	}
-	res, err := newRequest("POST", url+"/api/collection", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		return
-	}
 	var data responseID
-	err = unmarshalResponse(res, &data)
+	err = newRequest("POST", url+"/api/collection", bytes.NewBuffer(jsonValue), &data)
 	if err != nil {
 		return
 	}
@@ -268,15 +251,8 @@ func addDashboard() (err error) {
 	if err != nil {
 		return
 	}
-	res, err := newRequest("POST", url+"/api/dashboard", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		return
-	}
-	type response struct {
-		ID int `json:"id"`
-	}
-	var data response
-	err = unmarshalResponse(res, &data)
+	var data responseID
+	err = newRequest("POST", url+"/api/dashboard", bytes.NewBuffer(jsonValue), &data)
 	if err != nil {
 		return
 	}
@@ -297,15 +273,11 @@ func addCard(id int) (err error) {
 		return
 	}
 	x := strconv.Itoa(id)
-	res, err := newRequest("POST", url+"/api/dashboard/"+x+"/cards", bytes.NewBuffer(jsonValue))
-	if err != nil {
-		return
-	}
 	type response struct {
 		ID int `json:"id"`
 	}
 	var data response
-	err = unmarshalResponse(res, &data)
+	err = newRequest("POST", url+"/api/dashboard/"+x+"/cards", bytes.NewBuffer(jsonValue), &data)
 	if err != nil {
 		return
 	}
@@ -313,7 +285,7 @@ func addCard(id int) (err error) {
 	return
 }
 
-func newRequest(method, url string, body io.Reader) (res *http.Response, err error) {
+func newRequest(method, url string, body io.Reader, data interface{}) (err error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return
@@ -324,14 +296,10 @@ func newRequest(method, url string, body io.Reader) (res *http.Response, err err
 	if session_id != "" {
 		req.Header.Set("X-Metabase-Session", session_id)
 	}
-	res, err = client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return
 	}
-	return
-}
-
-func unmarshalResponse(res *http.Response, data interface{}) (err error) {
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return
