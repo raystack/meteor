@@ -7,13 +7,11 @@ import (
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/core/processor"
-	"github.com/odpf/meteor/core/sink"
 	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/internal/metrics"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
+	"github.com/odpf/meteor/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -87,9 +85,9 @@ func rundir(dirPath string) {
 func initRunner(config config.Config, logger plugins.Logger) (runner *agent.Agent) {
 	metricsMonitor := initMetricsMonitor(config)
 	runner = agent.NewAgent(
-		extractor.Catalog,
-		processor.Catalog,
-		sink.Catalog,
+		registry.Extractors,
+		registry.Processors,
+		registry.Sinks,
 		metricsMonitor,
 	)
 	return

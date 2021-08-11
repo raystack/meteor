@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta/common"
+	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 )
 
@@ -56,7 +55,7 @@ func (d *Extractor) Process() (*common.Event, error) {
 }
 
 func init() {
-	if err := extractor.Catalog.Register("date", func() core.Extractor {
+	if err := registry.Extractors.Register("date", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}

@@ -1,11 +1,11 @@
-package extractor_test
+package registry_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface
 	return nil
 }
 
-func newMockExtractor() core.Extractor {
+func newMockExtractor() plugins.Extractor {
 	return new(mockExtractor)
 }
 
@@ -24,17 +24,17 @@ func TestFactoryGet(t *testing.T) {
 	t.Run("should return not found error if extractor does not exist", func(t *testing.T) {
 		name := "wrong-name"
 
-		factory := extractor.NewFactory()
+		factory := registry.Extractors
 		factory.Register("mock", newMockExtractor)
 
 		_, err := factory.Get(name)
-		assert.Equal(t, extractor.NotFoundError{name}, err)
+		assert.Equal(t, registry.NotFoundError{"extractor", name}, err)
 	})
 
 	t.Run("should return a new instance of extractor with given name", func(t *testing.T) {
 		name := "mock"
 
-		factory := extractor.NewFactory()
+		factory := registry.Extractors
 		factory.Register(name, newMockExtractor)
 
 		extr, err := factory.Get(name)
@@ -49,7 +49,7 @@ func TestFactoryGet(t *testing.T) {
 
 func TestFactoryRegister(t *testing.T) {
 	t.Run("should add extractor factory with given key", func(t *testing.T) {
-		factory := extractor.NewFactory()
+		factory := registry.Extractors
 		factory.Register("mock1", newMockExtractor)
 		factory.Register("mock2", newMockExtractor)
 

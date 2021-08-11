@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/processor"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 // with the following format meteor-plugin-{plugin_name}
 //
 // in case of duplicate processor name, the latest would be used with no guarantee in order
-func DiscoverPlugins(factory *processor.Factory) (killPluginsFn func(), err error) {
+func DiscoverPlugins(factory *registry.ProcessorFactory) (killPluginsFn func(), err error) {
 	binaries, err := findBinaries()
 	if err != nil {
 		return
@@ -63,7 +63,7 @@ func createClients(binaries []string) (clients []*plugin.Client, err error) {
 	}
 	return
 }
-func populateProcessorFactory(clients []*plugin.Client, factory *processor.Factory) (err error) {
+func populateProcessorFactory(clients []*plugin.Client, factory *registry.ProcessorFactory) (err error) {
 	for _, client := range clients {
 		proc, err := dispense(client)
 		if err != nil {
@@ -74,7 +74,7 @@ func populateProcessorFactory(clients []*plugin.Client, factory *processor.Facto
 			return err
 		}
 
-		if err = factory.Register(name, func() core.Processor {
+		if err = factory.Register(name, func() plugins.Processor {
 			return proc
 		}); err != nil {
 			return err

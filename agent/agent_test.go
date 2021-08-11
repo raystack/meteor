@@ -6,12 +6,10 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/core/processor"
-	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/recipe"
+	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -42,8 +40,8 @@ var finalData = []interface{}{
 	},
 }
 
-var extrFactory = extractor.NewFactory()
-var procFactory = processor.NewFactory()
+var extrFactory = registry.NewExtractorFactory()
+var procFactory = registry.NewProcessorFactory()
 
 func init() {
 	extrFactory.Register("test-extractor", newMockExtractor)
@@ -55,14 +53,14 @@ func init() {
 
 func TestRunnerRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
-		r := agent.NewAgent(extractor.NewFactory(), processor.NewFactory(), sink.NewFactory(), nil)
+		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil)
 		run := r.Run(validRecipe)
 		assert.IsType(t, agent.Run{}, run)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
 	t.Run("should return error if extractor, processors or sinks could not be found", func(t *testing.T) {
-		r := agent.NewAgent(extractor.NewFactory(), processor.NewFactory(), sink.NewFactory(), nil)
+		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil)
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -74,7 +72,7 @@ func TestRunnerRun(t *testing.T) {
 		}
 
 		mSink := new(mockPassthroughSink)
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
@@ -89,7 +87,7 @@ func TestRunnerRun(t *testing.T) {
 		}
 
 		mSink := new(mockPassthroughSink)
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
@@ -99,7 +97,7 @@ func TestRunnerRun(t *testing.T) {
 
 	t.Run("should run extractor, processors and sinks", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
@@ -112,7 +110,7 @@ func TestRunnerRun(t *testing.T) {
 
 	t.Run("should record metrics", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
@@ -137,7 +135,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		}
 		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
 
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)))
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
@@ -162,7 +160,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		sink1 := new(mockPassthroughSink)
 		sink2 := new(mockPassthroughSink)
-		sinkFactory := sink.NewFactory()
+		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(sink1))
 		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2))
 
@@ -176,7 +174,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 type mockExtractor struct{}
 
-func newMockExtractor() core.Extractor {
+func newMockExtractor() plugins.Extractor {
 	return &mockExtractor{}
 }
 
@@ -200,7 +198,7 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 // This test processor will append meta.Table.Urn with "-bar"
 type mockProcessor struct{}
 
-func newMockProcessor() core.Processor {
+func newMockProcessor() plugins.Processor {
 	return &mockProcessor{}
 }
 
@@ -223,8 +221,8 @@ type mockPassthroughSink struct {
 	result []interface{}
 }
 
-func newMockSinkFn(sink core.Syncer) func() core.Syncer {
-	return func() core.Syncer {
+func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
+	return func() plugins.Syncer {
 		return sink
 	}
 }
@@ -255,7 +253,7 @@ func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success 
 
 type failedProcessor struct{}
 
-func newFailedProcessor() core.Processor {
+func newFailedProcessor() plugins.Processor {
 	return &failedProcessor{}
 }
 
@@ -269,7 +267,7 @@ func (t *failedProcessor) Process(ctx context.Context, config map[string]interfa
 
 type failedExtractor struct{}
 
-func newFailedExtractor() core.Extractor {
+func newFailedExtractor() plugins.Extractor {
 	return &failedExtractor{}
 }
 

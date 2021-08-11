@@ -7,11 +7,10 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -35,7 +34,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	// Build and validate config received from receipe
 	var cfg Config
 	if err := utils.BuildConfig(config, &cfg); err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	// Create database connection
@@ -197,7 +196,7 @@ func exclude(names []string, database string) bool {
 
 // Registers the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("postgres", func() core.Extractor {
+	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}
