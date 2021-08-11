@@ -1,4 +1,6 @@
-package recipe
+package agent
+
+import "github.com/odpf/meteor/recipe"
 
 type TaskType string
 
@@ -9,6 +11,6 @@ const (
 )
 
 type Run struct {
-	Recipe Recipe `json:"recipe"`
-	Error  error  `json:"error"`
+	Recipe recipe.Recipe `json:"recipe"`
+	Error  error         `json:"error"`
 }

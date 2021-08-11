@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"

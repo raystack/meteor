@@ -1,14 +1,18 @@
-package recipe
+package agent
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/odpf/meteor/recipe"
+)
 
 type Monitor interface {
-	RecordRun(recipe Recipe, durationInMs int, success bool)
+	RecordRun(recipe recipe.Recipe, durationInMs int, success bool)
 }
 
 type defaultMonitor struct{}
 
-func (m *defaultMonitor) RecordRun(recipe Recipe, durationInMs int, success bool) {}
+func (m *defaultMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {}
 
 func isNilMonitor(monitor Monitor) bool {
 	v := reflect.ValueOf(monitor)
