@@ -39,8 +39,8 @@ func TestSink(t *testing.T) {
 		url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
 	)
 
-	t.Run("should return invalid config error if host is empty", func(t *testing.T) {
-		invalids := []map[string]interface{}{
+	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
+		invalidConfigs := []map[string]interface{}{
 			{
 				"host": "",
 				"type": "columbus-type",
@@ -50,7 +50,7 @@ func TestSink(t *testing.T) {
 				"type": "",
 			},
 		}
-		for i, config := range invalids {
+		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
 				columbusSink := columbus.New(newMockHttpClient(http.MethodGet, url, requestPayload))
 				err := columbusSink.Sink(context.TODO(), config, make(<-chan interface{}))
