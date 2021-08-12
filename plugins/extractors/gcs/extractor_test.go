@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins/extractors/gcs"
 	"github.com/stretchr/testify/assert"
 )

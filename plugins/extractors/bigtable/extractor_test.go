@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/internal/logger"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"

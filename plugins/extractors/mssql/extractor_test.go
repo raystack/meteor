@@ -14,7 +14,7 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
