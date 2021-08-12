@@ -1,5 +1,3 @@
-//+build integration
-
 package metabase_test
 
 import (
@@ -16,8 +14,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -108,7 +106,7 @@ func TestExtract(t *testing.T) {
 			"host":    url,
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return dashboard model", func(t *testing.T) {

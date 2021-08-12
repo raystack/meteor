@@ -11,10 +11,9 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -44,10 +43,11 @@ func New(logger plugins.Logger) *Extractor {
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
-	// Build and validate config received from receipe
-	if err := utils.BuildConfig(config, &e.cfg); err != nil {
-		return extractor.InvalidConfigError{}
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+	// build and validateconfig
+	err = utils.BuildConfig(configMap, &e.cfg)
+	if err != nil {
+		return plugins.InvalidConfigError{}
 	}
 	// get session id for further api calls in metabase
 	e.sessionID, err = e.getSessionID()
@@ -114,7 +114,7 @@ func (e *Extractor) getSessionID() (sessionID string, err error) {
 		ID string `json:"id"`
 	}
 	var data responseID
-	err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, data)
+	err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, &data)
 	if err != nil {
 		return
 	}
@@ -140,6 +140,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	}
 	res, err := client.Do(req)
 	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	b, err := ioutil.ReadAll(res.Body)
@@ -150,9 +151,9 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	return
 }
 
-// Registers the extractor to catalog
+// Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("metabase", func() core.Extractor {
+	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
 		return New(plugins.Log)
 	}); err != nil {
 		panic(err)
