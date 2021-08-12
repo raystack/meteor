@@ -1,10 +1,5 @@
-FROM golang:1.16-stretch as builder
-WORKDIR /build/
-COPY . .
-RUN ["make"]
+FROM alpine:3.13
 
-FROM debian:stretch
-WORKDIR /opt/meteor
-COPY --from=builder /build/meteor /opt/meteor/meteor
+COPY meteor /opt/meteor/meteor
 
 CMD ["./meteor"]
