@@ -12,10 +12,11 @@ import (
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("clickhouse")
+		extr, _ := registry.Extractors.Get("clickhouse")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -89,11 +90,11 @@ func TestExtract(t *testing.T) {
 			"host":     "127.0.0.1:9000",
 		}, extractOut)
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("clickhouse")
+		extr, _ := registry.Extractors.Get("clickhouse")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -103,11 +104,11 @@ func TestExtract(t *testing.T) {
 			"host":    "127.0.0.1:9000",
 		}, extractOut)
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("clickhouse")
+		extr, _ := registry.Extractors.Get("clickhouse")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -117,11 +118,11 @@ func TestExtract(t *testing.T) {
 			"password": pass,
 		}, extractOut)
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("clickhouse")
+		extr, _ := registry.Extractors.Get("clickhouse")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})

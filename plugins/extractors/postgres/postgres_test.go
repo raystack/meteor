@@ -12,10 +12,11 @@ import (
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	_ "github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/registry"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +69,7 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
+		extr, _ := registry.Extractors.Get("postgres")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -77,11 +78,11 @@ func TestExtract(t *testing.T) {
 			"host":     "localhost:5432",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("postgres")
+		extr, _ := registry.Extractors.Get("postgres")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})

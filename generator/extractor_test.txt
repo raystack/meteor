@@ -3,7 +3,7 @@ package <extractor>_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
 )
 

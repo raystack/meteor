@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	kafkaLib "github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -88,7 +88,7 @@ func TestExtractorExtract(t *testing.T) {
 			"wrong-config": "wrong-value",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return list of topic metadata", func(t *testing.T) {

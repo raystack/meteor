@@ -12,8 +12,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +39,7 @@ func TestExtract(t *testing.T) {
 			"api_key":  "qwerty123",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestExtract(t *testing.T) {
 			"api_key":  "",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {

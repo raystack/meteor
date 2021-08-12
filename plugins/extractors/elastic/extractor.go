@@ -6,9 +6,8 @@ import (
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -30,7 +29,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	//build elasticsearch client
@@ -115,7 +114,7 @@ func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (r
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("elastic", func() core.Extractor {
+	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}

@@ -8,11 +8,10 @@ import (
 	"sync"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -39,7 +38,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	err = utils.BuildConfig(config, &cfg)
 
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	client, err := e.createClient(ctx, cfg)
@@ -218,7 +217,7 @@ func (e *Extractor) getResult(iter *bigquery.RowIterator) (ResultRow, error) {
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("bigquery", func() core.Extractor {
+	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}
