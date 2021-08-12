@@ -38,7 +38,7 @@ func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-
 	}
 
 	for data := range in {
-		if err = s.sink(data); err != nil {
+		if err = s.send(data); err != nil {
 			return
 		}
 	}
@@ -46,7 +46,7 @@ func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-
 	return
 }
 
-func (s *Sink) sink(data interface{}) (err error) {
+func (s *Sink) send(data interface{}) (err error) {
 	payload, err := s.buildPayload(data)
 	if err != nil {
 		return
