@@ -12,6 +12,9 @@ build:
 clean:
 	rm -rf dist/
 
+generate:
+	go generate ./...
+
 test:
 	go test ./... -coverprofile=coverage.out
 
