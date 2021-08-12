@@ -15,9 +15,6 @@ type Agent struct {
 	processorFactory *registry.ProcessorFactory
 	sinkFactory      *registry.SinkFactory
 	monitor          Monitor
-
-	// wg      *sync.WaitGroup
-	// errChan chan error
 }
 
 func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor) *Agent {
