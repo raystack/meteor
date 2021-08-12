@@ -3,14 +3,15 @@ package plugins
 import "fmt"
 
 type InvalidConfigError struct {
+	Type PluginType
 }
 
 func (err InvalidConfigError) Error() string {
-	return "invalid extractor config"
+	return fmt.Sprintf("invalid %s config", err.Type)
 }
 
 type NotFoundError struct {
-	Type string
+	Type PluginType
 	Name string
 }
 
