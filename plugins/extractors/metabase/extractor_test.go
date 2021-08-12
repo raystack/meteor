@@ -161,7 +161,7 @@ func setup() (err error) {
 }
 
 func setUser(setup_token string) (err error) {
-	values := map[string]interface{}{
+	payload := map[string]interface{}{
 		"user": map[string]interface{}{
 			"first_name": fname,
 			"last_name":  lname,
@@ -176,7 +176,7 @@ func setUser(setup_token string) (err error) {
 		},
 	}
 	var data sessionID
-	err = makeRequest("POST", url+"/api/setup", values, &data)
+	err = makeRequest("POST", url+"/api/setup", payload, &data)
 	if err != nil {
 		return
 	}
@@ -186,12 +186,12 @@ func setUser(setup_token string) (err error) {
 }
 
 func getSessionID() (err error) {
-	values := map[string]interface{}{
+	payload := map[string]interface{}{
 		"username": email,
 		"password": pass,
 	}
 	var data sessionID
-	err = makeRequest("POST", url+"/api/session", values, &data)
+	err = makeRequest("POST", url+"/api/session", payload, &data)
 	if err != nil {
 		return
 	}
@@ -212,13 +212,13 @@ func addMockData(session_id string) (err error) {
 }
 
 func addCollection() (err error) {
-	values := map[string]interface{}{
+	payload := map[string]interface{}{
 		"name":        collection_name,
 		"color":       collection_color,
 		"description": collection_description,
 	}
 	var data responseID
-	err = makeRequest("POST", url+"/api/collection", values, &data)
+	err = makeRequest("POST", url+"/api/collection", payload, &data)
 	if err != nil {
 		return
 	}
@@ -227,14 +227,14 @@ func addCollection() (err error) {
 }
 
 func addDashboard() (err error) {
-	values := map[string]interface{}{
+	payload := map[string]interface{}{
 		"name":          dashboard_name,
 		"description":   dashboard_description,
 		"collection_id": collection_id,
 	}
 
 	var data responseID
-	err = makeRequest("POST", url+"/api/dashboard", values, &data)
+	err = makeRequest("POST", url+"/api/dashboard", payload, &data)
 	if err != nil {
 		return
 	}
@@ -263,12 +263,12 @@ func addCard(id int) (err error) {
 	return
 }
 
-func makeRequest(method, url string, values map[string]interface{}, data interface{}) (err error) {
-	jsonValue, err := json.Marshal(values)
+func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return
 	}
-	body := bytes.NewBuffer(jsonValue)
+	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return

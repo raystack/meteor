@@ -32,9 +32,8 @@ type Config struct {
 }
 
 type Extractor struct {
-	cfg       Config
-	sessionID string
-	logger    plugins.Logger
+	cfg    Config
+	logger plugins.Logger
 }
 
 func New(logger plugins.Logger) *Extractor {
@@ -50,14 +49,11 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		return extractor.InvalidConfigError{}
 	}
 	// get session id for further api calls in metabase
-	if e.cfg.SessionID == "" {
-		err = e.getSessionID()
-		if err != nil {
-			return
-		}
-	} else {
-		e.sessionID = e.cfg.SessionID
+	err = e.getSessionID()
+	if err != nil {
+		return
 	}
+
 	dashboards, err := e.getDashboardsList()
 	if err != nil {
 		return
@@ -105,29 +101,31 @@ func (e *Extractor) getDashboardsList() (data []Dashboard, err error) {
 }
 
 func (e *Extractor) getSessionID() (err error) {
-	values := map[string]interface{}{
-		"username": e.cfg.UserID,
-		"password": e.cfg.Password,
+	if e.cfg.SessionID == "" {
+		payload := map[string]interface{}{
+			"username": e.cfg.UserID,
+			"password": e.cfg.Password,
+		}
+		type responseID struct {
+			ID string `json:"id"`
+		}
+		var data responseID
+		err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, data)
+		if err != nil {
+			return
+		}
+		e.cfg.SessionID = data.ID
 	}
-	type responseID struct {
-		ID string `json:"id"`
-	}
-	var data responseID
-	err = e.makeRequest("POST", e.cfg.Host+"/api/session", values, data)
-	if err != nil {
-		return
-	}
-	e.sessionID = data.ID
 	return
 }
 
 // helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(method, url string, values map[string]interface{}, data interface{}) (err error) {
-	jsonValue, err := json.Marshal(values)
+func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return
 	}
-	body := bytes.NewBuffer(jsonValue)
+	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return
@@ -135,8 +133,8 @@ func (e *Extractor) makeRequest(method, url string, values map[string]interface{
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if e.sessionID != "" {
-		req.Header.Set("X-Metabase-Session", e.sessionID)
+	if e.cfg.SessionID != "" {
+		req.Header.Set("X-Metabase-Session", e.cfg.SessionID)
 	}
 	res, err := client.Do(req)
 	if err != nil {
