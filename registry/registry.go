@@ -20,7 +20,7 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: "extractor", Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
 }
 
 func (f *ExtractorFactory) Register(name string, extractorFn func() plugins.Extractor) (err error) {
@@ -40,7 +40,7 @@ func (f *ProcessorFactory) Get(name string) (plugins.Processor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: "processor", Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: name}
 }
 
 func (f *ProcessorFactory) Register(name string, fn func() plugins.Processor) (err error) {
@@ -60,7 +60,7 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: "sink", Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
 }
 
 func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error) {
