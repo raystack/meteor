@@ -1,3 +1,5 @@
+//+build integration
+
 package metabase_test
 
 import (
