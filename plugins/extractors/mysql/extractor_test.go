@@ -14,8 +14,8 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/logger"
+	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
@@ -81,7 +81,7 @@ func TestExtract(t *testing.T) {
 			"host":     "localhost:3306",
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no password in config", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestExtract(t *testing.T) {
 			"host":    "localhost:3306",
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestExtract(t *testing.T) {
 			"password": pass,
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {

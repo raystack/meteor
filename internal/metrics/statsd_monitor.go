@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	statsd "github.com/etsy/statsd/examples/go"
-	"github.com/odpf/meteor/core/recipe"
+	"github.com/odpf/meteor/recipe"
 )
 
 var (

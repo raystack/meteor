@@ -1,6 +1,6 @@
 package plugins
 
-import "github.com/odpf/meteor/logger"
+import "github.com/odpf/meteor/internal/logger"
 
 type Logger interface {
 	Debug(...interface{})

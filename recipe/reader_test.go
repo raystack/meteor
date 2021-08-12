@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/core/recipe"
+	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 )
 

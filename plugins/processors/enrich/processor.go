@@ -3,8 +3,8 @@ package enrich
 import (
 	"context"
 
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/processor"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -42,7 +42,7 @@ func (p *Processor) process(data interface{}, config map[string]interface{}) int
 }
 
 func init() {
-	processor.Catalog.Register("enrich", func() core.Processor {
+	registry.Processors.Register("enrich", func() plugins.Processor {
 		return New()
 	})
 }

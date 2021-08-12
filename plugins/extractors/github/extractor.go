@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/google/go-github/v37/github"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"golang.org/x/oauth2"
 )
@@ -26,7 +25,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	ts := oauth2.StaticTokenSource(
@@ -60,7 +59,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("github", func() core.Extractor {
+	if err := registry.Extractors.Register("github", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}

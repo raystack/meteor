@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -27,14 +27,14 @@ type Sink struct {
 	client httpClient
 }
 
-func New(c httpClient) core.Syncer {
+func New(c httpClient) plugins.Syncer {
 	sink := &Sink{client: c}
 	return sink
 }
 
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) (err error) {
 	if err = utils.BuildConfig(configMap, &s.config); err != nil {
-		return sink.InvalidConfigError{}
+		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
 	}
 
 	for data := range in {
@@ -84,7 +84,7 @@ func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
 }
 
 func init() {
-	if err := sink.Catalog.Register("columbus", func() core.Syncer {
+	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
 		return New(&http.Client{})
 	}); err != nil {
 		panic(err)

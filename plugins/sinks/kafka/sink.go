@@ -10,8 +10,8 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/golang/protobuf/proto"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
 )
@@ -28,7 +28,7 @@ type ProtoReflector interface {
 
 type Sink struct{}
 
-func New() core.Syncer {
+func New() plugins.Syncer {
 	return new(Sink)
 }
 
@@ -155,7 +155,7 @@ func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 }
 
 func init() {
-	if err := sink.Catalog.Register("kafka", func() core.Syncer {
+	if err := registry.Sinks.Register("kafka", func() plugins.Syncer {
 		return &Sink{}
 	}); err != nil {
 		panic(err)

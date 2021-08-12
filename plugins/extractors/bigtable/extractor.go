@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 
 	"cloud.google.com/go/bigtable"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
@@ -39,7 +38,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	instanceAdminClient, err := instanceAdminClientCreator(ctx, config)
@@ -113,7 +112,7 @@ func (e *Extractor) createAdminClient(ctx context.Context, instance string, proj
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("bigtable", func() core.Extractor {
+	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}

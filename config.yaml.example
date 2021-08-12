@@ -1,2 +1,0 @@
-PORT: 3000
-RECIPE_STORAGE_URL: mem://

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/odpf/meteor/core/sink"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
@@ -55,7 +55,7 @@ func TestSink(t *testing.T) {
 				columbusSink := columbus.New(newMockHttpClient(http.MethodGet, url, requestPayload))
 				err := columbusSink.Sink(context.TODO(), config, make(<-chan interface{}))
 
-				assert.Equal(t, sink.InvalidConfigError{}, err)
+				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
 		}
 	})

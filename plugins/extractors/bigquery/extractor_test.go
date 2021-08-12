@@ -6,15 +6,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	_ "github.com/odpf/meteor/plugins/extractors/bigquery"
+	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
 
-		extr, _ := extractor.Catalog.Get("bigquery")
+		extr, _ := registry.Extractors.Get("bigquery")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -22,6 +23,6 @@ func TestExtract(t *testing.T) {
 			"wrong-config": "sample-project",
 		}, extractOut)
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 }
