@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/meteor/core"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/common"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/utils"
 	"google.golang.org/api/iterator"
@@ -46,7 +45,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	// create client
@@ -152,7 +151,7 @@ func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.C
 
 // Register the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("gcs", func() core.Extractor {
+	if err := registry.Extractors.Register("gcs", func() plugins.Extractor {
 		return New(plugins.Log)
 	}); err != nil {
 		panic(err)

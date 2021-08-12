@@ -1,4 +1,4 @@
-package extractor
+package plugins
 
 import "fmt"
 
@@ -10,9 +10,10 @@ func (err InvalidConfigError) Error() string {
 }
 
 type NotFoundError struct {
+	Type string
 	Name string
 }
 
 func (err NotFoundError) Error() string {
-	return fmt.Sprintf("could not find extractor \"%s\"", err.Name)
+	return fmt.Sprintf("could not find %s \"%s\"", err.Type, err.Name)
 }

@@ -4,9 +4,8 @@ import (
 	"context"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
@@ -38,7 +37,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	// create client
@@ -80,7 +79,7 @@ func (e *Extractor) buildTopic(topic_name string) meta.Topic {
 }
 
 func init() {
-	if err := extractor.Catalog.Register("kafka", func() core.Extractor {
+	if err := registry.Extractors.Register("kafka", func() plugins.Extractor {
 		return New(plugins.Log)
 	}); err != nil {
 		panic(err)

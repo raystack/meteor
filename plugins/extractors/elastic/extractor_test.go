@@ -14,8 +14,9 @@ import (
 
 	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/testutils"
+	"github.com/odpf/meteor/registry"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -98,15 +99,15 @@ func TestMain(m *testing.M) {
 func TestExtract(t *testing.T) {
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("elastic")
+		extr, _ := registry.Extractors.Get("elastic")
 		err := extr.Extract(ctx, map[string]interface{}{}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
 
-		extr, _ := extractor.Catalog.Get("elastic")
+		extr, _ := registry.Extractors.Get("elastic")
 		extractOut := make(chan interface{})
 		_, err := client.Info()
 		if err != nil {

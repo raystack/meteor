@@ -1,7 +1,7 @@
 package <extractor>
 
 import (
-	"github.com/odpf/meteor/core/extractor"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
@@ -15,7 +15,7 @@ func (e *Extractor) Extract(configMap map[string]interface{}) (result []meta.<ty
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
-		return result, extractor.InvalidConfigError{}
+		return result, plugins.InvalidConfigError{}
 	}
 	err = e.validateConfig(config)
 	if err != nil {
