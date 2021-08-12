@@ -32,8 +32,9 @@ type Config struct {
 }
 
 type Extractor struct {
-	cfg    Config
-	logger plugins.Logger
+	cfg       Config
+	sessionID string
+	logger    plugins.Logger
 }
 
 func New(logger plugins.Logger) *Extractor {
@@ -49,7 +50,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		return extractor.InvalidConfigError{}
 	}
 	// get session id for further api calls in metabase
-	err = e.getSessionID()
+	e.sessionID, err = e.getSessionID()
 	if err != nil {
 		return
 	}
@@ -100,23 +101,24 @@ func (e *Extractor) getDashboardsList() (data []Dashboard, err error) {
 	return
 }
 
-func (e *Extractor) getSessionID() (err error) {
-	if e.cfg.SessionID == "" {
-		payload := map[string]interface{}{
-			"username": e.cfg.UserID,
-			"password": e.cfg.Password,
-		}
-		type responseID struct {
-			ID string `json:"id"`
-		}
-		var data responseID
-		err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, data)
-		if err != nil {
-			return
-		}
-		e.cfg.SessionID = data.ID
+func (e *Extractor) getSessionID() (sessionID string, err error) {
+	if e.cfg.SessionID != "" {
+		return e.cfg.SessionID, nil
 	}
-	return
+
+	payload := map[string]interface{}{
+		"username": e.cfg.UserID,
+		"password": e.cfg.Password,
+	}
+	type responseID struct {
+		ID string `json:"id"`
+	}
+	var data responseID
+	err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, data)
+	if err != nil {
+		return
+	}
+	return data.ID, nil
 }
 
 // helper function to avoid rewriting a request
