@@ -28,7 +28,7 @@ func TestFactoryGet(t *testing.T) {
 		factory.Register("mock", newMockExtractor)
 
 		_, err := factory.Get(name)
-		assert.Equal(t, registry.NotFoundError{"extractor", name}, err)
+		assert.Equal(t, plugins.NotFoundError{Type: "extractor", Name: name}, err)
 	})
 
 	t.Run("should return a new instance of extractor with given name", func(t *testing.T) {
