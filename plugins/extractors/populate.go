@@ -10,6 +10,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/github"
 	_ "github.com/odpf/meteor/plugins/extractors/grafana"
 	_ "github.com/odpf/meteor/plugins/extractors/kafka"
+  _ "github.com/odpf/meteor/plugins/extractors/metabase"
 	_ "github.com/odpf/meteor/plugins/extractors/mongodb"
 	_ "github.com/odpf/meteor/plugins/extractors/mssql"
 	_ "github.com/odpf/meteor/plugins/extractors/mysql"
