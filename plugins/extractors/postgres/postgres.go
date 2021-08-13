@@ -57,19 +57,19 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		// information will be returned
 		db, err := connection(cfg, database)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to connect,skipping database", err)
 			continue
 		}
 		tables, err := e.getTables(db, database)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to get tables, skipping database ", err)
 			continue
 		}
 
 		for _, table := range tables {
 			result, err := e.getTableMetadata(db, database, table)
 			if err != nil {
-				e.logger.Error(err)
+				e.logger.Error("failed to get table metadata, skipping table", err)
 				continue
 			}
 			// Publish metadata to channel
@@ -135,7 +135,6 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 	var columns []*facets.Column
 	columns, err = e.getColumnMetadata(db, dbName, tableName)
 	if err != nil {
-		e.logger.Error(err)
 		return result, nil
 	}
 	result.Schema = &facets.Columns{
@@ -160,7 +159,7 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 		var length int
 		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to scan row, skipping", err)
 			continue
 		}
 		result = append(result, &facets.Column{

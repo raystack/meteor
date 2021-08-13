@@ -11,11 +11,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -181,7 +181,7 @@ func createCollection(ctx context.Context, collection_name string, data []interf
 
 func newExtractor() *mongodb.Extractor {
 	return mongodb.New(
-		logger.NewWithWriter("info", ioutil.Discard),
+		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
 	)
 }
 

@@ -14,12 +14,12 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -173,7 +173,7 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func newExtractor() *mysql.Extractor {
 	return mysql.New(
-		logger.NewWithWriter("info", ioutil.Discard),
+		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
 	)
 }
 
