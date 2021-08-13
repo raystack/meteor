@@ -48,7 +48,6 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	e.cfg = cfg
 
 	if err != nil {
-		e.logger.Error(err)
 		return
 	}
 
@@ -60,7 +59,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to fetch, skipping dataset", err)
 			continue
 		}
 
@@ -72,7 +71,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 				break
 			}
 			if err != nil {
-				e.logger.Error(err)
+				e.logger.Error("failed to scan, skipping table", err)
 				continue
 			}
 			out <- e.fetchMetadata(table)
@@ -150,7 +149,6 @@ func (e *Extractor) findColumnProfile(col *bigquery.FieldSchema, t *bigquery.Tab
 	}
 	rows, err := e.profileTheColumn(col, t)
 	if err != nil {
-		e.logger.Error(err)
 		return nil, err
 	}
 	result, err := e.getResult(rows)
