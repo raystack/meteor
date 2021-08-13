@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM debian
 
 COPY meteor /opt/meteor/meteor
 

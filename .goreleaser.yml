@@ -1,10 +1,9 @@
-project_name: optimus
+project_name: meteor
 
 before:
   hooks:
     - go mod tidy
     - make clean
-    - make generate
 builds:
   - main: ./main.go
     id: "meteor"
@@ -60,7 +59,7 @@ dockers:
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Tag }}-amd64'
 brews:
-  - name: optimus
+  - name: meteor
     tap:
       owner: odpf
       name: homebrew-taps
