@@ -1,5 +1,5 @@
-FROM debian
+FROM alpine:3.13
 
-COPY meteor /opt/meteor/meteor
+COPY meteor /usr/bin/meteor
 
 CMD ["./meteor"]

@@ -11,16 +11,13 @@ builds:
     flags:
       - -a
     ldflags:
-      - -s -w -X github.com/odpf/meteor/config.Version={{.Tag}} -X github.com/odpf/meteor/config.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/config.BuildDate={{.Date}}
+      - -X github.com/odpf/meteor/config.Version={{.Tag}} -X github.com/odpf/meteor/config.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/config.BuildDate={{.Date}}
     goos:
-      - linux
       - darwin
-      - windows
     goarch:
       - amd64
-      - 386
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
 archives:
   - replacements:
       darwin: macos
