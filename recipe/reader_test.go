@@ -30,20 +30,21 @@ func TestReaderRead(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expectedRecipe := recipe.Recipe{
-			Name: "test-recipe",
-			Source: recipe.SourceRecipe{
-				Type: "test-source",
-				Config: map[string]interface{}{
-					"foo": "bar",
+		expectedRecipe := []recipe.Recipe{
+			{
+				Name: "test-recipe",
+				Source: recipe.SourceRecipe{
+					Type: "test-source",
+					Config: map[string]interface{}{
+						"foo": "bar",
+					},
 				},
-			},
-			Sinks: []recipe.SinkRecipe{
-				{
-					Name: "test-sink",
+				Sinks: []recipe.SinkRecipe{
+					{
+						Name: "test-sink",
+					},
 				},
-			},
-		}
+			}}
 
 		assert.Equal(t, expectedRecipe, rcp)
 	})
@@ -65,41 +66,40 @@ func TestReaderRead(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expectedRecipe := recipe.Recipe{
-			Name: "test-recipe",
-			Source: recipe.SourceRecipe{
-				Type: "test-source",
-				Config: map[string]interface{}{
-					"username": username,
-					"password": password,
+		expectedRecipe := []recipe.Recipe{
+			{
+				Name: "test-recipe",
+				Source: recipe.SourceRecipe{
+					Type: "test-source",
+					Config: map[string]interface{}{
+						"username": username,
+						"password": password,
+					},
 				},
-			},
-			Sinks: []recipe.SinkRecipe{
-				{
-					Name: "test-sink",
+				Sinks: []recipe.SinkRecipe{
+					{
+						Name: "test-sink",
+					},
 				},
-			},
-			Processors: []recipe.ProcessorRecipe{
-				{
-					Name: "test-processor",
+				Processors: []recipe.ProcessorRecipe{
+					{
+						Name: "test-processor",
+					},
 				},
-			},
-		}
+			}}
 
 		assert.Equal(t, expectedRecipe, rcp)
 	})
-}
 
-func TestReaderReadDir(t *testing.T) {
 	t.Run("should return error if directory is not found", func(t *testing.T) {
 		reader := recipe.NewReader()
-		_, err := reader.ReadDir("./wrong-dir")
+		_, err := reader.Read("./wrong-dir")
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return error if path is not a directory", func(t *testing.T) {
 		reader := recipe.NewReader()
-		_, err := reader.ReadDir("./testdata/wrong-format.txt")
+		_, err := reader.Read("./testdata/wrong-format.txt")
 		assert.NotNil(t, err)
 	})
 
@@ -116,7 +116,7 @@ func TestReaderReadDir(t *testing.T) {
 		}()
 
 		reader := recipe.NewReader()
-		results, err := reader.ReadDir("./testdata")
+		results, err := reader.Read("./testdata")
 		if err != nil {
 			t.Fatal(err)
 		}

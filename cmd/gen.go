@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"github.com/odpf/meteor/generator"
+	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
 
 // GenCmd creates a command object for the "gen" action
-func GenCmd() *cobra.Command {
+func GenCmd(lg log.Logger) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gen",

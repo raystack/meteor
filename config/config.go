@@ -16,8 +16,8 @@ type Config struct {
 	StatsdPrefix  string `mapstructure:"STATSD_PREFIX" default:"meteor"`
 }
 
-// LoadConfig returns application configuration
-func LoadConfig() (c Config, err error) {
+// Load returns application configuration
+func Load() (c Config, err error) {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./")
 	viper.AddConfigPath("../")
@@ -25,49 +25,46 @@ func LoadConfig() (c Config, err error) {
 	viper.AutomaticEnv()
 
 	err = viper.ReadInConfig()
-	if err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("config file was not found. Env vars and defaults will be used")
-		} else {
-			return c, err
-		}
+
+	if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		return c, err
 	}
 
 	bindEnvVars()
 	defaults.SetDefaults(&c)
 	err = viper.Unmarshal(&c)
 	if err != nil {
-		return c, fmt.Errorf("unable to unmarshal config to struct: %v\n", err)
+		return c, fmt.Errorf("unable to unmarshal config to struct: %v", err)
 	}
 
 	return
 }
 
 func bindEnvVars() {
-	err, configKeys := getFlattenedStructKeys(Config{})
+	keys, err := getFlattenedStructKeys(Config{})
 	if err != nil {
 		panic(err)
 	}
 
 	// Bind each conf fields to environment vars
-	for key := range configKeys {
-		err := viper.BindEnv(configKeys[key])
+	for key := range keys {
+		err := viper.BindEnv(keys[key])
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func getFlattenedStructKeys(config Config) (error, []string) {
+func getFlattenedStructKeys(config Config) ([]string, error) {
 	var structMap map[string]interface{}
 	err := mapstructure.Decode(config, &structMap)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	flat, err := flatten.Flatten(structMap, "", flatten.DotStyle)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	keys := make([]string, 0, len(flat))
@@ -75,5 +72,5 @@ func getFlattenedStructKeys(config Config) (error, []string) {
 		keys = append(keys, k)
 	}
 
-	return nil, keys
+	return keys, nil
 }
