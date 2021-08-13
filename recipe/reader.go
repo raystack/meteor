@@ -4,14 +4,9 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
-)
-
-var (
-	recipeEnvVarPrefix = "METEOR_"
 )
 
 type Reader struct {
@@ -20,12 +15,34 @@ type Reader struct {
 
 func NewReader() *Reader {
 	reader := &Reader{}
-	reader.populateData()
+	reader.data = populateData()
 
 	return reader
 }
 
-func (r *Reader) Read(path string) (recipe Recipe, err error) {
+//  Read loads the list of recipes from a give file or directory path.
+func (r *Reader) Read(path string) (recipes []Recipe, err error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		recipes, err = r.readDir(path)
+		if err != nil {
+			return nil, err
+		}
+	case mode.IsRegular():
+		recipe, err := r.readFile(path)
+		if err != nil {
+			return nil, err
+		}
+		recipes = append(recipes, recipe)
+	}
+	return
+}
+
+func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	template, err := template.ParseFiles(path)
 	if err != nil {
 		return
@@ -45,54 +62,20 @@ func (r *Reader) Read(path string) (recipe Recipe, err error) {
 	return
 }
 
-func (r *Reader) ReadDir(path string) (recipes []Recipe, err error) {
-	dirEntries, err := os.ReadDir(path)
+func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
+	entries, err := os.ReadDir(path)
 	if err != nil {
 		return
 	}
 
-	for _, dirEntry := range dirEntries {
-		recipe, err := r.Read(filepath.Join(path, dirEntry.Name()))
+	for _, entry := range entries {
+		recipe, err := r.readFile(filepath.Join(path, entry.Name()))
 		if err != nil {
 			continue
 		}
 
 		recipes = append(recipes, recipe)
 	}
-
-	return
-}
-
-func (r *Reader) populateData() {
-	data := make(map[string]string)
-	for _, envvar := range os.Environ() {
-		keyval := strings.SplitN(envvar, "=", 2) // "sampleKey=sample=Value" returns ["sampleKey", "sample=value"]
-		key := keyval[0]
-		val := keyval[1]
-
-		key, ok := r.mapToMeteorKey(key)
-		if !ok {
-			continue
-		}
-
-		data[key] = val
-	}
-
-	r.data = data
-}
-
-func (r *Reader) mapToMeteorKey(rawKey string) (key string, ok bool) {
-	// we are doing everything in lowercase for case insensitivity
-	key = strings.ToLower(rawKey)
-	meteorPrefix := strings.ToLower(recipeEnvVarPrefix)
-	keyPrefixLen := len(meteorPrefix)
-
-	isMeteorKeyFormat := len(key) > keyPrefixLen && key[:keyPrefixLen] == meteorPrefix
-	if !isMeteorKeyFormat {
-		return
-	}
-	key = key[keyPrefixLen:] // strips prefix - meteor_user_id becomes user_id
-	ok = true
 
 	return
 }

@@ -6,9 +6,8 @@ type SourceRecipe struct {
 }
 
 type SinkRecipe struct {
-	Name         string                 `yaml:"name" validate:"required"`
-	BaseSinkName string                 `yaml:"base_sink_name"`
-	Config       map[string]interface{} `yaml:"config"`
+	Name   string                 `yaml:"name" validate:"required"`
+	Config map[string]interface{} `yaml:"config"`
 }
 
 type ProcessorRecipe struct {
