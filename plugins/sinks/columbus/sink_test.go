@@ -137,6 +137,43 @@ func TestSink(t *testing.T) {
 		close(in)
 		wg.Wait()
 	})
+
+	t.Run("should map fields using mapper from config", func(t *testing.T) {
+		metadata := meta.Topic{
+			Urn:         "test-urn",
+			Name:        "test-name",
+			Description: "test-description",
+		}
+		fieldsMapper := map[string]string{
+			"Urn":         "fieldA",
+			"Name":        "fieldB",
+			"Description": "fieldC",
+		}
+		requestPayload := `[{"fieldA":"test-urn","fieldB":"test-name","fieldC":"test-description"}]`
+
+		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client.SetupResponse(200, "")
+
+		in := make(chan interface{})
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			columbusSink := columbus.New(client)
+			columbusSink.Sink(context.TODO(), map[string]interface{}{
+				"host":          host,
+				"type":          columbusType,
+				"fields_mapper": fieldsMapper,
+			}, in)
+
+			client.Assert(t)
+
+			wg.Done()
+		}()
+
+		in <- metadata
+		close(in)
+		wg.Wait()
+	})
 }
 
 type mockHttpClient struct {
