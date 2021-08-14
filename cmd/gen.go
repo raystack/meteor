@@ -19,7 +19,7 @@ func GenCmd(lg log.Logger) *cobra.Command {
 	return cmd
 }
 
-// ExtCmd creates a command object for generating extractors
+// ExtCmd creates a command object for generating recipes
 func ExtCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
