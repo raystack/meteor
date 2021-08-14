@@ -1,8 +1,14 @@
 # Recipe
 
-A recipe is an instruction on how to fetch, process and sink metadata.
+A recipe is a set of instructions and configurations defined by user, and in Meteor they are used to define how a particular job will be performed. It should contain instruction about the `source` from which the metadata will be fetched, information about metadata `processors` and the destination is to be defined as `sinks` of metadata.
 
-Recipe is a yaml file with the below information.
+The recipe should contain about **only one** `source` since we wish to have a seperate job for different extractors, hence keeping them isolated. Should have **atleast one** destination of metadata mentioned in `sinks`, and the `processors` field is optional but can have multiple processors.
+
+Recipe is a yaml file, follows a structure as shown below and needs to passed as a individual file or as a bunch of recipes contained in a directory as shown in [sample usage](#sample-usage).
+
+## Writing a Recipe for Meteor
+
+- *sample-recipe.yaml*
 
 ```yaml
 name: main-kafka-production # unique recipe name as an ID
@@ -11,43 +17,36 @@ source: # required - for fetching input from sources
  config:
    broker: "localhost:9092"
 sinks: # required - at least 1 sink defined
- - name: http
-   config:
-     method: POST
-     url: "https://example.com/metadata"
+  - name: http
+    config:
+      method: POST
+      url: "https://example.com/metadata"
+  - name: console
 processors: # optional - metadata processors
- - name: metadata
-   config:
-     foo: bar
-     bar: foo
+  - name: metadata
+    config:
+      foo: bar
+      bar: foo
 ```
 
-`name` contains recipe name.
+### Glossary Table
 
-`source` is a required field to tell Meteor how and where to extract the data from. Learn more [here](./source.md).
+Contains details about the ingridients of our recipe. The `config` of each source, sinks and processors differs as different data source required different kinds of credentials, please refer more about them in further reference section.
 
-`source.type` defines what source and extractor to use to fetch the metadata. ([Extractor list](../reference/extractors.md))
-
-`source.config` is an optional field. Each extractor may require different configuration. More info can be found [here](../reference/extractors.md).
-
-`sinks` is a required field containing list of sinks to send the metadata to. Learn more [here](./sink.md).
-
-`sinks[].name` defines which sink you want to use. ([Sink list](../reference/sinks.md))
-
-`sinks[].config` is an optional field. Each sink may require different configuration. More info can be found [here](../reference/sinks.md).
-
-`processors` is an optional field containing list of processors. Learn more about processor [here](./processor.md).
-
-`processors[].name` defines what processor to use. ([Processor list](../reference/processors.md))
-
-`processors[].config` is an optional field. Each processor may require different configuration. More info can be found [here](../reference/processors.md).
+| Key | Description | Requirement | further reference   |
+| :-- | :---------- | :- | :-- |
+| `name` | **unique** recipe name, will be used as ID for job| required| N/A |
+| `source` | contains details about the source of metadata extraction | required | [source](./source.md) |
+| `sinks` | defines the final destination's of extracted and processed metadata | required | [sink](./sink.md)
+| `processors` | used process the metadata before sinking | optional | [processor](./processor.md)
 
 ## Dynamic recipe value
 
 Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe.
-Environment variables with prefix `METEOR_` will be used as the template data for the recipe.
+Environment variables with prefix `METEOR_`, such as `METEOR_MONGODB_PASS`, will be used as the template data for the recipe.
+This is to allow you to skip creating recipes containing the credentials of datasource.
 
-*recipe-with-variable.yaml*
+- *recipe-with-variable.yaml*
 
 ```yaml
 name: sample-recipe
@@ -55,15 +54,23 @@ source:
   type: mongodb
   config:
     user_id: {{ .mongodb_user }}
-    password: "{{ .mongodb_pass }}" # wrap it with double quotes to make sure value is read as a string
+    # wrap it with double quotes to make sure value is read as a string
+    password: "{{ .mongodb_pass }}"
+sinks:
+  - name: http
+    config:
+      method: POST
+      url: "https://example.com/metadata"
 ```
 
-sample usage
+## Sample Usage
 
 ```shell
 #setup environment variables
 > export METEOR_MONGODB_USER=admin
 > export METEOR_MONGODB_PASS=1234
-#run the recipe
+#run a single recipe
 > meteor run recipe-with-variable.yaml
+#run multiple recipes contained in single directory
+> meteor rundir path/directory-of-recipes
 ```
