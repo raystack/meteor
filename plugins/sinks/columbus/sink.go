@@ -68,8 +68,9 @@ func (s *Sink) buildDataMapper(data interface{}, config Config) func(interface{}
 	value := reflect.ValueOf(data)
 	newType := s.buildNewType(value, config.FieldsMapper)
 
-	return func(data interface{}) interface{} {
-		newValue := value.Convert(newType)
+	return func(d interface{}) interface{} {
+		v := reflect.ValueOf(d)
+		newValue := v.Convert(newType)
 		return newValue.Interface()
 	}
 }
