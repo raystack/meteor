@@ -29,6 +29,27 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 	}
 }
 
+func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
+	var wg sync.WaitGroup
+	runs := make([]Run, len(recipes))
+
+	for i, recipe := range recipes {
+		wg.Add(1)
+
+		tempIndex := i
+		tempRecipe := recipe
+		go func() {
+			run := r.Run(tempRecipe)
+			runs[tempIndex] = run
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	return runs
+}
+
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	var wg sync.WaitGroup
 	var (
@@ -97,27 +118,6 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	r.monitor.RecordRun(recipe, getDuration(), success)
 
 	return
-}
-
-func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
-	var wg sync.WaitGroup
-	runs := make([]Run, len(recipes))
-
-	for i, recipe := range recipes {
-		wg.Add(1)
-
-		tempIndex := i
-		tempRecipe := recipe
-		go func() {
-			run := r.Run(tempRecipe)
-			runs[tempIndex] = run
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
-	return runs
 }
 
 func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- interface{}) (err error) {
