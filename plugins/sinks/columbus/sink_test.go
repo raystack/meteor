@@ -144,7 +144,7 @@ func TestSink(t *testing.T) {
 			Name:        "test-name",
 			Description: "test-description",
 		}
-		fieldsMapper := map[string]string{
+		mapping := map[string]string{
 			"Urn":         "fieldA",
 			"Name":        "fieldB",
 			"Description": "fieldC",
@@ -160,9 +160,9 @@ func TestSink(t *testing.T) {
 		go func() {
 			columbusSink := columbus.New(client)
 			columbusSink.Sink(context.TODO(), map[string]interface{}{
-				"host":          host,
-				"type":          columbusType,
-				"fields_mapper": fieldsMapper,
+				"host":    host,
+				"type":    columbusType,
+				"mapping": mapping,
 			}, in)
 
 			client.Assert(t)

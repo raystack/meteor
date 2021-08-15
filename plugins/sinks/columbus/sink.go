@@ -19,9 +19,9 @@ type httpClient interface {
 }
 
 type Config struct {
-	Host         string            `mapstructure:"host" validate:"required"`
-	Type         string            `mapstructure:"type" validate:"required"`
-	FieldsMapper map[string]string `mapstructure:"fields_mapper"`
+	Host    string            `mapstructure:"host" validate:"required"`
+	Type    string            `mapstructure:"type" validate:"required"`
+	Mapping map[string]string `mapstructure:"mapping"`
 }
 
 type Sink struct {
@@ -60,13 +60,13 @@ func (s *Sink) getDataMapper(data interface{}, config Config) func(interface{}) 
 }
 
 func (s *Sink) buildDataMapper(data interface{}, config Config) func(interface{}) interface{} {
-	if config.FieldsMapper == nil {
+	if config.Mapping == nil {
 		return s.defaultMapper
 	}
 
 	// build new type
 	value := reflect.ValueOf(data)
-	newType := s.buildNewType(value, config.FieldsMapper)
+	newType := s.buildNewType(value, config.Mapping)
 
 	return func(d interface{}) interface{} {
 		v := reflect.ValueOf(d)
@@ -75,18 +75,16 @@ func (s *Sink) buildDataMapper(data interface{}, config Config) func(interface{}
 	}
 }
 
-func (s *Sink) buildNewType(value reflect.Value, fieldMap map[string]string) reflect.Type {
+func (s *Sink) buildNewType(value reflect.Value, mapping map[string]string) reflect.Type {
 	t := value.Type()
 	sf := make([]reflect.StructField, 0)
 	for i := 0; i < t.NumField(); i++ {
 		sf = append(sf, t.Field(i))
 
-		// check if field will be mapped
-		jsonField, ok := fieldMap[t.Field(i).Name]
-		if !ok {
-			continue // skip if field is not mentioned in the mapper
+		// rename json tag if field is included in mapping
+		if jsonField, ok := mapping[t.Field(i).Name]; ok {
+			sf[i].Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, jsonField))
 		}
-		sf[i].Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, jsonField))
 	}
 
 	return reflect.StructOf(sf)
