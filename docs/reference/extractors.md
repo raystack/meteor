@@ -21,3 +21,15 @@ In the sample-recipe.yaml add `source` information such as `type` from the table
 | [MS SQL](../../plugins/extractors/mssql/README.md) | `mssql` | Table |
 | [MySQL](../../plugins/extractors/mysql/README.md) | `mysql` | Table |
 | [PostgresDB](../../plugins/extractors/postgres/README.md) | `postgres` | Table |
+
+## Feature Matrix
+
+### Tables
+
+| Database | Urn | Name | Source | Description | Profile | Schema | Ownership | Lineage | Tags | Custom | Timestamps | Event |
+| :--- | :-- | :-- | :-- | :-- | :-- | :-- |:-- |:-- | :-- | :-- | :-- | :-- |
+| Clickhouse |  &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+| MongoDB |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+| MSSQL |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+| MySQL |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+| Postgres |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
