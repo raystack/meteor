@@ -1,8 +1,8 @@
-# Meteor Data Model
+# Meteor Metadata Model
 
-We have a set of defined data models which define the structure of metadata that meteor will yield.
-To visit the data models being used by different extractors please visit [here](../reference/extractors.md).
-We are currently using the following data models:
+We have a set of defined metadata models which define the structure of metadata that meteor will yield.
+To visit the metadata models being used by different extractors please visit [here](../reference/extractors.md).
+We are currently using the following metadata models:
 
 * [Bucket](Bucket.md)
 * [Chart](Chart.md)
