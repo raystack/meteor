@@ -33,3 +33,28 @@ In the sample-recipe.yaml add `source` information such as `type` from the table
 | MSSQL |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
 | MySQL |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
 | Postgres |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+
+### Dashboard
+
+|Dashboard |Urn |Name |Source |Description |Url | Chart |Lineage |Tags |Custom |Timestamps |Event |
+| :-- |  :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| Grafana |  &#9745; | &#9745; | &#9745; | &#9744; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; |
+| Metabase |  &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9745; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; |
+
+### Topic
+
+| Topic |Urn  |Name |Source | Description| Profile| Schema |Ownership | Lineage |Tags |Custom |Timestamps | Event |
+| :--- | :-- | :-- | :-- | :-- | :-- | :-- |:-- |:-- | :-- | :-- | :-- | :-- |
+| Kafka |  &#9744; | &#9745; | &#9745; | &#9744; | &#9744; | &#9744; | &#9744; | &#9744; |&#9744; | &#9744; | &#9744; | &#9744; |
+
+### User
+
+|User | Urn  |Source |Email |Username |FirstName |LastName |FullName | DisplayName |Title |IsActive | ManagerEmail | Profiles | Memberships |Tags |Custom |Timestamps |Event |
+| :--- | :-- | :-- | :-- | :-- | :-- | :-- |:-- |:-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| GitHub |  &#9745; | &#9744; | &#9745; | &#9745; | &#9744; | &#9744; | &#9745; | &#9744; |&#9744; | &#9745; | &#9744; | &#9744; | &#9744; | &#9744; | &#9744; | &#9744; | &#9744; |
+
+### Bucket
+
+|Bucket | Urn | Name | Source | Description | Location | StorageType| Blobs  | Ownership | Tags | Custom | Timestamps | Event |
+| :--- | :-- | :-- | :-- | :-- | :-- | :-- |:-- |:-- | :-- | :-- | :-- | :-- |
+| GCS |  &#9745; | &#9745; | &#9745; | &#9744; | &#9745; | &#9745; | &#9744; | &#9745; |&#9745; | &#9744; | &#9745; | &#9744; |
