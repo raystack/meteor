@@ -7,7 +7,7 @@
 |Source| string | `source` |
 |Description |string | `description` |
 | Profile | *TopicProfile |`profile` |
-| Schema  | *facets.TopicSchema | `schema` |
+| Schema  | *facets.Columns | `schema` |
 |Ownership |*facets.Ownership | `ownership` |
 |Lineage | *facets.Lineage| `lineage` |
 |Tags | *facets.Tags | `tags` |
