@@ -38,7 +38,6 @@ source:
 | `dashboard_urn` | `metabase.dashboard_name` |
 | `dashboard_source` | `metabase` |
 
-
 ## Contributing
 
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
