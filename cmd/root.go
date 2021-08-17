@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/odpf/meteor/internal/metrics"
+	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )

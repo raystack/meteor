@@ -407,6 +407,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/odpf/salt v0.0.0-20210812084547-bdc9d3c842b3 h1:4NL3m+6HFDN3+leYWVnFIhVl/EiMiAX6WO3HSj/O/AQ=
 github.com/odpf/salt v0.0.0-20210812084547-bdc9d3c842b3/go.mod h1:ux6pwzF4su81aqQ+NJLesag90kHdnBbH/yb/8PRRrNU=
+github.com/odpf/salt v0.0.0-20210817093332-cb78247ae769 h1:9jFAb94sKJT1ggD0v4s7wR5VTmMLkDaO48hw90bPF2w=
+github.com/odpf/salt v0.0.0-20210817093332-cb78247ae769/go.mod h1:ux6pwzF4su81aqQ+NJLesag90kHdnBbH/yb/8PRRrNU=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=

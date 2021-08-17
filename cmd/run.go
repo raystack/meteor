@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/internal/metrics"
+	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -22,16 +20,13 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt)
 
-			reader := recipe.NewReader()
-			recipes, err := reader.Read(args[0])
+			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
 				return err
 			}
 
-			count := len(recipes)
-
-			if count == 0 {
-				lg.Info(fmt.Sprintf("no recipe found for path: %s", args[0]))
+			if len(recipes) == 0 {
+				lg.Info("no recipe found", "path", args[0])
 				return nil
 			}
 
@@ -39,10 +34,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 			for _, run := range runs {
 				if run.Error != nil {
-					lg.Error(fmt.Sprintf("%s: %s", run.Recipe.Name, run.Error))
+					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					continue
 				}
-				lg.Info(fmt.Sprintf("%s: success", run.Recipe.Name))
+				lg.Info("success", "recipe", run.Recipe.Name)
 			}
 			return nil
 		},
