@@ -6,7 +6,7 @@ import (
 
 	"github.com/odpf/meteor/cmd"
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/internal/metrics"
+	"github.com/odpf/meteor/metrics"
 
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"

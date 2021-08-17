@@ -59,7 +59,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to fetch, skipping dataset", err)
+			e.logger.Error("failed to fetch, skipping dataset", "err", err)
 			continue
 		}
 
@@ -71,7 +71,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 				break
 			}
 			if err != nil {
-				e.logger.Error("failed to scan, skipping table", err)
+				e.logger.Error("failed to scan, skipping table", "err", err)
 				continue
 			}
 			out <- e.fetchMetadata(table)

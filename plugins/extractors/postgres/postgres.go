@@ -57,7 +57,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		// information will be returned
 		db, err := connection(cfg, database)
 		if err != nil {
-			e.logger.Error("failed to connect,skipping database", err)
+			e.logger.Error("failed to connect, skipping database", err)
 			continue
 		}
 		tables, err := e.getTables(db, database)
