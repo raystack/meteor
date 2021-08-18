@@ -5,7 +5,6 @@ package bigtable
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -16,14 +15,14 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/registry"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
+var log = logger.NewLogrus()
 
 func TestMain(m *testing.M) {
 	// setup test
@@ -47,14 +46,14 @@ func TestMain(m *testing.M) {
 	}
 	err, purgeFn := testutils.CreateContainer(opts, retryFn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("", err)
 	}
 
 	// run tests
 	code := m.Run()
 
 	if err := purgeFn(); err != nil {
-		log.Fatal(err)
+		log.Fatal("", err)
 	}
 	os.Exit(code)
 }

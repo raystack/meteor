@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"github.com/odpf/meteor/generator"
+	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
 
 // GenCmd creates a command object for the "gen" action
-func GenCmd() *cobra.Command {
+func GenCmd(lg log.Logger) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gen",
@@ -18,24 +19,18 @@ func GenCmd() *cobra.Command {
 	return cmd
 }
 
-// ExtCmd creates a command object for the "version" action
+// ExtCmd creates a command object for generating recipes
 func ExtCmd() *cobra.Command {
 
-	var extType string
-
 	cmd := &cobra.Command{
-		Use:     "extractor [name]",
-		Aliases: []string{"ext"},
+		Use:     "recipe [name]",
+		Aliases: []string{"r"},
 		Args:    cobra.ExactValidArgs(1),
-		Example: "meteor gen ext --type=topic",
+		Example: "meteor recipe ext --type=topic",
 		Short:   "Generate a new extractor",
 		Run: func(cmd *cobra.Command, args []string) {
-			generator.GenerateExtractor(extType, args[0])
+			generator.Recipe(args[0])
 		},
 	}
-
-	cmd.PersistentFlags().StringVar(&extType, "type", "", "type of extractor")
-	cmd.MarkFlagRequired("extType")
-
 	return cmd
 }

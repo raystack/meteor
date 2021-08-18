@@ -1,27 +1,22 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
 
-var root = &cobra.Command{
-	Use:   "meteor",
-	Short: "Meteor is a metadata collector tool",
-	Long: `Meteor is a metadata collector tool that helps to extract and sink 
-		   metadata from the source (e.g. DB, kafka, etc) and sink them to the destination (e.g. kafka, http).`,
-}
+// Execute adds all child commands to the root command and sets flags appropriately.
+func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
-// Execute executes the root command
-func Execute() {
-
-	root.AddCommand(RunCmd())
-	root.AddCommand(GenCmd())
-
-	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	var cmd = &cobra.Command{
+		Use:   "meteor",
+		Short: "Metadata collection tool",
+		Long:  "Meteor is a plugin driven agent for collecting metadata from a variety of data stores and sink to third party APIs and catalog services.",
 	}
+
+	cmd.AddCommand(RunCmd(lg, mt))
+	cmd.AddCommand(GenCmd(lg))
+
+	return cmd
 }
