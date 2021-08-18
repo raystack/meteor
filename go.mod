@@ -10,7 +10,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/confluentinc/confluent-kafka-go v1.7.0
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/elastic/go-elasticsearch v0.0.0
