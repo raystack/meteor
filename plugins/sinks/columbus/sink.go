@@ -27,6 +27,7 @@ type Config struct {
 type Sink struct {
 	client           httpClient
 	cachedDataMapper func(interface{}) interface{}
+	config           Config
 }
 
 func New(c httpClient) plugins.Syncer {
@@ -35,15 +36,14 @@ func New(c httpClient) plugins.Syncer {
 }
 
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) (err error) {
-	var config Config
-	if err = utils.BuildConfig(configMap, &config); err != nil {
+	if err = utils.BuildConfig(configMap, &s.config); err != nil {
 		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
 	}
 
 	for data := range in {
-		dataMapper := s.getDataMapper(data, config)
+		dataMapper := s.getDataMapper(data)
 		data = dataMapper(data)
-		if err = s.send(data, config); err != nil {
+		if err = s.send(data); err != nil {
 			return
 		}
 	}
@@ -51,22 +51,22 @@ func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-
 	return
 }
 
-func (s *Sink) getDataMapper(data interface{}, config Config) func(interface{}) interface{} {
+func (s *Sink) getDataMapper(data interface{}) func(interface{}) interface{} {
 	if s.cachedDataMapper == nil {
-		s.cachedDataMapper = s.buildDataMapper(data, config)
+		s.cachedDataMapper = s.buildDataMapper(data)
 	}
 
 	return s.cachedDataMapper
 }
 
-func (s *Sink) buildDataMapper(data interface{}, config Config) func(interface{}) interface{} {
-	if config.Mapping == nil {
+func (s *Sink) buildDataMapper(data interface{}) func(interface{}) interface{} {
+	if s.config.Mapping == nil {
 		return s.defaultMapper
 	}
 
 	// build new type
 	value := reflect.ValueOf(data)
-	newType := s.buildNewType(value, config.Mapping)
+	newType := s.buildNewType(value, s.config.Mapping)
 
 	return func(d interface{}) interface{} {
 		v := reflect.ValueOf(d)
@@ -92,14 +92,14 @@ func (s *Sink) buildNewType(value reflect.Value, mapping map[string]string) refl
 
 func (s *Sink) defaultMapper(data interface{}) interface{} { return data }
 
-func (s *Sink) send(data interface{}, config Config) (err error) {
+func (s *Sink) send(data interface{}) (err error) {
 	payload, err := s.buildPayload(data)
 	if err != nil {
 		return
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1/types/%s/records", config.Host, config.Type)
+	url := fmt.Sprintf("%s/v1/types/%s/records", s.config.Host, s.config.Type)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return
