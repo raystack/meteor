@@ -7,10 +7,11 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"testing"
 
-	kafkaLib "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
@@ -18,22 +19,17 @@ import (
 	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	kafkaLib "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	broker = "localhost:9093"
+	brokerHost = "localhost:9093"
 )
 
 func TestMain(m *testing.M) {
-	var client *kafkaLib.AdminClient
-	ctx := context.TODO()
-	// client, err := kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
-	// 	"bootstrap.servers": broker,
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	var conn *kafkaLib.Conn
+	var broker kafkaLib.Broker
 
 	// setup test
 	opts := dockertest.RunOptions{
@@ -51,10 +47,17 @@ func TestMain(m *testing.M) {
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
 		// create client
-		client, err = kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
-			"bootstrap.servers": broker,
-		})
-		return err
+		conn, err = kafkaLib.Dial("tcp", brokerHost)
+		if err != nil {
+			return
+		}
+		broker, err = conn.Controller()
+		if err != nil {
+			conn.Close()
+			return
+		}
+
+		return
 	}
 	err, purgeContainer := testutils.CreateContainer(opts, retryFn)
 	if err != nil {
@@ -62,18 +65,14 @@ func TestMain(m *testing.M) {
 	}
 
 	// setup and populate kafka for testing
-	if err := setup(ctx, client); err != nil {
+	if err := setup(broker); err != nil {
 		log.Fatal(err)
 	}
 
 	// run tests
 	code := m.Run()
 
-	// clean up test data
-	if err := cleanUp(ctx, client); err != nil {
-		log.Fatal(err)
-	}
-	client.Close()
+	conn.Close()
 
 	// purge container
 	if err := purgeContainer(); err != nil {
@@ -98,7 +97,7 @@ func TestExtractorExtract(t *testing.T) {
 
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"broker": broker,
+				"broker": brokerHost,
 			}, out)
 			close(out)
 
@@ -139,39 +138,24 @@ func TestExtractorExtract(t *testing.T) {
 	})
 }
 
-func setup(ctx context.Context, client *kafkaLib.AdminClient) (err error) {
-	results, err := client.CreateTopics(ctx, []kafkaLib.TopicSpecification{
-		{Topic: "meteor-test-topic-1", NumPartitions: 1},
-		{Topic: "meteor-test-topic-2", NumPartitions: 1},
-		{Topic: "meteor-test-topic-3", NumPartitions: 1},
-	})
+func setup(broker kafkaLib.Broker) (err error) {
+	// create broker connection to create topics
+	var conn *kafkaLib.Conn
+	conn, err = kafkaLib.Dial("tcp", net.JoinHostPort(broker.Host, strconv.Itoa(broker.Port)))
 	if err != nil {
 		return
 	}
-	// Have to manually check for results for any errors
-	for _, res := range results {
-		if res.Error.Code() != kafkaLib.ErrNoError {
-			return res.Error
-		}
+	defer conn.Close()
+
+	// create topics
+	topicConfigs := []kafkaLib.TopicConfig{
+		{Topic: "meteor-test-topic-1", NumPartitions: 1, ReplicationFactor: 1},
+		{Topic: "meteor-test-topic-2", NumPartitions: 1, ReplicationFactor: 1},
+		{Topic: "meteor-test-topic-3", NumPartitions: 1, ReplicationFactor: 1},
 	}
-
-	return
-}
-
-func cleanUp(ctx context.Context, client *kafkaLib.AdminClient) (err error) {
-	results, err := client.DeleteTopics(ctx, []string{
-		"meteor-test-topic-1",
-		"meteor-test-topic-2",
-		"meteor-test-topic-3",
-	})
+	err = conn.CreateTopics(topicConfigs...)
 	if err != nil {
 		return
-	}
-	// Have to manually check for results for any errors
-	for _, res := range results {
-		if res.Error.Code() != kafkaLib.ErrNoError {
-			return res.Error
-		}
 	}
 
 	return
