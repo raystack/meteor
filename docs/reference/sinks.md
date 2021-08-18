@@ -27,4 +27,11 @@ sinks:
    config:
      host: https://columbus.com
      type: sample-columbus-type
+     mapping:
+       ModelFieldName: "new_fieldname"
+       Urn: "id"
+       Name: "displayName"
 ```
+***Notes***
+
+Columbus' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Columbus.

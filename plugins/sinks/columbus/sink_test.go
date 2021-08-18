@@ -3,7 +3,6 @@ package columbus_test
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -34,7 +33,7 @@ func TestSink(t *testing.T) {
 				},
 			},
 		}
-		requestPayload = []interface{}{topic} // columbus requires payload to be in a list
+		requestPayload = `[{"urn":"my-topic-urn","name":"my-topic","ownership":{"owners":[{"name":"admin-A"}]}}]`
 		columbusType   = "my-type"
 		url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
 	)
@@ -138,22 +137,59 @@ func TestSink(t *testing.T) {
 		close(in)
 		wg.Wait()
 	})
+
+	t.Run("should map fields using mapper from config", func(t *testing.T) {
+		metadata := meta.Topic{
+			Urn:         "test-urn",
+			Name:        "test-name",
+			Description: "test-description",
+		}
+		mapping := map[string]string{
+			"Urn":         "fieldA",
+			"Name":        "fieldB",
+			"Description": "fieldC",
+		}
+		requestPayload := `[{"fieldA":"test-urn","fieldB":"test-name","fieldC":"test-description"}]`
+
+		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client.SetupResponse(200, "")
+
+		in := make(chan interface{})
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			columbusSink := columbus.New(client)
+			columbusSink.Sink(context.TODO(), map[string]interface{}{
+				"host":    host,
+				"type":    columbusType,
+				"mapping": mapping,
+			}, in)
+
+			client.Assert(t)
+
+			wg.Done()
+		}()
+
+		in <- metadata
+		close(in)
+		wg.Wait()
+	})
 }
 
 type mockHttpClient struct {
-	URL            string
-	Method         string
-	Data           interface{}
-	ResponseJSON   string
-	ResponseStatus int
-	req            *http.Request
+	URL                string
+	Method             string
+	RequestPayloadJSON string
+	ResponseJSON       string
+	ResponseStatus     int
+	req                *http.Request
 }
 
-func newMockHttpClient(method, url string, data interface{}) *mockHttpClient {
+func newMockHttpClient(method, url string, payloadJSON string) *mockHttpClient {
 	return &mockHttpClient{
-		Method: method,
-		URL:    url,
-		Data:   data,
+		Method:             method,
+		URL:                url,
+		RequestPayloadJSON: payloadJSON,
 	}
 }
 
@@ -190,18 +226,14 @@ func (m *mockHttpClient) Assert(t *testing.T) {
 	)
 	assert.Equal(t, m.URL, actualURL)
 
-	dataJsonBytes, err := json.Marshal(m.Data)
-	if err != nil {
-		t.Error(err)
-	}
-
 	var bodyBytes = []byte("")
 	if m.req.Body != nil {
+		var err error
 		bodyBytes, err = ioutil.ReadAll(m.req.Body)
 		if err != nil {
 			t.Error(err)
 		}
 	}
 
-	assert.Equal(t, string(dataJsonBytes), string(bodyBytes))
+	assert.Equal(t, string(m.RequestPayloadJSON), string(bodyBytes))
 }
