@@ -2,17 +2,17 @@ package plugins
 
 import (
 	"encoding/json"
-	"github.com/odpf/meteor/core"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
+	"github.com/odpf/meteor/plugins"
 )
 
 // Processor is wrapper for processor.Processor
 // it requires Name() to return the name of the processor
 // it is needed for referencing it in a recipe
 type Processor interface {
-	core.Processor
+	plugins.Processor
 	Name() (string, error)
 }
 

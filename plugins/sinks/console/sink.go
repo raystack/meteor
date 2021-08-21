@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/sink"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/registry"
 )
 
 type Sink struct {
 	logger plugins.Logger
 }
 
-func New() core.Syncer {
+func New() plugins.Syncer {
 	return new(Sink)
 }
 
@@ -37,7 +36,7 @@ func (s *Sink) process(value interface{}) error {
 }
 
 func init() {
-	if err := sink.Catalog.Register("console", func() core.Syncer {
+	if err := registry.Sinks.Register("console", func() plugins.Syncer {
 		return &Sink{
 			logger: plugins.Log,
 		}

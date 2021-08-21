@@ -13,12 +13,12 @@ import (
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +81,7 @@ func TestExtract(t *testing.T) {
 			"host":     "localhost:1433",
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 	t.Run("should return error if no password in config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
@@ -89,7 +89,7 @@ func TestExtract(t *testing.T) {
 			"host":    "localhost:1433",
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
@@ -97,7 +97,7 @@ func TestExtract(t *testing.T) {
 			"password": pass,
 		}, make(chan<- interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -164,7 +164,7 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func newExtractor() *mssql.Extractor {
 	return mssql.New(
-		logger.NewWithWriter("info", ioutil.Discard),
+		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
 	)
 }
 

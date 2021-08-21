@@ -5,24 +5,24 @@ package bigtable
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/registry"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
+var log = logger.NewLogrus()
 
 func TestMain(m *testing.M) {
 	// setup test
@@ -46,21 +46,21 @@ func TestMain(m *testing.M) {
 	}
 	err, purgeFn := testutils.CreateContainer(opts, retryFn)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("", err)
 	}
 
 	// run tests
 	code := m.Run()
 
 	if err := purgeFn(); err != nil {
-		log.Fatal(err)
+		log.Fatal("", err)
 	}
 	os.Exit(code)
 }
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("bigtable")
+		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -69,11 +69,11 @@ func TestExtract(t *testing.T) {
 			"wrong-config": "sample-project",
 		}, extractOut)
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if project_id is empty", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("bigtable")
+		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -86,7 +86,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return bigtable metadata on success", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("bigtable")
+		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -125,7 +125,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should handle instance admin client initialization error", func(t *testing.T) {
-		extr, _ := extractor.Catalog.Get("bigtable")
+		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -161,7 +161,7 @@ func TestExtract(t *testing.T) {
 
 	t.Run("should handle errors in getting instances list", func(t *testing.T) {
 
-		extr, _ := extractor.Catalog.Get("bigtable")
+		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})

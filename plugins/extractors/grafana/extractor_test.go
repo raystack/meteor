@@ -6,20 +6,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/internal/logger"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	logger "github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
+var log = logger.NewLogrus()
 var testServer *httptest.Server
 
 func TestMain(m *testing.M) {
@@ -39,7 +38,7 @@ func TestExtract(t *testing.T) {
 			"api_key":  "qwerty123",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
@@ -48,7 +47,7 @@ func TestExtract(t *testing.T) {
 			"api_key":  "",
 		}, make(chan interface{}))
 
-		assert.Equal(t, extractor.InvalidConfigError{}, err)
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {

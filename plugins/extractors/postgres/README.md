@@ -1,6 +1,7 @@
 # postgres
 
 ## Usage
+
 ```yaml
 source:
   type: postgres
@@ -9,7 +10,9 @@ source:
     user_id: admin
     password: 1234
 ```
+
 ## Inputs
+
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `host` | `string` | `localhost:5432` | The Host at which server is running | *required* |
@@ -18,6 +21,7 @@ source:
 | `database_name` | `string` | `postgres` | The Database owned by user mentioned in Config, root user can skip | *optional* |
 
 ## Outputs
+
 | Field | Sample Value |
 | :---- | :---- |
 | `urn` | `my_database.my_table` |
@@ -28,6 +32,7 @@ source:
 | `schema` | [][Column](#column) |
 
 ### Column
+
 | Field | Sample Value |
 | :---- | :---- |
 | `name` | `total_price` |
@@ -37,4 +42,5 @@ source:
 | `length` | `12,2` |
 
 ## Contributing
+
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

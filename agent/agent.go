@@ -6,23 +6,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/odpf/meteor/core/extractor"
-	"github.com/odpf/meteor/core/processor"
-	sinks "github.com/odpf/meteor/core/sink"
 	"github.com/odpf/meteor/recipe"
+	"github.com/odpf/meteor/registry"
 )
 
 type Agent struct {
-	extractorFactory *extractor.Factory
-	processorFactory *processor.Factory
-	sinkFactory      *sinks.Factory
+	extractorFactory *registry.ExtractorFactory
+	processorFactory *registry.ProcessorFactory
+	sinkFactory      *registry.SinkFactory
 	monitor          Monitor
-
-	// wg      *sync.WaitGroup
-	// errChan chan error
 }
 
-func NewAgent(ef *extractor.Factory, pf *processor.Factory, sf *sinks.Factory, mt Monitor) *Agent {
+func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor) *Agent {
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
 	}
@@ -32,6 +27,27 @@ func NewAgent(ef *extractor.Factory, pf *processor.Factory, sf *sinks.Factory, m
 		sinkFactory:      sf,
 		monitor:          mt,
 	}
+}
+
+func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
+	var wg sync.WaitGroup
+	runs := make([]Run, len(recipes))
+
+	for i, recipe := range recipes {
+		wg.Add(1)
+
+		tempIndex := i
+		tempRecipe := recipe
+		go func() {
+			run := r.Run(tempRecipe)
+			runs[tempIndex] = run
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	return runs
 }
 
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
@@ -104,27 +120,6 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
-	var wg sync.WaitGroup
-	runs := make([]Run, len(recipes))
-
-	for i, recipe := range recipes {
-		wg.Add(1)
-
-		tempIndex := i
-		tempRecipe := recipe
-		go func() {
-			run := r.Run(tempRecipe)
-			runs[tempIndex] = run
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
-	return runs
-}
-
 func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- interface{}) (err error) {
 	extractor, err := r.extractorFactory.Get(sourceRecipe.Type)
 	if err != nil {
@@ -175,6 +170,6 @@ func (r *Agent) buildTaskError(taskType TaskType, name string, err error) error 
 func (r *Agent) startDuration() func() int {
 	start := time.Now()
 	return func() int {
-		return int(time.Now().Sub(start).Milliseconds())
+		return int(time.Since(start).Milliseconds())
 	}
 }

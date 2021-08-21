@@ -7,11 +7,10 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/core"
-	"github.com/odpf/meteor/core/extractor"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -35,7 +34,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	// Build and validate config received from receipe
 	var cfg Config
 	if err := utils.BuildConfig(config, &cfg); err != nil {
-		return extractor.InvalidConfigError{}
+		return plugins.InvalidConfigError{}
 	}
 
 	// Create database connection
@@ -58,19 +57,19 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		// information will be returned
 		db, err := connection(cfg, database)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to connect, skipping database", err)
 			continue
 		}
 		tables, err := e.getTables(db, database)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to get tables, skipping database ", err)
 			continue
 		}
 
 		for _, table := range tables {
 			result, err := e.getTableMetadata(db, database, table)
 			if err != nil {
-				e.logger.Error(err)
+				e.logger.Error("failed to get table metadata, skipping table", err)
 				continue
 			}
 			// Publish metadata to channel
@@ -136,7 +135,6 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 	var columns []*facets.Column
 	columns, err = e.getColumnMetadata(db, dbName, tableName)
 	if err != nil {
-		e.logger.Error(err)
 		return result, nil
 	}
 	result.Schema = &facets.Columns{
@@ -161,7 +159,7 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 		var length int
 		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
 		if err != nil {
-			e.logger.Error(err)
+			e.logger.Error("failed to scan row, skipping", err)
 			continue
 		}
 		result = append(result, &facets.Column{
@@ -197,7 +195,7 @@ func exclude(names []string, database string) bool {
 
 // Registers the extractor to catalog
 func init() {
-	if err := extractor.Catalog.Register("postgres", func() core.Extractor {
+	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
 		return &Extractor{
 			logger: plugins.Log,
 		}

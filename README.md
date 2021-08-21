@@ -43,7 +43,8 @@ $ ./meteor run sample-recipe.yaml
 $ ./meteor rundir directory-path
 ```
 
-## Running tests 
+## Running tests
+
 ```sh
 # Running all unit tests, excluding extractors
 $ make test
@@ -63,6 +64,6 @@ To help you get your feet wet and get you familiar with our contribution process
 
 This project exists thanks to all the [contributors](https://github.com/odpf/meteor/graphs/contributors).
 
-
 ## License
+
 Meteor is [Apache 2.0](LICENSE) licensed.
