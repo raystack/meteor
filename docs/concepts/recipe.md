@@ -4,11 +4,11 @@ A recipe is a set of instructions and configurations defined by user, and in Met
 
 The recipe should contain about **only one** `source` since we wish to have a seperate job for different extractors, hence keeping them isolated. Should have **atleast one** destination of metadata mentioned in `sinks`, and the `processors` field is optional but can have multiple processors.
 
-Recipe is a yaml file, follows a structure as shown below and needs to passed as a individual file or as a bunch of recipes contained in a directory as shown in [sample usage](#sample-usage).
+Recipe is a yaml file, follows a structure as shown below and needs to passed as a individual file or as a bunch of recipes contained in a directory as shown in [sample usage](recipe.md#sample-usage).
 
 ## Writing a Recipe for Meteor
 
-- *sample-recipe.yaml*
+* _sample-recipe.yaml_
 
 ```yaml
 name: main-kafka-production # unique recipe name as an ID
@@ -33,20 +33,18 @@ processors: # optional - metadata processors
 
 Contains details about the ingridients of our recipe. The `config` of each source, sinks and processors differs as different data source required different kinds of credentials, please refer more about them in further reference section.
 
-| Key | Description | Requirement | further reference   |
-| :-- | :---------- | :- | :-- |
-| `name` | **unique** recipe name, will be used as ID for job| required| N/A |
-| `source` | contains details about the source of metadata extraction | required | [source](./source.md) |
-| `sinks` | defines the final destination's of extracted and processed metadata | required | [sink](./sink.md)
-| `processors` | used process the metadata before sinking | optional | [processor](./processor.md)
+| Key | Description | Requirement | further reference |
+| :--- | :--- | :--- | :--- |
+| `name` | **unique** recipe name, will be used as ID for job | required | N/A |
+| `source` | contains details about the source of metadata extraction | required | [source](source.md) |
+| `sinks` | defines the final destination's of extracted and processed metadata | required | [sink](sink.md) |
+| `processors` | used process the metadata before sinking | optional | [processor](processor.md) |
 
 ## Dynamic recipe value
 
-Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe.
-Environment variables with prefix `METEOR_`, such as `METEOR_MONGODB_PASS`, will be used as the template data for the recipe.
-This is to allow you to skip creating recipes containing the credentials of datasource.
+Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe. Environment variables with prefix `METEOR_`, such as `METEOR_MONGODB_PASS`, will be used as the template data for the recipe. This is to allow you to skip creating recipes containing the credentials of datasource.
 
-- *recipe-with-variable.yaml*
+* _recipe-with-variable.yaml_
 
 ```yaml
 name: sample-recipe
@@ -65,7 +63,7 @@ sinks:
 
 ## Sample Usage
 
-```shell
+```text
 #setup environment variables
 > export METEOR_MONGODB_USER=admin
 > export METEOR_MONGODB_PASS=1234
@@ -74,3 +72,4 @@ sinks:
 #run multiple recipes contained in single directory
 > meteor rundir path/directory-of-recipes
 ```
+
