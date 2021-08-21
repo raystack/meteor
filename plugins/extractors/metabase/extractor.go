@@ -153,7 +153,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 
 // Register the extractor to catalog
 func init() {
-	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
+	if err := registry.Extractors.Register("metabase", func() plugins.Extractor {
 		return New(plugins.Log)
 	}); err != nil {
 		panic(err)

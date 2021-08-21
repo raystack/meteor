@@ -6,20 +6,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	logger "github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
+var log = logger.NewLogrus()
 var testServer *httptest.Server
 
 func TestMain(m *testing.M) {

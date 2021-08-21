@@ -5,23 +5,22 @@ package csv_test
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"testing"
 
-	"github.com/odpf/meteor/internal/logger"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	logger "github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewWithWriter("info", ioutil.Discard)
+var lg = logger.NewLogrus()
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
 		config := map[string]interface{}{}
-		err := csv.New(log).Extract(
+		err := csv.New(lg).Extract(
 			context.TODO(),
 			config,
 			make(chan<- interface{}))
@@ -34,7 +33,7 @@ func TestExtract(t *testing.T) {
 		}
 		out := make(chan interface{})
 		go func() {
-			err := csv.New(log).Extract(
+			err := csv.New(lg).Extract(
 				context.TODO(),
 				config,
 				out)
@@ -75,7 +74,7 @@ func TestExtract(t *testing.T) {
 		}
 		out := make(chan interface{})
 		go func() {
-			err := csv.New(log).Extract(
+			err := csv.New(lg).Extract(
 				context.TODO(),
 				config,
 				out)
