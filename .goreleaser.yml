@@ -14,10 +14,12 @@ builds:
       - -X github.com/odpf/meteor/config.Version={{.Tag}} -X github.com/odpf/meteor/config.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/config.BuildDate={{.Date}}
     goos:
       - darwin
+      - linux
+      - windows
     goarch:
       - amd64
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
 archives:
   - replacements:
       darwin: macos
@@ -67,3 +69,4 @@ brews:
     commit_author:
       name: Gaurav Kumar
       email: gk74533@gmail.com
+      
