@@ -6,7 +6,7 @@
 
 Print data to stdout.
 
-### Sample usage
+### Sample usage of console sink
 
 ```yaml
 sinks:
@@ -19,7 +19,7 @@ sinks:
 
 Upload metadata to a given `type` in [Columbus](github.com/odpf/columbus). Request will be send via HTTP to given host.
 
-### Sample usage
+### Sample usage of columbus sink
 
 ```yaml
 sinks:

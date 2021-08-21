@@ -1,6 +1,7 @@
 # mongodb
 
 ## Usage
+
 ```yaml
 source:
   type: mongodb
@@ -9,7 +10,9 @@ source:
     user_id: admin
     password: 1234
 ```
+
 ## Inputs
+
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `host` | `string` | `localhost:27017` | The Host at which server is running | *required* |
@@ -17,6 +20,7 @@ source:
 | `password` | `string` | `1234` | Password for the Mongo Server | *required* |
 
 ## Outputs
+
 | Field | Sample Value |
 | :---- | :---- |
 | `urn` | `my_database.my_collection` |
@@ -26,4 +30,5 @@ source:
 | `profile.total_rows` | `2100` |
 
 ## Contributing
+
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
