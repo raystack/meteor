@@ -8,9 +8,9 @@ Enrich extra fields to metadata.
 
 ### Configs
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `{field_name}` | `string|number` | `{field_value}` | Dynamic field and value  | *required* |
+| Key | Value | Example | Description |  |  |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `{field_name}` | \`string | number\` | `{field_value}` | Dynamic field and value | _required_ |
 
 ### Sample usage
 
@@ -21,3 +21,4 @@ processors:
      fieldA: valueA
      fieldB: valueB
 ```
+

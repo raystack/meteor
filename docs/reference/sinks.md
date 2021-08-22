@@ -17,7 +17,7 @@ sinks:
 
 `columbus`
 
-Upload metadata to a given `type` in [Columbus](github.com/odpf/columbus). Request will be send via HTTP to given host.
+Upload metadata to a given `type` in [Columbus](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/columbus/README.md). Request will be send via HTTP to given host.
 
 ### Sample usage of columbus sink
 
@@ -32,6 +32,8 @@ sinks:
        Urn: "id"
        Name: "displayName"
 ```
-***Notes***
+
+_**Notes**_
 
 Columbus' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Columbus.
+
