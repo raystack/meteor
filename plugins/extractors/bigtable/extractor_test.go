@@ -5,6 +5,7 @@ package bigtable
 import (
 	"context"
 	"errors"
+	"log"
 	"os"
 	"testing"
 
@@ -16,13 +17,10 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/registry"
-	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
-
-var log = logger.NewLogrus()
 
 func TestMain(m *testing.M) {
 	// setup test
