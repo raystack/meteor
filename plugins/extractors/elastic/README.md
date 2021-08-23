@@ -13,11 +13,25 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `base_url` | `string` | `http://localhost:9200` | URL of the Elastic server | *required* |
+| `url` | `string` | `http://localhost:9200` | URL of the Elastic server | *required* |
+| `user` | `string` | `admin` | User ID to access the server| *optional* |
+| `password` | `string` | `1234` | Password for the Server | *optional* |
 
 ## Outputs
 
-TBA
+| Field | Sample Value |
+| :---- | :---- |
+| `urn` | `elasticsearch.index1` |
+| `name` | `index1` |
+| `profile.total_rows` | `1` |
+| `schema` | [][Column](#column) |
+
+### Column
+
+| Field | Sample Value |
+| :---- | :---- |
+| `name` | `SomeStr` |
+| `data_type` | `text` |
 
 ## Contributing
 

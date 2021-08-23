@@ -3,10 +3,13 @@ package elastic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -15,7 +18,7 @@ import (
 type Config struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host" validate:"required"`
+	Url      string `mapstructure:"url" validate:"required"`
 }
 
 type Extractor struct {
@@ -30,13 +33,14 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
+		// fmt.Println("1.25")
 		return plugins.InvalidConfigError{}
 	}
 
 	//build elasticsearch client
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			config.Host,
+			config.Url,
 		},
 		Username: config.User,
 		Password: config.Password,
@@ -46,15 +50,14 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		return
 	}
 
-	result, err := e.listIndexes(client)
+	err = e.listIndexes(client)
 	if err != nil {
 		return
 	}
-	out <- result
 	return
 }
 
-func (e *Extractor) listIndexes(client *elasticsearch.Client) (result []map[string]interface{}, err error) {
+func (e *Extractor) listIndexes(client *elasticsearch.Client) (err error) {
 	res, err := client.Cluster.Health(
 		client.Cluster.Health.WithLevel("indices"),
 	)
@@ -68,14 +71,19 @@ func (e *Extractor) listIndexes(client *elasticsearch.Client) (result []map[stri
 	}
 	x := reflect.ValueOf(r["indices"]).MapRange()
 	for x.Next() {
-		row := make(map[string]interface{})
-		row["index_name"] = x.Key().String()
-		doc_properties, err1 := e.listIndexInfo(client, x.Key().String())
+		indexName := x.Key().String()
+		docProperties, err1 := e.listIndexInfo(client, x.Key().String())
 		if err1 != nil {
 			err = err1
 			return
 		}
-		row["document_properties"] = doc_properties
+		var columns []*facets.Column
+		for i := range docProperties {
+			columns = append(columns, &facets.Column{
+				Name:     i,
+				DataType: docProperties[i].(map[string]interface{})["type"].(string),
+			})
+		}
 		countRes, err1 := client.Search(
 			client.Search.WithIndex(x.Key().String()),
 		)
@@ -89,8 +97,18 @@ func (e *Extractor) listIndexes(client *elasticsearch.Client) (result []map[stri
 			res.Body.Close()
 			return
 		}
-		row["document_count"] = len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
-		result = append(result, row)
+		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
+
+		e.out <- meta.Table{
+			Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
+			Name: indexName,
+			Schema: &facets.Columns{
+				Columns: columns,
+			},
+			Profile: &meta.TableProfile{
+				TotalRows: int64(docCount),
+			},
+		}
 	}
 	return
 }
@@ -113,12 +131,16 @@ func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (r
 	return
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

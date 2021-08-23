@@ -5,6 +5,7 @@ package elastic_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,15 +16,17 @@ import (
 	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/extractors/elastic"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/registry"
+	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	host = "http://localhost:9200"
+	url  = "http://localhost:9200"
 	pass = "secret_pass"
 	user = "elastic_meteor"
 )
@@ -36,7 +39,7 @@ var (
 func TestMain(m *testing.M) {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://localhost:9200",
+			url,
 		},
 		Username: user,
 		Password: pass,
@@ -99,32 +102,39 @@ func TestMain(m *testing.M) {
 func TestExtract(t *testing.T) {
 
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("elastic")
-		err := extr.Extract(ctx, map[string]interface{}{}, make(chan<- interface{}))
-
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+			"password": "pass",
+		}, make(chan<- interface{}))
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
-
-		extr, _ := registry.Extractors.Get("elastic")
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		extractOut := make(chan interface{})
-		_, err := client.Info()
-		if err != nil {
-			t.Fatal(err)
-		}
 		go func() {
-			err := extr.Extract(ctx, map[string]interface{}{
-				"host":     host,
+			err := newExtractor().Extract(ctx, map[string]interface{}{
+				"url":      url,
 				"user":     user,
 				"password": pass,
 			}, extractOut)
-			if err != nil {
-				log.Fatal(err)
-			}
-			expected := getExpectedVal()
-			assert.Equal(t, expected, extractOut)
+			close(extractOut)
+
+			assert.Nil(t, err)
 		}()
+		var results []meta.Table
+		for d := range extractOut {
+			table, ok := d.(meta.Table)
+			fmt.Println(table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
+
+			results = append(results, table)
+		}
+		fmt.Println(results)
+		fmt.Println(getExpectedVal())
+		assert.Equal(t, getExpectedVal(), results)
 	})
 }
 
@@ -182,40 +192,49 @@ func jsonStruct(doc MeteorMockElasticDocs) string {
 	return string(b)
 }
 
-func getExpectedVal() (expected []map[string]interface{}) {
-	expected = []map[string]interface{}{
+func newExtractor() *elastic.Extractor {
+	return elastic.New(testutils.Logger)
+}
+
+func getExpectedVal() []meta.Table {
+	return []meta.Table{
 		{
-			"document_count": 1,
-			"document_properties": map[string]interface{}{
-				"SomeInt": map[string]interface{}{
-					"type": "long",
-				},
-				"SomeStr": map[string]interface{}{
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"ignore_above": float64(256), "type": "keyword"},
+			Urn: "elasticsearch.index1",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						Name:     "SomeInt",
+						DataType: "long",
 					},
-					"type": "text",
+					{
+						Name:     "SomeStr",
+						DataType: "text",
+					},
 				},
 			},
-			"index_name": "index1",
+			Name: "index1",
+			Profile: &meta.TableProfile{
+				TotalRows: 1,
+			},
 		},
 		{
-			"document_count": 1,
-			"document_properties": map[string]interface{}{
-				"SomeInt": map[string]interface{}{
-					"type": "long",
-				},
-				"SomeStr": map[string]interface{}{
-					"fields": map[string]interface{}{
-						"keyword": map[string]interface{}{
-							"ignore_above": float64(256), "type": "keyword"},
+			Urn: "elastic.index2",
+			Schema: &facets.Columns{
+				Columns: []*facets.Column{
+					{
+						Name:     "SomeInt",
+						DataType: "long",
 					},
-					"type": "text",
+					{
+						Name:     "SomeStr",
+						DataType: "text",
+					},
 				},
 			},
-			"index_name": "index2",
+			Name: "index2",
+			Profile: &meta.TableProfile{
+				TotalRows: 1,
+			},
 		},
 	}
-	return
 }
