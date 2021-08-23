@@ -30,7 +30,10 @@ var db *sql.DB
 const (
 	user = "meteor_test_user"
 	pass = "pass"
+	port = "3310"
 )
+
+var host = "localhost:" + port
 
 func TestMain(m *testing.M) {
 	// setup test
@@ -40,16 +43,16 @@ func TestMain(m *testing.M) {
 		Env: []string{
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
 		},
-		ExposedPorts: []string{"3306"},
+		ExposedPorts: []string{"3306", port},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"3306": {
-				{HostIP: "0.0.0.0", HostPort: "3306"},
+				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("mysql", "root@tcp(localhost:3306)/")
+		db, err = sql.Open("mysql", "root@tcp("+host+")/")
 		if err != nil {
 			return err
 		}
@@ -78,7 +81,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no user_id in config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:3306",
+			"host":     host,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -87,7 +90,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no password in config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": user,
-			"host":    "localhost:3306",
+			"host":    host,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -111,7 +114,7 @@ func TestExtract(t *testing.T) {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  user,
 				"password": pass,
-				"host":     "localhost:3306",
+				"host":     host,
 			}, out)
 			close(out)
 
