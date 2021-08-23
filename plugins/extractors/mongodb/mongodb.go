@@ -38,12 +38,6 @@ type Extractor struct {
 	logger log.Logger
 }
 
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 
@@ -160,6 +154,12 @@ func createAndConnnectClient(ctx context.Context, uri string) (client *mongo.Cli
 	}
 
 	return
+}
+
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func init() {
