@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -129,7 +129,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 	}
 
 	// push table to channel
-	e.out <- meta.Table{
+	e.out <- resources.Table{
 		Urn:  fmt.Sprintf("%s.%s", database, tableName),
 		Name: tableName,
 		Schema: &facets.Columns{

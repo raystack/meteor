@@ -4,14 +4,14 @@ Metadata models are structs in which metadata of a certain kind will be extracte
 For e.g, MySQL and Postgres are supposed to provide similar struct for metadata since both are SQL based databases.
 Currently meteor provides the extracted metadata as one of the following metadata models:
 
-* [Bucket](Bucket.pb.gp)
-* [Chart](Chart.pb.go)
-* [Dashboard](Dashboard.pb.go)
-* [Group](Group.pb.go)
-* [Job](Job.pb.go)
-* [Table](Table.pb.go)
-* [Topic](Topic.pb.go)
-* [User](User.pb.go)
+* [Bucket](bucket.pb.gp)
+* [Chart](chart.pb.go)
+* [Dashboard](dashboard.pb.go)
+* [Group](group.pb.go)
+* [Job](job.pb.go)
+* [Table](table.pb.go)
+* [Topic](topic.pb.go)
+* [User](user.pb.go)
 
 While adding an extractor one needs to provide metadata supported by these models.
 If you want some other data model added to the list feel free to raise a issue.

@@ -9,9 +9,9 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/common"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/common"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -56,7 +56,6 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			return errors.Wrap(err, "failed to fetch dataset")
 		}
 		e.extractTable(ctx, ds, out)
-		break
 	}
 
 	return
@@ -92,28 +91,25 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 		}
 
 		out <- e.buildTable(ctx, table, tmd)
-		break
 	}
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) meta.Table {
-	return meta.Table{
+func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) resources.Table {
+	return resources.Table{
 		Urn:    fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
 		Name:   t.TableID,
 		Source: "bigquery",
 		Schema: &facets.Columns{
 			Columns: e.buildColumns(ctx, md),
 		},
-		Custom: &facets.Custom{
-			CustomProperties: map[string]string{
+		Properties: &facets.Properties{
+			Fields: utils.TryParseMapToProto(map[string]interface{}{
 				"dataset": t.DatasetID,
 				"project": t.ProjectID,
 				"type":    string(md.Type),
-			},
-		},
-		Tags: &facets.Tags{
-			Tags: md.Labels,
+			}),
+			Labels: md.Labels,
 		},
 		Timestamps: &common.Timestamp{
 			CreatedAt: timestamppb.New(md.CreationTime),
@@ -148,10 +144,10 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		Description: field.Description,
 		DataType:    string(field.Type),
 		IsNullable:  !(field.Required || field.Repeated),
-		Custom: &facets.Custom{
-			CustomProperties: map[string]string{
+		Properties: &facets.Properties{
+			Fields: utils.TryParseMapToProto(map[string]interface{}{
 				"mode": e.getColumnMode(field),
-			},
+			}),
 		},
 	}
 
@@ -183,8 +179,8 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 	type Row struct {
 		Min    string  `bigquery:"min"`
 		Max    string  `bigquery:"max"`
-		Avg    float32 `bigquery:"avg"`
-		Med    float32 `bigquery:"med"`
+		Avg    float64 `bigquery:"avg"`
+		Med    float64 `bigquery:"med"`
 		Unique int64   `bigquery:"unique"`
 		Count  int64   `bigquery:"count"`
 		Top    string  `bigquery:"top"`

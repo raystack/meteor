@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -42,7 +42,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return
 }
 
-func (e *Extractor) getTables() (result []meta.Table, err error) {
+func (e *Extractor) getTables() (result []resources.Table, err error) {
 	res, err := db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
@@ -57,7 +57,7 @@ func (e *Extractor) getTables() (result []meta.Table, err error) {
 			return
 		}
 
-		result = append(result, meta.Table{
+		result = append(result, resources.Table{
 			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 			Name: tableName,
 			Schema: &facets.Columns{

@@ -12,8 +12,8 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +24,7 @@ var (
 func TestSink(t *testing.T) {
 	// sample metadata
 	var (
-		topic = meta.Topic{
+		topic = resources.Topic{
 			Urn:  "my-topic-urn",
 			Name: "my-topic",
 			Ownership: &facets.Ownership{
@@ -139,7 +139,7 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should map fields using mapper from config", func(t *testing.T) {
-		metadata := meta.Topic{
+		metadata := resources.Topic{
 			Urn:         "test-urn",
 			Name:        "test-name",
 			Description: "test-description",
