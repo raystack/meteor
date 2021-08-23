@@ -32,7 +32,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
-				lg.Debug("recipe details", "config", run.Recipe)
+				lg.Debug("recipe details", "recipe", run.Recipe)
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					continue
