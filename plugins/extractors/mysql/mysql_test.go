@@ -78,28 +78,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should return error if no user_id in config", func(t *testing.T) {
+	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
-		}, make(chan<- interface{}))
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no password in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id": user,
-			"host":    host,
-		}, make(chan<- interface{}))
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -180,6 +162,7 @@ func newExtractor() *mysql.Extractor {
 	)
 }
 
+//conatins the format of metadata data we expect to be extracted
 func getExpected() []meta.Table {
 	return []meta.Table{
 		{
