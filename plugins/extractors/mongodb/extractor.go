@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -34,10 +35,10 @@ type Extractor struct {
 	excludeds map[string]bool
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -163,7 +164,7 @@ func createAndConnnectClient(ctx context.Context, uri string) (client *mongo.Cli
 
 func init() {
 	if err := registry.Extractors.Register("mongodb", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

@@ -13,12 +13,11 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
+	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
-	logger "github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 )
 
-var log = logger.NewLogrus()
 var testServer *httptest.Server
 
 func TestMain(m *testing.M) {
@@ -33,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
-		err := grafana.New(log).Extract(context.TODO(), map[string]interface{}{
+		err := grafana.New(testutils.Logger).Extract(context.TODO(), map[string]interface{}{
 			"base_url": "",
 			"api_key":  "qwerty123",
 		}, make(chan interface{}))
@@ -42,7 +41,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
-		err := grafana.New(log).Extract(context.TODO(), map[string]interface{}{
+		err := grafana.New(testutils.Logger).Extract(context.TODO(), map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "",
 		}, make(chan interface{}))
@@ -51,7 +50,7 @@ func TestExtract(t *testing.T) {
 	})
 
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
-		extractor := grafana.New(log)
+		extractor := grafana.New(testutils.Logger)
 
 		expectedData := []meta.Dashboard{
 			{

@@ -5,8 +5,7 @@ package kafka_test
 import (
 	"context"
 	"errors"
-	"io/ioutil"
-	"log"
+	lg "log"
 	"os"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
-	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -28,12 +26,6 @@ var (
 func TestMain(m *testing.M) {
 	var client *kafkaLib.AdminClient
 	ctx := context.TODO()
-	// client, err := kafkaLib.NewAdminClient(&kafkaLib.ConfigMap{
-	// 	"bootstrap.servers": broker,
-	// })
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// setup test
 	opts := dockertest.RunOptions{
@@ -58,12 +50,12 @@ func TestMain(m *testing.M) {
 	}
 	err, purgeContainer := testutils.CreateContainer(opts, retryFn)
 	if err != nil {
-		log.Fatal(err)
+		lg.Fatal(err)
 	}
 
 	// setup and populate kafka for testing
 	if err := setup(ctx, client); err != nil {
-		log.Fatal(err)
+		lg.Fatal(err)
 	}
 
 	// run tests
@@ -71,13 +63,13 @@ func TestMain(m *testing.M) {
 
 	// clean up test data
 	if err := cleanUp(ctx, client); err != nil {
-		log.Fatal(err)
+		lg.Fatal(err)
 	}
 	client.Close()
 
 	// purge container
 	if err := purgeContainer(); err != nil {
-		log.Fatal(err)
+		lg.Fatal(err)
 	}
 	os.Exit(code)
 }
@@ -178,9 +170,7 @@ func cleanUp(ctx context.Context, client *kafkaLib.AdminClient) (err error) {
 }
 
 func newExtractor() *kafka.Extractor {
-	return kafka.New(
-		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
-	)
+	return kafka.New(testutils.Logger)
 }
 
 // This function compares two slices without concerning about the order

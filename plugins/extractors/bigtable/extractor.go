@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -20,7 +21,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 type InstancesFetcher interface {
@@ -114,7 +115,7 @@ func (e *Extractor) createAdminClient(ctx context.Context, instance string, proj
 func init() {
 	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

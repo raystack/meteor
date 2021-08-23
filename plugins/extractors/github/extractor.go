@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"golang.org/x/oauth2"
 )
 
@@ -17,7 +18,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
@@ -61,7 +62,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 func init() {
 	if err := registry.Extractors.Register("github", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

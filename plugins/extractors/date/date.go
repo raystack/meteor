@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/salt/log"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 )
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
@@ -57,7 +58,7 @@ func (d *Extractor) Process() (*common.Event, error) {
 func init() {
 	if err := registry.Extractors.Register("date", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)
