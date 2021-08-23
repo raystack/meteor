@@ -61,8 +61,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to fetch, skipping dataset", "err", err)
-			continue
+			return errors.Wrap(err, "failed to fetch dataset")
 		}
 
 		// Fetch and iterate over tables
