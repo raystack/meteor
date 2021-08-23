@@ -35,18 +35,18 @@ const (
 	dashboard_description  = "some description"
 	email                  = "meteorextractortestuser@gmail.com"
 	pass                   = "meteor_pass_1234"
-	port                   = "3000"
-	url                    = "http://localhost:3000"
+	port                   = "4002"
 )
 
 var (
 	client = &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 4 * time.Second,
 	}
 	session_id    = ""
 	collection_id = 1
 	card_id       = 0
 	dashboard_id  = 0
+	url           = "http://localhost:" + port
 )
 
 type responseID struct {
@@ -62,9 +62,9 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "metabase/metabase",
 		Tag:          "latest",
-		ExposedPorts: []string{port},
+		ExposedPorts: []string{port, "3000"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			port: {
+			"3000": {
 				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
@@ -101,10 +101,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestExtract(t *testing.T) {
+
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": "user",
-			"host":    url,
+			"url":     url,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -118,16 +119,19 @@ func TestExtract(t *testing.T) {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":    email,
 				"password":   pass,
-				"host":       url,
+				"url":        url,
 				"session_id": session_id,
 			}, extractOut)
 			close(extractOut)
+
 			assert.NoError(t, err)
 		}()
+
 		var urns []string
 		for val := range extractOut {
 			urns = append(urns, val.(meta.Dashboard).Urn)
 		}
+
 		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
 	})
 }

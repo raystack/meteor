@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/lib/pq"
+	// _ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"
@@ -20,14 +20,14 @@ import (
 
 var (
 	client = &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 4 * time.Second,
 	}
 )
 
 type Config struct {
 	UserID    string `mapstructure:"user_id" validate:"required"`
 	Password  string `mapstructure:"password" validate:"required"`
-	Host      string `mapstructure:"host" validate:"required"`
+	Url       string `mapstructure:"url" validate:"required"`
 	SessionID string `mapstructure:"session_id"`
 }
 
@@ -35,12 +35,6 @@ type Extractor struct {
 	cfg       Config
 	sessionID string
 	logger    log.Logger
-}
-
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
@@ -72,7 +66,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 
 func (e *Extractor) buildDashboard(id string, name string) (data meta.Dashboard, err error) {
 	var dashboard Dashboard
-	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/"+id, nil, &dashboard)
+	err = e.makeRequest("GET", e.cfg.Url+"/api/dashboard/"+id, nil, &dashboard)
 	if err != nil {
 		return
 	}
@@ -95,7 +89,7 @@ func (e *Extractor) buildDashboard(id string, name string) (data meta.Dashboard,
 }
 
 func (e *Extractor) getDashboardsList() (data []Dashboard, err error) {
-	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/", nil, &data)
+	err = e.makeRequest("GET", e.cfg.Url+"/api/dashboard/", nil, &data)
 	if err != nil {
 		return
 	}
@@ -115,7 +109,7 @@ func (e *Extractor) getSessionID() (sessionID string, err error) {
 		ID string `json:"id"`
 	}
 	var data responseID
-	err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, &data)
+	err = e.makeRequest("POST", e.cfg.Url+"/api/session", payload, &data)
 	if err != nil {
 		return
 	}
@@ -150,6 +144,12 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	}
 	err = json.Unmarshal(b, &data)
 	return
+}
+
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 // Register the extractor to catalog
