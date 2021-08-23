@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 var defaults = []string{"information_schema", "root", "postgres"}
@@ -25,7 +26,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
@@ -193,7 +194,7 @@ func exclude(names []string, database string) bool {
 	return false
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -202,7 +203,9 @@ func New(logger plugins.Logger) *Extractor {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
-		return New(plugins.Log)
+		return &Extractor{
+			logger: plugins.GetLog(),
+		}
 	}); err != nil {
 		panic(err)
 	}

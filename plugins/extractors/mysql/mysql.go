@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 var defaultDBList = []string{
@@ -30,7 +31,7 @@ type Extractor struct {
 	excludedDbs map[string]bool
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
@@ -183,7 +184,7 @@ func (e *Extractor) isNullable(value string) bool {
 	return value == "YES"
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -192,7 +193,7 @@ func New(logger plugins.Logger) *Extractor {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

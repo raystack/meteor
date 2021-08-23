@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/odpf/salt/log"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 
@@ -31,7 +33,7 @@ type Extractor struct {
 	excludedDbs map[string]bool
 
 	// depedencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
@@ -177,7 +179,7 @@ func (e *Extractor) isNullable(value string) bool {
 	return value == "YES"
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -185,7 +187,7 @@ func New(logger plugins.Logger) *Extractor {
 
 func init() {
 	if err := registry.Extractors.Register("mssql", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

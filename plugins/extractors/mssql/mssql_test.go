@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -18,7 +17,6 @@ import (
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
-	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -151,9 +149,7 @@ func execute(db *sql.DB, queries []string) (err error) {
 }
 
 func newExtractor() *mssql.Extractor {
-	return mssql.New(
-		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
-	)
+	return mssql.New(testutils.Logger)
 }
 
 func getExpected() (expected []meta.Table) {
