@@ -34,12 +34,6 @@ type Extractor struct {
 	logger plugins.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 
@@ -181,6 +175,12 @@ func (e *Extractor) isExcludedDB(database string) bool {
 
 func (e *Extractor) isNullable(value string) bool {
 	return value == "YES"
+}
+
+func New(logger plugins.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 func init() {
