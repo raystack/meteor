@@ -6,5 +6,8 @@ RUN ["make"]
 FROM debian:stretch
 WORKDIR /opt/meteor
 COPY --from=builder /build/meteor /opt/meteor/meteor
+COPY _recipes /opt/meteor/_recipes
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends ca-certificates
 
 CMD ["./meteor"]
