@@ -26,24 +26,28 @@ import (
 var db *sql.DB
 
 const (
-	testDB = "test_db"
-	user   = "test_user"
-	pass   = "pass"
-	port   = "5432"
+	testDB    = "test_db"
+	user      = "test_user"
+	pass      = "pass"
+	port      = "5438"
+	root      = "root"
+	defaultDB = "postgres"
 )
+
+var host = "localhost:" + port
 
 func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "postgres",
 		Tag:          "12.3",
-		Env:          []string{"POSTGRES_USER=root", "POSTGRES_PASSWORD=pass", "POSTGRES_DB=postgres"},
-		ExposedPorts: []string{"5432"},
+		Env:          []string{"POSTGRES_USER=" + root, "POSTGRES_PASSWORD=" + pass, "POSTGRES_DB=" + defaultDB},
+		ExposedPorts: []string{port, "5432"},
 		PortBindings: map[docker.Port][]docker.PortBinding{"5432": {{HostIP: "0.0.0.0", HostPort: port}}},
 	}
 
 	// Exponential backoff-retry for container to be resy to accept connections
 	retryFn := func(r *dockertest.Resource) (err error) {
-		db, err = sql.Open("postgres", "postgres://root:pass@localhost:5432/postgres?sslmode=disable")
+		db, err = sql.Open("postgres", fmt.Sprintf("postgres://root:%s@%s/%s?sslmode=disable", pass, host, defaultDB))
 		if err != nil {
 			return err
 		}
@@ -72,13 +76,13 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:3306",
+			"host":     host,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
-	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
+	t.Run("should return mockdata we generated with postgres", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
@@ -87,7 +91,7 @@ func TestExtract(t *testing.T) {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":       user,
 				"password":      pass,
-				"host":          "localhost:5432",
+				"host":          host,
 				"database_name": testDB,
 			}, extractOut)
 			close(extractOut)
@@ -115,7 +119,7 @@ func setup() (err error) {
 	}
 	err = execute(db, queries)
 
-	userDB, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable", user, pass, testDB))
+	userDB, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", user, pass, host, testDB))
 	if err != nil {
 		return
 	}
