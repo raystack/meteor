@@ -1,3 +1,5 @@
+//+build integration
+
 package postgres_test
 
 import (
