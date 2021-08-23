@@ -1,29 +1,33 @@
 # Sink
 
-`sinks` are used to define the medium of consuming the metadata being extracted.You need to specify atleast one sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same metadata extraction. The given examples shows you its correct usage for http and kafka.
+`sinks` are used to define the medium of consuming the metadata being extracted. You need to specify **atleast one** sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same job. The given examples shows you its correct usage if your sink is `http` and `kafka`.
 
-## Sample usage in a recipe
+## Writing `sinks` part of your recipe
 
 ```yaml
-name: sample-recipe
 sinks: # required - at least 1 sink defined
- - name: http
-   config:
-     method: POST
-     url: "https://example.com/metadata"
- - name: kafka
-   config:
-     broker: localhost:9092
-     topic: "target-topic"
-     serializer:
-      type: proto
-      key: SampleLogKey
-      value: SampleLogMessage
+  - name: http
+    config:
+      method: POST
+      url: "https://example.com/metadata"
+  - name: kafka
+    config:
+      broker: localhost:9092
+      topic: "target-topic"
+      serializer:
+        type: proto
+        key: SampleLogKey
+        value: SampleLogMessage
 ```
+
+| key | Description | requirement |
+| :--- | :--- | :--- |
+| `name` | contains the name of sink | required |
+| `config` | different sinks will require different configuration | optional, depends on sink |
 
 ## Available Sinks
 
-* ### Console
+* **Console**
 
 ```yaml
 name: sample-recipe
@@ -35,8 +39,8 @@ Print metadata to stdout.
 
 ## Upcoming sinks
 
-- HTTP
-- Kafka
+* HTTP
+* Kafka
 
 ## Serializer
 
@@ -44,13 +48,13 @@ By default, metadata would be serialized into JSON format before sinking. To sen
 
 ## Custom Sink
 
-Meteor will have built-in sinks like Kafka and HTTP where users can just utilise directly. We will also allow creating custom sinks for DRY purposes.
+Meteor has built-in sinks like Kafka and HTTP which users can just utilise directly. We will also allow creating custom sinks for DRY purposes.
 
 It will be useful if you can find yourself sinking multiple metadata source to one place.
 
 ### Sample Custom Sink
 
-*central_metadata_store_sink.yaml*
+* _central\_metadata\_store\_sink.yaml_
 
 ```yaml
 name: central-metadata-store # unique sink name as an ID
@@ -62,3 +66,4 @@ sink:
 ```
 
 More info about available sinks can be found [here](../reference/sinks.md).
+

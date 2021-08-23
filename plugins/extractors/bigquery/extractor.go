@@ -14,6 +14,8 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
+	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,7 +29,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 	client *bigquery.Client
 	config Config
 }
@@ -51,8 +53,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to fetch, skipping dataset", "err", err)
-			continue
+			return errors.Wrap(err, "failed to fetch dataset")
 		}
 		e.extractTable(ctx, ds, out)
 		break
@@ -250,7 +251,7 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

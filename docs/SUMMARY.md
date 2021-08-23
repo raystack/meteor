@@ -17,6 +17,7 @@
 * [Sink](concepts/sink.md)
 
 ## Reference
+
 * [Commands](reference/commands.md)
 * [Configuration](reference/configuration.md)
 * [Extractors](reference/extractors.md)
@@ -24,6 +25,7 @@
 * [Sinks](reference/sinks.md)
 
 ## Contribute
+
 * [Guide](contribute/guide.md)
 * [Contribution Process](contribute/contributing.md)
 

@@ -11,6 +11,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/meta/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 var db *sql.DB
@@ -22,7 +23,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
@@ -94,7 +95,7 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*f
 func init() {
 	if err := registry.Extractors.Register("clickhouse", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

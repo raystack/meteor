@@ -1,6 +1,7 @@
 # bigquery
 
 ## Usage
+
 ```yaml
 source:
   type: bigquery
@@ -21,7 +22,9 @@ source:
         "client_x509_cert_url": "xxxxxxx"
       }
 ```
+
 ## Inputs
+
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
@@ -30,9 +33,11 @@ source:
 | `profile_column` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 
 ### *Notes*
+
 Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
 
 ## Outputs
+
 | Field | Sample Value |
 | :---- | :---- |
 | `urn` | `project_id.dataset_name.table_name` |
@@ -43,6 +48,7 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `schema` | [][Column](#column) |
 
 ### Column
+
 | Field | Sample Value |
 | :---- | :---- |
 | `name` | `total_price` |
@@ -53,4 +59,5 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `profile` | `{"min":...,"max": ...,"unique": ...}` |
 
 ## Contributing
+
 Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

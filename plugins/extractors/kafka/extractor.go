@@ -9,6 +9,7 @@ import (
 
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -21,10 +22,10 @@ type Extractor struct {
 	client *kafka.AdminClient
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -80,7 +81,7 @@ func (e *Extractor) buildTopic(topic_name string) meta.Topic {
 
 func init() {
 	if err := registry.Extractors.Register("kafka", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

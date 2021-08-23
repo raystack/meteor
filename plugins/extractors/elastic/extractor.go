@@ -9,6 +9,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -19,7 +20,7 @@ type Config struct {
 
 type Extractor struct {
 	out    chan<- interface{}
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
@@ -116,7 +117,7 @@ func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (r
 func init() {
 	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)
