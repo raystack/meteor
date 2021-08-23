@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	// _ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"

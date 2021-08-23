@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
