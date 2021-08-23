@@ -1,10 +1,9 @@
-//+ build integration
-
 package postgres_test
 
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -13,10 +12,10 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
-	_ "github.com/odpf/meteor/plugins/extractors/postgres"
+	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/registry"
+	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -69,32 +68,29 @@ func TestMain(m *testing.M) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("postgres")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		err := extr.Extract(ctx, map[string]interface{}{
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:5432",
-		}, make(chan interface{}))
+			"host":     "localhost:3306",
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with postgres running on localhost", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("postgres")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
 
 		go func() {
-			extr.Extract(ctx, map[string]interface{}{
+			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":       user,
 				"password":      pass,
 				"host":          "localhost:5432",
 				"database_name": testDB,
 			}, extractOut)
 			close(extractOut)
+
+			assert.Nil(t, err)
 		}()
 
 		var urns []string
@@ -140,4 +136,10 @@ func execute(db *sql.DB, queries []string) (err error) {
 		}
 	}
 	return
+}
+
+func newExtractor() *postgres.Extractor {
+	return postgres.New(
+		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
+	)
 }

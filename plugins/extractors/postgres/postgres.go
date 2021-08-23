@@ -193,12 +193,16 @@ func exclude(names []string, database string) bool {
 	return false
 }
 
-// Registers the extractor to catalog
+func New(logger plugins.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
+// Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.Log,
-		}
+		return New(plugins.Log)
 	}); err != nil {
 		panic(err)
 	}
