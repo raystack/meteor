@@ -8,12 +8,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/golang/protobuf/proto"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
+	kafka "github.com/segmentio/kafka-go"
 )
 
 type Config struct {
@@ -26,54 +26,59 @@ type ProtoReflector interface {
 	ProtoReflect() protoreflect.Message
 }
 
-type Sink struct{}
+type Sink struct {
+	writer *kafka.Writer
+}
 
 func New() plugins.Syncer {
 	return new(Sink)
 }
 
-func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error) {
-	kafkaConf := &Config{}
-	if err := utils.BuildConfig(config, kafkaConf); err != nil {
+func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) error {
+	var config Config
+	if err := utils.BuildConfig(configMap, &config); err != nil {
 		return err
 	}
-	producer, err := getProducer(kafkaConf.Brokers)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create kafka producer")
-	}
-	defer producer.Flush(5000)
 
+	s.writer = createWriter(config)
 	for val := range in {
-		if err := s.push(producer, kafkaConf, val); err != nil {
+		if err := s.push(ctx, config, val); err != nil {
 			return err
 		}
 	}
+
+	if err := s.writer.Close(); err != nil {
+		return errors.Wrap(err, "failed to close writer")
+	}
+
 	return nil
 }
 
-func getProducer(brokers string) (*kafka.Producer, error) {
-	producerConf := &kafka.ConfigMap{}
-	producerConf.SetKey("bootstrap.servers", brokers)
-	producerConf.SetKey("acks", "all")
-	return kafka.NewProducer(producerConf)
-}
+func (s *Sink) push(ctx context.Context, config Config, payload interface{}) error {
+	// struct needs to be cast to pointer to implement proto methods
+	payload = castModelToPointer(payload)
 
-func (s *Sink) push(producer *kafka.Producer, conf *Config, payload interface{}) error {
 	kafkaValue, err := s.buildValue(payload)
 	if err != nil {
 		return err
 	}
 
-	kafkaKey, err := s.buildKey(payload, conf.KeyPath)
+	kafkaKey, err := s.buildKey(payload, config.KeyPath)
 	if err != nil {
 		return err
 	}
 
-	return producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &conf.Topic},
-		Key:            kafkaKey,
-		Value:          kafkaValue,
-	}, nil)
+	err = s.writer.WriteMessages(ctx,
+		kafka.Message{
+			Key:   kafkaKey,
+			Value: kafkaValue,
+		},
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to write messages")
+	}
+
+	return nil
 }
 
 func (s *Sink) buildValue(value interface{}) ([]byte, error) {
@@ -146,12 +151,28 @@ func (s *Sink) extractKeyFromPayload(fieldName string, value interface{}) (strin
 func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 	keyPaths := strings.Split(keyPath, ".")
 	if len(keyPaths) < 2 {
-		return "", errors.New("invalid path, require at least one field name e.g.: .URN")
+		return "", errors.New("invalid path, require at least one field name e.g.: .Urn")
 	}
 	if len(keyPaths) > 2 {
 		return "", errors.New("invalid path, doesn't support nested field names yet")
 	}
 	return keyPaths[1], nil
+}
+
+func castModelToPointer(value interface{}) interface{} {
+	vp := reflect.New(reflect.TypeOf(value))
+	vp.Elem().Set(reflect.ValueOf(value))
+
+	return vp.Interface()
+}
+
+func createWriter(config Config) *kafka.Writer {
+	brokers := strings.Split(config.Brokers, ",")
+	return &kafka.Writer{
+		Addr:     kafka.TCP(brokers...),
+		Topic:    config.Topic,
+		Balancer: &kafka.LeastBytes{},
+	}
 }
 
 func init() {
