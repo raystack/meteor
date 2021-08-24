@@ -9,6 +9,7 @@ import (
 	meteorMeta "github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -20,10 +21,10 @@ type Extractor struct {
 	client *Client
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -98,7 +99,7 @@ func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("grafana", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

@@ -18,6 +18,7 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -25,10 +26,10 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -135,7 +136,7 @@ func (e *Extractor) buildFilePaths(filePath string) (files []string, err error) 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("csv", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

@@ -2,13 +2,14 @@ package plugins
 
 import "github.com/odpf/salt/log"
 
-type Logger interface {
-	Debug(msg string, args ...interface{})
-	Info(msg string, args ...interface{})
-	Warn(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
+var (
+	logger log.Logger = log.NewLogrus(log.LogrusWithLevel("INFO"))
+)
+
+func GetLog() log.Logger {
+	return logger
 }
 
-var (
-	Log = log.NewLogrus(log.LogrusWithLevel("INFO"))
-)
+func SetLog(l log.Logger) {
+	logger = l
+}

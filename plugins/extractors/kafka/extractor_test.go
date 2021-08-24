@@ -5,9 +5,9 @@ package kafka_test
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"log"
 	"net"
+
 	"os"
 	"strconv"
 	"testing"
@@ -16,7 +16,6 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/meta"
-	logger "github.com/odpf/salt/log"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	kafkaLib "github.com/segmentio/kafka-go"
@@ -162,9 +161,7 @@ func setup(broker kafkaLib.Broker) (err error) {
 }
 
 func newExtractor() *kafka.Extractor {
-	return kafka.New(
-		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
-	)
+	return kafka.New(testutils.Logger)
 }
 
 // This function compares two slices without concerning about the order
