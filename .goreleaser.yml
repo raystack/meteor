@@ -70,6 +70,6 @@ brews:
     install: |-
       bin.install "meteor"
     commit_author:
-      name: Gaurav Kumar
-      email: gk74533@gmail.com
+      name: Stewart Jingga
+      email: stewart_jingga@yahoo.com
       

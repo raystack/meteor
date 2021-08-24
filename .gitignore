@@ -26,3 +26,6 @@ _recipes
 
 # plugins
 meteor-plugin-*
+
+# build
+/dist
