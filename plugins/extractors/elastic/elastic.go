@@ -26,6 +26,12 @@ type Extractor struct {
 	logger log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 
@@ -129,12 +135,6 @@ func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (r
 	result = r[index].(map[string]interface{})["mappings"].(map[string]interface{})["properties"].(map[string]interface{})
 	res.Body.Close()
 	return
-}
-
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
 }
 
 // Register the extractor to catalog

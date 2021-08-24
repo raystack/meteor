@@ -24,6 +24,12 @@ type Extractor struct {
 	logger log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config
@@ -87,12 +93,6 @@ func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, 
 		Url:             fmt.Sprintf("%s?viewPanel=%d", metaURL, panel.ID),
 		DashboardUrn:    fmt.Sprintf("grafana.%s", dashboardUID),
 		DashboardSource: "grafana",
-	}
-}
-
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
 	}
 }
 

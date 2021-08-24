@@ -35,6 +35,12 @@ type Extractor struct {
 	logger log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config
@@ -140,12 +146,6 @@ func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.C
 	}
 
 	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
-}
-
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
 }
 
 // Register the extractor to catalog

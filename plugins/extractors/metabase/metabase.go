@@ -36,6 +36,12 @@ type Extractor struct {
 	logger    log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 // Extract collects metdata from the source. Metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build and validateconfig
@@ -143,12 +149,6 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	}
 	err = json.Unmarshal(b, &data)
 	return
-}
-
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
 }
 
 // Register the extractor to catalog
