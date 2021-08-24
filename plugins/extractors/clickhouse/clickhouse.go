@@ -46,7 +46,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	if err != nil {
 		return
 	}
-	err = e.getTables()
+	err = e.extractTables()
 	if err != nil {
 		return
 	}
@@ -54,7 +54,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return
 }
 
-func (e *Extractor) getTables() (err error) {
+func (e *Extractor) extractTables() (err error) {
 	res, err := db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
