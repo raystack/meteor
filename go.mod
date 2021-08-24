@@ -10,7 +10,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/confluentinc/confluent-kafka-go v1.7.0
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/elastic/go-elasticsearch v0.0.0
@@ -34,6 +33,7 @@ require (
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/segmentio/kafka-go v0.4.17
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.2.0 // indirect

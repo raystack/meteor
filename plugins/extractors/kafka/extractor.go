@@ -3,10 +3,10 @@ package kafka
 import (
 	"context"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
+	kafka "github.com/segmentio/kafka-go"
 
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -18,8 +18,8 @@ type Config struct {
 
 type Extractor struct {
 	// internal states
-	out    chan<- interface{}
-	client *kafka.AdminClient
+	out  chan<- interface{}
+	conn *kafka.Conn
 
 	// dependencies
 	logger log.Logger
@@ -41,29 +41,31 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		return plugins.InvalidConfigError{}
 	}
 
-	// create client
-	client, err := kafka.NewAdminClient(&kafka.ConfigMap{
-		"metadata.broker.list": config.Broker,
-	})
+	// create conn
+	e.conn, err = kafka.Dial("tcp", config.Broker)
 	if err != nil {
 		return err
 	}
-	defer client.Close()
-	e.client = client
+	defer e.conn.Close()
 
 	return e.extract()
 }
 
 // Extract and output metadata from all topics in a broker
 func (e *Extractor) extract() (err error) {
-	// Fetch kafka metadata
-	metadata, err := e.client.GetMetadata(nil, true, 1000)
+	partitions, err := e.conn.ReadPartitions()
 	if err != nil {
 		return
 	}
 
-	// Build and output topic metadata from topic name
-	for topic_name := range metadata.Topics {
+	// collect topic list from partition list
+	topics := map[string]bool{}
+	for _, p := range partitions {
+		topics[p.Topic] = true
+	}
+
+	// process topics
+	for topic_name := range topics {
 		e.out <- e.buildTopic(topic_name)
 	}
 
