@@ -43,11 +43,11 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `source` | `googlecloudstorage` |
 | `location` | `ASIA` |
 | `storage_type` | `STANDARD` |
-| `tags` | []{`key`:`value`} |
+| `labels` | []{`key`:`value`} |
 | `timestamps.created_at.seconds` | `1551082913` |
 | `timestamps.created_at.nanos` | `1551082913` |
 
-### Column
+### Blob
 
 | Field | Sample Value |
 | :---- | :---- |
@@ -56,7 +56,7 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `size` | `311` |
 | `deleted_at.seconds` | `1551082913` |
 | `expired_at.seconds` | `1551082913` |
-| `tags` | []{`key`:`value`} |
+| `labels` | []{`key`:`value`} |
 | `ownership.owners` | []{`name`:`serviceaccountname@project.gserviceaccount.com`} |
 | `timestamps.created_at.seconds` | `1551082913` |
 | `timestamps.created_at.nanos` | `1551082913` |

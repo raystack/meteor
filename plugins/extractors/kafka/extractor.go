@@ -5,9 +5,9 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 
-	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
@@ -71,8 +71,8 @@ func (e *Extractor) extract() (err error) {
 }
 
 // Build topic metadata model using a topic name
-func (e *Extractor) buildTopic(topic_name string) meta.Topic {
-	return meta.Topic{
+func (e *Extractor) buildTopic(topic_name string) resources.Topic {
+	return resources.Topic{
 		Urn:    topic_name,
 		Name:   topic_name,
 		Source: "kafka",

@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -46,7 +46,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		if err != nil {
 			continue
 		}
-		out <- meta.User{
+		out <- resources.User{
 			Urn:      usr.GetURL(),
 			Email:    usr.GetEmail(),
 			Username: usr.GetLogin(),

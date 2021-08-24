@@ -7,7 +7,7 @@ import (
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
@@ -32,10 +32,10 @@ var validRecipe = recipe.Recipe{
 }
 
 var finalData = []interface{}{
-	meta.Table{
+	resources.Table{
 		Urn: "foo-1-bar",
 	},
-	meta.Table{
+	resources.Table{
 		Urn: "foo-2-bar",
 	},
 }
@@ -179,7 +179,7 @@ func newMockExtractor() plugins.Extractor {
 }
 
 func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	data := []meta.Table{
+	data := []resources.Table{
 		{
 			Urn: "foo-1",
 		},
@@ -195,7 +195,7 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 	return nil
 }
 
-// This test processor will append meta.Table.Urn with "-bar"
+// This test processor will append resources.Table.Urn with "-bar"
 type mockProcessor struct{}
 
 func newMockProcessor() plugins.Processor {
@@ -204,7 +204,7 @@ func newMockProcessor() plugins.Processor {
 
 func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
 	for data := range in {
-		table, ok := data.(meta.Table)
+		table, ok := data.(resources.Table)
 		if !ok {
 			return errors.New("invalid data type")
 		}
@@ -272,6 +272,6 @@ func newFailedExtractor() plugins.Extractor {
 }
 
 func (e *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	out <- meta.Table{Urn: "id-1"}
+	out <- resources.Table{Urn: "id-1"}
 	return errors.New("failed extractor")
 }

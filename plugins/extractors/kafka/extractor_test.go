@@ -13,7 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -98,9 +98,9 @@ func TestExtractorExtract(t *testing.T) {
 		}()
 
 		// build results
-		var results []meta.Topic
+		var results []resources.Topic
 		for d := range out {
-			topic, ok := d.(meta.Topic)
+			topic, ok := d.(resources.Topic)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}
@@ -108,7 +108,7 @@ func TestExtractorExtract(t *testing.T) {
 		}
 
 		// assert results with expected data
-		expected := []meta.Topic{
+		expected := []resources.Topic{
 			{
 				Urn:    "meteor-test-topic-1",
 				Name:   "meteor-test-topic-1",
@@ -174,10 +174,10 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []meta.Topic, result []meta.Topic) {
+func assertResults(t *testing.T, expected []resources.Topic, result []resources.Topic) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]meta.Topic)
+	expectedMap := make(map[string]resources.Topic)
 	for _, topic := range expected {
 		expectedMap[topic.Urn] = topic
 	}

@@ -14,8 +14,8 @@ import (
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -143,8 +143,8 @@ func TestExtract(t *testing.T) {
 	})
 }
 
-func getExpectedVal() []meta.Table {
-	return []meta.Table{
+func getExpectedVal() []resources.Table {
+	return []resources.Table{
 		{
 			Urn:  "mockdata_meteor_metadata_test.applicant",
 			Name: "applicant",

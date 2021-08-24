@@ -10,8 +10,8 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,9 +39,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []meta.Table
+		var results []resources.Table
 		for d := range out {
-			table, ok := d.(meta.Table)
+			table, ok := d.(resources.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -49,7 +49,7 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []meta.Table{
+		expected := []resources.Table{
 			{
 				Urn:    "test.csv",
 				Name:   "test.csv",
@@ -80,9 +80,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []meta.Table
+		var results []resources.Table
 		for d := range out {
-			table, ok := d.(meta.Table)
+			table, ok := d.(resources.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -90,7 +90,7 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []meta.Table{
+		expected := []resources.Table{
 			{
 				Urn:    "test-2.csv",
 				Name:   "test-2.csv",

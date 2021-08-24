@@ -13,7 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/registry"
@@ -115,7 +115,7 @@ func TestExtract(t *testing.T) {
 		}()
 
 		for val := range extractOut {
-			result := val.([]meta.Table)
+			result := val.([]resources.Table)
 			assert.Equal(t, "bigtable", result[0].Source)
 		}
 
@@ -150,7 +150,7 @@ func TestExtract(t *testing.T) {
 		}()
 
 		for val := range extractOut {
-			result := val.([]meta.Table)
+			result := val.([]resources.Table)
 			assert.Nil(t, result)
 		}
 
@@ -190,7 +190,7 @@ func TestExtract(t *testing.T) {
 		}()
 
 		for val := range extractOut {
-			result := val.([]meta.Table)
+			result := val.([]resources.Table)
 			assert.Nil(t, result)
 		}
 

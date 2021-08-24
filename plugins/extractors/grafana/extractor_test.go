@@ -14,7 +14,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,7 +52,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
 		extractor := grafana.New(testutils.Logger)
 
-		expectedData := []meta.Dashboard{
+		expectedData := []resources.Dashboard{
 			{
 				Urn:         "grafana.HzK8qNW7z",
 				Name:        "new-dashboard-copy",
@@ -120,9 +120,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var actualData []meta.Dashboard
+		var actualData []resources.Dashboard
 		for d := range out {
-			dashboard, ok := d.(meta.Dashboard)
+			dashboard, ok := d.(resources.Dashboard)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}

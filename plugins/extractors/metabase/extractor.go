@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -70,21 +70,21 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return nil
 }
 
-func (e *Extractor) buildDashboard(id string, name string) (data meta.Dashboard, err error) {
+func (e *Extractor) buildDashboard(id string, name string) (data resources.Dashboard, err error) {
 	var dashboard Dashboard
 	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/"+id, nil, &dashboard)
 	if err != nil {
 		return
 	}
-	var tempCards []*meta.Chart
+	var tempCards []*resources.Chart
 	for _, card := range dashboard.Charts {
-		var tempCard meta.Chart
+		var tempCard resources.Chart
 		tempCard.Source = "metabase"
 		tempCard.Urn = "metabase." + id + "." + strconv.Itoa(card.ID)
 		tempCard.DashboardUrn = "metabase." + name
 		tempCards = append(tempCards, &tempCard)
 	}
-	data = meta.Dashboard{
+	data = resources.Dashboard{
 		Urn:         fmt.Sprintf("metabase.%s", dashboard.Name),
 		Name:        dashboard.Name,
 		Source:      "metabase",
