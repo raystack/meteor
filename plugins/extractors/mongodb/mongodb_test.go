@@ -13,7 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -113,9 +113,9 @@ func TestExtract(t *testing.T) {
 			assert.Nil(t, err)
 		}()
 
-		var results []meta.Table
-		for d := range extractOut {
-			table, ok := d.(meta.Table)
+		var results []resources.Table
+		for d := range out {
+			table, ok := d.(resources.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -168,26 +168,26 @@ func newExtractor() *mongodb.Extractor {
 	return mongodb.New(testutils.Logger)
 }
 
-func getExpected() []meta.Table {
-	return []meta.Table{
+func getExpected() []resources.Table {
+	return []resources.Table{
 		{
 			Urn:  testDB + ".connections",
 			Name: "connections",
-			Profile: &meta.TableProfile{
+			Profile: &resources.TableProfile{
 				TotalRows: 3,
 			},
 		},
 		{
 			Urn:  testDB + ".posts",
 			Name: "posts",
-			Profile: &meta.TableProfile{
+			Profile: &resources.TableProfile{
 				TotalRows: 2,
 			},
 		},
 		{
 			Urn:  testDB + ".stats",
 			Name: "stats",
-			Profile: &meta.TableProfile{
+			Profile: &resources.TableProfile{
 				TotalRows: 1,
 			},
 		},

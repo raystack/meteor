@@ -8,8 +8,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -126,9 +126,9 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *meta.Table, err error) {
+func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *resources.Table, err error) {
 
-	result = &meta.Table{
+	result = &resources.Table{
 		Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 		Name: tableName,
 	}

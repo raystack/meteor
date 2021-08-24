@@ -16,16 +16,21 @@ func New() *Processor {
 
 func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
 	for data := range in {
-		out <- p.process(data, config)
+		data, err := p.process(data, config)
+		if err != nil {
+			return err
+		}
+
+		out <- data
 	}
 
 	return
 }
 
-func (p *Processor) process(data interface{}, config map[string]interface{}) interface{} {
+func (p *Processor) process(data interface{}, config map[string]interface{}) (interface{}, error) {
 	customProps := utils.GetCustomProperties(data)
 	if customProps == nil {
-		return data
+		return data, nil
 	}
 
 	// update custom properties using value from config
@@ -37,8 +42,12 @@ func (p *Processor) process(data interface{}, config map[string]interface{}) int
 	}
 
 	// save custom properties
-	result := utils.SetCustomProperties(data, customProps)
-	return result
+	result, err := utils.SetCustomProperties(data, customProps)
+	if err != nil {
+		return data, err
+	}
+
+	return result, nil
 }
 
 func init() {

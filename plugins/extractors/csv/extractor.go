@@ -9,7 +9,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
@@ -17,7 +18,6 @@ import (
 	"encoding/csv"
 
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/salt/log"
 )
 
@@ -65,7 +65,7 @@ func (e *Extractor) extract(filePaths []string, out chan<- interface{}) (err err
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (table meta.Table, err error) {
+func (e *Extractor) buildTable(filePath string) (table resources.Table, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -84,7 +84,7 @@ func (e *Extractor) buildTable(filePath string) (table meta.Table, err error) {
 	}
 
 	fileName := stat.Name()
-	table = meta.Table{
+	table = resources.Table{
 		Urn:    fileName,
 		Name:   fileName,
 		Source: "csv",

@@ -18,7 +18,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -128,7 +128,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for val := range extractOut {
-			urns = append(urns, val.(meta.Dashboard).Urn)
+			urns = append(urns, val.(resources.Dashboard).Urn)
 		}
 
 		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)

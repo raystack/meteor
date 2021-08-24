@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/odpf/meteor/proto/odpf/meta/common"
+	"github.com/odpf/meteor/proto/odpf/entities/common"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
