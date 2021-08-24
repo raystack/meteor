@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	url  = "http://localhost:9200"
+	host = "http://localhost:9200"
 	pass = "secret_pass"
 	user = "elastic_meteor"
 )
@@ -39,7 +39,7 @@ var (
 func TestMain(m *testing.M) {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			url,
+			host,
 		},
 		Username: user,
 		Password: pass,
@@ -114,7 +114,7 @@ func TestExtract(t *testing.T) {
 		extractOut := make(chan interface{})
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"url":      url,
+				"host":     host,
 				"user":     user,
 				"password": pass,
 			}, extractOut)
@@ -125,15 +125,13 @@ func TestExtract(t *testing.T) {
 		var results []resources.Table
 		for d := range extractOut {
 			table, ok := d.(resources.Table)
-			fmt.Println(table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
 
 			results = append(results, table)
 		}
-		fmt.Println(results)
-		fmt.Println(getExpectedVal())
+
 		assert.Equal(t, getExpectedVal(), results)
 	})
 }

@@ -18,7 +18,7 @@ import (
 type Config struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
-	Url      string `mapstructure:"url" validate:"required"`
+	Host     string `mapstructure:"host" validate:"required"`
 }
 
 type Extractor struct {
@@ -46,7 +46,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	//build elasticsearch client
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			config.Url,
+			config.Host,
 		},
 		Username: config.User,
 		Password: config.Password,
