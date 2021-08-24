@@ -8,10 +8,11 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 var defaults = []string{"information_schema", "root", "postgres"}
@@ -25,7 +26,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
@@ -125,9 +126,9 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *meta.Table, err error) {
+func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *resources.Table, err error) {
 
-	result = &meta.Table{
+	result = &resources.Table{
 		Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 		Name: tableName,
 	}
@@ -197,7 +198,7 @@ func exclude(names []string, database string) bool {
 func init() {
 	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

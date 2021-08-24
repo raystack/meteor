@@ -7,6 +7,7 @@ import (
 	"github.com/odpf/meteor/cmd"
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/meteor/plugins"
 
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
@@ -24,6 +25,7 @@ func main() {
 	}
 
 	lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
+	plugins.SetLog(lg)
 
 	// Setup statsd monitor to collect monitoring metrics
 	var monitor *metrics.StatsdMonitor

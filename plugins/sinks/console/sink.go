@@ -7,10 +7,11 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/salt/log"
 )
 
 type Sink struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 func New() plugins.Syncer {
@@ -38,7 +39,7 @@ func (s *Sink) process(value interface{}) error {
 func init() {
 	if err := registry.Sinks.Register("console", func() plugins.Syncer {
 		return &Sink{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

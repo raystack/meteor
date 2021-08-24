@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -17,9 +16,8 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
-	logger "github.com/odpf/salt/log"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -118,9 +116,9 @@ func TestExtract(t *testing.T) {
 			assert.Nil(t, err)
 		}()
 
-		var results []meta.Table
+		var results []resources.Table
 		for d := range out {
-			table, ok := d.(meta.Table)
+			table, ok := d.(resources.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -172,13 +170,11 @@ func execute(db *sql.DB, queries []string) (err error) {
 }
 
 func newExtractor() *mysql.Extractor {
-	return mysql.New(
-		logger.NewLogrus(logger.LogrusWithWriter(ioutil.Discard)),
-	)
+	return mysql.New(testutils.Logger)
 }
 
-func getExpected() []meta.Table {
-	return []meta.Table{
+func getExpected() []resources.Table {
+	return []resources.Table{
 		{
 			Urn:  "mockdata_meteor_metadata_test.applicant",
 			Name: "applicant",

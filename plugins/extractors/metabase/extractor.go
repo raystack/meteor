@@ -12,9 +12,10 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 var (
@@ -33,10 +34,10 @@ type Config struct {
 type Extractor struct {
 	cfg       Config
 	sessionID string
-	logger    plugins.Logger
+	logger    log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -69,21 +70,21 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return nil
 }
 
-func (e *Extractor) buildDashboard(id string, name string) (data meta.Dashboard, err error) {
+func (e *Extractor) buildDashboard(id string, name string) (data resources.Dashboard, err error) {
 	var dashboard Dashboard
 	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/"+id, nil, &dashboard)
 	if err != nil {
 		return
 	}
-	var tempCards []*meta.Chart
+	var tempCards []*resources.Chart
 	for _, card := range dashboard.Charts {
-		var tempCard meta.Chart
+		var tempCard resources.Chart
 		tempCard.Source = "metabase"
 		tempCard.Urn = "metabase." + id + "." + strconv.Itoa(card.ID)
 		tempCard.DashboardUrn = "metabase." + name
 		tempCards = append(tempCards, &tempCard)
 	}
-	data = meta.Dashboard{
+	data = resources.Dashboard{
 		Urn:         fmt.Sprintf("metabase.%s", dashboard.Name),
 		Name:        dashboard.Name,
 		Source:      "metabase",
@@ -154,7 +155,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("metabase", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

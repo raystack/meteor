@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 type Config struct {
@@ -20,7 +21,7 @@ type Config struct {
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 }
 
 type InstancesFetcher interface {
@@ -68,7 +69,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []meta.Table, err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []resources.Table, err error) {
 	for _, instance := range instances {
 		adminClient, err := e.createAdminClient(ctx, instance, projectID)
 		if err != nil {
@@ -83,15 +84,15 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 				if err != nil {
 					return
 				}
-				customProps := make(map[string]string)
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				customProps["column_family"] = string(familyInfoBytes)
-				results = append(results, meta.Table{
+				results = append(results, resources.Table{
 					Urn:    fmt.Sprintf("%s.%s.%s", projectID, instance, table),
 					Name:   table,
 					Source: "bigtable",
-					Custom: &facets.Custom{
-						CustomProperties: customProps,
+					Properties: &facets.Properties{
+						Fields: utils.TryParseMapToProto(map[string]interface{}{
+							"column_family": string(familyInfoBytes),
+						}),
 					},
 				})
 				wg.Done()
@@ -114,7 +115,7 @@ func (e *Extractor) createAdminClient(ctx context.Context, instance string, proj
 func init() {
 	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

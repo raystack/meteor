@@ -9,73 +9,53 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/common"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
+	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Config struct {
-	ProjectID          string `mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON string `mapstructure:"service_account_json"`
-	TablePattern       string `mapstructure:"table_pattern"`
-	ProfileColumn      bool   `mapstructure:"profile_column"`
+	ProjectID            string `mapstructure:"project_id" validate:"required"`
+	ServiceAccountJSON   string `mapstructure:"service_account_json"`
+	TablePattern         string `mapstructure:"table_pattern"`
+	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
 }
 
 type Extractor struct {
-	logger plugins.Logger
+	logger log.Logger
 	client *bigquery.Client
-	ctx    context.Context
-	cfg    Config
+	config Config
 }
 
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
-	e.logger.Info("extracting table metadata from big query table")
-
-	var cfg Config
-	err = utils.BuildConfig(config, &cfg)
-
+	err = utils.BuildConfig(config, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	client, err := e.createClient(ctx, cfg)
-
-	e.client = client
-	e.ctx = ctx
-	e.cfg = cfg
-
+	e.client, err = e.createClient(ctx)
 	if err != nil {
 		return
 	}
 
 	// Fetch and iterate over datesets
-	it := client.Datasets(ctx)
+	it := e.client.Datasets(ctx)
 	for {
 		ds, err := it.Next()
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to fetch, skipping dataset", "err", err)
-			continue
+			return errors.Wrap(err, "failed to fetch dataset")
 		}
-
-		// Fetch and iterate over tables
-		tb := ds.Tables(ctx)
-		for {
-			table, err := tb.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				e.logger.Error("failed to scan, skipping table", "err", err)
-				continue
-			}
-			out <- e.fetchMetadata(table)
-		}
+		e.extractTable(ctx, ds, out)
 	}
 
 	return
@@ -83,88 +63,149 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 }
 
 // Create big query client
-func (e *Extractor) createClient(ctx context.Context, config Config) (*bigquery.Client, error) {
-	if config.ServiceAccountJSON == "" {
+func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) {
+	if e.config.ServiceAccountJSON == "" {
 		e.logger.Info("credentials are not specified, creating bigquery client using default credentials...")
-		return bigquery.NewClient(ctx, config.ProjectID)
+		return bigquery.NewClient(ctx, e.config.ProjectID)
 	}
 
-	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+	return bigquery.NewClient(ctx, e.config.ProjectID, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+}
+
+// Create big query client
+func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out chan<- interface{}) {
+	tb := ds.Tables(ctx)
+	for {
+		table, err := tb.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			e.logger.Error("failed to scan, skipping table", "err", err)
+			continue
+		}
+		tmd, err := table.Metadata(ctx)
+		if err != nil {
+			e.logger.Error("failed to fetch table's metadata, skipping table", "err", err)
+			continue
+		}
+
+		out <- e.buildTable(ctx, table, tmd)
+	}
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) fetchMetadata(t *bigquery.Table) meta.Table {
-	return meta.Table{
-		Urn:         fmt.Sprintf("%s.%s.%s", t.ProjectID, t.DatasetID, t.TableID),
-		Name:        t.TableID,
-		Source:      "bigquery",
-		Description: t.DatasetID,
-		Schema:      e.extractSchema(t),
+func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) resources.Table {
+	return resources.Table{
+		Urn:    fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+		Name:   t.TableID,
+		Source: "bigquery",
+		Schema: &facets.Columns{
+			Columns: e.buildColumns(ctx, md),
+		},
+		Properties: &facets.Properties{
+			Fields: utils.TryParseMapToProto(map[string]interface{}{
+				"dataset": t.DatasetID,
+				"project": t.ProjectID,
+				"type":    string(md.Type),
+			}),
+			Labels: md.Labels,
+		},
+		Timestamps: &common.Timestamp{
+			CreatedAt: timestamppb.New(md.CreationTime),
+			UpdatedAt: timestamppb.New(md.LastModifiedTime),
+		},
 	}
 }
 
 // Extract table schema
-func (e *Extractor) extractSchema(t *bigquery.Table) (columns *facets.Columns) {
-
-	mt, _ := t.Metadata(e.ctx)
-	col := mt.Schema
-	var columnList []*facets.Column
+func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata) []*facets.Column {
+	schema := tm.Schema
 	var wg sync.WaitGroup
-	var mu sync.Mutex
 
-	wg.Add(len(col))
-	for _, b := range col {
+	wg.Add(len(schema))
+	columns := make([]*facets.Column, len(schema))
+	for i, b := range schema {
+		index := i
 		go func(s *bigquery.FieldSchema) {
 			defer wg.Done()
-			column := e.mapColumn(s, mt)
-			mu.Lock()
-			columnList = append(columnList, column)
-			mu.Unlock()
+
+			columns[index] = e.buildColumn(ctx, s, tm)
 		}(b)
 	}
 	wg.Wait()
-	return &facets.Columns{
-		Columns: columnList,
-	}
+
+	return columns
 }
 
-func (e *Extractor) mapColumn(col *bigquery.FieldSchema, mt *bigquery.TableMetadata) *facets.Column {
-	var columnProfile *facets.ColumnProfile
-	if e.cfg.ProfileColumn {
-		columnProfile, _ = e.findColumnProfile(col, mt)
+func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) (col *facets.Column) {
+	col = &facets.Column{
+		Name:        field.Name,
+		Description: field.Description,
+		DataType:    string(field.Type),
+		IsNullable:  !(field.Required || field.Repeated),
+		Properties: &facets.Properties{
+			Fields: utils.TryParseMapToProto(map[string]interface{}{
+				"mode": e.getColumnMode(field),
+			}),
+		},
 	}
-	return &facets.Column{
-		Name:        col.Name,
-		Description: col.Description,
-		DataType:    string(col.Type),
-		IsNullable:  !(col.Required || col.Repeated),
-		Profile:     columnProfile,
+
+	if e.config.IncludeColumnProfile {
+		profile, err := e.getColumnProfile(ctx, field, tm)
+		if err != nil {
+			e.logger.Error("error fetching column's profile", "error", err)
+		}
+		col.Profile = profile
 	}
+
+	return
 }
 
-func (e *Extractor) findColumnProfile(col *bigquery.FieldSchema, t *bigquery.TableMetadata) (*facets.ColumnProfile, error) {
+func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (cp *facets.ColumnProfile, err error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
-		return nil, nil
+		return
 	}
-	rows, err := e.profileTheColumn(col, t)
+
+	// build and run query
+	query, err := e.buildColumnProfileQuery(col, tm)
+	it, err := query.Read(ctx)
 	if err != nil {
 		return nil, err
 	}
-	result, err := e.getResult(rows)
 
-	return &facets.ColumnProfile{
-		Min:    result.Min,
-		Max:    result.Max,
-		Avg:    result.Avg,
-		Med:    result.Med,
-		Unique: result.Unique,
-		Count:  result.Count,
-		Top:    result.Top,
-	}, err
+	// fetch first row for column profile result
+	type Row struct {
+		Min    string  `bigquery:"min"`
+		Max    string  `bigquery:"max"`
+		Avg    float64 `bigquery:"avg"`
+		Med    float64 `bigquery:"med"`
+		Unique int64   `bigquery:"unique"`
+		Count  int64   `bigquery:"count"`
+		Top    string  `bigquery:"top"`
+	}
+	var row Row
+	err = it.Next(&row)
+	if err != nil && err != iterator.Done {
+		return
+	}
+
+	// map row data to column profile
+	cp = &facets.ColumnProfile{
+		Min:    row.Min,
+		Max:    row.Max,
+		Avg:    row.Avg,
+		Med:    row.Med,
+		Unique: row.Unique,
+		Count:  row.Count,
+		Top:    row.Top,
+	}
+
+	return
 }
 
-func (e *Extractor) profileTheColumn(col *bigquery.FieldSchema, t *bigquery.TableMetadata) (*bigquery.RowIterator, error) {
+func (e *Extractor) buildColumnProfileQuery(col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (query *bigquery.Query, err error) {
 	queryTemplate := `SELECT
 		COALESCE(CAST(MIN({{ .ColumnName }}) AS STRING), "") AS min,
 		COALESCE(CAST(MAX({{ .ColumnName }}) AS STRING), "") AS max,
@@ -177,47 +218,36 @@ func (e *Extractor) profileTheColumn(col *bigquery.FieldSchema, t *bigquery.Tabl
 		{{ .TableName }}`
 	data := map[string]interface{}{
 		"ColumnName": col.Name,
-		"TableName":  strings.ReplaceAll(t.FullID, ":", "."),
+		"TableName":  strings.ReplaceAll(tm.FullID, ":", "."),
 	}
-
 	temp := template.Must(template.New("query").Parse(queryTemplate))
 	builder := &strings.Builder{}
-	if err := temp.Execute(builder, data); err != nil {
-		panic(err)
+	err = temp.Execute(builder, data)
+	if err != nil {
+		return
 	}
 	finalQuery := builder.String()
-	query := e.client.Query(finalQuery)
-	return query.Read(e.ctx)
+	query = e.client.Query(finalQuery)
+
+	return
 }
 
-type ResultRow struct {
-	Min    string  `bigquery:"min"`
-	Max    string  `bigquery:"max"`
-	Avg    float32 `bigquery:"avg"`
-	Med    float32 `bigquery:"med"`
-	Unique int64   `bigquery:"unique"`
-	Count  int64   `bigquery:"count"`
-	Top    string  `bigquery:"top"`
-}
-
-func (e *Extractor) getResult(iter *bigquery.RowIterator) (ResultRow, error) {
-	var row ResultRow
-	err := iter.Next(&row)
-	if err == iterator.Done {
-		return row, nil
+func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
+	switch {
+	case col.Repeated:
+		return "REPEATED"
+	case col.Required:
+		return "REQUIRED"
+	default:
+		return "NULLABLE"
 	}
-	if err != nil {
-		return row, fmt.Errorf("error iterating through results: %v", err)
-	}
-
-	return row, err
 }
 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
 		return &Extractor{
-			logger: plugins.Log,
+			logger: plugins.GetLog(),
 		}
 	}); err != nil {
 		panic(err)

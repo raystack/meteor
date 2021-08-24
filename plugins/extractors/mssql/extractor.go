@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/odpf/salt/log"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -31,10 +33,10 @@ type Extractor struct {
 	excludedDbs map[string]bool
 
 	// depedencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -124,7 +126,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 	}
 
 	// push table to channel
-	e.out <- meta.Table{
+	e.out <- resources.Table{
 		Urn:  fmt.Sprintf("%s.%s", database, tableName),
 		Name: tableName,
 		Schema: &facets.Columns{
@@ -185,7 +187,7 @@ func (e *Extractor) isNullable(value string) bool {
 
 func init() {
 	if err := registry.Extractors.Register("mssql", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

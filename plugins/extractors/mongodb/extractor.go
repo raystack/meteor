@@ -6,9 +6,10 @@ import (
 	"sort"
 
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -34,10 +35,10 @@ type Extractor struct {
 	excludeds map[string]bool
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -112,17 +113,17 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collection_name string) (table meta.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collection_name string) (table resources.Table, err error) {
 	// get total rows
 	total_rows, err := db.Collection(collection_name).EstimatedDocumentCount(ctx)
 	if err != nil {
 		return
 	}
 
-	table = meta.Table{
+	table = resources.Table{
 		Urn:  fmt.Sprintf("%s.%s", db.Name(), collection_name),
 		Name: collection_name,
-		Profile: &meta.TableProfile{
+		Profile: &resources.TableProfile{
 			TotalRows: total_rows,
 		},
 	}
@@ -163,7 +164,7 @@ func createAndConnnectClient(ctx context.Context, uri string) (client *mongo.Cli
 
 func init() {
 	if err := registry.Extractors.Register("mongodb", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

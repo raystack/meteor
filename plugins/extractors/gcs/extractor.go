@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/meteor/proto/odpf/meta"
-	"github.com/odpf/meteor/proto/odpf/meta/common"
-	"github.com/odpf/meteor/proto/odpf/meta/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/common"
+	"github.com/odpf/meteor/proto/odpf/entities/facets"
+	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -31,10 +32,10 @@ type Extractor struct {
 	client *storage.Client
 
 	// dependencies
-	logger plugins.Logger
+	logger log.Logger
 }
 
-func New(logger plugins.Logger) *Extractor {
+func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
@@ -69,7 +70,7 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 			return err
 		}
 
-		var blobs []*facets.Blob
+		var blobs []*resources.Blob
 		if config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, config.ProjectID)
 			if err != nil {
@@ -83,7 +84,7 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*facets.Blob, err error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*resources.Blob, err error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
 	object, err := it.Next()
@@ -98,8 +99,8 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 	return
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*facets.Blob) (bucket meta.Bucket) {
-	bucket = meta.Bucket{
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*resources.Blob) (bucket resources.Bucket) {
+	bucket = resources.Bucket{
 		Urn:         fmt.Sprintf("%s/%s", projectID, b.Name),
 		Name:        b.Name,
 		Location:    b.Location,
@@ -108,21 +109,19 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 		Timestamps: &common.Timestamp{
 			CreatedAt: timestamppb.New(b.Created),
 		},
-		Tags: &facets.Tags{
-			Tags: b.Labels,
+		Properties: &facets.Properties{
+			Labels: b.Labels,
 		},
 	}
 	if blobs != nil {
-		bucket.Blobs = &facets.Blobs{
-			Blobs: blobs,
-		}
+		bucket.Blobs = blobs
 	}
 
 	return
 }
 
-func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *facets.Blob {
-	return &facets.Blob{
+func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *resources.Blob {
+	return &resources.Blob{
 		Urn:       fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
 		Name:      blob.Name,
 		Size:      blob.Size,
@@ -152,7 +151,7 @@ func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.C
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("gcs", func() plugins.Extractor {
-		return New(plugins.Log)
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
