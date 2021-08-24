@@ -1,0 +1,75 @@
+project_name: meteor
+
+before:
+  hooks:
+    - go mod tidy
+    - make clean
+builds:
+  - main: ./main.go
+    id: "meteor"
+    binary: meteor
+    flags:
+      - -a
+    ldflags:
+      - -X github.com/odpf/meteor/config.Version={{.Tag}} -X github.com/odpf/meteor/config.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/config.BuildDate={{.Date}}
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+    env:
+      - CGO_ENABLED=0
+archives:
+  - replacements:
+      darwin: macos
+      linux: linux
+      windows: windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+release:
+  draft: true
+  prerelease: auto
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^build:'
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    ids:
+      - meteor
+    dockerfile: Dockerfile
+    image_templates:
+      - 'docker.io/odpf/{{.ProjectName}}:latest'
+      - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'
+      - 'docker.io/odpf/{{.ProjectName}}:{{ .Tag }}-amd64'
+brews:
+  - name: meteor
+    tap:
+      owner: odpf
+      name: homebrew-taps
+    license: "Apache 2.0"
+    folder: Formula
+    dependencies:
+      - name: git
+    install: |-
+      bin.install "meteor"
+    commit_author:
+      name: Stewart Jingga
+      email: stewart_jingga@yahoo.com
+      
