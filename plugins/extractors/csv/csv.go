@@ -29,12 +29,6 @@ type Extractor struct {
 	logger log.Logger
 }
 
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
-		logger: logger,
-	}
-}
-
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config
@@ -131,6 +125,12 @@ func (e *Extractor) buildFilePaths(filePath string) (files []string, err error) 
 	}
 
 	return []string{filePath}, err
+}
+
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
 }
 
 // Register the extractor to catalog
