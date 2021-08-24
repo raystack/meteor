@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/meta"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
@@ -161,26 +160,10 @@ func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 }
 
 func castModelToPointer(value interface{}) interface{} {
-	switch data := value.(type) {
-	case meta.Table:
-		return &data
-	case meta.Topic:
-		return &data
-	case meta.Dashboard:
-		return &data
-	case meta.Chart:
-		return &data
-	case meta.Group:
-		return &data
-	case meta.User:
-		return &data
-	case meta.Job:
-		return &data
-	case meta.Bucket:
-		return &data
-	default:
-		return &value
-	}
+	vp := reflect.New(reflect.TypeOf(value))
+	vp.Elem().Set(reflect.ValueOf(value))
+
+	return vp.Interface()
 }
 
 func createWriter(config Config) *kafka.Writer {
