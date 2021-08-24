@@ -56,14 +56,14 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		return
 	}
 
-	err = e.listIndexes(client)
+	err = e.extractIndexes(client)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func (e *Extractor) listIndexes(client *elasticsearch.Client) (err error) {
+func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 	res, err := client.Cluster.Health(
 		client.Cluster.Health.WithLevel("indices"),
 	)
