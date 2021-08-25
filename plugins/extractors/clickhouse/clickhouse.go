@@ -23,10 +23,19 @@ type Config struct {
 }
 
 type Extractor struct {
+	out chan<- interface{}
+
 	logger log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+	e.out = out
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
@@ -37,12 +46,15 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	if err != nil {
 		return
 	}
-	result, _ := e.getTables()
-	out <- result
+	err = e.extractTables()
+	if err != nil {
+		return
+	}
+
 	return
 }
 
-func (e *Extractor) getTables() (result []resources.Table, err error) {
+func (e *Extractor) extractTables() (err error) {
 	res, err := db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
@@ -57,13 +69,13 @@ func (e *Extractor) getTables() (result []resources.Table, err error) {
 			return
 		}
 
-		result = append(result, resources.Table{
+		e.out <- resources.Table{
 			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 			Name: tableName,
 			Schema: &facets.Columns{
 				Columns: columns,
 			},
-		})
+		}
 	}
 	return
 }
@@ -93,10 +105,8 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*f
 
 // Register the extractor to catalog
 func init() {
-	if err := registry.Extractors.Register("clickhouse", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/entities/resources"
 	"github.com/odpf/meteor/registry"
@@ -20,7 +19,7 @@ import (
 
 var (
 	client = &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 4 * time.Second,
 	}
 )
 

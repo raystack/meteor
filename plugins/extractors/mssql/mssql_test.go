@@ -26,7 +26,10 @@ const (
 	testDB = "mockdata_meteor_metadata_test"
 	user   = "sa"
 	pass   = "P@ssword1234"
+	port   = "1433"
 )
+
+var host = "localhost:" + port
 
 var db *sql.DB
 
@@ -39,15 +42,15 @@ func TestMain(m *testing.M) {
 			"SA_PASSWORD=" + pass,
 			"ACCEPT_EULA=Y",
 		},
-		ExposedPorts: []string{"1433"},
+		ExposedPorts: []string{port},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"1433": {
-				{HostIP: "0.0.0.0", HostPort: "1433"},
+			port: {
+				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@localhost:1433/", user, pass))
+		db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", user, pass, host))
 		if err != nil {
 			return err
 		}
@@ -73,30 +76,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should return error if no user_id in config", func(t *testing.T) {
+	t.Run("should error for invalid configurations", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
-			"host":     "localhost:1433",
+			"host":     host,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
-	t.Run("should return error if no password in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id": user,
-			"host":    "localhost:1433",
-		}, make(chan<- interface{}))
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-		}, make(chan<- interface{}))
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -106,7 +94,7 @@ func TestExtract(t *testing.T) {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  user,
 				"password": pass,
-				"host":     "localhost:1433",
+				"host":     host,
 			}, out)
 			close(out)
 

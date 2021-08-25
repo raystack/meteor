@@ -1,9 +1,10 @@
-// +build integration
+//+build integration
 
 package clickhouse_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,16 +14,14 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/extractors/clickhouse"
 	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/entities/facets"
 	"github.com/odpf/meteor/proto/odpf/entities/resources"
-	"github.com/odpf/meteor/registry"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
-
-var db *sql.DB
 
 const (
 	testDB     = "mockdata_meteor_metadata_test"
@@ -30,6 +29,11 @@ const (
 	pass       = "pass"
 	globalhost = "%"
 	port       = "9000"
+)
+
+var (
+	db   *sql.DB
+	host = "127.0.0.1:" + port
 )
 
 func TestMain(m *testing.M) {
@@ -41,7 +45,7 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "yandex/clickhouse-server",
 		Tag:          "21.7.4-alpine",
-		ExposedPorts: []string{"9000"},
+		ExposedPorts: []string{"9000", port},
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.xml:rw", pwd),
 		},
@@ -53,7 +57,7 @@ func TestMain(m *testing.M) {
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://127.0.0.1:%s?username=default&password=pass&debug=true", port))
+		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=default&password=pass&debug=true", host))
 		if err != nil {
 			return err
 		}
@@ -79,71 +83,45 @@ func TestMain(m *testing.M) {
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should return error if no user_id in config", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("clickhouse")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extr.Extract(ctx, map[string]interface{}{
-			"password": pass,
-			"host":     "127.0.0.1:9000",
-		}, extractOut)
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no password in config", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("clickhouse")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extr.Extract(ctx, map[string]interface{}{
-			"user_id": user,
-			"host":    "127.0.0.1:9000",
-		}, extractOut)
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no host in config", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("clickhouse")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan interface{})
-
-		err := extr.Extract(ctx, map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-		}, extractOut)
+	t.Run("should return error for invalid configuration", func(t *testing.T) {
+		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+			"password": "pass",
+			"host":     host,
+		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
-		extr, _ := registry.Extractors.Get("clickhouse")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		extractOut := make(chan interface{})
 
 		go func() {
-			extr.Extract(ctx, map[string]interface{}{
+			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  "default",
 				"password": pass,
-				"host":     "127.0.0.1:9000",
+				"host":     host,
 			}, extractOut)
+
+			close(extractOut)
+
+			assert.Nil(t, err)
 		}()
 
-		for val := range extractOut {
-			expected := getExpectedVal()
-			assert.Equal(t, expected, val)
+		var results []resources.Table
+		for d := range extractOut {
+			table, ok := d.(resources.Table)
+			if !ok {
+				t.Fatal(errors.New("invalid table format"))
+			}
+			results = append(results, table)
 		}
-
+		assert.Equal(t, getExpected(), results)
 	})
 }
 
-func getExpectedVal() []resources.Table {
+func getExpected() []resources.Table {
 	return []resources.Table{
 		{
 			Urn:  "mockdata_meteor_metadata_test.applicant",
@@ -195,38 +173,37 @@ func getExpectedVal() []resources.Table {
 }
 
 func setup() (err error) {
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB))
+	// create database, user and grant access
+	err = execute(db, []string{
+		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
+		fmt.Sprintf("CREATE DATABASE %s", testDB),
+		fmt.Sprintf("USE %s;", testDB),
+	})
 	if err != nil {
 		return
 	}
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", testDB))
-	if err != nil {
-		return
-	}
-	_, err = db.Exec(fmt.Sprintf("USE %s;", testDB))
-	if err != nil {
-		return
-	}
-	table1 := "applicant"
-	columns1 := "(applicant_id int, last_name varchar(255), first_name varchar(255))"
-	table2 := "jobs"
-	columns2 := "(job_id int, job varchar(255), department varchar(255))"
-	err = createTable(table1, columns1)
-	if err != nil {
-		return
-	}
-	err = createTable(table2, columns2)
+
+	// create and populate tables
+	err = execute(db, []string{
+		"CREATE TABLE IF NOT EXISTS applicant (applicant_id int, last_name varchar(255), first_name varchar(255))  engine=Memory",
+		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255))  engine=Memory",
+	})
 	if err != nil {
 		return
 	}
 	return
 }
 
-func createTable(table string, columns string) (err error) {
-	query := "CREATE TABLE IF NOT EXISTS "
-	_, err = db.Exec(query + table + columns + " engine=Memory")
-	if err != nil {
-		return
+func execute(db *sql.DB, queries []string) (err error) {
+	for _, query := range queries {
+		_, err = db.Exec(query)
+		if err != nil {
+			return
+		}
 	}
 	return
+}
+
+func newExtractor() *clickhouse.Extractor {
+	return clickhouse.New(testutils.Logger)
 }

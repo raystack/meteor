@@ -15,7 +15,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `http://localhost:3000` | The url at which metabase is running | *required* |
+| `host` | `string` | `http://localhost:4002` | The host at which metabase is running | *required* |
 | `user_id` | `string` | `meteor_tester` | User ID to access the metabase| *required* |
 | `password` | `string` | `meteor_pass_1234` | Password for the metabase | *required* |
 

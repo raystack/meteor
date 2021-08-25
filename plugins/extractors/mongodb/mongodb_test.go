@@ -22,11 +22,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	client *mongo.Client
+const (
 	testDB = "MeteorMongoExtractorTest"
 	user   = "user"
 	pass   = "abcd"
+	port   = "27017"
+)
+
+var (
+	host   = "127.0.0.1:" + port
+	client *mongo.Client
 )
 
 func TestMain(m *testing.M) {
@@ -40,15 +45,15 @@ func TestMain(m *testing.M) {
 			"MONGO_INITDB_ROOT_USERNAME=" + user,
 			"MONGO_INITDB_ROOT_PASSWORD=" + pass,
 		},
-		ExposedPorts: []string{"27017"},
+		ExposedPorts: []string{port},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"27017": {
-				{HostIP: "0.0.0.0", HostPort: "27017"},
+			port: {
+				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		uri := fmt.Sprintf("mongodb://%s:%s@%s", user, pass, "127.0.0.1:27017")
+		uri := fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host)
 		clientOptions := options.Client().ApplyURI(uri)
 		client, err = mongo.NewClient(clientOptions)
 		if err != nil {
@@ -83,28 +88,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 func TestExtract(t *testing.T) {
-	t.Run("should return error if no user_id in config", func(t *testing.T) {
+	t.Run("should return error for invalid", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"password": "abcd",
-			"host":     "127.0.0.1:27017",
-		}, make(chan interface{}))
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no password in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id": "Gaurav_Ubuntu",
-			"host":    "127.0.0.1:27017",
-		}, make(chan interface{}))
-
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
-	})
-
-	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
-			"user_id":  "user",
-			"password": "abcd",
+			"password": pass,
+			"host":     host,
 		}, make(chan interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -113,15 +100,15 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		out := make(chan interface{})
+		extractOut := make(chan interface{})
 
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":  user,
 				"password": pass,
-				"host":     "127.0.0.1:27017",
-			}, out)
-			close(out)
+				"host":     host,
+			}, extractOut)
+			close(extractOut)
 
 			assert.Nil(t, err)
 		}()

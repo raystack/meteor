@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/plugins/testutils"
@@ -35,18 +34,18 @@ const (
 	dashboard_description  = "some description"
 	email                  = "meteorextractortestuser@gmail.com"
 	pass                   = "meteor_pass_1234"
-	port                   = "3000"
-	url                    = "http://localhost:3000"
+	port                   = "4002"
 )
 
 var (
 	client = &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 4 * time.Second,
 	}
 	session_id    = ""
 	collection_id = 1
 	card_id       = 0
 	dashboard_id  = 0
+	host          = "http://localhost:" + port
 )
 
 type responseID struct {
@@ -62,16 +61,16 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "metabase/metabase",
 		Tag:          "latest",
-		ExposedPorts: []string{port},
+		ExposedPorts: []string{port, "3000"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			port: {
+			"3000": {
 				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
 	}
 
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		res, err := http.Get(url + "/api/health")
+		res, err := http.Get(host + "/api/health")
 		if err != nil {
 			return
 		}
@@ -101,10 +100,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestExtract(t *testing.T) {
+
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": "user",
-			"host":    url,
+			"host":    host,
 		}, make(chan<- interface{}))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -118,16 +118,19 @@ func TestExtract(t *testing.T) {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":    email,
 				"password":   pass,
-				"host":       url,
+				"host":       host,
 				"session_id": session_id,
 			}, extractOut)
 			close(extractOut)
+
 			assert.NoError(t, err)
 		}()
+
 		var urns []string
 		for val := range extractOut {
 			urns = append(urns, val.(resources.Dashboard).Urn)
 		}
+
 		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
 	})
 }
@@ -141,7 +144,7 @@ func setup() (err error) {
 		Token string `json:"setup-token"`
 	}
 	var data responseToken
-	err = makeRequest("GET", url+"/api/session/properties", nil, &data)
+	err = makeRequest("GET", host+"/api/session/properties", nil, &data)
 	if err != nil {
 		return
 	}
@@ -173,7 +176,7 @@ func setUser(setup_token string) (err error) {
 		},
 	}
 	var data sessionID
-	err = makeRequest("POST", url+"/api/setup", payload, &data)
+	err = makeRequest("POST", host+"/api/setup", payload, &data)
 	if err != nil {
 		return
 	}
@@ -188,7 +191,7 @@ func getSessionID() (err error) {
 		"password": pass,
 	}
 	var data sessionID
-	err = makeRequest("POST", url+"/api/session", payload, &data)
+	err = makeRequest("POST", host+"/api/session", payload, &data)
 	if err != nil {
 		return
 	}
@@ -215,7 +218,7 @@ func addCollection() (err error) {
 		"description": collection_description,
 	}
 	var data responseID
-	err = makeRequest("POST", url+"/api/collection", payload, &data)
+	err = makeRequest("POST", host+"/api/collection", payload, &data)
 	if err != nil {
 		return
 	}
@@ -231,7 +234,7 @@ func addDashboard() (err error) {
 	}
 
 	var data responseID
-	err = makeRequest("POST", url+"/api/dashboard", payload, &data)
+	err = makeRequest("POST", host+"/api/dashboard", payload, &data)
 	if err != nil {
 		return
 	}
@@ -252,7 +255,7 @@ func addCard(id int) (err error) {
 		ID int `json:"id"`
 	}
 	var data response
-	err = makeRequest("POST", url+"/api/dashboard/"+x+"/cards", values, &data)
+	err = makeRequest("POST", host+"/api/dashboard/"+x+"/cards", values, &data)
 	if err != nil {
 		return
 	}
