@@ -6,7 +6,7 @@
 source:
   type: elasticsearch
   config:
-    base_url: elastic_server
+    host: elastic_server
 ```
 
 ## Inputs
