@@ -6,7 +6,7 @@
 source:
   type: metabase
   config:
-    url: http://localhost:3000
+    host: http://localhost:3000
     user_id: meteor_tester
     password: meteor_pass_1234
 ```
