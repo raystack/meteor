@@ -22,7 +22,6 @@ require (
 	github.com/google/go-github/v37 v37.0.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
-	github.com/jeremywohl/flatten v1.0.1
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.2
@@ -35,7 +34,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
