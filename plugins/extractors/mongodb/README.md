@@ -23,9 +23,9 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `my_database.my_collection` |
-| `name` | `my_collection` |
-| `source` | `mongodb` |
+| `resource.urn` | `my_database.my_collection` |
+| `resource.name` | `my_collection` |
+| `resource.service` | `mongodb` |
 | `description` | `table description` |
 | `profile.total_rows` | `2100` |
 

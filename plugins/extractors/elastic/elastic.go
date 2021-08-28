@@ -8,8 +8,9 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -105,13 +106,15 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 
-		e.out <- resources.Table{
-			Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
-			Name: indexName,
+		e.out <- assets.Table{
+			Resource: &common.Resource{
+				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
+				Name: indexName,
+			},
 			Schema: &facets.Columns{
 				Columns: columns,
 			},
-			Profile: &resources.TableProfile{
+			Profile: &assets.TableProfile{
 				TotalRows: int64(docCount),
 			},
 		}

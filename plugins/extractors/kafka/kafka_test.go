@@ -15,7 +15,8 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	kafkaLib "github.com/segmentio/kafka-go"
@@ -104,9 +105,9 @@ func TestExtractorExtract(t *testing.T) {
 		}()
 
 		// build results
-		var results []resources.Topic
+		var results []assets.Topic
 		for d := range out {
-			topic, ok := d.(resources.Topic)
+			topic, ok := d.(assets.Topic)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}
@@ -114,21 +115,27 @@ func TestExtractorExtract(t *testing.T) {
 		}
 
 		// assert results with expected data
-		expected := []resources.Topic{
+		expected := []assets.Topic{
 			{
-				Urn:    "meteor-test-topic-1",
-				Name:   "meteor-test-topic-1",
-				Source: "kafka",
+				Resource: &common.Resource{
+					Urn:     "meteor-test-topic-1",
+					Name:    "meteor-test-topic-1",
+					Service: "kafka",
+				},
 			},
 			{
-				Urn:    "meteor-test-topic-2",
-				Name:   "meteor-test-topic-2",
-				Source: "kafka",
+				Resource: &common.Resource{
+					Urn:     "meteor-test-topic-2",
+					Name:    "meteor-test-topic-2",
+					Service: "kafka",
+				},
 			},
 			{
-				Urn:    "meteor-test-topic-3",
-				Name:   "meteor-test-topic-3",
-				Source: "kafka",
+				Resource: &common.Resource{
+					Urn:     "meteor-test-topic-3",
+					Name:    "meteor-test-topic-3",
+					Service: "kafka",
+				},
 			},
 		}
 		// We need this function because the extractor cannot guarantee order
@@ -165,19 +172,19 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []resources.Topic, result []resources.Topic) {
+func assertResults(t *testing.T, expected []assets.Topic, result []assets.Topic) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]resources.Topic)
+	expectedMap := make(map[string]assets.Topic)
 	for _, topic := range expected {
-		expectedMap[topic.Urn] = topic
+		expectedMap[topic.Resource.Urn] = topic
 	}
 
 	for _, topic := range result {
-		assert.Contains(t, expectedMap, topic.Urn)
-		assert.Equal(t, expectedMap[topic.Urn], topic)
+		assert.Contains(t, expectedMap, topic.Resource.Urn)
+		assert.Equal(t, expectedMap[topic.Resource.Urn], topic)
 
 		// delete entry to make sure there is no duplicate
-		delete(expectedMap, topic.Urn)
+		delete(expectedMap, topic.Resource.Urn)
 	}
 }

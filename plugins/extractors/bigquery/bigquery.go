@@ -9,9 +9,9 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/common"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -95,16 +95,18 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) resources.Table {
-	return resources.Table{
-		Urn:    fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
-		Name:   t.TableID,
-		Source: "bigquery",
+func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) assets.Table {
+	return assets.Table{
+		Resource: &common.Resource{
+			Urn:     fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+			Name:    t.TableID,
+			Service: "bigquery",
+		},
 		Schema: &facets.Columns{
 			Columns: e.buildColumns(ctx, md),
 		},
 		Properties: &facets.Properties{
-			Fields: utils.TryParseMapToProto(map[string]interface{}{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"dataset": t.DatasetID,
 				"project": t.ProjectID,
 				"type":    string(md.Type),
@@ -112,8 +114,8 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 			Labels: md.Labels,
 		},
 		Timestamps: &common.Timestamp{
-			CreatedAt: timestamppb.New(md.CreationTime),
-			UpdatedAt: timestamppb.New(md.LastModifiedTime),
+			CreateTime: timestamppb.New(md.CreationTime),
+			UpdateTime: timestamppb.New(md.LastModifiedTime),
 		},
 	}
 }
@@ -145,7 +147,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		DataType:    string(field.Type),
 		IsNullable:  !(field.Required || field.Repeated),
 		Properties: &facets.Properties{
-			Fields: utils.TryParseMapToProto(map[string]interface{}{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"mode": e.getColumnMode(field),
 			}),
 		},

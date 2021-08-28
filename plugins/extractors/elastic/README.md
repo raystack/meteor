@@ -21,8 +21,8 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `elasticsearch.index1` |
-| `name` | `index1` |
+| `resource.urn` | `elasticsearch.index1` |
+| `resource.name` | `index1` |
 | `profile.total_rows` | `1` |
 | `schema` | [][Column](#column) |
 

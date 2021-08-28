@@ -19,8 +19,9 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `name` | `my-topic` |
-| `source` | `kafka` |
+| `resource.urn` | `my-topic` |
+| `resource.name` | `my-topic` |
+| `resource.service` | `kafka` |
 
 ## Contributing
 

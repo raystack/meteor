@@ -7,8 +7,9 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -69,10 +70,11 @@ func (e *Extractor) extractTables() (err error) {
 			return
 		}
 
-		e.out <- resources.Table{
-			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
-			Name: tableName,
-			Schema: &facets.Columns{
+		e.out <- assets.Table{
+			Resource: &common.Resource{
+				Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
+				Name: tableName,
+			}, Schema: &facets.Columns{
 				Columns: columns,
 			},
 		}

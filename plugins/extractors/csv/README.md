@@ -23,9 +23,9 @@ Passing directory in `path` will collect and extract metadata from all `.csv` fi
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `filename.csv` |
-| `name` | `filename.csv` |
-| `source` | `csv` |
+| `resource.urn` | `filename.csv` |
+| `resource.name` | `filename.csv` |
+| `resource.service` | `csv` |
 | `schema.columns` | [][Column](#column) |
 
 ### Column

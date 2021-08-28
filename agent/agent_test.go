@@ -7,7 +7,8 @@ import (
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
@@ -32,11 +33,15 @@ var validRecipe = recipe.Recipe{
 }
 
 var finalData = []interface{}{
-	resources.Table{
-		Urn: "foo-1-bar",
+	assets.Table{
+		Resource: &common.Resource{
+			Urn: "foo-1-bar",
+		},
 	},
-	resources.Table{
-		Urn: "foo-2-bar",
+	assets.Table{
+		Resource: &common.Resource{
+			Urn: "foo-2-bar",
+		},
 	},
 }
 
@@ -179,12 +184,16 @@ func newMockExtractor() plugins.Extractor {
 }
 
 func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	data := []resources.Table{
+	data := []assets.Table{
 		{
-			Urn: "foo-1",
+			Resource: &common.Resource{
+				Urn: "foo-1",
+			},
 		},
 		{
-			Urn: "foo-2",
+			Resource: &common.Resource{
+				Urn: "foo-2",
+			},
 		},
 	}
 
@@ -195,7 +204,7 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 	return nil
 }
 
-// This test processor will append resources.Table.Urn with "-bar"
+// This test processor will append assets.Table.Urn with "-bar"
 type mockProcessor struct{}
 
 func newMockProcessor() plugins.Processor {
@@ -204,12 +213,12 @@ func newMockProcessor() plugins.Processor {
 
 func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
 	for data := range in {
-		table, ok := data.(resources.Table)
+		table, ok := data.(assets.Table)
 		if !ok {
 			return errors.New("invalid data type")
 		}
 
-		table.Urn = table.Urn + "-bar"
+		table.Resource.Urn = table.Resource.Urn + "-bar"
 
 		out <- table
 	}
@@ -272,6 +281,10 @@ func newFailedExtractor() plugins.Extractor {
 }
 
 func (e *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	out <- resources.Table{Urn: "id-1"}
+	out <- assets.Table{
+		Resource: &common.Resource{
+			Urn: "id-1",
+		},
+	}
 	return errors.New("failed extractor")
 }

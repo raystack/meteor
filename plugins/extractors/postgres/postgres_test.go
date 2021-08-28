@@ -15,7 +15,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +99,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for val := range extractOut {
-			urns = append(urns, val.(*resources.Table).Urn)
+			urns = append(urns, val.(*assets.Table).Resource.Urn)
 
 		}
 		assert.Equal(t, []string{"test_db.article", "test_db.post"}, urns)

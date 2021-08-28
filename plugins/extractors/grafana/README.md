@@ -21,10 +21,10 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `grafana.HzK8qNW7z` |
-| `name` | `new-dashboard-copy` |
-| `source` | `grafana` |
-| `url` | `http://localhost:3000/d/HzK8qNW7z/new-dashboard-copy` |
+| `resource.urn` | `grafana.HzK8qNW7z` |
+| `resource.name` | `new-dashboard-copy` |
+| `resource.service` | `grafana` |
+| `resource.url` | `http://localhost:3000/d/HzK8qNW7z/new-dashboard-copy` |
 | `charts` | [][chart](#chart) |
 
 ### Chart

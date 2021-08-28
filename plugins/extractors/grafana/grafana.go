@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -61,28 +62,30 @@ func (e *Extractor) extract(out chan<- interface{}) (err error) {
 	return
 }
 
-func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) resources.Dashboard {
-	charts := make([]*resources.Chart, len(dashboard.Dashboard.Panels))
+func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) assets.Dashboard {
+	charts := make([]*assets.Chart, len(dashboard.Dashboard.Panels))
 	for i, panel := range dashboard.Dashboard.Panels {
 		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
 		charts[i] = &c
 	}
-	return resources.Dashboard{
-		Urn:         fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
-		Name:        dashboard.Meta.Slug,
-		Source:      "grafana",
+	return assets.Dashboard{
+		Resource: &common.Resource{
+			Urn:     fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
+			Name:    dashboard.Meta.Slug,
+			Service: "grafana",
+			Url:     dashboard.Meta.URL,
+		},
 		Description: dashboard.Dashboard.Description,
-		Url:         dashboard.Meta.URL,
 		Charts:      charts,
 	}
 }
 
-func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) resources.Chart {
+func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) assets.Chart {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL
 	}
-	return resources.Chart{
+	return assets.Chart{
 		Urn:             fmt.Sprintf("%s.%d", dashboardUID, panel.ID),
 		Name:            panel.Title,
 		Type:            panel.Type,

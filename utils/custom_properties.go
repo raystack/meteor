@@ -1,19 +1,19 @@
 package utils
 
 import (
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func GetCustomProperties(data interface{}) map[string]interface{} {
 	var customProps *facets.Properties
 	switch data := data.(type) {
-	case resources.Table:
+	case assets.Table:
 		customProps = data.Properties
-	case resources.Topic:
+	case assets.Topic:
 		customProps = data.Properties
-	case resources.Dashboard:
+	case assets.Dashboard:
 		customProps = data.Properties
 	default:
 		// skip process if data's type is not defined
@@ -26,7 +26,7 @@ func GetCustomProperties(data interface{}) map[string]interface{} {
 	}
 
 	// return custom fields as map
-	return parseToMap(customProps.Fields)
+	return parseToMap(customProps.Attributes)
 }
 
 func SetCustomProperties(data interface{}, customFields map[string]interface{}) (res interface{}, err error) {
@@ -36,17 +36,17 @@ func SetCustomProperties(data interface{}, customFields map[string]interface{}) 
 	}
 
 	switch data := data.(type) {
-	case resources.Table:
+	case assets.Table:
 		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Fields = protoStruct
+		data.Properties.Attributes = protoStruct
 		res = data
-	case resources.Topic:
+	case assets.Topic:
 		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Fields = protoStruct
+		data.Properties.Attributes = protoStruct
 		res = data
-	case resources.Dashboard:
+	case assets.Dashboard:
 		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Fields = protoStruct
+		data.Properties.Attributes = protoStruct
 		res = data
 	default:
 		res = data
@@ -58,7 +58,7 @@ func SetCustomProperties(data interface{}, customFields map[string]interface{}) 
 func createOrGetCustomFacet(facet *facets.Properties) *facets.Properties {
 	if facet == nil {
 		return &facets.Properties{
-			Fields: &structpb.Struct{},
+			Attributes: &structpb.Struct{},
 		}
 	}
 

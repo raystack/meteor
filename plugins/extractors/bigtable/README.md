@@ -23,9 +23,9 @@ You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as 
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `project_id.instance_name.table_name` |
-| `name` | `table_name` |
-| `source` | `bigtable` |
+| `resource.urn` | `project_id.instance_name.table_name` |
+| `resource.name` | `table_name` |
+| `resource.service` | `bigtable` |
 | `properties.fields` | [Fields](#Fields) |
 
 ### Fields

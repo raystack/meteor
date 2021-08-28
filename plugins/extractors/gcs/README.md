@@ -38,9 +38,9 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `project_id/bucket_name` |
-| `name` | `bucket_name` |
-| `source` | `googlecloudstorage` |
+| `resource.urn` | `project_id/bucket_name` |
+| `resource.name` | `bucket_name` |
+| `resource.service` | `googlecloudstorage` |
 | `location` | `ASIA` |
 | `storage_type` | `STANDARD` |
 | `labels` | []{`key`:`value`} |

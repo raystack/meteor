@@ -9,8 +9,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
@@ -65,7 +66,7 @@ func (e *Extractor) extract(filePaths []string, out chan<- interface{}) (err err
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (table resources.Table, err error) {
+func (e *Extractor) buildTable(filePath string) (table assets.Table, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -84,10 +85,12 @@ func (e *Extractor) buildTable(filePath string) (table resources.Table, err erro
 	}
 
 	fileName := stat.Name()
-	table = resources.Table{
-		Urn:    fileName,
-		Name:   fileName,
-		Source: "csv",
+	table = assets.Table{
+		Resource: &common.Resource{
+			Urn:     fileName,
+			Name:    fileName,
+			Service: "csv",
+		},
 		Schema: &facets.Columns{
 			Columns: e.buildColumns(content),
 		},
