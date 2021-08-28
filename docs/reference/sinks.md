@@ -28,9 +28,9 @@ sinks:
      host: https://columbus.com
      type: sample-columbus-type
      mapping:
-       new_fieldname: "ModelFieldName"
-       id: "Resource.Urn"
-       displayName: "Resource.Name"
+       new_fieldname: "json_field_name"
+       id: "resource.urn"
+       displayName: "resource.name"
 ```
 
 _**Notes**_
