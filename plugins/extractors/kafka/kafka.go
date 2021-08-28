@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	kafka "github.com/segmentio/kafka-go"
 
@@ -73,11 +74,13 @@ func (e *Extractor) extract() (err error) {
 }
 
 // Build topic metadata model using a topic name
-func (e *Extractor) buildTopic(topic_name string) resources.Topic {
-	return resources.Topic{
-		Urn:    topic_name,
-		Name:   topic_name,
-		Source: "kafka",
+func (e *Extractor) buildTopic(topic_name string) assets.Topic {
+	return assets.Topic{
+		Resource: &common.Resource{
+			Urn:     topic_name,
+			Name:    topic_name,
+			Service: "kafka",
+		},
 	}
 }
 

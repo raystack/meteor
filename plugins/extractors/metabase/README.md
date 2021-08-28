@@ -23,9 +23,9 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `metabase.dashboard_name` |
-| `name` | `dashboard_name` |
-| `source` | `metabase` |
+| `resource.urn` | `metabase.dashboard_name` |
+| `resource.name` | `dashboard_name` |
+| `resource.service` | `metabase` |
 | `description` | `table description` |
 | `charts` | [][Chart](#chart) |
 

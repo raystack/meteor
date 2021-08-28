@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
+	"strings"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/pkg/errors"
 )
 
 type httpClient interface {
@@ -25,9 +26,8 @@ type Config struct {
 }
 
 type Sink struct {
-	client           httpClient
-	cachedDataMapper func(interface{}) interface{}
-	config           Config
+	client httpClient
+	config Config
 }
 
 func New(c httpClient) plugins.Syncer {
@@ -41,56 +41,79 @@ func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-
 	}
 
 	for data := range in {
-		dataMapper := s.getDataMapper(data)
-		data = dataMapper(data)
+		data, err = s.mapData(data)
+		if err != nil {
+			return errors.Wrap(err, "error mapping data")
+		}
 		if err = s.send(data); err != nil {
-			return
+			return errors.Wrap(err, "error sending data")
 		}
 	}
 
 	return
 }
 
-func (s *Sink) getDataMapper(data interface{}) func(interface{}) interface{} {
-	if s.cachedDataMapper == nil {
-		s.cachedDataMapper = s.buildDataMapper(data)
-	}
-
-	return s.cachedDataMapper
-}
-
-func (s *Sink) buildDataMapper(data interface{}) func(interface{}) interface{} {
+func (s *Sink) mapData(data interface{}) (interface{}, error) {
+	// skip if mapping is not defined
 	if s.config.Mapping == nil {
-		return s.defaultMapper
+		return data, nil
 	}
 
-	// build new type
-	value := reflect.ValueOf(data)
-	newType := s.buildNewType(value, s.config.Mapping)
-
-	return func(d interface{}) interface{} {
-		v := reflect.ValueOf(d)
-		newValue := v.Convert(newType)
-		return newValue.Interface()
+	// parse data to map for easier mapping
+	result, err := s.parseToMap(data)
+	if err != nil {
+		return data, err
 	}
+
+	// map fields
+	for newField, currField := range s.config.Mapping {
+		val, err := s.getValueFromField(result, currField)
+		if err != nil {
+			return result, errors.Wrap(err, "error getting value from field")
+		}
+
+		result[newField] = val
+	}
+
+	return result, nil
 }
 
-func (s *Sink) buildNewType(value reflect.Value, mapping map[string]string) reflect.Type {
-	t := value.Type()
-	sf := make([]reflect.StructField, 0)
-	for i := 0; i < t.NumField(); i++ {
-		sf = append(sf, t.Field(i))
+func (s *Sink) parseToMap(data interface{}) (result map[string]interface{}, err error) {
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(jsonBytes, &result)
+	if err != nil {
+		return
+	}
 
-		// rename json tag if field is included in mapping
-		if jsonField, ok := mapping[t.Field(i).Name]; ok {
-			sf[i].Tag = reflect.StructTag(fmt.Sprintf(`json:"%s"`, jsonField))
+	return result, nil
+}
+
+func (s *Sink) getValueFromField(data map[string]interface{}, fieldName string) (interface{}, error) {
+	var value interface{}
+	nestedFields := strings.Split(fieldName, ".") // "resource.urn" -> ["resource", "urn"]
+	totalNestedLevel := len(nestedFields)         // total nested level
+
+	temp := data
+	for i := 0; i < totalNestedLevel; i++ {
+		var ok bool
+		field := nestedFields[i]
+		value, ok = temp[field]
+		if !ok {
+			return value, fmt.Errorf("could not find field \"%s\"", field)
+		}
+		if i < totalNestedLevel-1 {
+			temp, ok = value.(map[string]interface{})
+			if !ok {
+				return value, fmt.Errorf("field \"%s\" is not a map", field)
+			}
 		}
 	}
 
-	return reflect.StructOf(sf)
+	return value, nil
 }
-
-func (s *Sink) defaultMapper(data interface{}) interface{} { return data }
 
 func (s *Sink) send(data interface{}) (err error) {
 	payload, err := s.buildPayload(data)

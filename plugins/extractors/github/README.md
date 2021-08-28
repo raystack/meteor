@@ -21,11 +21,11 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `https://github.com/ravisuhag` |
+| `resource.urn` | `https://github.com/ravisuhag` |
 | `email` | `suhag.ravi@gmail.com` |
 | `username` | `ravisuhag` |
 | `full_name` | `Ravi Suhag` |
-| `is_active` | `true` |
+| `status` | `active` |
 
 ## Contributing
 

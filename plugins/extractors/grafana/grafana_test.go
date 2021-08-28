@@ -14,7 +14,8 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,14 +53,16 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
 		extractor := grafana.New(testutils.Logger)
 
-		expectedData := []resources.Dashboard{
+		expectedData := []assets.Dashboard{
 			{
-				Urn:         "grafana.HzK8qNW7z",
-				Name:        "new-dashboard-copy",
-				Source:      "grafana",
+				Resource: &common.Resource{
+					Urn:     "grafana.HzK8qNW7z",
+					Name:    "new-dashboard-copy",
+					Service: "grafana",
+					Url:     fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+				},
 				Description: "",
-				Url:         fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
-				Charts: []*meta.Chart{
+				Charts: []*assets.Chart{
 					{
 						Urn:             "HzK8qNW7z.2",
 						Name:            "Panel Title",
@@ -75,12 +78,14 @@ func TestExtract(t *testing.T) {
 				},
 			},
 			{
-				Urn:         "grafana.5WsKOvW7z",
-				Name:        "test-dashboard-updated",
-				Source:      "grafana",
+				Resource: &common.Resource{
+					Urn:     "grafana.5WsKOvW7z",
+					Name:    "test-dashboard-updated",
+					Service: "grafana",
+					Url:     fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
+				},
 				Description: "this is description for testing",
-				Url:         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
-				Charts: []*meta.Chart{
+				Charts: []*assets.Chart{
 					{
 						Urn:             "5WsKOvW7z.4",
 						Name:            "Panel Random",
@@ -120,9 +125,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var actualData []resources.Dashboard
+		var actualData []assets.Dashboard
 		for d := range out {
-			dashboard, ok := d.(resources.Dashboard)
+			dashboard, ok := d.(assets.Dashboard)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}

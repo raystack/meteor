@@ -10,8 +10,9 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/utils"
 )
 
@@ -126,9 +127,11 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 	}
 
 	// push table to channel
-	e.out <- resources.Table{
-		Urn:  fmt.Sprintf("%s.%s", database, tableName),
-		Name: tableName,
+	e.out <- assets.Table{
+		Resource: &common.Resource{
+			Urn:  fmt.Sprintf("%s.%s", database, tableName),
+			Name: tableName,
+		},
 		Schema: &facets.Columns{
 			Columns: columns,
 		},

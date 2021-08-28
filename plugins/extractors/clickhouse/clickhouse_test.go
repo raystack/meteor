@@ -16,8 +16,9 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/clickhouse"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -109,9 +110,9 @@ func TestExtract(t *testing.T) {
 			assert.Nil(t, err)
 		}()
 
-		var results []resources.Table
+		var results []assets.Table
 		for d := range extractOut {
-			table, ok := d.(resources.Table)
+			table, ok := d.(assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -121,11 +122,13 @@ func TestExtract(t *testing.T) {
 	})
 }
 
-func getExpected() []resources.Table {
-	return []resources.Table{
+func getExpected() []assets.Table {
+	return []assets.Table{
 		{
-			Urn:  "mockdata_meteor_metadata_test.applicant",
-			Name: "applicant",
+			Resource: &common.Resource{
+				Urn:  "mockdata_meteor_metadata_test.applicant",
+				Name: "applicant",
+			},
 			Schema: &facets.Columns{
 				Columns: []*facets.Column{
 					{
@@ -147,8 +150,10 @@ func getExpected() []resources.Table {
 			},
 		},
 		{
-			Urn:  "mockdata_meteor_metadata_test.jobs",
-			Name: "jobs",
+			Resource: &common.Resource{
+				Urn:  "mockdata_meteor_metadata_test.jobs",
+				Name: "jobs",
+			},
 			Schema: &facets.Columns{
 				Columns: []*facets.Column{
 					{

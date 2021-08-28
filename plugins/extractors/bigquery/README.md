@@ -40,9 +40,9 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `project_id.dataset_name.table_name` |
-| `name` | `table_name` |
-| `source` | `bigquery` |
+| `resource.urn` | `project_id.dataset_name.table_name` |
+| `resource.name` | `table_name` |
+| `resource.service` | `bigquery` |
 | `description` | `table description` |
 | `profile.total_rows` | `2100` |
 | `schema` | [][Column](#column) |

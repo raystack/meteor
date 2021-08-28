@@ -23,9 +23,9 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `my_database.my_table` |
-| `name` | `my_table` |
-| `source` | `mysql` |
+| `resource.urn` | `my_database.my_table` |
+| `resource.name` | `my_table` |
+| `resource.service` | `mysql` |
 | `description` | `table description` |
 | `profile.total_rows` | `2100` |
 | `schema` | [][Column](#column) |

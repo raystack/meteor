@@ -38,13 +38,13 @@ To check their implementation please refer [here](../../proto/odpf/meta/README.m
 
 ```golang
 import(
-"github.com/odpf/meteor/proto/odpf/entities"
-"github.com/odpf/meteor/proto/odpf/entities/facets"
+"github.com/odpf/meteor/proto/odpf/assets"
+"github.com/odpf/meteor/proto/odpf/assets/facets"
 )
 
 func main(){
-    // result is a var of data type of resources.Table one of our metadata model
-    result := &resources.Table{
+    // result is a var of data type of assets.Table one of our metadata model
+    result := &assets.Table{
         // assigining value to metadata model
         Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
         Name: tableName,

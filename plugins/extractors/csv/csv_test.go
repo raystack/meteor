@@ -10,8 +10,9 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,9 +40,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []resources.Table
+		var results []assets.Table
 		for d := range out {
-			table, ok := d.(resources.Table)
+			table, ok := d.(assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -49,11 +50,13 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []resources.Table{
+		expected := []assets.Table{
 			{
-				Urn:    "test.csv",
-				Name:   "test.csv",
-				Source: "csv",
+				Resource: &common.Resource{
+					Urn:     "test.csv",
+					Name:    "test.csv",
+					Service: "csv",
+				},
 				Schema: &facets.Columns{
 					Columns: []*facets.Column{
 						{Name: "name"},
@@ -80,9 +83,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []resources.Table
+		var results []assets.Table
 		for d := range out {
-			table, ok := d.(resources.Table)
+			table, ok := d.(assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -90,11 +93,13 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []resources.Table{
+		expected := []assets.Table{
 			{
-				Urn:    "test-2.csv",
-				Name:   "test-2.csv",
-				Source: "csv",
+				Resource: &common.Resource{
+					Urn:     "test-2.csv",
+					Name:    "test-2.csv",
+					Service: "csv",
+				},
 				Schema: &facets.Columns{
 					Columns: []*facets.Column{
 						{Name: "order"},
@@ -104,9 +109,11 @@ func TestExtract(t *testing.T) {
 				},
 			},
 			{
-				Urn:    "test.csv",
-				Name:   "test.csv",
-				Source: "csv",
+				Resource: &common.Resource{
+					Urn:     "test.csv",
+					Name:    "test.csv",
+					Service: "csv",
+				},
 				Schema: &facets.Columns{
 					Columns: []*facets.Column{
 						{Name: "name"},

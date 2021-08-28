@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 
 	"cloud.google.com/go/bigtable"
@@ -69,7 +70,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []resources.Table, err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []assets.Table, err error) {
 	for _, instance := range instances {
 		adminClient, err := e.createAdminClient(ctx, instance, projectID)
 		if err != nil {
@@ -85,12 +86,14 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				results = append(results, resources.Table{
-					Urn:    fmt.Sprintf("%s.%s.%s", projectID, instance, table),
-					Name:   table,
-					Source: "bigtable",
+				results = append(results, assets.Table{
+					Resource: &common.Resource{
+						Urn:     fmt.Sprintf("%s.%s.%s", projectID, instance, table),
+						Name:    table,
+						Service: "bigtable",
+					},
 					Properties: &facets.Properties{
-						Fields: utils.TryParseMapToProto(map[string]interface{}{
+						Attributes: utils.TryParseMapToProto(map[string]interface{}{
 							"column_family": string(familyInfoBytes),
 						}),
 					},

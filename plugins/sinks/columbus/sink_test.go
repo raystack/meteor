@@ -3,7 +3,6 @@ package columbus_test
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,8 +11,9 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,16 +24,18 @@ var (
 func TestSink(t *testing.T) {
 	// sample metadata
 	var (
-		topic = resources.Topic{
-			Urn:  "my-topic-urn",
-			Name: "my-topic",
+		topic = assets.Topic{
+			Resource: &common.Resource{
+				Urn:  "my-topic-urn",
+				Name: "my-topic",
+			},
 			Ownership: &facets.Ownership{
 				Owners: []*facets.Owner{
 					{Name: "admin-A"},
 				},
 			},
 		}
-		requestPayload = `[{"urn":"my-topic-urn","name":"my-topic","ownership":{"owners":[{"name":"admin-A"}]}}]`
+		requestPayload = `[{"resource":{"urn":"my-topic-urn","name":"my-topic"},"ownership":{"owners":[{"name":"admin-A"}]}}]`
 		columbusType   = "my-type"
 		url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
 	)
@@ -85,7 +87,7 @@ func TestSink(t *testing.T) {
 
 	t.Run("should return error if columbus host returns error", func(t *testing.T) {
 		columbusError := `{"reason":"no such type: \"my-type\""}`
-		expectedErr := errors.New("columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}")
+		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}"
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
@@ -102,7 +104,7 @@ func TestSink(t *testing.T) {
 				"type": "my-type",
 			}, in)
 
-			assert.Equal(t, expectedErr, err)
+			assert.Equal(t, errMessage, err.Error())
 			client.Assert(t)
 
 			wg.Done()
@@ -139,17 +141,19 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should map fields using mapper from config", func(t *testing.T) {
-		metadata := resources.Topic{
-			Urn:         "test-urn",
-			Name:        "test-name",
-			Description: "test-description",
+		metadata := assets.Topic{
+			Resource: &common.Resource{
+				Urn:  "test-urn",
+				Name: "test-name",
+			},
+			Description: "test-desc",
 		}
 		mapping := map[string]string{
-			"Urn":         "fieldA",
-			"Name":        "fieldB",
-			"Description": "fieldC",
+			"fieldA": "resource.urn",
+			"fieldB": "resource.name",
+			"fieldC": "description",
 		}
-		requestPayload := `[{"fieldA":"test-urn","fieldB":"test-name","fieldC":"test-description"}]`
+		requestPayload := `[{"description":"test-desc","fieldA":"test-urn","fieldB":"test-name","fieldC":"test-desc","resource":{"name":"test-name","urn":"test-urn"}}]`
 
 		client := newMockHttpClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")

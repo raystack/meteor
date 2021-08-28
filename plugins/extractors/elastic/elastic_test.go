@@ -18,8 +18,9 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/elastic"
 	"github.com/odpf/meteor/plugins/testutils"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -122,9 +123,9 @@ func TestExtract(t *testing.T) {
 
 			assert.Nil(t, err)
 		}()
-		var results []resources.Table
+		var results []assets.Table
 		for d := range extractOut {
-			table, ok := d.(resources.Table)
+			table, ok := d.(assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -194,10 +195,13 @@ func newExtractor() *elastic.Extractor {
 	return elastic.New(testutils.Logger)
 }
 
-func getExpectedVal() []resources.Table {
-	return []resources.Table{
+func getExpectedVal() []assets.Table {
+	return []assets.Table{
 		{
-			Urn: "elasticsearch.index1",
+			Resource: &common.Resource{
+				Urn:  "elasticsearch.index1",
+				Name: "index1",
+			},
 			Schema: &facets.Columns{
 				Columns: []*facets.Column{
 					{
@@ -210,13 +214,15 @@ func getExpectedVal() []resources.Table {
 					},
 				},
 			},
-			Name: "index1",
-			Profile: &resources.TableProfile{
+			Profile: &assets.TableProfile{
 				TotalRows: 1,
 			},
 		},
 		{
-			Urn: "elastic.index2",
+			Resource: &common.Resource{
+				Urn:  "elastic.index2",
+				Name: "index2",
+			},
 			Schema: &facets.Columns{
 				Columns: []*facets.Column{
 					{
@@ -229,8 +235,7 @@ func getExpectedVal() []resources.Table {
 					},
 				},
 			},
-			Name: "index2",
-			Profile: &resources.TableProfile{
+			Profile: &assets.TableProfile{
 				TotalRows: 1,
 			},
 		},

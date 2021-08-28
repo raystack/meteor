@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/odpf/meteor/proto/odpf/entities/common"
-	"github.com/odpf/meteor/proto/odpf/entities/facets"
-	"github.com/odpf/meteor/proto/odpf/entities/resources"
+	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -70,7 +70,7 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 			return err
 		}
 
-		var blobs []*resources.Blob
+		var blobs []*assets.Blob
 		if config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, config.ProjectID)
 			if err != nil {
@@ -84,7 +84,7 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*resources.Blob, err error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*assets.Blob, err error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
 	object, err := it.Next()
@@ -99,15 +99,17 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 	return
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*resources.Blob) (bucket resources.Bucket) {
-	bucket = resources.Bucket{
-		Urn:         fmt.Sprintf("%s/%s", projectID, b.Name),
-		Name:        b.Name,
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assets.Blob) (bucket assets.Bucket) {
+	bucket = assets.Bucket{
+		Resource: &common.Resource{
+			Urn:     fmt.Sprintf("%s/%s", projectID, b.Name),
+			Name:    b.Name,
+			Service: metadataSource,
+		},
 		Location:    b.Location,
 		StorageType: b.StorageClass,
-		Source:      metadataSource,
 		Timestamps: &common.Timestamp{
-			CreatedAt: timestamppb.New(b.Created),
+			CreateTime: timestamppb.New(b.Created),
 		},
 		Properties: &facets.Properties{
 			Labels: b.Labels,
@@ -120,21 +122,21 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	return
 }
 
-func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *resources.Blob {
-	return &resources.Blob{
-		Urn:       fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
-		Name:      blob.Name,
-		Size:      blob.Size,
-		DeletedAt: timestamppb.New(blob.Deleted),
-		ExpiredAt: timestamppb.New(blob.RetentionExpirationTime),
+func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *assets.Blob {
+	return &assets.Blob{
+		Urn:        fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
+		Name:       blob.Name,
+		Size:       blob.Size,
+		DeleteTime: timestamppb.New(blob.Deleted),
+		ExpireTime: timestamppb.New(blob.RetentionExpirationTime),
 		Ownership: &facets.Ownership{
 			Owners: []*facets.Owner{
 				{Name: blob.Owner},
 			},
 		},
 		Timestamps: &common.Timestamp{
-			CreatedAt: timestamppb.New(blob.Created),
-			UpdatedAt: timestamppb.New(blob.Updated),
+			CreateTime: timestamppb.New(blob.Created),
+			UpdateTime: timestamppb.New(blob.Updated),
 		},
 	}
 }

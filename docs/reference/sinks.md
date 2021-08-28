@@ -28,12 +28,11 @@ sinks:
      host: https://columbus.com
      type: sample-columbus-type
      mapping:
-       ModelFieldName: "new_fieldname"
-       Urn: "id"
-       Name: "displayName"
+       new_fieldname: "json_field_name"
+       id: "resource.urn"
+       displayName: "resource.name"
 ```
 
 _**Notes**_
 
-Columbus' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Columbus.
-
+Columbus' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Columbus. Supports getting value from nested fields.
