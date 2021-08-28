@@ -23,6 +23,14 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
 }
 
+func (f *ExtractorFactory) List() (names [][]string) {
+
+	for name := range f.fnStore {
+		names = append(names, []string{name, "extractor"})
+	}
+	return
+}
+
 func (f *ExtractorFactory) Register(name string, extractorFn func() plugins.Extractor) (err error) {
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate extractor: %s", name)
@@ -43,6 +51,14 @@ func (f *ProcessorFactory) Get(name string) (plugins.Processor, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: name}
 }
 
+func (f *ProcessorFactory) List() (names [][]string) {
+
+	for name := range f.fnStore {
+		names = append(names, []string{name, "processor"})
+	}
+	return
+}
+
 func (f *ProcessorFactory) Register(name string, fn func() plugins.Processor) (err error) {
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate processor: %s", name)
@@ -61,6 +77,14 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 		return fn(), nil
 	}
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
+}
+
+func (f *SinkFactory) List() (names [][]string) {
+
+	for name := range f.fnStore {
+		names = append(names, []string{name, "sink"})
+	}
+	return
 }
 
 func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error) {

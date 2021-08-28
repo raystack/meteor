@@ -17,6 +17,8 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 	cmd.AddCommand(RunCmd(lg, mt))
 	cmd.AddCommand(GenCmd(lg))
+	cmd.AddCommand(ListCmd(lg))
+	cmd.AddCommand(LintCmd(lg))
 
 	return cmd
 }
