@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
@@ -10,10 +11,31 @@ import (
 func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 	var cmd = &cobra.Command{
-		Use:   "meteor",
-		Short: "Metadata collection tool",
-		Long:  "Meteor is a plugin driven agent for collecting metadata from a variety of data stores and sink to third party APIs and catalog services.",
+		Use:           "meteor <command> <subcommand> [flags]",
+		Short:         "Metadata CLI",
+		Long:          heredoc.Doc(`Metadata collection tool.`),
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		Example: heredoc.Doc(`
+			$ meteor list extractors
+			$ meteor run recipe.yaml
+			$ meteor gen recipe --extractor=date
+		`),
+		Annotations: map[string]string{
+			"IsCore": "true",
+			"help:feedback": heredoc.Doc(`
+				Open an issue here https://github.com/odpf/meteor/issues
+			`),
+		},
 	}
+
+	cmd.PersistentFlags().Bool("help", false, "Show help for command")
+
+	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		RootHelpFunc(cmd, args)
+	})
+	cmd.SetUsageFunc(RootUsageFunc)
+	cmd.SetFlagErrorFunc(RootFlagErrorFunc)
 
 	cmd.AddCommand(RunCmd(lg, mt))
 	cmd.AddCommand(GenCmd(lg))
