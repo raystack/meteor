@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/odpf/meteor/cmd"
 	"github.com/odpf/meteor/config"
@@ -13,6 +14,11 @@ import (
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
 	"github.com/odpf/salt/log"
+)
+
+const (
+	exitOK    = 0
+	exitError = 1
 )
 
 func main() {
@@ -33,7 +39,7 @@ func main() {
 		client, err := metrics.NewStatsdClient(cfg.StatsdHost)
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err.Error())
-			os.Exit(1)
+			os.Exit(exitError)
 		}
 		monitor = metrics.NewStatsdMonitor(client, cfg.StatsdPrefix)
 	}
@@ -41,7 +47,15 @@ func main() {
 	command := cmd.New(lg, monitor)
 
 	if err := command.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		if strings.HasPrefix(err.Error(), "unknown command ") {
+			if !strings.HasSuffix(err.Error(), "\n") {
+				fmt.Println()
+			}
+			fmt.Println(command.UsageString())
+			os.Exit(exitOK)
+		} else {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(exitError)
+		}
 	}
 }

@@ -12,6 +12,9 @@ func GenCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gen",
 		Short: "A collection of several useful generators.",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 	}
 
 	cmd.AddCommand(ExtCmd())

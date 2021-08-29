@@ -16,6 +16,9 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		Example: "meteor run recipe.yaml",
 		Short:   "Run meteor for provided recipes.",
 		Args:    cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt)
