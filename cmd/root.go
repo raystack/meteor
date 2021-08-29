@@ -22,7 +22,7 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			$ meteor gen recipe --extractor=date
 		`),
 		Annotations: map[string]string{
-			"IsCore": "true",
+			"group:core": "true",
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/meteor/issues
 			`),

@@ -13,7 +13,7 @@ func GenCmd(lg log.Logger) *cobra.Command {
 		Use:   "gen",
 		Short: "A collection of several useful generators.",
 		Annotations: map[string]string{
-			"IsCore": "true",
+			"group:core": "true",
 		},
 	}
 

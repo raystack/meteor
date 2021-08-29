@@ -17,7 +17,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		Short:   "Run meteor for provided recipes.",
 		Args:    cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			"IsCore": "true",
+			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
