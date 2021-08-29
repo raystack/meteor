@@ -17,6 +17,9 @@ func LintCmd(lg log.Logger) *cobra.Command {
 		Args:    cobra.ExactValidArgs(1),
 		Example: "meteor lint recipe.yaml",
 		Short:   "Validate a receipe",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Validating recipe...")
 		},
