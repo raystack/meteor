@@ -107,9 +107,10 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		},
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"dataset": t.DatasetID,
-				"project": t.ProjectID,
-				"type":    string(md.Type),
+				"dataset":         t.DatasetID,
+				"project":         t.ProjectID,
+				"type":            string(md.Type),
+				"partition_field": md.TimePartitioning.Field,
 			}),
 			Labels: md.Labels,
 		},
