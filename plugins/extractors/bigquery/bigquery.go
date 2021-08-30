@@ -96,6 +96,11 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 
 // Build the bigquery table metadata
 func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) assets.Table {
+	var partitionField string
+	if md.TimePartitioning != nil {
+		partitionField = md.TimePartitioning.Field
+	}
+
 	return assets.Table{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
@@ -107,9 +112,10 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		},
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"dataset": t.DatasetID,
-				"project": t.ProjectID,
-				"type":    string(md.Type),
+				"dataset":         t.DatasetID,
+				"project":         t.ProjectID,
+				"type":            string(md.Type),
+				"partition_field": partitionField,
 			}),
 			Labels: md.Labels,
 		},
