@@ -16,8 +16,22 @@ const (
 	MaxDates = 3
 )
 
+var (
+	configInfo = ``
+	inputInfo  = ``
+	outputInfo = ``
+)
+
 type Extractor struct {
 	logger log.Logger
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {

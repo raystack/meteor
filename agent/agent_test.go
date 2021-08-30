@@ -183,6 +183,14 @@ func newMockExtractor() plugins.Extractor {
 	return &mockExtractor{}
 }
 
+func (t *mockExtractor) GetDescription() string {
+	return ""
+}
+
+func (t *mockExtractor) GetSampleConfig() string {
+	return ""
+}
+
 func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
 	data := []assets.Table{
 		{
@@ -278,6 +286,14 @@ type failedExtractor struct{}
 
 func newFailedExtractor() plugins.Extractor {
 	return &failedExtractor{}
+}
+
+func (e *failedExtractor) GetDescription() string {
+	return ""
+}
+
+func (e *failedExtractor) GetSampleConfig() string {
+	return ""
 }
 
 func (e *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {

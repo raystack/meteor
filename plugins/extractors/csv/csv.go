@@ -22,6 +22,28 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _____________________________________________________________________________________
+| Key             | Example             | Description                    |            |
+|_________________|_____________________|________________________________|____________|
+| "path"          | "./folder/file.csv" | Path to a file or a directory  | *required* |
+|_________________|_____________________|________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _____________________________________
+|Field               |Sample Value    |
+|____________________|________________|
+|"resource.urn"      |"filename.csv"  |
+|"resource.name"     |"filename.csv"  |
+|"resource.service"  |"csv"           |
+|"schema.columns"    |[]Column        |
+|____________________|________________|`
+)
+
 type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }
@@ -34,6 +56,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

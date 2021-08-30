@@ -13,6 +13,30 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _________________________________________________________________________________
+| Key      | Example                 | Description                   |            |
+|__________|_________________________|_______________________________|____________|
+|"base_url"| "http://localhost:3000" | URL of the Grafana server     | *required* |
+|"api_key" | "Bearer qweruqwryqwLKJ" | API key to access Grafana API | *required* |
+|__________|_________________________|_______________________________|____________|
+`
+	outputInfo = `
+Output:
+ ___________________________________________________________________________
+|Field              |Sample Value                                           |
+|___________________|_______________________________________________________|
+|"resource.urn"     |"grafana.HzK8qNW7z"                                    |
+|"resource.name"    |"new-dashboard-copy"                                   |
+|"resource.service" |"grafana"                                              |
+|"resource.url"     |"http://localhost:3000/d/HzK8qNW7z/new-dashboard-copy" |
+|"charts"           |[]chart     											|
+|___________________|_______________________________________________________|`
+)
+
 type Config struct {
 	BaseURL string `mapstructure:"base_url" validate:"required"`
 	APIKey  string `mapstructure:"api_key" validate:"required"`
@@ -29,6 +53,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

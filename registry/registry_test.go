@@ -16,6 +16,14 @@ func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface
 	return nil
 }
 
+func (e *mockExtractor) GetDescription() string {
+	return ""
+}
+
+func (e *mockExtractor) GetSampleConfig() string {
+	return ""
+}
+
 func newMockExtractor() plugins.Extractor {
 	return new(mockExtractor)
 }

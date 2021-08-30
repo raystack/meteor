@@ -17,6 +17,32 @@ import (
 
 var db *sql.DB
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ __________________________________________________________________________________________________
+| Key             | Example          | Description                                    |            |
+|_________________|__________________|________________________________________________|____________|
+| "host"          | "localhost:9000" | The Host at which server is running            | *required* |
+| "user_id"       | "admin"          | User ID to access the clickhouse server        | *required* |
+| "password"      | "1234"           | Password for the clickhouse Server             | *required* |
+|_________________|__________________|________________________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _____________________________________________
+|Field               |Sample Value            |
+|____________________|________________________|
+|"resource.urn"      |"my_database.my_table"  |
+|"resource.name"     |"my_table"              |
+|"resource.service"  |"clickhouse"            |
+|"description"       |"table description"     |
+|"profile.total_rows"|"2100"                  |
+|"schema"            |[]Column     			  |
+|____________________|________________________|`
+)
+
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
@@ -33,6 +59,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

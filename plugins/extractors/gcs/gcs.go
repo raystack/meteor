@@ -22,6 +22,34 @@ const (
 	metadataSource = "googlecloudstorage"
 )
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+________________________________________________________________________________________________________________
+| Key               | Example                             | Description                            |            |
+|___________________|_____________________________________|________________________________________|____________|
+| "project_id"      | "my-project"                        | BigQuery Project ID                    | *required* |
+| "credentials_json"| "{'private_key':., 'private_id':.}" | Service Account in JSON string         | *optional* |
+| "extract_blob"    | "true"                              | Extract blob metadata inside a bucket  | *optional* |
+|___________________|_____________________________________|________________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _______________________________________________________
+|Field                         |Sample Value            |
+|______________________________|________________________|
+|"resource.urn"                |"project_id/bucket_name"|
+|"resource.name"               |"my_table"              |
+|"resource.service"            |"googlecloudstorage"    |
+|"location"                    |"ASIA"                  |
+|"storage_type"                |"STANDARD"              |
+|"timestamp.created_at.seconds"|"1551082913"            |
+|"timestamp.created_at.nanos"  |"1551082913"            |
+|"labels"                      |[]{key:value}           |
+|______________________________|________________________|`
+)
+
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
@@ -39,6 +67,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

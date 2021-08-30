@@ -16,12 +16,36 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var defaultCollections = []string{
-	"system.users",
-	"system.version",
-	"system.sessions",
-	"startup_log",
-}
+var (
+	defaultCollections = []string{
+		"system.users",
+		"system.version",
+		"system.sessions",
+		"startup_log",
+	}
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _________________________________________________________________________________________
+| Key             | Example           | Description                          |            |
+|_________________|___________________|______________________________________|____________|
+| "host"          | "localhost:27017" | The Host at which server is running  | *required* |
+| "user_id"       | "admin"           | User ID to access the mongo server   | *required* |
+| "password"      | "1234"            | Password for the mongo Server        | *required* |
+|_________________|___________________|______________________________________|____________|
+`
+	outputInfo = `
+Output:
+ ________________________________________________
+|Field               |Sample Value               |
+|____________________|___________________________|
+|"resource.urn"      |"my_database.my_collection"|
+|"resource.name"     |"my_collection"            |
+|"resource.service"  |"mongodb"                  |
+|"description"       |"table description"        |
+|"profile.total_rows"|"2100"                     |
+|____________________|___________________________|`
+)
 
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -43,6 +67,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

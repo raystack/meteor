@@ -22,6 +22,31 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _____________________________________________________________________________________________
+| Key             | Example          | Description                               |            |
+|_________________|__________________|___________________________________________|____________|
+| "host"          | "localhost:9200" | The Host at which server is running       | *required* |
+| "user_id"       | "admin"          | User ID to access the elastic server      | *optional* |
+| "password"      | "1234"           | Password for the elastic Server           | *optional* |
+|_________________|__________________|___________________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _____________________________________________
+|Field               |Sample Value            |
+|____________________|________________________|
+|"resource.urn"      |"elasticsearch.index1"  |
+|"resource.name"     |"index1"                |
+|"resource.service"  |"elastic"               |
+|"profile.total_rows"|"1"                     |
+|"schema"            |[]Column                |
+|____________________|________________________|`
+)
+
 type Extractor struct {
 	out    chan<- interface{}
 	logger log.Logger
@@ -31,6 +56,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

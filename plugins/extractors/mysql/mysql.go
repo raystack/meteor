@@ -14,12 +14,37 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-var defaultDBList = []string{
-	"information_schema",
-	"mysql",
-	"performance_schema",
-	"sys",
-}
+var (
+	defaultDBList = []string{
+		"information_schema",
+		"mysql",
+		"performance_schema",
+		"sys",
+	}
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _______________________________________________________________________________________
+| Key             | Example          | Description                         |            |
+|_________________|__________________|_____________________________________|____________|
+| "host"          | "localhost:3306" | The Host at which server is running | *required* |
+| "user_id"       | "admin"          | User ID to access the mysql server  | *required* |
+| "password"      | "1234"           | Password for the mysql Server       | *required* |
+|_________________|__________________|_____________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _____________________________________________
+|Field               |Sample Value            |
+|____________________|________________________|
+|"resource.urn"      |"my_database.my_table"  |
+|"resource.name"     |"my_table"              |
+|"resource.service"  |"mysql"              |
+|"description"       |"table description"     |
+|"profile.total_rows"|"2100"                  |
+|"schema"            |[][Column](#column)     |
+|____________________|________________________|`
+)
 
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -39,6 +64,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

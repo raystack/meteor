@@ -13,6 +13,27 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ ________________________________________________________________
+| Ke       | Example          | Description         |            |
+|__________|__________________|_____________________|____________|
+| "broker" | "localhost:9092" | Kafka broker's host | *required* |
+|__________|__________________|_____________________|____________|
+`
+	outputInfo = `
+Output:
+ __________________________________
+|Field               |Sample Value |
+|____________________|_____________|
+|"resource.urn"      |"my-topic"   |
+|"resource.name"     |"my-topic"   |
+|"resource.service"  |"kafka"      |
+|____________________|_____________|`
+)
+
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 }
@@ -30,6 +51,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

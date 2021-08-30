@@ -28,10 +28,45 @@ type Config struct {
 	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
 }
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _______________________________________________________________________________________________________________________
+| Key               | Example                             | Description                                    |            |
+|___________________|_____________________________________|________________________________________________|____________|
+| "project_id"      | "my-project"                        | BigQuery Project ID                            | *required* |
+| "credentials_json"| "{'private_key':., 'private_id':.}" | Service Account in JSON string                 | *optional* |
+| "table_pattern"   | "gofood.fact_"                      | Regex pattern, filters bigquery table to scan  | *optional* |
+| "profile_column"  | "true"                              | true to have profile the column value          | *optional* |
+|___________________|_____________________________________|________________________________________________|____________|
+`
+	outputInfo = `
+Output:
+ ___________________________________________________________
+|Field               |Sample Value                          |
+|____________________|______________________________________|
+|"resource.urn"      |"project_id.dataset_name.table_name"  |
+|"resource.name"     |"table_name"              			|
+|"resource.service"  |"bigquery"              				|
+|"description"       |"table description"     				|
+|"profile.total_rows"|"2100"                  				|
+|"schema"            |[]Column             				|
+|____________________|______________________________________|`
+)
+
 type Extractor struct {
 	logger log.Logger
 	client *bigquery.Client
 	config Config
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
@@ -172,6 +207,9 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 
 	// build and run query
 	query, err := e.buildColumnProfileQuery(col, tm)
+	if err != nil {
+		return nil, err
+	}
 	it, err := query.Read(ctx)
 	if err != nil {
 		return nil, err

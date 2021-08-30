@@ -22,6 +22,28 @@ var (
 	client = &http.Client{
 		Timeout: 4 * time.Second,
 	}
+	configInfo = ``
+	inputInfo  = `
+Input:
+ _________________________________________________________________________________________
+| Key             | Example          | Description                           |            |
+|_________________|__________________|_______________________________________|____________|
+| "host"          | "localhost:4002" | The Host at which server is running   | *required* |
+| "user_id"       | "admin"          | User ID to access the metabase server | *required* |
+| "password"      | "1234"           | Password for the metabase Server      | *required* |
+|_________________|__________________|_______________________________________|____________|
+`
+	outputInfo = `
+Output:
+ ________________________________________________
+|Field               |Sample Value               |
+|____________________|___________________________|
+|"resource.urn"      |"metabase.dashboard_name"  |
+|"resource.name"     |"dashboard_name"           |
+|"resource.service"  |"metabase"                 |
+|"description"       |"table description"        |
+|"schema"            |[]Column                   |
+|____________________|___________________________|`
 )
 
 type Config struct {
@@ -41,6 +63,14 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel

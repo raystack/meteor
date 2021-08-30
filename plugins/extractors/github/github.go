@@ -13,6 +13,30 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var (
+	configInfo = ``
+	inputInfo  = `
+Input:
+______________________________________________________________________
+| Key    | Example         | Description                 |            |
+|________|_________________|_________ ___________________|____________|
+|"org"   | "odpf"          | Name of github organisation | *required* |
+|"token" | "kdfljdfljoijj" | Github API access token     | *required* |
+|__________________________|_____________________________|____________|
+`
+	outputInfo = `
+Output:
+______________________________________________
+|Field         |Sample Value                  |
+|_______ ______|______________________________|
+|"resource.urn"|"https://github.com/ravisuhag"|
+|"email"       | "suhag.ravi@gmail.com"       |
+|"username"    | "ravisuhag"                  |
+|"full_name"   | "Ravi Suhag"                 |
+|"status"      | "active"                     |
+|______________|______________________________|`
+)
+
 type Config struct {
 	Org   string `mapstructure:"org" validate:"required"`
 	Token string `mapstructure:"token" validate:"required"`
@@ -20,6 +44,14 @@ type Config struct {
 
 type Extractor struct {
 	logger log.Logger
+}
+
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

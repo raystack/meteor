@@ -17,6 +17,30 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+var (
+	instanceAdminClientCreator = createInstanceAdminClient
+	instanceInfoGetter         = getInstancesInfo
+	configInfo                 = ``
+	inputInfo                  = `
+Input:
+ _____________________________________________________________________________
+| Key           | Example       | Description                    |            |
+|_______________|_______________|________________________________|____________|
+| "project_id"  | "my-project"  | Big Table Project ID           | *required* |
+|_______________|_______________|________________________________|____________|
+`
+	outputInfo = `
+Output:
+ ____________________________________________________________
+|Field               |Sample Value            				 |
+|____________________|_______________________________________|
+|"resource.urn"      |"project_id.instance_name.table_name"  |
+|"resource.name"     |"table_name"                           |
+|"resource.service"  |"bigtable                              |
+|"properties.fields" |[]Fields                             |
+|____________________|_______________________________________|`
+)
+
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
 }
@@ -29,10 +53,13 @@ type InstancesFetcher interface {
 	Instances(context.Context) ([]*bigtable.InstanceInfo, error)
 }
 
-var (
-	instanceAdminClientCreator = createInstanceAdminClient
-	instanceInfoGetter         = getInstancesInfo
-)
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
+}
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting bigtable metadata...")

@@ -10,7 +10,13 @@ const (
 	PluginTypeSink      PluginType = "sink"
 )
 
+type Plugin interface {
+	GetDescription() string
+	GetSampleConfig() string
+}
+
 type Extractor interface {
+	Plugin
 	Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error)
 }
 

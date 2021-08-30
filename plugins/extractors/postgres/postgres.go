@@ -16,7 +16,33 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-var defaults = []string{"information_schema", "root", "postgres"}
+var (
+	defaults   = []string{"information_schema", "root", "postgres"}
+	configInfo = ``
+	inputInfo  = `
+Input:
+ __________________________________________________________________________________________________
+| Key             | Example          | Description                                    |            |
+|_________________|__________________|________________________________________________|____________|
+| "host"          | "localhost:5432" | The Host at which server is running            | *required* |
+| "user_id"       | "admin"          | User ID to access the postgres server          | *required* |
+| "password"      | "1234"           | Password for the postgres Server               | *required* |
+| "database_name" | "postgres"       | Database owned by user can be skipped for root | *optional* |
+|_________________|__________________|________________________________________________|____________|
+`
+	outputInfo = `
+Output:
+ _____________________________________________
+|Field               |Sample Value            |
+|____________________|________________________|
+|"resource.urn"      |"my_database.my_table"  |
+|"resource.name"     |"my_table"              |
+|"resource.service"  |"postgres"              |
+|"description"       |"table description"     |
+|"profile.total_rows"|"2100"                  |
+|"schema"            |[][Column](#column)     |
+ _____________________________________________`
+)
 
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -36,9 +62,17 @@ func New(logger log.Logger) *Extractor {
 	}
 }
 
+func (e *Extractor) GetDescription() string {
+	return inputInfo + outputInfo
+}
+
+func (e *Extractor) GetSampleConfig() string {
+	return configInfo
+}
+
 // Extract collects metdata from the source. Metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
-
+	fmt.Println(inputInfo + outputInfo)
 	// Build and validate config received from receipe
 	var cfg Config
 	if err := utils.BuildConfig(config, &cfg); err != nil {
