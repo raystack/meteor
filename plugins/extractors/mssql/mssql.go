@@ -30,8 +30,8 @@ Input:
 | Key             | Example          | Description                                    |            |
 |_________________|__________________|________________________________________________|____________|
 | "host"          | "localhost:5432" | The Host at which server is running            | *required* |
-| "user_id"       | "admin"          | User ID to access the mssql server          | *required* |
-| "password"      | "1234"           | Password for the mssql Server               | *required* |
+| "user_id"       | "admin"          | User ID to access the mssql server             | *required* |
+| "password"      | "1234"           | Password for the mssql Server                  | *required* |
 |_________________|__________________|________________________________________________|____________|
 `
 	outputInfo = `
@@ -41,7 +41,7 @@ Output:
 |____________________|________________________|
 |"resource.urn"      |"my_database.my_table"  |
 |"resource.name"     |"my_table"              |
-|"resource.service"  |"mssql"              |
+|"resource.service"  |"mssql"                 |
 |"description"       |"table description"     |
 |"profile.total_rows"|"2100"                  |
 |"schema"            |[][Column](#column)     |

@@ -39,7 +39,7 @@ Output:
 |"resource.service"  |"clickhouse"            |
 |"description"       |"table description"     |
 |"profile.total_rows"|"2100"                  |
-|"schema"            |[]Column     			  |
+|"schema"            |[]Column                |
 |____________________|________________________|`
 )
 

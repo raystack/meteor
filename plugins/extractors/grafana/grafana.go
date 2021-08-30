@@ -33,7 +33,7 @@ Output:
 |"resource.name"    |"new-dashboard-copy"                                   |
 |"resource.service" |"grafana"                                              |
 |"resource.url"     |"http://localhost:3000/d/HzK8qNW7z/new-dashboard-copy" |
-|"charts"           |[]chart     											|
+|"charts"           |[]chart                                                |
 |___________________|_______________________________________________________|`
 )
 

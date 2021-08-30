@@ -47,11 +47,11 @@ Output:
 |Field               |Sample Value                          |
 |____________________|______________________________________|
 |"resource.urn"      |"project_id.dataset_name.table_name"  |
-|"resource.name"     |"table_name"              			|
-|"resource.service"  |"bigquery"              				|
-|"description"       |"table description"     				|
-|"profile.total_rows"|"2100"                  				|
-|"schema"            |[]Column             				|
+|"resource.name"     |"table_name"                          |
+|"resource.service"  |"bigquery"                            |
+|"description"       |"table description"                   |
+|"profile.total_rows"|"2100"                                |
+|"schema"            |[]Column             	                |
 |____________________|______________________________________|`
 )
 

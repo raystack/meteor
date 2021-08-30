@@ -32,12 +32,12 @@ Input:
 	outputInfo = `
 Output:
  ____________________________________________________________
-|Field               |Sample Value            				 |
+|Field               |Sample Value                           |
 |____________________|_______________________________________|
 |"resource.urn"      |"project_id.instance_name.table_name"  |
 |"resource.name"     |"table_name"                           |
 |"resource.service"  |"bigtable                              |
-|"properties.fields" |[]Fields                             |
+|"properties.fields" |[]Fields                               |
 |____________________|_______________________________________|`
 )
 

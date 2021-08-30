@@ -41,7 +41,7 @@ Output:
 |"description"       |"table description"     |
 |"profile.total_rows"|"2100"                  |
 |"schema"            |[][Column](#column)     |
- _____________________________________________`
+|____________________|________________________|`
 )
 
 type Config struct {
