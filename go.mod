@@ -23,14 +23,13 @@ require (
 	github.com/google/go-github/v37 v37.0.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
-	github.com/jeremywohl/flatten v1.0.1
 	github.com/klauspost/compress v1.12.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
-	github.com/odpf/salt v0.0.0-20210828031041-64e3061910b2
+	github.com/odpf/salt v0.0.0-20210830052454-4ff2e6b56721
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
