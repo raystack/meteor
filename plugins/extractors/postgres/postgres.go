@@ -72,7 +72,6 @@ func (e *Extractor) GetSampleConfig() string {
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
-	fmt.Println(inputInfo + outputInfo)
 	// Build and validate config received from receipe
 	var cfg Config
 	if err := utils.BuildConfig(config, &cfg); err != nil {
