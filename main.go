@@ -25,7 +25,7 @@ const (
 func main() {
 
 	var cfg agent.Config
-	l := config.NewLoader()
+	l := config.NewLoader(config.WithPath("./"))
 
 	if err := l.Load(&cfg); err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())
