@@ -17,7 +17,7 @@ import (
 )
 
 type Config struct {
-	User     string `mapstructure:"user"`
+	User     string `mapstructure:"user_id"`
 	Password string `mapstructure:"password"`
 	Host     string `mapstructure:"host" validate:"required"`
 }

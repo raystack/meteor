@@ -116,7 +116,7 @@ func TestExtract(t *testing.T) {
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"host":     host,
-				"user":     user,
+				"user_id":  user,
 				"password": pass,
 			}, extractOut)
 			close(extractOut)

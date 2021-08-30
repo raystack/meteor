@@ -14,7 +14,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `host` | `string` | `http://localhost:9200` | Host of the Elastic server | *required* |
-| `user` | `string` | `admin` | User ID to access the server| *optional* |
+| `user_id` | `string` | `admin` | User ID to access the server| *optional* |
 | `password` | `string` | `1234` | Password for the Server | *optional* |
 
 ## Outputs
