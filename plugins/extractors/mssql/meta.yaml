@@ -1,10 +1,7 @@
 name: "mssql"
 version: "1.0.0"
 Description: "descr"
-config: |-
-  source:
-    type: mssql
-    config:
-      host: localhost:1433
-      user_id: admin
-      password: 1234
+sample_config: |-
+  host: localhost:1433
+  user_id: admin
+  password: 1234

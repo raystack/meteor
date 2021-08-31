@@ -1,10 +1,7 @@
 name: "metabase"
 version: "1.0.0"
 Description: "descr"
-config: |-
-  source:
-    type: metabase
-    config:
-      host: http://localhost:3000
-      user_id: meteor_tester
-      password: meteor_pass_1234
+sample_config: |-
+  host: http://localhost:3000
+  user_id: meteor_tester
+  password: meteor_pass_1234

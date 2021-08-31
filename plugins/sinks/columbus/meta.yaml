@@ -2,12 +2,9 @@ name: "Columbus HTTP"
 version: "1.0.0"
 description: "descr"
 sample_config: |-
-  sinks:
-    - name: columbus
-      config:
-        host: https://columbus.com
-        type: sample-columbus-type
-        mapping:
-          new_fieldname: "json_field_name"
-          id: "resource.urn"
-          displayName: "resource.name"
+  host: https://columbus.com
+  type: sample-columbus-type
+  mapping:
+    new_fieldname: "json_field_name"
+    id: "resource.urn"
+    displayName: "resource.name"

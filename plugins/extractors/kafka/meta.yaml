@@ -1,8 +1,5 @@
 name: "kafka"
 version: "1.0.0"
 Description: "descr"
-config: |-
-  source:
-    type: kafka
-    config:
-      broker: "localhost:9092"
+sample_config: |-
+  broker: "localhost:9092"

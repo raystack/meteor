@@ -2,9 +2,6 @@ name: "kafka"
 version: "1.0.0"
 Description: "descr"
 sample_config: |-
-  sinks:
-    - name: kafka
-      config:
-        brokers: ll
-        topic: ll
-        key_path: kk
+  brokers: "localhost:9092"
+  topic: go-data
+  key_path: xxx
