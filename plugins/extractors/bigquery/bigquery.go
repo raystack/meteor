@@ -182,11 +182,12 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 }
 
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, rows []interface{}, err error) {
-	rows = make([]interface{}, previewTotalRows)
+	rows = []interface{}{}
 	fields = []interface{}{}
 
 	ri := t.Read(ctx)
-	for i := 0; i < previewTotalRows; i++ {
+	totalRows := 0
+	for totalRows < previewTotalRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
 		if err == iterator.Done {
@@ -197,13 +198,14 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 		}
 
 		// populate row fields once
-		if len(fields) > 0 {
+		if len(fields) < 1 {
 			for _, schema := range ri.Schema {
 				fields = append(fields, schema.Name)
 			}
 		}
 
-		rows[i] = row
+		rows = append(rows, row)
+		totalRows++
 	}
 
 	// this preview will be stored on Properties.Attributes which is a proto struct
