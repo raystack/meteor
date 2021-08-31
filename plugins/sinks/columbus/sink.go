@@ -39,6 +39,10 @@ func New(c httpClient) plugins.Syncer {
 	return sink
 }
 
+func (s *Sink) ValidateConfig(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
+}
+
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) (err error) {
 	if err = utils.BuildConfig(configMap, &s.config); err != nil {
 		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}

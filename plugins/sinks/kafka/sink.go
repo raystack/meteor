@@ -34,6 +34,10 @@ func New() plugins.Syncer {
 	return new(Sink)
 }
 
+func (s *Sink) ValidateConfig(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
+}
+
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) error {
 	var config Config
 	if err := utils.BuildConfig(configMap, &config); err != nil {

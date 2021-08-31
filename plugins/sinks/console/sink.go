@@ -18,6 +18,10 @@ func New() plugins.Syncer {
 	return new(Sink)
 }
 
+func (s *Sink) ValidateConfig(configMap map[string]interface{}) (err error) {
+	return
+}
+
 func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {
 	for val := range out {
 		if err := s.process(val); err != nil {

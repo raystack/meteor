@@ -26,5 +26,6 @@ type Processor interface {
 }
 
 type Syncer interface {
+	ValidateConfig(config map[string]interface{}) error
 	Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error)
 }
