@@ -1,0 +1,7 @@
+name: "Console"
+version: "1.0.0"
+Description: "descr"
+sample_config: |-
+  sinks:
+    - name: console
+    

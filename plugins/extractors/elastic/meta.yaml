@@ -1,0 +1,8 @@
+name: "elastic"
+version: "1.0.0"
+Description: "descr"
+config: |-
+  source:
+    type: elasticsearch
+    config:
+      host: elastic_server

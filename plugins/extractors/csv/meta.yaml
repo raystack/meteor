@@ -1,0 +1,8 @@
+name: "csv"
+version: "1.0.0"
+Description: "descr"
+config: |-
+  source:
+    type: csv
+    config:
+      path: ./path-to-a-file-or-a-directory

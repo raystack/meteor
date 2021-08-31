@@ -1,0 +1,10 @@
+name: "postgres"
+version: "1.0.0"
+Description: "descr"
+config: |-
+source:
+  type: postgres
+  config:
+    host: localhost:5432
+    user_id: admin
+    password: 1234

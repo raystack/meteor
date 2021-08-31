@@ -1,5 +1,6 @@
 name: "Columbus HTTP"
 version: "1.0.0"
+description: "descr"
 sample_config: |-
   sinks:
     - name: columbus

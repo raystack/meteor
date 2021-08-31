@@ -1,0 +1,9 @@
+name: "grafana"
+version: "1.0.0"
+Description: "descr"
+config: |-
+  source:
+    type: grafana
+    config:
+      base_url: grafana_server
+      api_key: your_api_key

@@ -21,4 +21,3 @@ processors:
      fieldA: valueA
      fieldB: valueB
 ```
-

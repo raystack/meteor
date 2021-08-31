@@ -1,0 +1,10 @@
+name: "mongodb"
+version: "1.0.0"
+Description: "descr"
+config: |-
+  source:
+    type: mongodb
+    config:
+      host: localhost:27017
+      user_id: admin
+      password: 1234

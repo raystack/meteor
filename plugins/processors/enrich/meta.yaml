@@ -1,0 +1,9 @@
+name: "enrich"
+version: "1.0.0"
+Description: ""
+sample_config: |-
+  processors:
+    - name: enrich
+      config:
+        fieldA: valueA
+        fieldB: valueB
