@@ -78,7 +78,7 @@ func TestRunnerRun(t *testing.T) {
 
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink), "")
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
 		run := r.Run(rcp)
@@ -93,7 +93,7 @@ func TestRunnerRun(t *testing.T) {
 
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink), "")
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
 		run := r.Run(rcp)
@@ -103,7 +103,7 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should run extractor, processors and sinks", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink), "")
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
 		run := r.Run(validRecipe)
@@ -116,7 +116,7 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should record metrics", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		sinkFactory.Register("mock-sink", newMockSinkFn(mSink), "")
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
@@ -141,7 +141,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
 
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)))
+		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)), "")
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
 		runs := r.RunMultiple(recipeList)
@@ -166,8 +166,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sink1 := new(mockPassthroughSink)
 		sink2 := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(sink1))
-		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2))
+		sinkFactory.Register("mock-sink", newMockSinkFn(sink1), "")
+		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2), "")
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
 		r.RunMultiple(recipeList)
@@ -234,6 +234,10 @@ func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
 	return func() plugins.Syncer {
 		return sink
 	}
+}
+
+func (m *mockPassthroughSink) ValidateConfig(config map[string]interface{}) error {
+	return nil
 }
 
 func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) error {
