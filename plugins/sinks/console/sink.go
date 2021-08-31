@@ -41,7 +41,7 @@ func init() {
 		return &Sink{
 			logger: plugins.GetLog(),
 		}
-	}); err != nil {
+	}, ""); err != nil {
 		panic(err)
 	}
 }

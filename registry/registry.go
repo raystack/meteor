@@ -3,6 +3,7 @@ package registry
 import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -17,6 +18,13 @@ type ExtractorFactory struct {
 }
 
 func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
+	if fn, ok := f.fnStore[name]; ok {
+		return fn(), nil
+	}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
+}
+
+func (f *ExtractorFactory) GetInfo(name string) (plugins.Extractor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
@@ -69,7 +77,8 @@ func (f *ProcessorFactory) Register(name string, fn func() plugins.Processor) (e
 
 // SinkFactory is a factory for Sinks.
 type SinkFactory struct {
-	fnStore map[string]func() plugins.Syncer
+	fnStore   map[string]func() plugins.Syncer
+	infoStore map[string]string // map[plugin name]plugin info content
 }
 
 func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
@@ -77,6 +86,15 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 		return fn(), nil
 	}
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
+}
+
+func (f *SinkFactory) GetInfo(name string) (info plugins.PluginInfo, err error) {
+	path, ok := f.infoStore[name]
+	if !ok {
+		return info, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
+	}
+
+	return buildPluginInfo(path)
 }
 
 func (f *SinkFactory) List() (names [][]string) {
@@ -87,12 +105,22 @@ func (f *SinkFactory) List() (names [][]string) {
 	return
 }
 
-func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error) {
+func (f *SinkFactory) Register(name string, fn func() plugins.Syncer, pluginInfo string) (err error) {
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate syncer: %s", name)
 	}
 
 	f.fnStore[name] = fn
+	f.infoStore[name] = pluginInfo
+
+	return
+}
+
+func buildPluginInfo(pluginInfoString string) (info plugins.PluginInfo, err error) {
+	err = yaml.Unmarshal([]byte(pluginInfoString), &info)
+	if err != nil {
+		return
+	}
 
 	return
 }
@@ -111,6 +139,7 @@ func NewProcessorFactory() *ProcessorFactory {
 
 func NewSinkFactory() *SinkFactory {
 	return &SinkFactory{
-		fnStore: make(map[string]func() plugins.Syncer),
+		fnStore:   make(map[string]func() plugins.Syncer),
+		infoStore: make(map[string]string),
 	}
 }

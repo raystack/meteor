@@ -412,8 +412,6 @@ github.com/mrunalp/fileutils v0.5.0/go.mod h1:M1WthSahJixYnrXQl/DFQuteStB1weuxD2
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/odpf/salt v0.0.0-20210828031041-64e3061910b2 h1:3Wx6E5h/YrR1tjXCo3VMyd1faf/UJBm6C8onAqKtA8A=
-github.com/odpf/salt v0.0.0-20210828031041-64e3061910b2/go.mod h1:FE3qyo8IEquC1/X0keNWDpHh/0BvLHQDcGQErgw5H1I=
 github.com/odpf/salt v0.0.0-20210830052454-4ff2e6b56721 h1:JOE/QN/vRUIwsR8jdH/+e1t7vTzF1bJCqP4GlQm6QZM=
 github.com/odpf/salt v0.0.0-20210830052454-4ff2e6b56721/go.mod h1:FE3qyo8IEquC1/X0keNWDpHh/0BvLHQDcGQErgw5H1I=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=

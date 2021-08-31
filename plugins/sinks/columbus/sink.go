@@ -3,6 +3,7 @@ package columbus
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +15,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
 )
+
+//go:embed meta.yaml
+var metaFile string
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -155,7 +159,7 @@ func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
 func init() {
 	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
 		return New(&http.Client{})
-	}); err != nil {
+	}, metaFile); err != nil {
 		panic(err)
 	}
 }

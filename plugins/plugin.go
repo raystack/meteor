@@ -10,6 +10,13 @@ const (
 	PluginTypeSink      PluginType = "sink"
 )
 
+type PluginInfo struct {
+	Name         string `yaml:"name"`
+	Version      string `yaml:"version"`
+	Description  string `yaml:"description"`
+	SampleConfig string `yaml:"sample_config"`
+}
+
 type Extractor interface {
 	Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error)
 }

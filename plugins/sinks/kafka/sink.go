@@ -178,7 +178,7 @@ func createWriter(config Config) *kafka.Writer {
 func init() {
 	if err := registry.Sinks.Register("kafka", func() plugins.Syncer {
 		return &Sink{}
-	}); err != nil {
+	}, ""); err != nil {
 		panic(err)
 	}
 }
