@@ -13,7 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
 	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/testutils"
+	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/registry"
@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 		_, err = bigtable.NewAdminClient(context.Background(), "dev", "dev")
 		return
 	}
-	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	err, purgeFn := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal("", err)
 	}

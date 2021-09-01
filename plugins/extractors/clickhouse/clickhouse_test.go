@@ -18,7 +18,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
-	"github.com/odpf/meteor/testutils"
+	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}
-	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	err, purgeFn := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -210,5 +210,5 @@ func execute(db *sql.DB, queries []string) (err error) {
 }
 
 func newExtractor() *clickhouse.Extractor {
-	return clickhouse.New(testutils.Logger)
+	return clickhouse.New(test.Logger)
 }

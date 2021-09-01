@@ -18,7 +18,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/testutils"
+	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Exponential backoff-retry for container to be resy to accept connections
-	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	err, purgeFn := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestExtract(t *testing.T) {
 }
 
 func newExtractor() *metabase.Extractor {
-	return metabase.New(testutils.Logger)
+	return metabase.New(test.Logger)
 }
 
 func setup() (err error) {

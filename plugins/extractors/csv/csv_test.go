@@ -12,14 +12,14 @@ import (
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
-	"github.com/odpf/meteor/testutils"
+	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExtract(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
 		config := map[string]interface{}{}
-		err := csv.New(testutils.Logger).Extract(
+		err := csv.New(test.Logger).Extract(
 			context.TODO(),
 			config,
 			make(chan<- interface{}))
@@ -32,7 +32,7 @@ func TestExtract(t *testing.T) {
 		}
 		out := make(chan interface{})
 		go func() {
-			err := csv.New(testutils.Logger).Extract(
+			err := csv.New(test.Logger).Extract(
 				context.TODO(),
 				config,
 				out)
@@ -75,7 +75,7 @@ func TestExtract(t *testing.T) {
 		}
 		out := make(chan interface{})
 		go func() {
-			err := csv.New(testutils.Logger).Extract(
+			err := csv.New(test.Logger).Extract(
 				context.TODO(),
 				config,
 				out)

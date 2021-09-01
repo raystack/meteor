@@ -16,7 +16,7 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/testutils"
+	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	kafkaLib "github.com/segmentio/kafka-go"
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 
 		return
 	}
-	err, purgeContainer := testutils.CreateContainer(opts, retryFn)
+	err, purgeContainer := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func setup(broker kafkaLib.Broker) (err error) {
 }
 
 func newExtractor() *kafka.Extractor {
-	return kafka.New(testutils.Logger)
+	return kafka.New(test.Logger)
 }
 
 // This function compares two slices without concerning about the order
