@@ -1,6 +1,6 @@
 name: "mysql"
 version: "1.0.0"
-Description: "descr"
+description: "descr"
 sample_config: |-
   host: localhost:3306
   user_id: admin

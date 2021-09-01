@@ -1,6 +1,6 @@
 name: "enrich"
 version: "1.0.0"
-Description: ""
+description: ""
 sample_config: |-
   fieldA: valueA
   fieldB: valueB

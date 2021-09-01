@@ -1,6 +1,6 @@
 name: "metabase"
 version: "1.0.0"
-Description: "descr"
+description: "descr"
 sample_config: |-
   host: http://localhost:3000
   user_id: meteor_tester

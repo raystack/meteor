@@ -1,5 +1,5 @@
 name: "bigtable"
 version: "1.0.0"
-Description: "descr"
+description: "descr"
 sample_config: |-
   project_id: google-project-id

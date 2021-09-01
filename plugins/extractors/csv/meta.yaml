@@ -1,5 +1,5 @@
 name: "csv"
 version: "1.0.0"
-Description: "descr"
+description: "descr"
 sample_config: |-
   path: ./path-to-a-file-or-a-directory

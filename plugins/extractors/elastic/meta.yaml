@@ -1,5 +1,5 @@
 name: "elastic"
 version: "1.0.0"
-Description: "descr"
+description: "descr"
 sample_config: |-
   host: elastic_server
