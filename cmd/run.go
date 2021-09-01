@@ -21,7 +21,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt)
+			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt, lg)
 
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {

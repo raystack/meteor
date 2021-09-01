@@ -12,9 +12,9 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
-	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 
 		return client.Ping(ctx, nil)
 	}
-	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	err, purgeFn := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +166,7 @@ func createCollection(ctx context.Context, collection_name string, data []interf
 }
 
 func newExtractor() *mongodb.Extractor {
-	return mongodb.New(testutils.Logger)
+	return mongodb.New(test.Logger)
 }
 
 func getExpected() []assets.Table {

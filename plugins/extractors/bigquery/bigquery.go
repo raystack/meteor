@@ -181,12 +181,13 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	return
 }
 
-func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, rows []interface{}, err error) {
-	rows = []interface{}{}
-	fields = []interface{}{}
+func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
+	fields = []interface{}{}  // list of column names
+	preview = []interface{}{} // rows of column values
 
-	ri := t.Read(ctx)
+	rows := []interface{}{}
 	totalRows := 0
+	ri := t.Read(ctx)
 	for totalRows < previewTotalRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
@@ -215,7 +216,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(jsonBytes, &rows)
+	err = json.Unmarshal(jsonBytes, &preview)
 	if err != nil {
 		return
 	}

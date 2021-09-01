@@ -14,8 +14,8 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
-	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}
-	err, purgeFn := testutils.CreateContainer(opts, retryFn)
+	err, purgeFn := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -143,5 +143,5 @@ func execute(db *sql.DB, queries []string) (err error) {
 }
 
 func newExtractor() *postgres.Extractor {
-	return postgres.New(testutils.Logger)
+	return postgres.New(test.Logger)
 }
