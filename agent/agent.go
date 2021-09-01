@@ -8,6 +8,7 @@ import (
 
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/salt/log"
 )
 
 type Agent struct {
@@ -15,9 +16,10 @@ type Agent struct {
 	processorFactory *registry.ProcessorFactory
 	sinkFactory      *registry.SinkFactory
 	monitor          Monitor
+	logger           log.Logger
 }
 
-func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor) *Agent {
+func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor, logger log.Logger) *Agent {
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
 	}
@@ -26,6 +28,7 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 		processorFactory: pf,
 		sinkFactory:      sf,
 		monitor:          mt,
+		logger:           logger,
 	}
 }
 
@@ -51,6 +54,7 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 }
 
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
+	r.logger.Info("running recipe", "recipe", recipe.Name)
 	var wg sync.WaitGroup
 	var (
 		getDuration = r.startDuration()
@@ -115,7 +119,14 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	wg.Wait()
 
 	success := run.Error == nil
-	r.monitor.RecordRun(recipe, getDuration(), success)
+	durationInMs := getDuration()
+	r.monitor.RecordRun(recipe, durationInMs, success)
+
+	if success {
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs)
+	} else {
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "err", run.Error)
+	}
 
 	return
 }

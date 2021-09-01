@@ -11,6 +11,7 @@ import (
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/meteor/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -58,14 +59,14 @@ func init() {
 
 func TestRunnerRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
-		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil)
+		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil, testutils.Logger)
 		run := r.Run(validRecipe)
 		assert.IsType(t, agent.Run{}, run)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
 	t.Run("should return error if extractor, processors or sinks could not be found", func(t *testing.T) {
-		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil)
+		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil, testutils.Logger)
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -80,7 +81,7 @@ func TestRunnerRun(t *testing.T) {
 		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, testutils.Logger)
 		run := r.Run(rcp)
 		assert.Error(t, run.Error)
 	})
@@ -95,7 +96,7 @@ func TestRunnerRun(t *testing.T) {
 		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, testutils.Logger)
 		run := r.Run(rcp)
 		assert.Error(t, run.Error)
 	})
@@ -105,7 +106,7 @@ func TestRunnerRun(t *testing.T) {
 		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, testutils.Logger)
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
 
@@ -121,7 +122,7 @@ func TestRunnerRun(t *testing.T) {
 		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, monitor)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, monitor, testutils.Logger)
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
 	})
@@ -143,7 +144,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sinkFactory := registry.NewSinkFactory()
 		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, testutils.Logger)
 		runs := r.RunMultiple(recipeList)
 
 		assert.Len(t, runs, len(recipeList))
@@ -169,7 +170,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sinkFactory.Register("mock-sink", newMockSinkFn(sink1))
 		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil)
+		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, testutils.Logger)
 		r.RunMultiple(recipeList)
 
 		assert.Equal(t, finalData, sink1.GetResult())
