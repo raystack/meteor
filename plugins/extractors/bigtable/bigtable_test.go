@@ -12,8 +12,8 @@ import (
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
-	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/assets"
+	"github.com/odpf/meteor/testutils"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/odpf/meteor/registry"

@@ -9,10 +9,10 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
-	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
+	"github.com/odpf/meteor/testutils"
 	"github.com/stretchr/testify/assert"
 )
 

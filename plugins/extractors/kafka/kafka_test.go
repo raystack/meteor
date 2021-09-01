@@ -14,9 +14,9 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
-	"github.com/odpf/meteor/plugins/testutils"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/testutils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	kafkaLib "github.com/segmentio/kafka-go"
