@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"strings"
@@ -19,6 +20,10 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+const (
+	previewTotalRows = 30
 )
 
 type Config struct {
@@ -59,7 +64,6 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 	}
 
 	return
-
 }
 
 // Create big query client
@@ -101,6 +105,11 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		partitionField = md.TimePartitioning.Field
 	}
 
+	previewFields, previewRows, err := e.buildPreview(ctx, t)
+	if err != nil {
+		e.logger.Warn("error building preview", "err", err, "table", t.FullyQualifiedName())
+	}
+
 	return assets.Table{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
@@ -116,6 +125,8 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 				"project":         t.ProjectID,
 				"type":            string(md.Type),
 				"partition_field": partitionField,
+				"preview":         previewRows,
+				"preview_fields":  previewFields,
 			}),
 			Labels: md.Labels,
 		},
@@ -170,6 +181,49 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	return
 }
 
+func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
+	fields = []interface{}{}  // list of column names
+	preview = []interface{}{} // rows of column values
+
+	rows := []interface{}{}
+	totalRows := 0
+	ri := t.Read(ctx)
+	for totalRows < previewTotalRows {
+		var row []bigquery.Value
+		err = ri.Next(&row)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return
+		}
+
+		// populate row fields once
+		if len(fields) < 1 {
+			for _, schema := range ri.Schema {
+				fields = append(fields, schema.Name)
+			}
+		}
+
+		rows = append(rows, row)
+		totalRows++
+	}
+
+	// this preview will be stored on Properties.Attributes which is a proto struct
+	// we need to totally change []bigquery.Value to []interface{}
+	// to prevent error when mapping this preview to Properties facets
+	jsonBytes, err := json.Marshal(rows)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(jsonBytes, &preview)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (cp *facets.ColumnProfile, err error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
@@ -178,6 +232,10 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 
 	// build and run query
 	query, err := e.buildColumnProfileQuery(col, tm)
+	if err != nil {
+		return nil, err
+	}
+
 	it, err := query.Read(ctx)
 	if err != nil {
 		return nil, err

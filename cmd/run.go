@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +24,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt)
+			cs := term.NewColorScheme()
+			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt, lg)
 
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
@@ -29,7 +33,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				lg.Info("no recipe found", "path", args[0])
+				fmt.Println(cs.Yellowf("no recipe found in [%s]", args[0]))
 				return nil
 			}
 

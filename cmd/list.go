@@ -13,7 +13,6 @@ import (
 
 // LintCmd creates a command object for linting recipes
 func ListCmd(lg log.Logger) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "list <command>",
 		Short: "List available plugins in meteor",
@@ -29,7 +28,6 @@ func ListCmd(lg log.Logger) *cobra.Command {
 
 // ListExtCmd creates a command object for listing extractors
 func ListExtCmd() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:     "extractors",
 		Example: "meteor list extractors",
@@ -45,7 +43,6 @@ func ListExtCmd() *cobra.Command {
 
 //  ListSinksCmd creates a command object for listing sinks
 func ListSinksCmd() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:     "sinks",
 		Example: "meteor list sinks",
@@ -61,7 +58,6 @@ func ListSinksCmd() *cobra.Command {
 
 //  ListProccCmd creates a command object for listing processors
 func ListProccCmd() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:     "processors",
 		Example: "meteor list processors",

@@ -2,7 +2,7 @@ NAME="github.com/odpf/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
 
-.PHONY: all build clean
+.PHONY: all build clean test
 
 all: build
 
