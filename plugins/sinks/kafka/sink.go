@@ -8,12 +8,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
 	kafka "github.com/segmentio/kafka-go"
+	"google.golang.org/protobuf/proto"
 )
 
 type Config struct {

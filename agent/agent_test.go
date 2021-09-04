@@ -268,7 +268,7 @@ func newFailedProcessor() plugins.Processor {
 }
 
 func (t *failedProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
-	for _ = range in {
+	for range in {
 		return errors.New("failed processor")
 	}
 

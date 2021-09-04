@@ -8,10 +8,9 @@ import (
 
 // GenCmd creates a command object for the "gen" action
 func GenCmd(lg log.Logger) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "gen",
-		Short: "A collection of several useful generators.",
+		Short: "Generate sample recipes and plugins.",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -24,13 +23,12 @@ func GenCmd(lg log.Logger) *cobra.Command {
 
 // ExtCmd creates a command object for generating recipes
 func ExtCmd() *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:     "recipe [name]",
 		Aliases: []string{"r"},
 		Args:    cobra.ExactValidArgs(1),
 		Example: "meteor recipe ext --type=topic",
-		Short:   "Generate a new extractor",
+		Short:   "Generate a new recipe",
 		Run: func(cmd *cobra.Command, args []string) {
 			generator.Recipe(args[0])
 		},

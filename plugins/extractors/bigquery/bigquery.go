@@ -232,6 +232,10 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 
 	// build and run query
 	query, err := e.buildColumnProfileQuery(col, tm)
+	if err != nil {
+		return nil, err
+	}
+
 	it, err := query.Read(ctx)
 	if err != nil {
 		return nil, err

@@ -9,7 +9,6 @@ import (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
-
 	var cmd = &cobra.Command{
 		Use:           "meteor <command> <subcommand> [flags]",
 		Short:         "Metadata CLI",
