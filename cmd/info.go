@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -36,15 +37,11 @@ func InfoSinkCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			info, _ := registry.Sinks.Info(name)
+			info, err := registry.Sinks.Info(name)
 
-			r, _ := glamour.NewTermRenderer(
-				glamour.WithAutoStyle(),
-			)
-
-			out, _ := r.Render(info.Summary)
-			fmt.Print(out)
-
+			if err := inform("sinks", info.Summary, err); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
@@ -63,15 +60,10 @@ func InfoExtCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			info, _ := registry.Extractors.Info(name)
-
-			r, _ := glamour.NewTermRenderer(
-				glamour.WithAutoStyle(),
-			)
-
-			out, _ := r.Render(info.Summary)
-			fmt.Print(out)
-
+			info, err := registry.Extractors.Info(name)
+			if err := inform("extractors", info.Summary, err); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
@@ -90,17 +82,31 @@ func InfoProccCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			info, _ := registry.Processors.Info(name)
+			info, err := registry.Processors.Info(name)
 
-			r, _ := glamour.NewTermRenderer(
-				glamour.WithAutoStyle(),
-			)
-
-			out, _ := r.Render(info.Summary)
-			fmt.Print(out)
-
+			if err := inform("processors", info.Summary, err); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
 	return cmd
+}
+
+func inform(typ string, summary string, err error) error {
+	cs := term.NewColorScheme()
+
+	if err != nil {
+		fmt.Println(cs.Redf("ERROR:"), cs.Redf(err.Error()))
+		fmt.Println(cs.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
+		return nil
+	}
+
+	r, _ := glamour.NewTermRenderer(glamour.WithAutoStyle())
+	out, err := r.Render(summary)
+	if err != nil {
+		return err
+	}
+	fmt.Print(out)
+	return nil
 }
