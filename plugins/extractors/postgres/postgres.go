@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
 	_ "github.com/lib/pq"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -31,6 +30,13 @@ type Config struct {
 	Exclude  string `mapstructure:"exclude"`
 }
 
+var sampleConfig = `
+ host: localhost:1433
+ user_id: admin
+ password: 1234
+ database: database_name
+ exclude: postgres`
+
 type Extractor struct {
 	logger log.Logger
 }
@@ -43,14 +49,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Table metadata and metrics from Postgres SQL sever.",
-		SampleConfig: heredoc.Doc(`
-			host: localhost:5432
-			user_id: admin
-			password: 1234
-		`),
-		Summary: summary,
-		Tags:    []string{"GCP,extractor"},
+		Description:  "Table metadata and metrics from Postgres SQL sever.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

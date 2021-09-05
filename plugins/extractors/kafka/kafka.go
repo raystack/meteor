@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -21,6 +20,9 @@ var summary string
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 }
+
+var sampleConfig = `
+ broker: "localhost:9092"`
 
 type Extractor struct {
 	// internal states
@@ -39,12 +41,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Topic list from Apache Kafka.",
-		SampleConfig: heredoc.Doc(`
-			broker: "localhost:9092"
-		`),
-		Summary: summary,
-		Tags:    []string{"oss,extractor"},
+		Description:  "Topic list from Apache Kafka.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

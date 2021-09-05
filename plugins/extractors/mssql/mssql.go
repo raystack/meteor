@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/salt/log"
 
 	"github.com/odpf/meteor/plugins"
@@ -34,6 +33,11 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
+var sampleConfig = `
+ host: localhost:1433
+ user_id: admin
+ password: 1234`
+
 type Extractor struct {
 	out         chan<- interface{}
 	excludedDbs map[string]bool
@@ -50,14 +54,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Table metdata from MSSQL server",
-		SampleConfig: heredoc.Doc(`
-			host: localhost:1433
-			user_id: admin
-			password: 1234	  
-		`),
-		Summary: summary,
-		Tags:    []string{"microsoft,extractor"},
+		Description:  "Table metdata from MSSQL server",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"microsoft,extractor"},
 	}
 }
 

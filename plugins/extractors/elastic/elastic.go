@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -27,6 +26,12 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
+var sampleConfig = `
+ # Elasticsearch configuration
+ ueser: "elastic"
+ password: "changeme"
+ host: elastic_server`
+
 type Extractor struct {
 	out    chan<- interface{}
 	logger log.Logger
@@ -40,12 +45,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Search engine based on the Lucene library.",
-		SampleConfig: heredoc.Doc(`
-			host: elastic_server
-		`),
-		Summary: summary,
-		Tags:    []string{"oss,extractor"},
+		Description:  "Search engine based on the Lucene library.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

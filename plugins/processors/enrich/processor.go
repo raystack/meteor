@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -19,15 +18,17 @@ func New() *Processor {
 	return new(Processor)
 }
 
+var sampleConfig = `
+ # Enrichment configuration
+ # fieldA: valueA
+ # fieldB: valueB`
+
 func (p *Processor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Send metadata to columbus http service",
-		SampleConfig: heredoc.Doc(`
-			fieldA: valueA
-			fieldB: valueB
-		`),
-		Summary: summary,
-		Tags:    []string{"http,sink"},
+		Description:  "Send metadata to columbus http service",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"http,sink"},
 	}
 }
 

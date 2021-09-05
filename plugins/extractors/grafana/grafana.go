@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -23,6 +22,10 @@ type Config struct {
 	APIKey  string `mapstructure:"api_key" validate:"required"`
 }
 
+var sampleConfig = `
+ base_url: grafana_server
+ api_key: your_api_key	  `
+
 type Extractor struct {
 	client *Client
 
@@ -38,13 +41,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Dashboard list from Grafana server.",
-		SampleConfig: heredoc.Doc(`
-			base_url: grafana_server
-			api_key: your_api_key	  
-		`),
-		Summary: summary,
-		Tags:    []string{"GCP,extractor"},
+		Description:  "Dashboard list from Grafana server.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 
