@@ -6,9 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"github.com/pkg/errors"
 )
 
 type Agent struct {
@@ -30,6 +32,21 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 		monitor:          mt,
 		logger:           logger,
 	}
+}
+
+func (r *Agent) Validate(rcp recipe.Recipe) error {
+	for _, s := range rcp.Sinks {
+		sink, err := r.sinkFactory.Get(s.Name)
+		if err != nil {
+			return err
+		}
+		err = sink.Validate(s.Config)
+		if err != nil {
+			return errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink)
+		}
+	}
+
+	return nil
 }
 
 func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {

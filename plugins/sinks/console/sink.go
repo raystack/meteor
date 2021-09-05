@@ -2,6 +2,7 @@ package console
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 
@@ -10,12 +11,23 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+//go:embed meta.yaml
+var metaFile string
+
 type Sink struct {
 	logger log.Logger
 }
 
 func New() plugins.Syncer {
 	return new(Sink)
+}
+
+func (s *Sink) Info() (plugins.Info, error) {
+	return plugins.ParseInfo(metaFile)
+}
+
+func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
+	return nil
 }
 
 func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {

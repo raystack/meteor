@@ -1,0 +1,5 @@
+title: "Elastic Search"
+version: "v1"
+description: "Search engine based on the Lucene library."
+sample_config: |-
+  host: elastic_server

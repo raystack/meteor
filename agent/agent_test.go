@@ -237,6 +237,14 @@ func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
 	}
 }
 
+func (m *mockPassthroughSink) Info() (plugins.Info, error) {
+	return plugins.Info{}, nil
+}
+
+func (m *mockPassthroughSink) Validate(config map[string]interface{}) error {
+	return nil
+}
+
 func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) error {
 	if m.result == nil {
 		m.result = []interface{}{}

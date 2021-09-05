@@ -1,0 +1,7 @@
+title: "kafka"
+version: "v1"
+description: "Distributed event streaming platform"
+sample_config: |-
+  brokers: "localhost:9092"
+  topic: sample-topic-name
+  key_path: xxx

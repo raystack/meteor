@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	_ "embed"
 	"reflect"
 	"strings"
 
@@ -15,6 +16,9 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
 )
+
+//go:embed meta.yaml
+var metaFile string
 
 type Config struct {
 	Brokers string `mapstructure:"brokers" validate:"required"`
@@ -32,6 +36,14 @@ type Sink struct {
 
 func New() plugins.Syncer {
 	return new(Sink)
+}
+
+func (s *Sink) Info() (plugins.Info, error) {
+	return plugins.ParseInfo(metaFile)
+}
+
+func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) error {

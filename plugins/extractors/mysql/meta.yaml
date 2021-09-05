@@ -1,0 +1,7 @@
+title: "MySQL"
+version: "v1"
+description: "Open-source relational database management system"
+sample_config: |-
+  host: localhost:3306
+  user_id: admin
+  password: 1234

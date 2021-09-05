@@ -1,0 +1,5 @@
+title: "csv"
+version: "v1"
+description: "Comma-separated values file."
+sample_config: |-
+  path: ./path-to-a-file-or-a-directory

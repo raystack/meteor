@@ -1,0 +1,4 @@
+title: "console"
+version: "v1"
+description: "Log to standard output"
+sample_config:

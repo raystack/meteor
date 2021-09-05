@@ -3,6 +3,7 @@ package columbus
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +15,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
 )
+
+//go:embed meta.yaml
+var metaFile string
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -33,6 +37,14 @@ type Sink struct {
 func New(c httpClient) plugins.Syncer {
 	sink := &Sink{client: c}
 	return sink
+}
+
+func (s *Sink) Info() (plugins.Info, error) {
+	return plugins.ParseInfo(metaFile)
+}
+
+func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) (err error) {

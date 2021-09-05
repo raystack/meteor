@@ -1,0 +1,7 @@
+title: "MongoDB"
+version: "v1"
+description: "Document-oriented database program"
+sample_config: |-
+  host: localhost:27017
+  user_id: admin
+  password: 1234
