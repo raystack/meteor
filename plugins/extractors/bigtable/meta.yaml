@@ -1,5 +1,5 @@
-name: "bigtable"
-version: "1.0.0"
-description: "descr"
+title: "Bigtable"
+version: "v1"
+description: "Compressed, high-performance, proprietary data storage system."
 sample_config: |-
   project_id: google-project-id

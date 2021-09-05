@@ -9,8 +9,8 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
-	"github.com/pkg/errors"
 	"github.com/odpf/salt/log"
+	"github.com/pkg/errors"
 )
 
 type Agent struct {
@@ -40,7 +40,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) error {
 		if err != nil {
 			return err
 		}
-		err = sink.ValidateConfig(s.Config)
+		err = sink.Validate(s.Config)
 		if err != nil {
 			return errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink)
 		}

@@ -1,6 +1,6 @@
-name: "gcs"
-version: "1.0.0"
-description: "descr"
+title: "Google Cloud Storage"
+version: "v1"
+description: "Online file storage web service for storing and accessing data."
 sample_config: |-
   project_id: google-project-id
   extract_blob: true

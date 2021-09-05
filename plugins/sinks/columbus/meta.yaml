@@ -1,6 +1,6 @@
-name: "Columbus HTTP"
-version: "1.0.0"
-description: "descr"
+title: "Columbus HTTP"
+version: "v1"
+description: "Data discovery and lineage service"
 sample_config: |-
   host: https://columbus.com
   type: sample-columbus-type

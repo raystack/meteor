@@ -39,7 +39,11 @@ func New(c httpClient) plugins.Syncer {
 	return sink
 }
 
-func (s *Sink) ValidateConfig(configMap map[string]interface{}) (err error) {
+func (s *Sink) Info() (plugins.Info, error) {
+	return plugins.ParseInfo(metaFile)
+}
+
+func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
@@ -163,7 +167,7 @@ func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
 func init() {
 	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
 		return New(&http.Client{})
-	}, metaFile); err != nil {
+	}); err != nil {
 		panic(err)
 	}
 }

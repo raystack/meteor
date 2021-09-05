@@ -1,0 +1,4 @@
+title: "Date"
+version: "v1"
+description: "Print current dates from system."
+sample_config:

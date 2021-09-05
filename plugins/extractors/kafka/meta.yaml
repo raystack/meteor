@@ -1,5 +1,5 @@
-name: "kafka"
-version: "1.0.0"
-description: "descr"
+title: "Apache Kafka"
+version: "v1"
+description: "Distributed event streaming platform."
 sample_config: |-
   broker: "localhost:9092"

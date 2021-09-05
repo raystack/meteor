@@ -1,6 +1,6 @@
-name: "bigquery"
-version: "1.0.0"
-description: "descr"
+title: "BigQuery"
+version: "v1"
+description: "Fully-managed, serverless data warehouse."
 sample_config: |-
   project_id: google-project-id
   table_pattern: gofood.fact_

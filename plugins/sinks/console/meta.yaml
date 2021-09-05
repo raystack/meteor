@@ -1,3 +1,4 @@
-name: "console"
-version: "1.0.0"
-description: "descr"
+title: "console"
+version: "v1"
+description: "Log to standard output"
+sample_config:

@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	_ "embed"
 	"reflect"
 	"strings"
 
@@ -15,6 +16,9 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
 )
+
+//go:embed meta.yaml
+var metaFile string
 
 type Config struct {
 	Brokers string `mapstructure:"brokers" validate:"required"`
@@ -34,7 +38,11 @@ func New() plugins.Syncer {
 	return new(Sink)
 }
 
-func (s *Sink) ValidateConfig(configMap map[string]interface{}) (err error) {
+func (s *Sink) Info() (plugins.Info, error) {
+	return plugins.ParseInfo(metaFile)
+}
+
+func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
@@ -182,7 +190,7 @@ func createWriter(config Config) *kafka.Writer {
 func init() {
 	if err := registry.Sinks.Register("kafka", func() plugins.Syncer {
 		return &Sink{}
-	}, ""); err != nil {
+	}); err != nil {
 		panic(err)
 	}
 }

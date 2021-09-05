@@ -1,6 +1,6 @@
-name: "github"
-version: "1.0.0"
-description: "descr"
+title: "Github"
+version: "v1"
+description: "Git repository hosting service."
 sample_config: |-
   org: odpf
   token: github_token
