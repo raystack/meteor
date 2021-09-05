@@ -23,6 +23,7 @@ func ListCmd(lg log.Logger) *cobra.Command {
 	cmd.AddCommand(ListExtCmd())
 	cmd.AddCommand(ListSinksCmd())
 	cmd.AddCommand(ListProccCmd())
+
 	return cmd
 }
 
@@ -32,6 +33,9 @@ func ListExtCmd() *cobra.Command {
 		Use:     "extractors",
 		Example: "meteor list extractors",
 		Short:   "List available extractors",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			extractors := registry.Extractors.List()
 			fmt.Printf(" \nShowing %d of %d extractors\n \n", len(extractors), len(extractors))
@@ -47,6 +51,9 @@ func ListSinksCmd() *cobra.Command {
 		Use:     "sinks",
 		Example: "meteor list sinks",
 		Short:   "List available sinks",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			sinks := registry.Sinks.List()
 			fmt.Printf(" \nShowing %d of %d sinks\n \n", len(sinks), len(sinks))
@@ -62,6 +69,9 @@ func ListProccCmd() *cobra.Command {
 		Use:     "processors",
 		Example: "meteor list processors",
 		Short:   "List available processors",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			processors := registry.Processors.List()
 			fmt.Printf(" \nShowing %d of %d processors\n \n", len(processors), len(processors))
