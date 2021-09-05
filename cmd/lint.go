@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
@@ -19,8 +20,22 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
 		Args:    cobra.ExactValidArgs(1),
-		Example: "meteor lint recipe.yaml",
-		Short:   "Validate recipes.",
+		Short:   "Validate recipes",
+		Long: heredoc.Doc(`
+			Validate specified recipes.
+
+			Linters are run on the recipe files in the specified path.
+			If no path is specified, the current directory is used.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor lint recipe.yml
+
+			# lint all recipes in the specified directory
+			$ meteor lint _recipes/
+
+			# lint all recipes in the current directory
+			$ meteor lint .
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -36,20 +51,31 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 			if len(recipes) == 0 {
 				fmt.Println(cs.Yellowf("no recipe found in [%s]", args[0]))
+				fmt.Println(cs.Blue("\nUse 'meteor gen recipe' to generate a new recipe."))
 				return nil
 			}
 
+			report := []string{""}
+			var success = 0
+			var failures = 0
 			for _, recipe := range recipes {
 				errs := runner.Validate(recipe)
 				if len(errs) > 0 {
-					// Print errors
 					for _, err := range errs {
 						lg.Error(err.Error())
 					}
+					report = append(report, fmt.Sprint(cs.FailureIcon(), cs.Redf(" %d errors found is recipe %s", len(errs), recipe.Name)))
+					failures++
 					continue
 				}
-				fmt.Println(cs.Greenf("recipe [%s] is valid", recipe.Name))
+				report = append(report, fmt.Sprint(cs.SuccessIcon(), cs.Greenf(" 0 error found in recipe %s", recipe.Name)))
+				success++
 			}
+
+			for _, line := range report {
+				fmt.Println(line)
+			}
+			fmt.Printf("Total: %d, Success: %d, Failures: %d\n", len(recipes), success, failures)
 			return nil
 		},
 	}
