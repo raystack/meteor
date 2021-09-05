@@ -12,6 +12,14 @@ import (
 type mockExtractor struct {
 }
 
+func (p *mockExtractor) Info() plugins.Info {
+	return plugins.Info{}
+}
+
+func (p *mockExtractor) Validate(map[string]interface{}) error {
+	return nil
+}
+
 func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
 	return nil
 }

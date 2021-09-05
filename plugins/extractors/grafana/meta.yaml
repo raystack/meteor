@@ -1,6 +1,0 @@
-title: "Grafana"
-version: "v1"
-description: "Open source analytics & monitoring solution"
-sample_config: |-
-  base_url: grafana_server
-  api_key: your_api_key

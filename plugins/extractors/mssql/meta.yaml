@@ -1,7 +1,0 @@
-title: "Microsoft SQL Server"
-version: "v1"
-description: "Relational database management system."
-sample_config: |-
-  host: localhost:1433
-  user_id: admin
-  password: 1234

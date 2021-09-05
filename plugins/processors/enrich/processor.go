@@ -2,16 +2,37 @@ package enrich
 
 import (
 	"context"
+	_ "embed"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 )
 
+//go:embed README.md
+var summary string
+
 type Processor struct{}
 
 func New() *Processor {
 	return new(Processor)
+}
+
+func (p *Processor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Send metadata to columbus http service",
+		SampleConfig: heredoc.Doc(`
+			fieldA: valueA
+			fieldB: valueB
+		`),
+		Summary: summary,
+		Tags:    []string{"http,sink"},
+	}
+}
+
+func (p *Processor) Validate(configMap map[string]interface{}) (err error) {
+	return nil
 }
 
 func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {

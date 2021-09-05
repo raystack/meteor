@@ -1,7 +1,0 @@
-title: "PostgreSQL"
-version: "v1"
-description: "Open source object-relational database system."
-sample_config: |-
-  host: localhost:5432
-  user_id: admin
-  password: 1234

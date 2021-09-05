@@ -184,6 +184,14 @@ func newMockExtractor() plugins.Extractor {
 	return &mockExtractor{}
 }
 
+func (t *mockExtractor) Info() plugins.Info {
+	return plugins.Info{}
+}
+
+func (t *mockExtractor) Validate(config map[string]interface{}) error {
+	return nil
+}
+
 func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
 	data := []assets.Table{
 		{
@@ -212,6 +220,14 @@ func newMockProcessor() plugins.Processor {
 	return &mockProcessor{}
 }
 
+func (t *mockProcessor) Info() plugins.Info {
+	return plugins.Info{}
+}
+
+func (t *mockProcessor) Validate(config map[string]interface{}) error {
+	return nil
+}
+
 func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
 	for data := range in {
 		table, ok := data.(assets.Table)
@@ -237,8 +253,8 @@ func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
 	}
 }
 
-func (m *mockPassthroughSink) Info() (plugins.Info, error) {
-	return plugins.Info{}, nil
+func (m *mockPassthroughSink) Info() plugins.Info {
+	return plugins.Info{}
 }
 
 func (m *mockPassthroughSink) Validate(config map[string]interface{}) error {
@@ -275,6 +291,14 @@ func newFailedProcessor() plugins.Processor {
 	return &failedProcessor{}
 }
 
+func (t *failedProcessor) Info() plugins.Info {
+	return plugins.Info{}
+}
+
+func (t *failedProcessor) Validate(config map[string]interface{}) error {
+	return nil
+}
+
 func (t *failedProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
 	for range in {
 		return errors.New("failed processor")
@@ -287,6 +311,14 @@ type failedExtractor struct{}
 
 func newFailedExtractor() plugins.Extractor {
 	return &failedExtractor{}
+}
+
+func (t *failedExtractor) Info() plugins.Info {
+	return plugins.Info{}
+}
+
+func (t *failedExtractor) Validate(config map[string]interface{}) error {
+	return nil
 }
 
 func (e *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {

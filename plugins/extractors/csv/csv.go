@@ -2,6 +2,7 @@ package csv
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
@@ -22,6 +24,9 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+//go:embed README.md
+var summary string
+
 type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }
@@ -34,6 +39,21 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Comma seperated file",
+		SampleConfig: heredoc.Doc(`
+			path: ./path-to-a-file-or-a-directory
+		`),
+		Summary: summary,
+		Tags:    []string{"GCP,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

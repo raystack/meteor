@@ -2,7 +2,9 @@ package kafka
 
 import (
 	"context"
+	_ "embed"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -12,6 +14,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
+
+//go:embed README.md
+var summary string
 
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
@@ -30,6 +35,21 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Topic list from Apache Kafka.",
+		SampleConfig: heredoc.Doc(`
+			broker: "localhost:9092"
+		`),
+		Summary: summary,
+		Tags:    []string{"oss,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

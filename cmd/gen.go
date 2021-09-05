@@ -29,6 +29,9 @@ func ExtCmd() *cobra.Command {
 		Args:    cobra.ExactValidArgs(1),
 		Example: "meteor recipe ext --type=topic",
 		Short:   "Generate a new recipe",
+		Annotations: map[string]string{
+			"group:core": "true",
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			generator.Recipe(args[0])
 		},

@@ -3,8 +3,10 @@ package mssql
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/salt/log"
 
 	"github.com/odpf/meteor/plugins"
@@ -15,6 +17,9 @@ import (
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/utils"
 )
+
+//go:embed README.md
+var summary string
 
 var defaultDBList = []string{
 	"master",
@@ -41,6 +46,23 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Table metdata from MSSQL server",
+		SampleConfig: heredoc.Doc(`
+			host: localhost:1433
+			user_id: admin
+			password: 1234	  
+		`),
+		Summary: summary,
+		Tags:    []string{"microsoft,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

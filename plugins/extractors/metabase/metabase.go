@@ -3,6 +3,7 @@ package metabase
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -17,6 +19,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
+
+//go:embed README.md
+var summary string
 
 var (
 	client = &http.Client{
@@ -41,6 +46,23 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Dashboard list from Metabase server.",
+		SampleConfig: heredoc.Doc(`
+			host: http://localhost:3000
+			user_id: meteor_tester
+			password: meteor_pass_1234
+		`),
+		Summary: summary,
+		Tags:    []string{"oss,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel

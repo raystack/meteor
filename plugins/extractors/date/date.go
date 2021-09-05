@@ -2,6 +2,7 @@ package date
 
 import (
 	"context"
+	_ "embed"
 	"time"
 
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -12,12 +13,28 @@ import (
 	"github.com/odpf/salt/log"
 )
 
+//go:embed README.md
+var summary string
+
 const (
 	MaxDates = 3
 )
 
 type Extractor struct {
 	logger log.Logger
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description:  "Print current date from system",
+		SampleConfig: "",
+		Summary:      summary,
+		Tags:         []string{"GCP,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return nil
 }
 
 func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
