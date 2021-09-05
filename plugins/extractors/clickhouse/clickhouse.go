@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	_ "github.com/ClickHouse/clickhouse-go"
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -28,6 +27,11 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
+var sampleConfig = `
+ host: localhost:9000
+ user_id: admin
+ password: 1234`
+
 type Extractor struct {
 	out chan<- interface{}
 
@@ -42,14 +46,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Column-oriented DBMS for online analytical processing.",
-		SampleConfig: heredoc.Doc(`
-			host: localhost:9000
-			user_id: admin
-			password: 1234
-		`),
-		Summary: summary,
-		Tags:    []string{"GCP,extractor"},
+		Description:  "Column-oriented DBMS for online analytical processing.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

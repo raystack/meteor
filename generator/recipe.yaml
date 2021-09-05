@@ -1,0 +1,16 @@
+name: {{.Name}}
+source:
+{{- range $key, $value := .Source }}
+  type: {{$key}}
+  config: {{$value}}
+{{- end }}
+sinks:
+{{- range $key, $value := .Sinks }}
+  - name: {{$key}}
+    config: {{$value}}
+{{- end }}
+processors:
+{{- range $key, $value := .Processors }}
+  - name: {{$key}}
+    config: {{$value}}
+{{- end }}

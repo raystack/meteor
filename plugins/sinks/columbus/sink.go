@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -20,14 +19,25 @@ import (
 //go:embed README.md
 var summary string
 
-type httpClient interface {
-	Do(*http.Request) (*http.Response, error)
-}
-
 type Config struct {
 	Host    string            `mapstructure:"host" validate:"required"`
 	Type    string            `mapstructure:"type" validate:"required"`
 	Mapping map[string]string `mapstructure:"mapping"`
+}
+
+var sampleConfig = `
+  # The hostnmame of the columbus service
+  host: https://columbus.com
+  # The type of the data to send
+  type: sample-columbus-type
+  # Create a mapping from the fields in the data to the fields in the columbus
+  # mapping:
+  #   new_fieldname: "json_field_name"
+  #   id: "resource.urn"
+  #   displayName: "resource.name"`
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
 }
 
 type Sink struct {
@@ -42,17 +52,10 @@ func New(c httpClient) plugins.Syncer {
 
 func (s *Sink) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Send metadata to columbus http service",
-		SampleConfig: heredoc.Doc(`
-  			host: https://columbus.com
-  			type: sample-columbus-type
-  			mapping:
-    			new_fieldname: "json_field_name"
-    			id: "resource.urn"
-    			displayName: "resource.name"
-		`),
-		Summary: summary,
-		Tags:    []string{"http,sink"},
+		Description:  "Send metadata to columbus http service",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"http,sink"},
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
@@ -31,6 +30,9 @@ type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }
 
+var sampleConfig = `
+ path: ./path-to-a-file-or-a-directory`
+
 type Extractor struct {
 	logger log.Logger
 }
@@ -43,12 +45,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Comma seperated file",
-		SampleConfig: heredoc.Doc(`
-			path: ./path-to-a-file-or-a-directory
-		`),
-		Summary: summary,
-		Tags:    []string{"GCP,extractor"},
+		Description:  "Comma seperated file",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"file,extractor"},
 	}
 }
 

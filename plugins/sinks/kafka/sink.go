@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -27,6 +26,14 @@ type Config struct {
 	KeyPath string `mapstructure:"key_path"`
 }
 
+var sampleConfig = `
+ # Kafka broker addresses
+ brokers: "localhost:9092"
+ # The Kafka topic to write to
+ topic: sample-topic-name
+ # The path to the key field in the payload
+ key_path: xxx`
+
 type ProtoReflector interface {
 	ProtoReflect() protoreflect.Message
 }
@@ -41,14 +48,10 @@ func New() plugins.Syncer {
 
 func (s *Sink) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Sink metadata to Apache Kafka topic",
-		Summary:     summary,
-		SampleConfig: heredoc.Doc(`
-			brokers: "localhost:9092"
-			topic: sample-topic-name
-			key_path: xxx
-		`),
-		Tags: []string{"kafka", "topic", "sink"},
+		Description:  "Sink metadata to Apache Kafka topic",
+		Summary:      summary,
+		SampleConfig: sampleConfig,
+		Tags:         []string{"kafka", "topic", "sink"},
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -23,19 +22,20 @@ type Config struct {
 	Token string `mapstructure:"token" validate:"required"`
 }
 
+var sampleConfig = `
+ org: odpf
+ token: github_token`
+
 type Extractor struct {
 	logger log.Logger
 }
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "User list from Github organisation.",
-		SampleConfig: heredoc.Doc(`
-			org: odpf
-			token: github_token
-		`),
-		Summary: summary,
-		Tags:    []string{"GCP,extractor"},
+		Description:  "User list from Github organisation.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"platform,extractor"},
 	}
 }
 

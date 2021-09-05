@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -34,6 +33,11 @@ type Config struct {
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
+var sampleConfig = `
+ host: localhost:27017
+ user_id: admin
+ password: 1234`
+
 type Extractor struct {
 	// internal states
 	out       chan<- interface{}
@@ -52,14 +56,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Collection metadata from MongoDB Server",
-		SampleConfig: heredoc.Doc(`
-			host: localhost:27017
-			user_id: admin
-			password: 1234
-		`),
-		Summary: summary,
-		Tags:    []string{"oss,extractor"},
+		Description:  "Collection metadata from MongoDB Server",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

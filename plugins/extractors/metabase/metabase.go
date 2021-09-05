@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -28,6 +27,11 @@ var (
 		Timeout: 4 * time.Second,
 	}
 )
+
+var sampleConfig = `
+ host: http://localhost:3000
+ user_id: meteor_tester
+ password: meteor_pass_1234`
 
 type Config struct {
 	UserID    string `mapstructure:"user_id" validate:"required"`
@@ -50,14 +54,10 @@ func New(logger log.Logger) *Extractor {
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Dashboard list from Metabase server.",
-		SampleConfig: heredoc.Doc(`
-			host: http://localhost:3000
-			user_id: meteor_tester
-			password: meteor_pass_1234
-		`),
-		Summary: summary,
-		Tags:    []string{"oss,extractor"},
+		Description:  "Dashboard list from Metabase server.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss,extractor"},
 	}
 }
 

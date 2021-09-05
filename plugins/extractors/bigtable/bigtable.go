@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
@@ -26,6 +25,9 @@ type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
 }
 
+var sampleConfig = `
+ project_id: google-project-id`
+
 type Extractor struct {
 	logger log.Logger
 }
@@ -41,12 +43,10 @@ var (
 
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description: "Compressed, high-performance, proprietary data storage system.",
-		SampleConfig: heredoc.Doc(`
-		  project_id: google-project-id
-		`),
-		Summary: summary,
-		Tags:    []string{"gcp,extractor"},
+		Description:  "Compressed, high-performance, proprietary data storage system.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"gcp,extractor"},
 	}
 }
 
