@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
@@ -31,8 +32,21 @@ func ListCmd(lg log.Logger) *cobra.Command {
 func ListExtCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "extractors",
-		Example: "meteor list extractors",
+		Aliases: []string{"e"},
 		Short:   "List available extractors",
+		Long: heredoc.Doc(`
+			List available extractors
+
+			This command lists all available extractors.
+			Extractors are used to extract metadata from a source.
+			For example, you can use an extractor to extract metadata from a file.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor list extractors
+
+			# list all extractors with alias 'e'
+			$ meteor list e
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -49,8 +63,21 @@ func ListExtCmd() *cobra.Command {
 func ListSinksCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "sinks",
-		Example: "meteor list sinks",
+		Aliases: []string{"s"},
 		Short:   "List available sinks",
+		Long: heredoc.Doc(`
+			List available sinks
+
+			This command lists all available sinks.
+			Sinks are used to send data to a target.
+			For example, you can use a sink to send metadata to standard output.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor list sinks
+
+			# list all sinks with alias 's'
+			$ meteor list s
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -67,8 +94,21 @@ func ListSinksCmd() *cobra.Command {
 func ListProccCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "processors",
-		Example: "meteor list processors",
+		Aliases: []string{"p"},
 		Short:   "List available processors",
+		Long: heredoc.Doc(`
+			List available processors
+
+			This command lists all available processors.
+			Processors are used to transform data before it is sent to a sink.
+			For example, you can use a processor to enrich custom attributes.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor list processors
+
+			# list all processors with alias 'p'
+			$ meteor list p
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},

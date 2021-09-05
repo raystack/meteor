@@ -3,6 +3,7 @@ package cmd
 import (
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/generator"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
@@ -25,31 +26,49 @@ func GenCmd(lg log.Logger) *cobra.Command {
 
 // GenRecipeCmd creates a command object for generating recipes
 func GenRecipeCmd() *cobra.Command {
+	var (
+		extractor  string
+		sinks      string
+		processors string
+	)
+
 	cmd := &cobra.Command{
 		Use:     "recipe [name]",
 		Aliases: []string{"r"},
 		Args:    cobra.ExactValidArgs(1),
-		Example: "meteor gen recipe sample -e bigquery -s console,kafka -p enrich",
 		Short:   "Generate a new recipe",
+		Long: heredoc.Doc(`
+			Generate a new recipe.
+
+			The recipe will be printed on standard output.
+			Specify recipe name with the first argument without extension.
+			Use commma to separate multiple sinks and processors.
+		`),
+		Example: heredoc.Doc(`
+			# generate a recipe with a bigquery extractor and a console sink
+			$ meteor gen recipe sample -e bigquery -s console
+
+			# generate recipe with multiple sinks
+			$ meteor gen recipe sample -e bigquery -s columbus,kafka -p enrich
+
+			# store recipe to a file
+			$ meteor gen recipe sample -e bigquery -s columbus > recipe.yaml
+		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			sinkList := strings.Split(sinks, ",")
+			procList := strings.Split(processors, ",")
 
-			ext, _ := cmd.Flags().GetString("extractor")
-			s, _ := cmd.Flags().GetString("sinks")
-			p, _ := cmd.Flags().GetString("processors")
-
-			sinks := strings.Split(s, ",")
-			processors := strings.Split(p, ",")
-
-			generator.Recipe(args[0], ext, sinks, processors)
+			// TODO: validate extractor and sink names
+			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}
 
-	cmd.PersistentFlags().StringP("extraactor", "e", "", "Type of extractor")
-	cmd.PersistentFlags().StringP("sinks", "s", "", "List of sinks types")
-	cmd.PersistentFlags().StringP("processors", "p", "", "List of processor types")
+	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
+	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sinks types")
+	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
 
 	return cmd
 }

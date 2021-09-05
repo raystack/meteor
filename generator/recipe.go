@@ -22,7 +22,6 @@ type Template struct {
 }
 
 func Recipe(name string, source string, sinks []string, processors []string) error {
-
 	tem := Template{
 		Name:       name,
 		Source:     make(map[string]string),

@@ -19,7 +19,7 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
 }
 
-func (f *ExtractorFactory) Info(name string) (info plugins.Info, err error) {
+func (f *ExtractorFactory) Info(name string) (plugins.Info, error) {
 	sink, err := f.Get(name)
 	if err != nil {
 		return plugins.Info{}, err
