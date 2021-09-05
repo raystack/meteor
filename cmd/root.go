@@ -36,11 +36,11 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	cmd.SetUsageFunc(RootUsageFunc)
 	cmd.SetFlagErrorFunc(RootFlagErrorFunc)
 
-	cmd.AddCommand(RunCmd(lg, mt))
 	cmd.AddCommand(GenCmd(lg))
 	cmd.AddCommand(ListCmd(lg))
-	cmd.AddCommand(LintCmd(lg))
 	cmd.AddCommand(InfoCmd(lg))
+	cmd.AddCommand(RunCmd(lg, mt))
+	cmd.AddCommand(LintCmd(lg, mt))
 
 	return cmd
 }
