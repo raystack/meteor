@@ -3,9 +3,11 @@ package clickhouse
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 
 	_ "github.com/ClickHouse/clickhouse-go"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -16,6 +18,9 @@ import (
 )
 
 var db *sql.DB
+
+//go:embed README.md
+var summary string
 
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -33,6 +38,23 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Column-oriented DBMS for online analytical processing.",
+		SampleConfig: heredoc.Doc(`
+			host: localhost:9000
+			user_id: admin
+			password: 1234
+		`),
+		Summary: summary,
+		Tags:    []string{"GCP,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

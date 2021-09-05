@@ -2,9 +2,11 @@ package mongodb
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"sort"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -15,6 +17,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+//go:embed README.md
+var summary string
 
 var defaultCollections = []string{
 	"system.users",
@@ -43,6 +48,23 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Collection metadata from MongoDB Server",
+		SampleConfig: heredoc.Doc(`
+			host: localhost:27017
+			user_id: admin
+			password: 1234
+		`),
+		Summary: summary,
+		Tags:    []string{"oss,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

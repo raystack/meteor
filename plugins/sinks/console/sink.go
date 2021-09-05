@@ -11,8 +11,8 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-//go:embed meta.yaml
-var metaFile string
+//go:embed README.md
+var summary string
 
 type Sink struct {
 	logger log.Logger
@@ -22,8 +22,13 @@ func New() plugins.Syncer {
 	return new(Sink)
 }
 
-func (s *Sink) Info() (plugins.Info, error) {
-	return plugins.ParseInfo(metaFile)
+func (s *Sink) Info() plugins.Info {
+	return plugins.Info{
+		Description:  "Log to standard output",
+		SampleConfig: "",
+		Summary:      summary,
+		Tags:         []string{"log", "sink"},
+	}
 }
 
 func (s *Sink) Validate(configMap map[string]interface{}) (err error) {

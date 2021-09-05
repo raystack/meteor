@@ -2,10 +2,12 @@ package bigtable
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"sync"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
@@ -16,6 +18,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
+
+//go:embed README.md
+var summary string
 
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
@@ -33,6 +38,21 @@ var (
 	instanceAdminClientCreator = createInstanceAdminClient
 	instanceInfoGetter         = getInstancesInfo
 )
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Compressed, high-performance, proprietary data storage system.",
+		SampleConfig: heredoc.Doc(`
+		  project_id: google-project-id
+		`),
+		Summary: summary,
+		Tags:    []string{"gcp,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
+}
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting bigtable metadata...")

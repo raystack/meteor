@@ -2,9 +2,11 @@ package grafana
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net/http"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -12,6 +14,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
+
+//go:embed README.md
+var summary string
 
 type Config struct {
 	BaseURL string `mapstructure:"base_url" validate:"required"`
@@ -29,6 +34,22 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Dashboard list from Grafana server.",
+		SampleConfig: heredoc.Doc(`
+			base_url: grafana_server
+			api_key: your_api_key	  
+		`),
+		Summary: summary,
+		Tags:    []string{"GCP,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

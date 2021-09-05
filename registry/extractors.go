@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"strings"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
 )
@@ -17,17 +19,18 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
 }
 
-func (f *ExtractorFactory) GetInfo(name string) (plugins.Extractor, error) {
-	if fn, ok := f.fnStore[name]; ok {
-		return fn(), nil
+func (f *ExtractorFactory) Info(name string) (info plugins.Info, err error) {
+	sink, err := f.Get(name)
+	if err != nil {
+		return plugins.Info{}, err
 	}
-	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
+	return sink.Info(), nil
 }
 
 func (f *ExtractorFactory) List() (names [][]string) {
-
 	for name := range f.fnStore {
-		names = append(names, []string{name, "extractor"})
+		info, _ := f.Info(name)
+		names = append(names, []string{name, info.Description, strings.Join(info.Tags, ",")})
 	}
 	return
 }

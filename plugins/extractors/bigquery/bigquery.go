@@ -2,6 +2,7 @@ package bigquery
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,6 +10,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -21,6 +23,9 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+//go:embed README.md
+var summary string
 
 const (
 	previewTotalRows = 30
@@ -37,6 +42,35 @@ type Extractor struct {
 	logger log.Logger
 	client *bigquery.Client
 	config Config
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Big Query table metadata and metrics",
+		SampleConfig: heredoc.Doc(`
+			project_id: google-project-id
+			table_pattern: gofood.fact_
+			profile_column: true
+			credentials_json:
+			  {
+				"type": "service_account",
+				"private_key_id": "xxxxxxx",
+				"private_key": "xxxxxxx",
+				"client_email": "xxxxxxx",
+				"client_id": "xxxxxxx",
+				"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+				"token_uri": "https://oauth2.googleapis.com/token",
+				"auth_provider_x509_cert_url": "xxxxxxx",
+				"client_x509_cert_url": "xxxxxxx"
+			  }
+		`),
+		Summary: summary,
+		Tags:    []string{"gcp,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {

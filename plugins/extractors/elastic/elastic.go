@@ -2,10 +2,12 @@ package elastic
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"reflect"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -15,6 +17,9 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 )
+
+//go:embed README.md
+var summary string
 
 type Config struct {
 	User     string `mapstructure:"user"`
@@ -31,6 +36,21 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Search engine based on the Lucene library.",
+		SampleConfig: heredoc.Doc(`
+			host: elastic_server
+		`),
+		Summary: summary,
+		Tags:    []string{"oss,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

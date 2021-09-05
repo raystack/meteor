@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"strings"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
 )
@@ -17,19 +19,18 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
 }
 
-// func (f *SinkFactory) GetInfo(name string) (info plugins.PluginInfo, err error) {
-// 	path, ok := f.infoStore[name]
-// 	if !ok {
-// 		return info, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
-// 	}
-
-// 	return buildPluginInfo(path)
-// }
+func (f *SinkFactory) Info(name string) (info plugins.Info, err error) {
+	sink, err := f.Get(name)
+	if err != nil {
+		return plugins.Info{}, err
+	}
+	return sink.Info(), nil
+}
 
 func (f *SinkFactory) List() (names [][]string) {
-
 	for name := range f.fnStore {
-		names = append(names, []string{name, "sink"})
+		info, _ := f.Info(name)
+		names = append(names, []string{name, info.Description, strings.Join(info.Tags, ",")})
 	}
 	return
 }
@@ -38,8 +39,6 @@ func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate syncer: %s", name)
 	}
-
 	f.fnStore[name] = fn
-
 	return
 }

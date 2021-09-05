@@ -2,8 +2,10 @@ package gcs
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/proto/odpf/assets/facets"
@@ -17,6 +19,9 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
+
+//go:embed README.md
+var summary string
 
 const (
 	metadataSource = "googlecloudstorage"
@@ -39,6 +44,34 @@ func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Online file storage web service for storing and accessing data.",
+		SampleConfig: heredoc.Doc(`
+			project_id: google-project-id
+			extract_blob: true
+			credentials_json:
+			  {
+				"type": "service_account",
+				"private_key_id": "xxxxxxx",
+				"private_key": "xxxxxxx",
+				"client_email": "xxxxxxx",
+				"client_id": "xxxxxxx",
+				"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+				"token_uri": "https://oauth2.googleapis.com/token",
+				"auth_provider_x509_cert_url": "xxxxxxx",
+				"client_x509_cert_url": "xxxxxxx"
+			  }  
+		`),
+		Summary: summary,
+		Tags:    []string{"gcp,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

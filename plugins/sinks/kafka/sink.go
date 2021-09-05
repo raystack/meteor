@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -17,8 +18,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-//go:embed meta.yaml
-var metaFile string
+//go:embed README.md
+var summary string
 
 type Config struct {
 	Brokers string `mapstructure:"brokers" validate:"required"`
@@ -38,8 +39,17 @@ func New() plugins.Syncer {
 	return new(Sink)
 }
 
-func (s *Sink) Info() (plugins.Info, error) {
-	return plugins.ParseInfo(metaFile)
+func (s *Sink) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Sink metadata to Apache Kafka topic",
+		Summary:     summary,
+		SampleConfig: heredoc.Doc(`
+			brokers: "localhost:9092"
+			topic: sample-topic-name
+			key_path: xxx
+		`),
+		Tags: []string{"kafka", "topic", "sink"},
+	}
 }
 
 func (s *Sink) Validate(configMap map[string]interface{}) (err error) {

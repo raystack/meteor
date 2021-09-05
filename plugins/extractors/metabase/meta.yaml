@@ -1,7 +1,0 @@
-title: "Metabase"
-version: "v1"
-description: "Open source business intelligence tool."
-sample_config: |-
-  host: http://localhost:3000
-  user_id: meteor_tester
-  password: meteor_pass_1234

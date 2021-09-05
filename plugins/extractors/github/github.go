@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	_ "embed"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -13,6 +15,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
+//go:embed README.md
+var summary string
+
 type Config struct {
 	Org   string `mapstructure:"org" validate:"required"`
 	Token string `mapstructure:"token" validate:"required"`
@@ -20,6 +25,22 @@ type Config struct {
 
 type Extractor struct {
 	logger log.Logger
+}
+
+func (e *Extractor) Info() plugins.Info {
+	return plugins.Info{
+		Description: "User list from Github organisation.",
+		SampleConfig: heredoc.Doc(`
+			org: odpf
+			token: github_token
+		`),
+		Summary: summary,
+		Tags:    []string{"GCP,extractor"},
+	}
+}
+
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {

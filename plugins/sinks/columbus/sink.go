@@ -10,14 +10,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
 )
 
-//go:embed meta.yaml
-var metaFile string
+//go:embed README.md
+var summary string
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -39,8 +40,20 @@ func New(c httpClient) plugins.Syncer {
 	return sink
 }
 
-func (s *Sink) Info() (plugins.Info, error) {
-	return plugins.ParseInfo(metaFile)
+func (s *Sink) Info() plugins.Info {
+	return plugins.Info{
+		Description: "Send metadata to columbus http service",
+		SampleConfig: heredoc.Doc(`
+  			host: https://columbus.com
+  			type: sample-columbus-type
+  			mapping:
+    			new_fieldname: "json_field_name"
+    			id: "resource.urn"
+    			displayName: "resource.name"
+		`),
+		Summary: summary,
+		Tags:    []string{"http,sink"},
+	}
 }
 
 func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
