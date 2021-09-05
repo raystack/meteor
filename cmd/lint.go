@@ -40,10 +40,15 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			}
 
 			for _, recipe := range recipes {
-				if err := runner.Validate(recipe); err != nil {
-					lg.Error(err.Error())
+				errs := runner.Validate(recipe)
+				if len(errs) > 0 {
+					// Print errors
+					for _, err := range errs {
+						lg.Error(err.Error())
+					}
 					continue
 				}
+				fmt.Println(cs.Greenf("recipe [%s] is valid", recipe.Name))
 			}
 			return nil
 		},

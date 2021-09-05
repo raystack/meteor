@@ -34,19 +34,41 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 	}
 }
 
-func (r *Agent) Validate(rcp recipe.Recipe) error {
-	for _, s := range rcp.Sinks {
-		sink, err := r.sinkFactory.Get(s.Name)
+func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
+	ext, err := r.extractorFactory.Get(rcp.Source.Type)
+	if err != nil {
+		errs = append(errs, errors.Wrapf(err, "could not find %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+	} else {
+		err = ext.Validate(rcp.Source.Config)
 		if err != nil {
-			return err
-		}
-		err = sink.Validate(s.Config)
-		if err != nil {
-			return errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink)
+			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 		}
 	}
 
-	return nil
+	for _, s := range rcp.Sinks {
+		sink, err := r.sinkFactory.Get(s.Name)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "could not find %s (%s)", s.Name, plugins.PluginTypeSink))
+			continue
+		}
+		err = sink.Validate(s.Config)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink))
+		}
+	}
+
+	for _, p := range rcp.Processors {
+		procc, err := r.processorFactory.Get(p.Name)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "could not find %s (%s)", p.Name, plugins.PluginTypeProcessor))
+			continue
+		}
+		err = procc.Validate(p.Config)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", p.Name, plugins.PluginTypeProcessor))
+		}
+	}
+	return
 }
 
 func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
