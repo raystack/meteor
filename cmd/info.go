@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/charmbracelet/glamour"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -28,10 +29,17 @@ func InfoCmd(lg log.Logger) *cobra.Command {
 // InfoSinkCmd creates a command object for listing sinks
 func InfoSinkCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "sink <name>",
-		Example: "meteor info sink console",
-		Short:   "Vew an sink information",
-		Args:    cobra.ExactArgs(1),
+		Use:   "sink <name>",
+		Short: "Vew sink information",
+		Long: heredoc.Doc(`
+			View sink information.
+			
+			The list of supported sinks is available via the 'meteor list sinks' command.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor info sink console
+		`),
+		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -51,10 +59,17 @@ func InfoSinkCmd() *cobra.Command {
 // InfoExtCmd creates a command object for listing extractors
 func InfoExtCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "extractor <name>",
-		Example: "meteor info extractor kafka",
-		Short:   "Vew extractor information",
-		Args:    cobra.ExactArgs(1),
+		Use:   "extractor <name>",
+		Short: "Vew extractor information",
+		Long: heredoc.Doc(`
+			View sink information.
+			
+			The list of supported extractors is available via the 'meteor list extractors' command.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor info sink console
+		`),
+		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -73,10 +88,17 @@ func InfoExtCmd() *cobra.Command {
 // InfoProccCmd creates a command object for listing processors
 func InfoProccCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "processor <name>",
-		Example: "meteor info processor enrich",
-		Short:   "Vew processor information",
-		Args:    cobra.ExactArgs(1),
+		Use:   "processor <name>",
+		Short: "Vew processor information",
+		Long: heredoc.Doc(`
+			View processor information.
+			
+			The list of supported processors is available via the 'meteor list processors' command.
+		`),
+		Example: heredoc.Doc(`
+			$ meteor info sink console
+		`),
+		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
