@@ -9,22 +9,31 @@ Read more about the concepts on each of these in [concepts](../concepts/README.m
 
 ## List of available commands
 
-Meteor currently supports
+Meteor currently supports the following commands and these can be utilised after the installation:
 
-* completion
-* gen
-* help
-* info
-* lint
-* list
-* run
+* completion: generate the autocompletion script for the specified shell
 
-## Creating Sample recipe\(s\)
+* [gen](#creating-sample-recipes): ```meteor gen recipe <filename> [flags]```
+
+* help: ```meteor help```
+
+* info: ```meteor info <plugins-type> <plugin-name>```
+
+* lint: ```meteor lint [path]```
+
+* list: ```meteor list <command> [flags]```
+
+* run: ```meteor run sample-recipe.yaml```
+
+## Generating Sample recipe\(s\)
 
 Since recipe is the main resource of Meteor, we first need to create it before anything else.
+You can create a sample recipe usin the gen command.
 
 ```bash
-#generate a sample recipe
+#generate a sample recipe.yaml file for extracor as postgres, multiple sinks and enrich processor.
+# save the generated recipe to a recipe.yaml
+meteor gen recipe sample -e postgres -s columbus,kafka -p enrich > recipe.yaml
 ```
 
 Then edit the recipe file using [this guide](../concepts/recipe.md).
