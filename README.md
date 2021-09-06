@@ -5,24 +5,41 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/odpf/meteor?logo=semantic-release)](Version)
 
-Meteor is a metadata collector tool that helps to extract and sink metadata from the source to the destination.
+Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to source metadata from a variety of data stores, services and message queues. It also has sink plugins to send metadata to variety of third party APIs and catalog services.
 
 <p align="center"><img src="./docs/assets/overview.svg" /></p>
 
 ## Key Features
 
-* **Metadata Extractions** Easily orchestrate your metadata extraction via recipe and Meteor's built-in features.
-* **Scale:** Meteor scales in an instant, both vertically and horizontally for high performance.
+* **No Dependency** Written in Go. It compiles into a single binary with no external dependency.
+* **Extensible** Plugin system allows new sources and sinks to be easily added.
+* **Ecosystem** Extract metadata for many popular services with a wide number of service plugins.
 * **Customizable:** Add your own processors and sinks to suit your many use cases.
-* **Runtime:** Meteor can run inside VMs or containers in a fully managed runtime environment like kubernetes.
+* **Runtime:** Meteor can run inside VMs or containers with minimal memory footprint.
 
-## Usage
+## Documentation
 
 Explore the following resources to get started with Meteor:
 
-* [Usage Guides](docs/guides/usage.md) will help you get started on Meteor.
-* [Concepts](docs/concepts) describes all important Meteor concepts.
-* [Contribute](docs/contribute/contributing.md) contains resources for anyone who wants to contribute to Meteor.
+* [Usage Guides](https://odpf.gitbook.io/meteor/guides/usage) will help you get started on Meteor.
+* [Concepts](https://odpf.gitbook.io/meteor/concepts/overview) describes all important Meteor concepts.
+* [Contribute](https://odpf.gitbook.io/meteor/contribute/contributing) contains resources for anyone who wants to contribute to Meteor.
+
+## Installtion 
+
+`meteor` is available via Homebrew and as a downloadable binary from the [releases](https://github.com/odpf/meteor/releases) page.
+
+**Homebrew**
+```sh
+# install meteor (requires homebrew installed)
+$ brew install odpf/taps/meteor
+
+# upgrade meteor (requires homebrew installed)
+$ brew upgrade meteor
+
+# check for meteor installation
+$ meteor --help
+```
 
 ## Running locally
 
@@ -40,7 +57,7 @@ $ make build
 $ ./meteor run sample-recipe.yaml
 
 # Run meteor on multiple recipes in a directory
-$ ./meteor rundir directory-path
+$ ./meteor run directory-path
 ```
 
 ## Running tests
