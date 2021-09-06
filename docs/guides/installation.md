@@ -1,13 +1,29 @@
 # Installation
 
-After it first release, meteor one can install meteor on various OS as follows:
+Meteor can be installed currently by one of the following ways:
 
-## brew taps for macOS
+## using brew
 
-```$ brew install odpf/taps/meteor```
+```sh
+# install meteor (requires homebrew installed)
+$ brew install odpf/taps/meteor
 
-## snap for linux
+# Get info about meteor
+$ meteor
 
-## scoop for windows
+# list down all the supported extractors, sinks, and processors
+$ meteor list extractors
+```
 
 ## using docker image
+
+```bash
+# pull
+$ docker pull odpf/meteor
+
+# Get info about commands
+$ docker run --rm odpf/meteor
+
+# list down all the extractors currently supported
+$ docker run --rm odpf/meteor meteor list extractors
+```
