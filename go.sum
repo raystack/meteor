@@ -451,14 +451,8 @@ github.com/muesli/termenv v0.9.0/go.mod h1:R/LzAKf+suGs4IsO95y7+7DpFHO0KABgnZqtl
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/odpf/salt v0.0.0-20210906095950-11ca0a87ac26 h1:J6ajU+tkXhNBR05Cj/6LOQerdRBPCEz50res+PMceTU=
-github.com/odpf/salt v0.0.0-20210906095950-11ca0a87ac26/go.mod h1:ZzltSVlsVB9HzEpR2FQjZJYLwwD0ZaR0fnIVHtfoq5I=
-github.com/odpf/salt v0.0.0-20210906135439-b147afbccf01 h1:uZ80W+u3h0rKmOvYA+SyQcNHm2bKOIRG+avvcydMS7c=
-github.com/odpf/salt v0.0.0-20210906135439-b147afbccf01/go.mod h1:ZzltSVlsVB9HzEpR2FQjZJYLwwD0ZaR0fnIVHtfoq5I=
-github.com/odpf/salt v0.0.0-20210907003018-b35275081151 h1:lxCi+kP7CgG/6t07X6v6htxygz0+98+J9u+OhtMHL2c=
-github.com/odpf/salt v0.0.0-20210907003018-b35275081151/go.mod h1:ZzltSVlsVB9HzEpR2FQjZJYLwwD0ZaR0fnIVHtfoq5I=
-github.com/odpf/salt v0.0.0-20210907005031-f51edd554d20 h1:Ee6jP1udxaSEh4m+V3GVH6g8B55C2O6cfGc/hXv/btg=
-github.com/odpf/salt v0.0.0-20210907005031-f51edd554d20/go.mod h1:ZzltSVlsVB9HzEpR2FQjZJYLwwD0ZaR0fnIVHtfoq5I=
+github.com/odpf/salt v0.0.0-20210907023951-8fae515add1f h1:JxxB9tC1vhlKsaUjaeHrRnD3wXXybqVhaC7apToDvBA=
+github.com/odpf/salt v0.0.0-20210907023951-8fae515add1f/go.mod h1:QS9NZHxR/feygQ3xLNBpwhGmq2QYR1VL0v9wdnRhI1k=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=

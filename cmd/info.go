@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/charmbracelet/glamour"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
@@ -124,8 +124,8 @@ func inform(typ string, summary string, err error) error {
 		return nil
 	}
 
-	r, _ := glamour.NewTermRenderer(glamour.WithAutoStyle())
-	out, err := r.Render(summary)
+	out, err := printer.MarkdownWithWrap(summary, 130)
+
 	if err != nil {
 		return err
 	}

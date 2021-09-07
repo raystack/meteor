@@ -11,7 +11,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/charmbracelet/glamour v0.3.0
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/elastic/go-elasticsearch v0.0.0
@@ -31,7 +30,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/muesli/reflow v0.3.0
-	github.com/odpf/salt v0.0.0-20210907005031-f51edd554d20
+	github.com/odpf/salt v0.0.0-20210907023951-8fae515add1f
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
