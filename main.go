@@ -23,7 +23,6 @@ const (
 )
 
 func main() {
-
 	var cfg agent.Config
 	l := config.NewLoader(config.WithPath("./"))
 

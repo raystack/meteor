@@ -11,9 +11,9 @@ Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to s
 
 ## Key Features
 
-* **No Dependency** Written in Go. It compiles into a single binary with no external dependency.
-* **Extensible** Plugin system allows new sources and sinks to be easily added.
-* **Ecosystem** Extract metadata for many popular services with a wide number of service plugins.
+* **No Dependency:** Written in Go. It compiles into a single binary with no external dependency.
+* **Extensible:** Plugin system allows new sources and sinks to be easily added.
+* **Ecosystem:** Extract metadata for many popular services with a wide number of service plugins.
 * **Customizable:** Add your own processors and sinks to suit your many use cases.
 * **Runtime:** Meteor can run inside VMs or containers with minimal memory footprint.
 
@@ -25,7 +25,7 @@ Explore the following resources to get started with Meteor:
 * [Concepts](https://odpf.gitbook.io/meteor/concepts/overview) describes all important Meteor concepts.
 * [Contribute](https://odpf.gitbook.io/meteor/contribute/contributing) contains resources for anyone who wants to contribute to Meteor.
 
-## Installtion 
+## Installation 
 
 `meteor` is available via Homebrew and as a downloadable binary from the [releases](https://github.com/odpf/meteor/releases) page.
 

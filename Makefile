@@ -7,7 +7,7 @@ COVERFILE="/tmp/app.coverprofile"
 all: build
 
 build:
-	go build -ldflags "-X main.Version=${VERSION}" ${NAME}
+	go build -ldflags "-X cmd.Version=${VERSION}" ${NAME}
 
 clean:
 	rm -rf dist/
