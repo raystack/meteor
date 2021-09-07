@@ -19,7 +19,7 @@ func VersionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "version",
 		Aliases: []string{"v"},
-		Short:   "Print version of meteor",
+		Short:   "Print meteor version information",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cs := term.NewColorScheme()
 

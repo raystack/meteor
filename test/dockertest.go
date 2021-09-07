@@ -14,15 +14,15 @@ import (
 func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Resource) error) (err error, purgeFn func() error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return fmt.Errorf("Could not create dockertest pool: %s", err), purgeFn
+		return fmt.Errorf("could not create dockertest pool: %s", err), purgeFn
 	}
 	resource, err := pool.RunWithOptions(&opts)
 	if err != nil {
-		return fmt.Errorf("Could not start resource: %s", err.Error()), purgeFn
+		return fmt.Errorf("could not start resource: %s", err.Error()), purgeFn
 	}
 	purgeFn = func() error {
 		if err := pool.Purge(resource); err != nil {
-			return fmt.Errorf("Could not purge resource: %s", err)
+			return fmt.Errorf("could not purge resource: %s", err)
 		}
 
 		return nil
@@ -37,7 +37,7 @@ func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Reso
 		return
 	}); err != nil {
 		purgeFn()
-		return fmt.Errorf("Could not connect to docker: %s", err.Error()), purgeFn
+		return fmt.Errorf("could not connect to docker: %s", err.Error()), purgeFn
 	}
 	return
 }

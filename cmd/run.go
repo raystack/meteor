@@ -17,9 +17,9 @@ import (
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run [COMMAND]",
-		Short: "Run meteor for specified recipes.",
+		Short: "Execute recipes for metadata extraction",
 		Long: heredoc.Doc(`
-			Run meteor for specified recipes.
+			Execute specified recipes for metadata extraction.
 
 			A recipe is a set of instructions and configurations defined by user, 
 			and in Meteor they are used to define how metadata will be collected. 
@@ -36,7 +36,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			$ meteor run _recipes/
 
 			# run all recipes in the current directory
-			$ meteor lint .
+			$ meteor run .
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{

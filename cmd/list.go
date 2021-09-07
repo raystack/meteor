@@ -35,7 +35,7 @@ func ListExtCmd() *cobra.Command {
 		Aliases: []string{"e"},
 		Short:   "List available extractors",
 		Long: heredoc.Doc(`
-			List available extractors
+			List available extractors.
 
 			This command lists all available extractors.
 			Extractors are used to extract metadata from a source.
@@ -66,7 +66,7 @@ func ListSinksCmd() *cobra.Command {
 		Aliases: []string{"s"},
 		Short:   "List available sinks",
 		Long: heredoc.Doc(`
-			List available sinks
+			List available sinks.
 
 			This command lists all available sinks.
 			Sinks are used to send data to a target.
@@ -97,7 +97,7 @@ func ListProccCmd() *cobra.Command {
 		Aliases: []string{"p"},
 		Short:   "List available processors",
 		Long: heredoc.Doc(`
-			List available processors
+			List available processors.
 
 			This command lists all available processors.
 			Processors are used to transform data before it is sent to a sink.

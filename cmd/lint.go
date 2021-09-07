@@ -20,9 +20,9 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
 		Args:    cobra.ExactValidArgs(1),
-		Short:   "Validate recipes",
+		Short:   "Check of issues in recipes",
 		Long: heredoc.Doc(`
-			Validate specified recipes.
+			Check for issues specified recipes.
 
 			Linters are run on the recipe files in the specified path.
 			If no path is specified, the current directory is used.

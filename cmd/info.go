@@ -15,7 +15,7 @@ import (
 func InfoCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info <command>",
-		Short: "View plugin information",
+		Short: "Display plugin information",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -30,9 +30,9 @@ func InfoCmd(lg log.Logger) *cobra.Command {
 func InfoSinkCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sink <name>",
-		Short: "Vew sink information",
+		Short: "Display sink information",
 		Long: heredoc.Doc(`
-			View sink information.
+			Display sink information.
 			
 			The list of supported sinks is available via the 'meteor list sinks' command.
 		`),
@@ -60,14 +60,14 @@ func InfoSinkCmd() *cobra.Command {
 func InfoExtCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "extractor <name>",
-		Short: "Vew extractor information",
+		Short: "Display extractor information",
 		Long: heredoc.Doc(`
-			View sink information.
+			Display sink information.
 			
 			The list of supported extractors is available via the 'meteor list extractors' command.
 		`),
 		Example: heredoc.Doc(`
-			$ meteor info sink console
+			$ meteor info extractor bigquery
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
@@ -89,14 +89,14 @@ func InfoExtCmd() *cobra.Command {
 func InfoProccCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "processor <name>",
-		Short: "Vew processor information",
+		Short: "Display processor information",
 		Long: heredoc.Doc(`
-			View processor information.
+			Display processor information.
 			
 			The list of supported processors is available via the 'meteor list processors' command.
 		`),
 		Example: heredoc.Doc(`
-			$ meteor info sink console
+			$ meteor info processor enrich
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{

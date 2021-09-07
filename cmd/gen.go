@@ -13,7 +13,7 @@ import (
 func GenCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gen",
-		Short: "Generate sample recipes and plugins.",
+		Short: "Generate sample recipes and plugins",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},

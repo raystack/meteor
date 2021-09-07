@@ -40,9 +40,9 @@ var sampleConfig = `
 
 type Extractor struct {
 	// internal states
-	out       chan<- interface{}
-	client    *mongo.Client
-	excludeds map[string]bool
+	out      chan<- interface{}
+	client   *mongo.Client
+	excluded map[string]bool
 
 	// dependencies
 	logger log.Logger
@@ -158,17 +158,17 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 
 // Build a map of excluded collections using list of collection names
 func (e *Extractor) buildExcludedCollections() {
-	excludeds := make(map[string]bool)
+	excluded := make(map[string]bool)
 	for _, collection := range defaultCollections {
-		excludeds[collection] = true
+		excluded[collection] = true
 	}
 
-	e.excludeds = excludeds
+	e.excluded = excluded
 }
 
 // Check if collection is default using stored map
 func (e *Extractor) isDefaultCollection(collectionName string) bool {
-	_, ok := e.excludeds[collectionName]
+	_, ok := e.excluded[collectionName]
 	return ok
 }
 

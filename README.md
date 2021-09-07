@@ -2,8 +2,9 @@
 
 ![test workflow](https://github.com/odpf/meteor/actions/workflows/test.yml/badge.svg)
 ![build workflow](https://github.com/odpf/meteor/actions/workflows/build.yml/badge.svg)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/odpf/meteor)](https://goreportcard.com/report/github.com/odpf/meteor)
 [![Version](https://img.shields.io/github/v/release/odpf/meteor?logo=semantic-release)](Version)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 
 Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to source metadata from a variety of data stores, services and message queues. It also has sink plugins to send metadata to variety of third party APIs and catalog services.
 
