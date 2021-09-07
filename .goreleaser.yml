@@ -11,7 +11,7 @@ builds:
     flags:
       - -a
     ldflags:
-      - -X github.com/odpf/meteor/config.Version={{.Tag}} -X github.com/odpf/meteor/config.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/config.BuildDate={{.Date}}
+      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
     goos:
       - darwin
       - linux
