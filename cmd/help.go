@@ -17,6 +17,7 @@ func HasFailed() bool {
 	return hasFailed
 }
 
+// RootUsageFunc prints the usage of the root command.
 func RootUsageFunc(command *cobra.Command) error {
 	command.Printf("Usage:  %s", command.UseLine())
 
@@ -40,6 +41,7 @@ func RootUsageFunc(command *cobra.Command) error {
 	return nil
 }
 
+// RootFlagErrorFunc returns an error, if the flag is invalid.
 func RootFlagErrorFunc(cmd *cobra.Command, err error) error {
 	if err == pflag.ErrHelp {
 		return err
@@ -47,6 +49,7 @@ func RootFlagErrorFunc(cmd *cobra.Command, err error) error {
 	return err
 }
 
+// RootHelpFunc is the helper function for the root command.
 func RootHelpFunc(command *cobra.Command, args []string) {
 
 	if isRootCmd(command.Parent()) && len(args) >= 2 && args[1] != "--help" && args[1] != "-h" {

@@ -2,7 +2,7 @@ package github
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/plugins"
@@ -17,6 +17,7 @@ import (
 //go:embed README.md
 var summary string
 
+// Config hold the set of configuration for the extractor
 type Config struct {
 	Org   string `mapstructure:"org" validate:"required"`
 	Token string `mapstructure:"token" validate:"required"`
@@ -26,10 +27,12 @@ var sampleConfig = `
  org: odpf
  token: github_token`
 
+// Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "User list from Github organisation.",
@@ -39,10 +42,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract extracts the data from the extractor
+// The data is returned as a list of assets.Asset
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 
 	var config Config

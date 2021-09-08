@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -17,6 +17,7 @@ import (
 //go:embed README.md
 var summary string
 
+// Config hold the set of configuration for the kafka extractor
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 }
@@ -24,21 +25,23 @@ type Config struct {
 var sampleConfig = `
  broker: "localhost:9092"`
 
+// Extractor manages the extraction of data
+// from a kafka broker
 type Extractor struct {
 	// internal states
 	out  chan<- interface{}
 	conn *kafka.Conn
-
-	// dependencies
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Topic list from Apache Kafka.",
@@ -48,10 +51,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract checks if the extractor is ready to extract
+// if so, then extracts metadata from the kafka broker
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 
@@ -86,19 +92,19 @@ func (e *Extractor) extract() (err error) {
 	}
 
 	// process topics
-	for topic_name := range topics {
-		e.out <- e.buildTopic(topic_name)
+	for topicName := range topics {
+		e.out <- e.buildTopic(topicName)
 	}
 
 	return
 }
 
 // Build topic metadata model using a topic name
-func (e *Extractor) buildTopic(topic_name string) assets.Topic {
+func (e *Extractor) buildTopic(topicName string) assets.Topic {
 	return assets.Topic{
 		Resource: &common.Resource{
-			Urn:     topic_name,
-			Name:    topic_name,
+			Urn:     topicName,
+			Name:    topicName,
 			Service: "kafka",
 		},
 	}

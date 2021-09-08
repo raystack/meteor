@@ -1,5 +1,6 @@
 package agent
 
+// Config contains the configuration for the agent.
 type Config struct {
 	LogLevel      string `mapstructure:"LOG_LEVEL" default:"info"`
 	StatsdEnabled bool   `mapstructure:"STATSD_ENABLED" default:"false"`

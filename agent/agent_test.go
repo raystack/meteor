@@ -3,6 +3,7 @@ package agent_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/odpf/meteor/agent"
@@ -50,11 +51,18 @@ var extrFactory = registry.NewExtractorFactory()
 var procFactory = registry.NewProcessorFactory()
 
 func init() {
-	extrFactory.Register("test-extractor", newMockExtractor)
-	extrFactory.Register("failed-extractor", newFailedExtractor)
-
-	procFactory.Register("test-processor", newMockProcessor)
-	procFactory.Register("failed-processor", newFailedProcessor)
+	if err := extrFactory.Register("test-extractor", newMockExtractor); err != nil {
+		return
+	}
+	if err := extrFactory.Register("failed-extractor", newFailedExtractor); err != nil {
+		return
+	}
+	if err := procFactory.Register("test-processor", newMockProcessor); err != nil {
+		return
+	}
+	if err := procFactory.Register("failed-processor", newFailedProcessor); err != nil {
+		return
+	}
 }
 
 func TestRunnerRun(t *testing.T) {
@@ -79,7 +87,9 @@ func TestRunnerRun(t *testing.T) {
 
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
+			t.Error(err.Error())
+		}
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
 		run := r.Run(rcp)
@@ -94,7 +104,9 @@ func TestRunnerRun(t *testing.T) {
 
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
+			t.Error(err.Error())
+		}
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
 		run := r.Run(rcp)
@@ -104,7 +116,9 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should run extractor, processors and sinks", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
+			t.Error(err.Error())
+		}
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
 		run := r.Run(validRecipe)
@@ -117,7 +131,9 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should record metrics", func(t *testing.T) {
 		mSink := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(mSink))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
+			t.Error(err.Error())
+		}
 		monitor := new(mockMonitor)
 		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
@@ -142,7 +158,9 @@ func TestRunnerRunMultiple(t *testing.T) {
 		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
 
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink)))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink))); err != nil {
+			t.Error(err.Error())
+		}
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
 		runs := r.RunMultiple(recipeList)
@@ -167,8 +185,12 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sink1 := new(mockPassthroughSink)
 		sink2 := new(mockPassthroughSink)
 		sinkFactory := registry.NewSinkFactory()
-		sinkFactory.Register("mock-sink", newMockSinkFn(sink1))
-		sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2))
+		if err := sinkFactory.Register("mock-sink", newMockSinkFn(sink1)); err != nil {
+			t.Error(err.Error())
+		}
+		if err := sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2)); err != nil {
+			t.Error(err.Error())
+		}
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
 		r.RunMultiple(recipeList)
@@ -178,7 +200,10 @@ func TestRunnerRunMultiple(t *testing.T) {
 	})
 }
 
-type mockExtractor struct{}
+type mockExtractor struct {
+	m    sync.Mutex
+	data []assets.Table
+}
 
 func newMockExtractor() plugins.Extractor {
 	return &mockExtractor{}
@@ -193,7 +218,8 @@ func (t *mockExtractor) Validate(config map[string]interface{}) error {
 }
 
 func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	data := []assets.Table{
+	t.m.Lock()
+	t.data = []assets.Table{
 		{
 			Resource: &common.Resource{
 				Urn: "foo-1",
@@ -205,12 +231,13 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 			},
 		},
 	}
-
-	for _, d := range data {
+	for _, d := range t.data {
 		out <- d
 	}
 
+	t.m.Unlock()
 	return nil
+
 }
 
 // This test processor will append assets.Table.Urn with "-bar"
@@ -321,7 +348,7 @@ func (t *failedExtractor) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (e *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
+func (t *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
 	out <- assets.Table{
 		Resource: &common.Resource{
 			Urn: "id-1",

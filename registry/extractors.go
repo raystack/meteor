@@ -12,6 +12,7 @@ type ExtractorFactory struct {
 	fnStore map[string]func() plugins.Extractor
 }
 
+// Get returns an Extractor by name.
 func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
@@ -19,6 +20,7 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
 }
 
+// Info returns information about an Extractor.
 func (f *ExtractorFactory) Info(name string) (plugins.Info, error) {
 	sink, err := f.Get(name)
 	if err != nil {
@@ -27,6 +29,7 @@ func (f *ExtractorFactory) Info(name string) (plugins.Info, error) {
 	return sink.Info(), nil
 }
 
+// List returns a list of registered Extractors.
 func (f *ExtractorFactory) List() (names [][]string) {
 	for name := range f.fnStore {
 		info, _ := f.Info(name)
@@ -35,6 +38,7 @@ func (f *ExtractorFactory) List() (names [][]string) {
 	return
 }
 
+// Register registers an Extractor.
 func (f *ExtractorFactory) Register(name string, extractorFn func() plugins.Extractor) (err error) {
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate extractor: %s", name)

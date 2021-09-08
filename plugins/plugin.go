@@ -6,8 +6,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// PluginType is the type of plugin. 
 type PluginType string
 
+// PluginType names
 const (
 	PluginTypeExtractor PluginType = "extractor"
 	PluginTypeProcessor PluginType = "processor"
@@ -29,7 +31,7 @@ type Extractor interface {
 	Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error)
 }
 
-// Processors are the functions that are executed on the extracted data.
+// Processor are the functions that are executed on the extracted data.
 type Processor interface {
 	Info() Info
 	Validate(config map[string]interface{}) error

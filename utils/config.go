@@ -12,6 +12,7 @@ func init() {
 	validate = validator.New()
 }
 
+// BuildConfig builds a config struct from a map
 func BuildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	err = mapstructure.Decode(configMap, c)
 	if err != nil {

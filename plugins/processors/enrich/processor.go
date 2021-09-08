@@ -2,6 +2,7 @@ package enrich
 
 import (
 	"context"
+	//
 	_ "embed"
 
 	"github.com/odpf/meteor/plugins"
@@ -12,8 +13,10 @@ import (
 //go:embed README.md
 var summary string
 
+// Processor work in a list of data
 type Processor struct{}
 
+// New create a new processor
 func New() *Processor {
 	return new(Processor)
 }
@@ -23,6 +26,7 @@ var sampleConfig = `
  # fieldA: valueA
  # fieldB: valueB`
 
+// Info returns the plugin information
 func (p *Processor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Send metadata to columbus http service",
@@ -32,10 +36,12 @@ func (p *Processor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the plugin configuration
 func (p *Processor) Validate(configMap map[string]interface{}) (err error) {
 	return nil
 }
 
+// Process processes the data
 func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
 	for data := range in {
 		data, err := p.process(data, config)
@@ -73,7 +79,9 @@ func (p *Processor) process(data interface{}, config map[string]interface{}) (in
 }
 
 func init() {
-	registry.Processors.Register("enrich", func() plugins.Processor {
+ 	if err := registry.Processors.Register("enrich", func() plugins.Processor {
 		return New()
-	})
+	}); err != nil {
+		return
+	}
 }

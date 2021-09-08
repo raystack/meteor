@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 		_, err = bigtable.NewAdminClient(context.Background(), "dev", "dev")
 		return
 	}
-	err, purgeFn := test.CreateContainer(opts, retryFn)
+	purgeFn, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal("", err)
 	}

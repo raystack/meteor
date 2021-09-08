@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 
 		return client.Ping(ctx, nil)
 	}
-	err, purgeFn := test.CreateContainer(opts, retryFn)
+	purgeFn, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -159,8 +159,8 @@ func setup(ctx context.Context) (err error) {
 	return
 }
 
-func createCollection(ctx context.Context, collection_name string, data []interface{}) (err error) {
-	collection := client.Database(testDB).Collection(collection_name)
+func createCollection(ctx context.Context, collectionName string, data []interface{}) (err error) {
+	collection := client.Database(testDB).Collection(collectionName)
 	_, err = collection.InsertMany(ctx, data)
 	return
 }

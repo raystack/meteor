@@ -3,11 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	_ "embed"
+	_ "embed" // // used to print the embedded assets
 	"fmt"
 	"strings"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // used to register the postgres driver
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -22,6 +22,7 @@ var summary string
 
 var defaults = []string{"information_schema", "root", "postgres"}
 
+// Config holds the set of configuration options for the extractor
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
@@ -37,16 +38,19 @@ var sampleConfig = `
  database: database_name
  exclude: postgres`
 
+// Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Table metadata and metrics from Postgres SQL sever.",
@@ -56,6 +60,7 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
@@ -122,7 +127,10 @@ func (e *Extractor) getDatabases(cfg Config, db *sql.DB) (list []string, err err
 
 	for res.Next() {
 		var database string
-		res.Scan(&database)
+		err := res.Scan(&database)
+		if err != nil {
+			return nil, err
+		}
 		if exclude(excludeList, database) {
 			continue
 		}

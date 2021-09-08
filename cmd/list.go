@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// LintCmd creates a command object for linting recipes
+// ListCmd creates a command object for linting recipes
 func ListCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list <command>",
@@ -59,7 +59,7 @@ func ListExtCmd() *cobra.Command {
 	return cmd
 }
 
-//  ListSinksCmd creates a command object for listing sinks
+// ListSinksCmd creates a command object for listing sinks
 func ListSinksCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "sinks",
@@ -90,7 +90,7 @@ func ListSinksCmd() *cobra.Command {
 	return cmd
 }
 
-//  ListProccCmd creates a command object for listing processors
+// ListProccCmd creates a command object for listing processors
 func ListProccCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "processors",

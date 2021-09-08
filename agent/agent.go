@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Agent contains fields responsible for the execution of a recipe.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
 	processorFactory *registry.ProcessorFactory
@@ -21,6 +22,7 @@ type Agent struct {
 	logger           log.Logger
 }
 
+// NewAgent creates a new Agent.
 func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor, logger log.Logger) *Agent {
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
@@ -34,13 +36,12 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 	}
 }
 
+// Validate validates the recipe.
 func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
-	ext, err := r.extractorFactory.Get(rcp.Source.Type)
-	if err != nil {
+	if ext, err := r.extractorFactory.Get(rcp.Source.Type); err != nil {
 		errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 	} else {
-		err = ext.Validate(rcp.Source.Config)
-		if err != nil {
+		if err = ext.Validate(rcp.Source.Config); err != nil {
 			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 		}
 	}
@@ -51,8 +52,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 			continue
 		}
-		err = sink.Validate(s.Config)
-		if err != nil {
+		if err = sink.Validate(s.Config); err != nil {
 			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink))
 		}
 	}
@@ -63,14 +63,14 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 			continue
 		}
-		err = procc.Validate(p.Config)
-		if err != nil {
+		if err = procc.Validate(p.Config); err != nil {
 			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", p.Name, plugins.PluginTypeProcessor))
 		}
 	}
 	return
 }
 
+// RunMultiple runs multiple recipes.
 func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 	var wg sync.WaitGroup
 	runs := make([]Run, len(recipes))
@@ -92,6 +92,7 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 	return runs
 }
 
+// Run runs a recipe.
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	r.logger.Info("running recipe", "recipe", recipe.Name)
 	var wg sync.WaitGroup
@@ -107,8 +108,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// run extractors
 	extrChannel := channel
 	go func() {
-		err := r.runExtractor(ctx, recipe.Source, extrChannel)
-		if err != nil {
+		if err := r.runExtractor(ctx, recipe.Source, extrChannel); err != nil {
 			run.Error = r.buildTaskError(TaskTypeExtract, recipe.Source.Type, err)
 		}
 
@@ -125,8 +125,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		// processorRecipe to always be the last recipe in the loop
 		tempRecipe := processorRecipe
 		go func() {
-			err := r.runProcessor(ctx, tempRecipe, inChannel, outChannel)
-			if err != nil {
+			if err := r.runProcessor(ctx, tempRecipe, inChannel, outChannel); err != nil {
 				run.Error = r.buildTaskError(TaskTypeProcess, tempRecipe.Name, err)
 			}
 
@@ -147,8 +146,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		tempRecipe := sinkRecipe
 		wg.Add(1)
 		go func() {
-			err := r.runSink(ctx, tempRecipe, channel)
-			if err != nil {
+			if err := r.runSink(ctx, tempRecipe, channel); err != nil {
 				run.Error = r.buildTaskError(TaskTypeSink, tempRecipe.Name, err)
 			}
 			wg.Done()
@@ -175,8 +173,7 @@ func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceReci
 	if err != nil {
 		return
 	}
-	err = extractor.Extract(ctx, sourceRecipe.Config, in)
-	if err != nil {
+	if err = extractor.Extract(ctx, sourceRecipe.Config, in); err != nil {
 		return
 	}
 
@@ -188,8 +185,7 @@ func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.Process
 	if err != nil {
 		return
 	}
-	err = processor.Process(ctx, processorRecipe.Config, in, out)
-	if err != nil {
+	if err = processor.Process(ctx, processorRecipe.Config, in, out); err != nil {
 		return
 	}
 
@@ -201,8 +197,7 @@ func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-
 	if err != nil {
 		return
 	}
-	err = sink.Sink(ctx, sinkRecipe.Config, in)
-	if err != nil {
+	if err = sink.Sink(ctx, sinkRecipe.Config, in); err != nil {
 		return
 	}
 

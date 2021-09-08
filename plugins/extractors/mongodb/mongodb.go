@@ -2,7 +2,7 @@ package mongodb
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"fmt"
 	"sort"
 
@@ -27,6 +27,7 @@ var defaultCollections = []string{
 	"startup_log",
 }
 
+// Config hold the set of configuration for the extractor
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
@@ -38,22 +39,23 @@ var sampleConfig = `
  user_id: admin
  password: "1234"`
 
+// Extractor manages the communication with the mongo server
 type Extractor struct {
 	// internal states
 	out      chan<- interface{}
 	client   *mongo.Client
 	excluded map[string]bool
-
-	// dependencies
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Collection metadata from MongoDB Server",
@@ -63,10 +65,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract extracts the data from the mongo server
+// and outputs the data to the out channel
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 
@@ -98,8 +103,8 @@ func (e *Extractor) extract(ctx context.Context) (err error) {
 		return
 	}
 
-	for _, db_name := range databases {
-		database := e.client.Database(db_name)
+	for _, dbName := range databases {
+		database := e.client.Database(dbName)
 		if err := e.extractCollections(ctx, database); err != nil {
 			return err
 		}
@@ -118,13 +123,13 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 	// this ensures the returned collection list are in consistent order
 	// or else test might fail
 	sort.Strings(collections)
-	for _, collection_name := range collections {
+	for _, collectionName := range collections {
 		// skip if collection is default mongo
-		if e.isDefaultCollection(collection_name) {
+		if e.isDefaultCollection(collectionName) {
 			continue
 		}
 
-		table, err := e.buildTable(ctx, db, collection_name)
+		table, err := e.buildTable(ctx, db, collectionName)
 		if err != nil {
 			return err
 		}
@@ -136,20 +141,20 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collection_name string) (table assets.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table assets.Table, err error) {
 	// get total rows
-	total_rows, err := db.Collection(collection_name).EstimatedDocumentCount(ctx)
+	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
 		return
 	}
 
 	table = assets.Table{
 		Resource: &common.Resource{
-			Urn:  fmt.Sprintf("%s.%s", db.Name(), collection_name),
-			Name: collection_name,
+			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
+			Name: collectionName,
 		},
 		Profile: &assets.TableProfile{
-			TotalRows: total_rows,
+			TotalRows: totalRows,
 		},
 	}
 
