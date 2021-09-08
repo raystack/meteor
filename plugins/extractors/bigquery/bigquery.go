@@ -41,17 +41,17 @@ var sampleConfig = `
  project_id: google-project-id
  table_pattern: gofood.fact_
  include_column_profile: true
- service_account_json:
+ service_account_json: |-
    {
- 	"type": "service_account",
- 	"private_key_id": "xxxxxxx",
- 	"private_key": "xxxxxxx",
- 	"client_email": "xxxxxxx",
- 	"client_id": "xxxxxxx",
- 	"auth_uri": "https://accounts.google.com/o/oauth2/auth",
- 	"token_uri": "https://oauth2.googleapis.com/token",
- 	"auth_provider_x509_cert_url": "xxxxxxx",
- 	"client_x509_cert_url": "xxxxxxx"
+     "type": "service_account",
+     "private_key_id": "xxxxxxx",
+     "private_key": "xxxxxxx",
+     "client_email": "xxxxxxx",
+     "client_id": "xxxxxxx",
+     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+     "token_uri": "https://oauth2.googleapis.com/token",
+     "auth_provider_x509_cert_url": "xxxxxxx",
+     "client_x509_cert_url": "xxxxxxx"
    }`
 
 type Extractor struct {
