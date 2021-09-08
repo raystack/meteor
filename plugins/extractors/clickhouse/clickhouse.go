@@ -129,7 +129,7 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*f
 
 // Register the extractor to catalog
 func init() {
-	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
+	if err := registry.Extractors.Register("clickhouse", func() plugins.Extractor {
 		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
