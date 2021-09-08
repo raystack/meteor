@@ -34,8 +34,7 @@ type Config struct {
 
 var sampleConfig = `
  project_id: google-project-id
- table_pattern: gofood.fact_
- include_column_profile: true
+ extract_blob: true
  service_account_json: |-
    {
      "type": "service_account",
