@@ -2,7 +2,7 @@ package csv
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,6 +26,7 @@ import (
 //go:embed README.md
 var summary string
 
+// Config hold the path configuration for the csv extractor
 type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }
@@ -33,29 +34,35 @@ type Config struct {
 var sampleConfig = `
  path: ./path-to-a-file-or-a-directory`
 
+// Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
-		Description:  "Comma seperated file",
+		Description:  "Comma separated file",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
 		Tags:         []string{"file,extractor"},
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+//Extract checks if the extractor is configured and
+// returns the extracted data
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config

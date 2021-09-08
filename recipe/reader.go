@@ -9,10 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Reader is a struct that reads recipe files.
 type Reader struct {
 	data map[string]string
 }
 
+// NewReader returns a new Reader.
 func NewReader() *Reader {
 	reader := &Reader{}
 	reader.data = populateData()

@@ -139,7 +139,7 @@ func TestExtractorExtract(t *testing.T) {
 			},
 		}
 		// We need this function because the extractor cannot guarantee order
-		// so comparing expected slice and result slice will not be consistant
+		// so comparing expected slice and result slice will not be consistent
 		assertResults(t, expected, results)
 	})
 }

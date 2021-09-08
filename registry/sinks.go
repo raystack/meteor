@@ -12,6 +12,7 @@ type SinkFactory struct {
 	fnStore map[string]func() plugins.Syncer
 }
 
+// Get returns a Sink by name.
 func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
@@ -19,6 +20,7 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
 }
 
+// Info returns information about a Sink.
 func (f *SinkFactory) Info(name string) (info plugins.Info, err error) {
 	sink, err := f.Get(name)
 	if err != nil {
@@ -27,6 +29,7 @@ func (f *SinkFactory) Info(name string) (info plugins.Info, err error) {
 	return sink.Info(), nil
 }
 
+// List returns a list of registered Sinks.
 func (f *SinkFactory) List() (names [][]string) {
 	for name := range f.fnStore {
 		info, _ := f.Info(name)
@@ -35,6 +38,7 @@ func (f *SinkFactory) List() (names [][]string) {
 	return
 }
 
+// Register registers a Sink.
 func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error) {
 	if _, ok := f.fnStore[name]; ok {
 		return errors.Errorf("duplicate syncer: %s", name)

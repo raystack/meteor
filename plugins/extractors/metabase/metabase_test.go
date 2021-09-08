@@ -27,7 +27,7 @@ import (
 const (
 	fname                  = "meteor"
 	lname                  = "metabase"
-	collection_name        = "temp_collection_meteor"
+	collectionName         = "temp_collection_meteor"
 	collection_color       = "#ffffb3"
 	collection_description = "Temp Collection for Meteor Metabase Extractor"
 	dashboard_name         = "random_dashboard"
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Exponential backoff-retry for container to be resy to accept connections
-	err, purgeFn := test.CreateContainer(opts, retryFn)
+	purgeFn, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func addMockData(session_id string) (err error) {
 
 func addCollection() (err error) {
 	payload := map[string]interface{}{
-		"name":        collection_name,
+		"name":        collectionName,
 		"color":       collection_color,
 		"description": collection_description,
 	}

@@ -3,7 +3,7 @@ package metabase
 import (
 	"bytes"
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -33,6 +33,7 @@ var sampleConfig = `
  user_id: meteor_tester
  password: meteor_pass_1234`
 
+// Config hold the set of configuration for the metabase extractor
 type Config struct {
 	UserID    string `mapstructure:"user_id" validate:"required"`
 	Password  string `mapstructure:"password" validate:"required"`
@@ -40,18 +41,22 @@ type Config struct {
 	SessionID string `mapstructure:"session_id"`
 }
 
+// Extractor manages the extraction of data
+// from the metabase server
 type Extractor struct {
 	cfg       Config
 	sessionID string
 	logger    log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information of the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Dashboard list from Metabase server.",
@@ -61,11 +66,12 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract collects metdata from the source. Metadata is collected through the out channel
+// Extract collects the metadata from the source. The metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build and validateconfig
 	err = utils.BuildConfig(configMap, &e.cfg)

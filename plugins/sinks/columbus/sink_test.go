@@ -53,7 +53,7 @@ func TestSink(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newMockHttpClient(http.MethodGet, url, requestPayload))
+				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload))
 				err := columbusSink.Sink(context.TODO(), config, make(<-chan interface{}))
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -62,7 +62,7 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should create the right request to columbus", func(t *testing.T) {
-		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 
 		in := make(chan interface{})
@@ -70,10 +70,13 @@ func TestSink(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			columbusSink := columbus.New(client)
-			columbusSink.Sink(context.TODO(), map[string]interface{}{
+			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
 				"host": host,
 				"type": columbusType,
 			}, in)
+			if err != nil {
+				t.Error(err.Error())
+			}
 
 			client.Assert(t)
 
@@ -91,7 +94,7 @@ func TestSink(t *testing.T) {
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
-		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(404, columbusError)
 
 		in := make(chan interface{})
@@ -116,7 +119,7 @@ func TestSink(t *testing.T) {
 
 	t.Run("should return no error if columbus returns 200", func(t *testing.T) {
 		// setup mock client
-		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, `{"success": true}`)
 
 		in := make(chan interface{})
@@ -155,7 +158,7 @@ func TestSink(t *testing.T) {
 		}
 		requestPayload := `[{"description":"test-desc","fieldA":"test-urn","fieldB":"test-name","fieldC":"test-desc","resource":{"name":"test-name","urn":"test-urn"}}]`
 
-		client := newMockHttpClient(http.MethodPut, url, requestPayload)
+		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 
 		in := make(chan interface{})
@@ -163,11 +166,14 @@ func TestSink(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			columbusSink := columbus.New(client)
-			columbusSink.Sink(context.TODO(), map[string]interface{}{
+			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
 				"host":    host,
 				"type":    columbusType,
 				"mapping": mapping,
 			}, in)
+			if err != nil {
+				t.Error(err.Error())
+			}
 
 			client.Assert(t)
 
@@ -180,7 +186,7 @@ func TestSink(t *testing.T) {
 	})
 }
 
-type mockHttpClient struct {
+type mockHTTPClient struct {
 	URL                string
 	Method             string
 	RequestPayloadJSON string
@@ -189,20 +195,20 @@ type mockHttpClient struct {
 	req                *http.Request
 }
 
-func newMockHttpClient(method, url string, payloadJSON string) *mockHttpClient {
-	return &mockHttpClient{
+func newmockHTTPClient(method, url string, payloadJSON string) *mockHTTPClient {
+	return &mockHTTPClient{
 		Method:             method,
 		URL:                url,
 		RequestPayloadJSON: payloadJSON,
 	}
 }
 
-func (m *mockHttpClient) SetupResponse(statusCode int, json string) {
+func (m *mockHTTPClient) SetupResponse(statusCode int, json string) {
 	m.ResponseStatus = statusCode
 	m.ResponseJSON = json
 }
 
-func (m *mockHttpClient) Do(req *http.Request) (res *http.Response, err error) {
+func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
 	m.req = req
 
 	res = &http.Response{
@@ -212,7 +218,7 @@ func (m *mockHttpClient) Do(req *http.Request) (res *http.Response, err error) {
 		ProtoMinor:    1,
 		StatusCode:    m.ResponseStatus,
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 		ContentLength: int64(len(m.ResponseJSON)),
 		Body:          ioutil.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
 	}
@@ -220,7 +226,7 @@ func (m *mockHttpClient) Do(req *http.Request) (res *http.Response, err error) {
 	return
 }
 
-func (m *mockHttpClient) Assert(t *testing.T) {
+func (m *mockHTTPClient) Assert(t *testing.T) {
 	assert.Equal(t, m.Method, m.req.Method)
 	actualURL := fmt.Sprintf(
 		"%s://%s%s",

@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 		}
 		return
 	}
-	err, purgeFn := test.CreateContainer(opts, retryFn)
+	purgeFn, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}

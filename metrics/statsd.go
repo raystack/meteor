@@ -14,11 +14,13 @@ var (
 	runMetricName         = "run"
 )
 
+// StatsdMonitor contains the statsd client and prefix
 type StatsdMonitor struct {
 	client statsdClient
 	prefix string
 }
 
+// NewStatsdMonitor creates a new StatsdMonitor
 func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 	return &StatsdMonitor{
 		client: client,
@@ -26,6 +28,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 	}
 }
 
+// RecordRun records a run behavior
 func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration int, success bool) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, recipe, success),
@@ -36,6 +39,7 @@ func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration int, success bo
 	)
 }
 
+// createMetricName creates a metric name for a given recipe and success
 func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
 	var successText = "false"
 	if success {
@@ -56,6 +60,7 @@ type statsdClient interface {
 	Increment(string)
 }
 
+// NewStatsdClient returns a new statsd client if the given address is valid
 func NewStatsdClient(statsdAddress string) (c *statsd.StatsdClient, err error) {
 	statsdHost, statsdPortStr, err := net.SplitHostPort(statsdAddress)
 	if err != nil {

@@ -14,6 +14,7 @@ var file embed.FS
 
 var size uint = 2
 
+// Template contains the set of fields that are used to generate the recipe
 type Template struct {
 	Name       string
 	Source     map[string]string
@@ -21,6 +22,7 @@ type Template struct {
 	Processors map[string]string
 }
 
+// Recipe checks if the recipe is valid and returns a Template
 func Recipe(name string, source string, sinks []string, processors []string) error {
 	tem := Template{
 		Name:       name,

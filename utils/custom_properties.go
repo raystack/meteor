@@ -6,6 +6,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+// GetCustomProperties returns custom properties of the given asset
 func GetCustomProperties(data interface{}) map[string]interface{} {
 	var customProps *facets.Properties
 	switch data := data.(type) {
@@ -29,6 +30,7 @@ func GetCustomProperties(data interface{}) map[string]interface{} {
 	return parseToMap(customProps.Attributes)
 }
 
+// SetCustomProperties sets custom properties of the given asset
 func SetCustomProperties(data interface{}, customFields map[string]interface{}) (res interface{}, err error) {
 	protoStruct, err := parseMapToProto(customFields)
 	if err != nil {
@@ -39,15 +41,15 @@ func SetCustomProperties(data interface{}, customFields map[string]interface{}) 
 	case assets.Table:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data
+		res = data.Properties
 	case assets.Topic:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data
+		res = data.Properties
 	case assets.Dashboard:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data
+		res = data.Properties
 	default:
 		res = data
 	}
@@ -81,6 +83,7 @@ func parseMapToProto(src map[string]interface{}) (*structpb.Struct, error) {
 	return structpb.NewStruct(src)
 }
 
+// TryParseMapToProto parses given map to proto struct
 func TryParseMapToProto(src map[string]interface{}) *structpb.Struct {
 	res, err := parseMapToProto(src)
 	if err != nil {

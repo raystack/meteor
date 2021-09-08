@@ -160,7 +160,7 @@ type TableProfile struct {
 
 	// The number of rows in the table.
 	// Example: `100`.
-	TotalRows int64 `protobuf:"varint,1,opt,name=total_rows,json=totalRows,proto3" json:"total_rows,omitempty"`
+	TotalRows int64 `protobuf:"varint,1,opt,name=total_rows,json=total_rows,proto3" json:"total_rows,omitempty"`
 	// The number of rows in the table that are not deleted.
 	// Example: `event_timestamp`.
 	PartitionKey   string `protobuf:"bytes,2,opt,name=partition_key,json=partitionKey,proto3" json:"partition_key,omitempty"`
@@ -199,7 +199,7 @@ func (*TableProfile) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_table_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TableProfile) GetTotalRows() int64 {
+func (x *TableProfile) Gettotal_rows() int64 {
 	if x != nil {
 		return x.TotalRows
 	}

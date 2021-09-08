@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"fmt"
 
 	"github.com/odpf/meteor/plugins"
@@ -25,6 +25,7 @@ var defaultDBList = []string{
 	"sys",
 }
 
+// Config hold the set of configuration for the extractor
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
@@ -36,20 +37,21 @@ var sampleConfig = `
  user_id: admin
  password: "1234"`
 
+// Extractor manages the extraction of data from MySQL
 type Extractor struct {
 	out         chan<- interface{}
 	excludedDbs map[string]bool
-
-	// dependencies
-	logger log.Logger
+	logger      log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Table metadata from MySQL server.",
@@ -59,10 +61,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract extracts the data from the MySQL server
+// and collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.out = out
 

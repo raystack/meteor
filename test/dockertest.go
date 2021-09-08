@@ -6,19 +6,19 @@ import (
 	"github.com/ory/dockertest/v3"
 )
 
-//This will create a docker container using the RunOptions given
+//CreateContainer will create a docker container using the RunOptions given
 //
 //"opts" is the configuration for docker
 //
 //"retryOp" is an exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Resource) error) (err error, purgeFn func() error) {
+func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Resource) error) (purgeFn func() error, err error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return fmt.Errorf("could not create dockertest pool: %s", err), purgeFn
+		return purgeFn, fmt.Errorf("could not create dockertest pool: %s", err)
 	}
 	resource, err := pool.RunWithOptions(&opts)
 	if err != nil {
-		return fmt.Errorf("could not start resource: %s", err.Error()), purgeFn
+		return purgeFn, fmt.Errorf("could not start resource: %s", err.Error())
 	}
 	purgeFn = func() error {
 		if err := pool.Purge(resource); err != nil {
@@ -36,8 +36,10 @@ func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Reso
 
 		return
 	}); err != nil {
-		purgeFn()
-		return fmt.Errorf("could not connect to docker: %s", err.Error()), purgeFn
+	 	if err := purgeFn(); err != nil {
+			return nil, err
+		}
+		return purgeFn, fmt.Errorf("could not connect to docker: %s", err.Error())
 	}
 	return
 }

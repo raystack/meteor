@@ -6,10 +6,12 @@ import (
 	"github.com/odpf/meteor/recipe"
 )
 
+// Monitor is the interface for monitoring the agent.
 type Monitor interface {
 	RecordRun(recipe recipe.Recipe, durationInMs int, success bool)
 }
 
+// defaultMonitor is the default implementation of Monitor.
 type defaultMonitor struct{}
 
 func (m *defaultMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {}

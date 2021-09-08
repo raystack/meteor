@@ -2,7 +2,7 @@ package grafana
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"fmt"
 	"net/http"
 
@@ -17,6 +17,7 @@ import (
 //go:embed README.md
 var summary string
 
+// Config holds the set of configuration for the extractor
 type Config struct {
 	BaseURL string `mapstructure:"base_url" validate:"required"`
 	APIKey  string `mapstructure:"api_key" validate:"required"`
@@ -26,19 +27,20 @@ var sampleConfig = `
  base_url: grafana_server
  api_key: your_api_key	  `
 
+// Extractor manages the communication with the Grafana Server
 type Extractor struct {
 	client *Client
-
-	// dependencies
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Dashboard list from Grafana server.",
@@ -48,10 +50,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract checks if the extractor is configured and
+// if so, then it extracts the assets from the extractor.
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config

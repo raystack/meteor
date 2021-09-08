@@ -2,7 +2,7 @@ package bigtable
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -21,6 +21,7 @@ import (
 //go:embed README.md
 var summary string
 
+// Config hold the configurations for the bigtable extractor
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
 }
@@ -28,10 +29,12 @@ type Config struct {
 var sampleConfig = `
  project_id: google-project-id`
 
+// Extractor used to extract bigtable metadata
 type Extractor struct {
 	logger log.Logger
 }
 
+// InstancesFetcher is an interface for fetching instances
 type InstancesFetcher interface {
 	Instances(context.Context) ([]*bigtable.InstanceInfo, error)
 }
@@ -41,6 +44,7 @@ var (
 	instanceInfoGetter         = getInstancesInfo
 )
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Compressed, high-performance, proprietary data storage system.",
@@ -50,10 +54,14 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+//Extract checks if the extractor is configured and 
+// if so, then extracts the metadata and 
+// returns the assets.
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting bigtable metadata...")
 

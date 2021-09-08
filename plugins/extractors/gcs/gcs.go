@@ -2,7 +2,7 @@ package gcs
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"fmt"
 
 	"github.com/odpf/meteor/proto/odpf/assets"
@@ -22,10 +22,9 @@ import (
 //go:embed README.md
 var summary string
 
-const (
-	metadataSource = "googlecloudstorage"
-)
+const metadataSource = "googlecloudstorage"
 
+// Config hold the set of configuration for the extractor
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
@@ -48,19 +47,21 @@ var sampleConfig = `
      "client_x509_cert_url": "xxxxxxx"
    }`
 
+// Extractor manages the extraction of data
+// from the google cloud storage
 type Extractor struct {
 	client *storage.Client
-
-	// dependencies
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Online file storage web service for storing and accessing data.",
@@ -70,10 +71,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract checks if the extractor is configured and
+// if so, create a client and extract the data
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	// build config
 	var config Config

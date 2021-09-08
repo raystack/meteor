@@ -125,7 +125,7 @@ func (s *Sink) buildKey(payload interface{}, keyPath string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	keyString, keyJsonName, err := s.extractKeyFromPayload(fieldName, payload)
+	keyString, keyJSONName, err := s.extractKeyFromPayload(fieldName, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (s *Sink) buildKey(payload interface{}, keyPath string) ([]byte, error) {
 		return nil, errors.New("not a valid proto payload")
 	}
 	messageDescriptor := reflector.ProtoReflect().Descriptor()
-	fieldDescriptor := messageDescriptor.Fields().ByJSONName(keyJsonName)
+	fieldDescriptor := messageDescriptor.Fields().ByJSONName(keyJSONName)
 	if fieldDescriptor == nil {
 		return nil, errors.New("failed to build kafka key")
 	}

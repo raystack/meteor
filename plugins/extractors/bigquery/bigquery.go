@@ -2,7 +2,7 @@ package bigquery
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -26,10 +26,10 @@ import (
 //go:embed README.md
 var summary string
 
-const (
-	previewTotalRows = 30
-)
+// previewTotalRows is the number of rows to preview
+const previewTotalRows = 30
 
+// Config hold the set of configuration for the bigquery extractor
 type Config struct {
 	ProjectID            string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON   string `mapstructure:"service_account_json"`
@@ -54,12 +54,14 @@ var sampleConfig = `
      "client_x509_cert_url": "xxxxxxx"
    }`
 
+// Extractor manages the communication with the bigquery service
 type Extractor struct {
 	logger log.Logger
 	client *bigquery.Client
 	config Config
 }
 
+// Info returns the detailed information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Big Query table metadata and metrics",
@@ -69,10 +71,12 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
 	err = utils.BuildConfig(config, &e.config)
 	if err != nil {

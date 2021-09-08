@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// InvalidRecipeError hold the field to show the error message
 type InvalidRecipeError struct {
 	Message string
 }

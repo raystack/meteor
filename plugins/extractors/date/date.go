@@ -2,7 +2,7 @@ package date
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // used to print the embedded assets
 	"time"
 
 	"github.com/odpf/meteor/proto/odpf/assets/common"
@@ -16,14 +16,15 @@ import (
 //go:embed README.md
 var summary string
 
-const (
-	MaxDates = 3
-)
+// maxDates is the maximum number of dates to extract
+const maxDates = 3
 
+// Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Print current date from system",
@@ -33,11 +34,13 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return nil
 }
 
-func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+// Extract checks if the event contains a date and returns it
+func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
 	dateCount := 0
 	for {
 		select {
@@ -47,21 +50,22 @@ func (d *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			// maybe timmed out?
 			return nil
 		default:
-			p, err := d.Process()
+			p, err := e.Process()
 			if err != nil {
 				return err
 			}
 			out <- p
 
 			dateCount++
-			if dateCount >= MaxDates {
+			if dateCount >= maxDates {
 				return nil
 			}
 		}
 	}
 }
 
-func (d *Extractor) Process() (*common.Event, error) {
+// Process returns the current date
+func (e *Extractor) Process() (*common.Event, error) {
 	// simulate we did some heavy workload here
 	time.Sleep(500 * time.Millisecond)
 	// ...
