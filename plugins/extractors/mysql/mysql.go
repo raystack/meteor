@@ -34,7 +34,7 @@ type Config struct {
 var sampleConfig = `
  host: localhost:1433
  user_id: admin
- password: 1234`
+ password: "1234"`
 
 type Extractor struct {
 	out         chan<- interface{}

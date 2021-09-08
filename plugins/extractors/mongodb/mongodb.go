@@ -36,7 +36,7 @@ type Config struct {
 var sampleConfig = `
  host: localhost:27017
  user_id: admin
- password: 1234`
+ password: "1234"`
 
 type Extractor struct {
 	// internal states
