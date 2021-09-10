@@ -14,7 +14,7 @@ var (
 	runMetricName         = "run"
 )
 
-// StatsdMonitor contains the statsd client and prefix
+// StatsdMonitor reprsents the statsd monitor.
 type StatsdMonitor struct {
 	client statsdClient
 	prefix string

@@ -14,7 +14,7 @@ var file embed.FS
 
 var size uint = 2
 
-// Template contains the set of fields that are used to generate the recipe
+// Template represents the template for generating a recipe.
 type Template struct {
 	Name       string
 	Source     map[string]string
