@@ -6,11 +6,11 @@ import "github.com/odpf/meteor/recipe"
 type TaskType string
 
 const (
-	// TaskTypeExtract is the type of a task that extracts a file
+	// TaskTypeExtract is the type of task that extracts a record
 	TaskTypeExtract TaskType = "extract"
-	// TaskTypeProcess is the type of a task that processes a file
+	// TaskTypeProcess is the type of task that processes a record
 	TaskTypeProcess TaskType = "process"
-	// TaskTypeSink is the type of a task that sends a file to a sink
+	// TaskTypeSink is the type of task that sends a record to a sink
 	TaskTypeSink    TaskType = "sink"
 )
 

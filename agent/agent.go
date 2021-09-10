@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Agent contains fields responsible for the execution of a recipe.
+// Agent runs recipes for specified plugins.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
 	processorFactory *registry.ProcessorFactory
@@ -22,7 +22,7 @@ type Agent struct {
 	logger           log.Logger
 }
 
-// NewAgent creates a new Agent.
+// NewAgent returns an Agent with plugin factories.
 func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor, logger log.Logger) *Agent {
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
@@ -36,7 +36,7 @@ func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *
 	}
 }
 
-// Validate validates the recipe.
+// Validate checks the recipe for linting errors.
 func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 	if ext, err := r.extractorFactory.Get(rcp.Source.Type); err != nil {
 		errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
@@ -70,7 +70,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 	return
 }
 
-// RunMultiple runs multiple recipes.
+// RunMultiple executes multiple recipes.
 func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 	var wg sync.WaitGroup
 	runs := make([]Run, len(recipes))
@@ -92,7 +92,7 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 	return runs
 }
 
-// Run runs a recipe.
+// Run executes the specified recipe.
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	r.logger.Info("running recipe", "recipe", recipe.Name)
 	var wg sync.WaitGroup
