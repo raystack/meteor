@@ -168,6 +168,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
+// runExtractor runs an extractor.
 func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- interface{}) (err error) {
 	extractor, err := r.extractorFactory.Get(sourceRecipe.Type)
 	if err != nil {
@@ -180,6 +181,7 @@ func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceReci
 	return
 }
 
+// runProcessor runs a processor.
 func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.ProcessorRecipe, in <-chan interface{}, out chan<- interface{}) (err error) {
 	processor, err := r.processorFactory.Get(processorRecipe.Name)
 	if err != nil {
@@ -192,6 +194,7 @@ func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.Process
 	return
 }
 
+// runSink runs a sink.
 func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-chan interface{}) (err error) {
 	sink, err := r.sinkFactory.Get(sinkRecipe.Name)
 	if err != nil {
@@ -204,6 +207,7 @@ func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-
 	return
 }
 
+// buildTaskError builds a task error.
 func (r *Agent) buildTaskError(taskType TaskType, name string, err error) error {
 	return fmt.Errorf(
 		"error running %s task \"%s\": %s",
@@ -212,6 +216,7 @@ func (r *Agent) buildTaskError(taskType TaskType, name string, err error) error 
 		err)
 }
 
+// startDuration starts a timer.
 func (r *Agent) startDuration() func() int {
 	start := time.Now()
 	return func() int {
