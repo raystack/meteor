@@ -9,9 +9,9 @@ The tour takes you through how you can use meteor as and end user and is a great
 
 * Install Homebrew (for macOS) or Docker (if using docker image).
 
-* Install [Meteor](../guides/installation.md)
-
 * You are required to have atleast one Database, Dashboard or any other Data source and their proper credentials ready.
 For e.g. Postgres, MySQL, MSSQL, MongoDB, GitHub, etc.
 
-* For sink we will be using console, if you are planning to use columbus or Kafka please make necessary changes accrodingly.
+* For sink we will be using console, if you are planning to use columbus or Kafka please make necessary changes accordingly.
+
+Once done with the pre-requisites Get started with [Installation Part](./0_Installation.md).
