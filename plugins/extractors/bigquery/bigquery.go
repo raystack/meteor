@@ -88,7 +88,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		return
 	}
 
-	// Fetch and iterate over datesets
+	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	for {
 		ds, err := it.Next()
@@ -96,7 +96,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch dataset")
+			return errors.Wrapf(err, "failed to fetch dataset %s", ds.DatasetID)
 		}
 		e.extractTable(ctx, ds, out)
 	}
@@ -123,12 +123,12 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to scan, skipping table", "err", err)
+			e.logger.Error("failed to scan, skipping table", "err", err, "table", table.FullyQualifiedName())
 			continue
 		}
 		tmd, err := table.Metadata(ctx)
 		if err != nil {
-			e.logger.Error("failed to fetch table's metadata, skipping table", "err", err)
+			e.logger.Error("failed to fetch table's metadata, skipping table", "err", err, "table", table.FullyQualifiedName())
 			continue
 		}
 
