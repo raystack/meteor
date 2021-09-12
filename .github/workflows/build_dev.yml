@@ -23,5 +23,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Tag dev image
+      run: docker tag docker.io/odpf/meteor:latest docker.io/odpf/meteor:dev
     - name: Push Images
       run: docker push docker.io/odpf/meteor:dev

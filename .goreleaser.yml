@@ -56,7 +56,6 @@ dockers:
     dockerfile: Dockerfile
     image_templates:
       - 'docker.io/odpf/{{.ProjectName}}:latest'
-      - 'docker.io/odpf/{{.ProjectName}}:dev'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Tag }}-amd64'
 brews:
