@@ -41,15 +41,15 @@ func SetCustomProperties(data interface{}, customFields map[string]interface{}) 
 	case assets.Table:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data.Properties
+		res = data
 	case assets.Topic:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data.Properties
+		res = data
 	case assets.Dashboard:
 		data.Properties = createOrGetCustomFacet(data.Properties)
 		data.Properties.Attributes = protoStruct
-		res = data.Properties
+		res = data
 	default:
 		res = data
 	}
