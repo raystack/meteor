@@ -135,7 +135,7 @@ func TestRunnerRun(t *testing.T) {
 			t.Error(err.Error())
 		}
 		monitor := new(mockMonitor)
-		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
+		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true, 0).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, monitor, test.Logger)

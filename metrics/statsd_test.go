@@ -29,17 +29,20 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			Name: "test-recipe",
 		}
 		duration := 100
+		dataCount := "0"
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s",
+			"%s.runDuration,name=%s,success=%s,dataCount=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
+			dataCount,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s",
+			"%s.run,name=%s,success=%s,dataCount=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
+			dataCount,
 		)
 
 		client := new(mockStatsdClient)
@@ -56,17 +59,20 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			Name: "test-recipe",
 		}
 		duration := 100
+		dataCount := "0"
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s",
+			"%s.runDuration,name=%s,success=%s,dataCount=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
+			dataCount,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s",
+			"%s.run,name=%s,success=%s,dataCount=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
+			dataCount,
 		)
 
 		client := new(mockStatsdClient)
