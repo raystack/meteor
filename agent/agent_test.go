@@ -308,8 +308,8 @@ type mockMonitor struct {
 	mock.Mock
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
-	m.Called(recipe, durationInMs, success)
+func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool, dataCount int) {
+	m.Called(recipe, durationInMs, success, dataCount)
 }
 
 type failedProcessor struct{}

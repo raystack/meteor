@@ -157,10 +157,10 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	success := run.Error == nil
 	durationInMs := getDuration()
-	r.monitor.RecordRun(recipe, durationInMs, success)
-
+	dataCount := 0
+	r.monitor.RecordRun(recipe, durationInMs, success, dataCount)
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "Data Count", dataCount)
 	} else {
 		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "err", run.Error)
 	}
