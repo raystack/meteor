@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -33,7 +34,7 @@ var sampleConfig = `
  host: elastic_server`
 
 type Extractor struct {
-	out    chan<- interface{}
+	out    chan<- models.Record
 	logger log.Logger
 }
 
@@ -56,7 +57,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 
 	//build config
@@ -129,7 +130,7 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 
-		e.out <- assets.Table{
+		e.out <- models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
 				Name: indexName,
@@ -140,7 +141,7 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 			Profile: &assets.TableProfile{
 				TotalRows: int64(docCount),
 			},
-		}
+		})
 	}
 	return
 }

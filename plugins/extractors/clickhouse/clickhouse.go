@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -36,7 +37,7 @@ var sampleConfig = `
 // Extractor manages the output stream
 // and logger interface for the extractor
 type Extractor struct {
-	out    chan<- interface{}
+	out    chan<- models.Record
 	logger log.Logger
 }
 
@@ -65,7 +66,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 //Extract checks if the extractor is configured and
 // if the connection to the DB is successful
 // and then starts the extraction process
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -103,14 +104,14 @@ func (e *Extractor) extractTables() (err error) {
 			return
 		}
 
-		e.out <- assets.Table{
+		e.out <- models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 				Name: tableName,
 			}, Schema: &facets.Columns{
 				Columns: columns,
 			},
-		}
+		})
 	}
 	return
 }

@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -63,7 +64,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 //Extract checks if the extractor is configured and
 // returns the extracted data
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -80,20 +81,20 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return e.extract(filePaths, out)
 }
 
-func (e *Extractor) extract(filePaths []string, out chan<- interface{}) (err error) {
+func (e *Extractor) extract(filePaths []string, out chan<- models.Record) (err error) {
 	for _, filePath := range filePaths {
 		table, err := e.buildTable(filePath)
 		if err != nil {
 			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
 		}
 
-		out <- table
+		out <- models.NewRecord(table)
 	}
 
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (table assets.Table, err error) {
+func (e *Extractor) buildTable(filePath string) (table *assets.Table, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -112,7 +113,7 @@ func (e *Extractor) buildTable(filePath string) (table assets.Table, err error) 
 	}
 
 	fileName := stat.Name()
-	table = assets.Table{
+	table = &assets.Table{
 		Resource: &common.Resource{
 			Urn:     fileName,
 			Name:    fileName,

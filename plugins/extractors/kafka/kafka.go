@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -29,7 +30,7 @@ var sampleConfig = `
 // from a kafka broker
 type Extractor struct {
 	// internal states
-	out    chan<- interface{}
+	out    chan<- models.Record
 	conn   *kafka.Conn
 	logger log.Logger
 }
@@ -58,7 +59,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 
 	// build config
@@ -93,15 +94,15 @@ func (e *Extractor) extract() (err error) {
 
 	// process topics
 	for topicName := range topics {
-		e.out <- e.buildTopic(topicName)
+		e.out <- models.NewRecord(e.buildTopic(topicName))
 	}
 
 	return
 }
 
 // Build topic metadata model using a topic name
-func (e *Extractor) buildTopic(topicName string) assets.Topic {
-	return assets.Topic{
+func (e *Extractor) buildTopic(topicName string) *assets.Topic {
+	return &assets.Topic{
 		Resource: &common.Resource{
 			Urn:     topicName,
 			Name:    topicName,

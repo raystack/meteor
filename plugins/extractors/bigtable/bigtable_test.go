@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
@@ -61,7 +62,7 @@ func TestExtract(t *testing.T) {
 		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		err := extr.Extract(ctx, map[string]interface{}{
 			"wrong-config": "sample-project",
@@ -74,7 +75,7 @@ func TestExtract(t *testing.T) {
 		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		err := extr.Extract(ctx, map[string]interface{}{
 			"project_id": "",
@@ -87,7 +88,7 @@ func TestExtract(t *testing.T) {
 		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
@@ -114,9 +115,9 @@ func TestExtract(t *testing.T) {
 
 		}()
 
-		for val := range extractOut {
-			result := val.([]assets.Table)
-			assert.Equal(t, "bigtable", result[0].Resource.Service)
+		for record := range extractOut {
+			table := record.Data().(*assets.Table)
+			assert.Equal(t, "bigtable", table.Resource.Service)
 		}
 
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
@@ -126,7 +127,7 @@ func TestExtract(t *testing.T) {
 		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
@@ -149,11 +150,6 @@ func TestExtract(t *testing.T) {
 
 		}()
 
-		for val := range extractOut {
-			result := val.([]assets.Table)
-			assert.Nil(t, result)
-		}
-
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
 	})
 
@@ -162,7 +158,7 @@ func TestExtract(t *testing.T) {
 		extr, _ := registry.Extractors.Get("bigtable")
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		os.Setenv("BIGTABLE_EMULATOR_HOST", "localhost:9035")
 		oldInstanceAdminClientCreator := instanceAdminClientCreator
@@ -186,13 +182,7 @@ func TestExtract(t *testing.T) {
 				"project_id": "dev",
 			}, extractOut)
 			assert.EqualError(t, err, "random error")
-
 		}()
-
-		for val := range extractOut {
-			result := val.([]assets.Table)
-			assert.Nil(t, result)
-		}
 
 		os.Unsetenv("BIGTABLE_EMULATOR_HOST")
 	})

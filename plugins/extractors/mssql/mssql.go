@@ -8,6 +8,7 @@ import (
 
 	"github.com/odpf/salt/log"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 
@@ -41,7 +42,7 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {
-	out         chan<- interface{}
+	out         chan<- models.Record
 	excludedDbs map[string]bool
 	logger      log.Logger
 }
@@ -70,7 +71,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract checks if the extractor is ready to extract
 // and then extract and push data into stream
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 
 	// build and verify config
@@ -154,7 +155,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 	}
 
 	// push table to channel
-	e.out <- assets.Table{
+	e.out <- models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -162,7 +163,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 		Schema: &facets.Columns{
 			Columns: columns,
 		},
-	}
+	})
 
 	return
 }

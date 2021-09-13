@@ -5,6 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -78,7 +79,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract checks if the extractor is configured and
 // if so, create a client and extract the data
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	// build config
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -96,7 +97,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return e.extract(ctx, out, config)
 }
 
-func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config Config) (err error) {
+func (e *Extractor) extract(ctx context.Context, out chan<- models.Record, config Config) (err error) {
 	it := e.client.Buckets(ctx, config.ProjectID)
 	for {
 		bucket, err := it.Next()
@@ -115,7 +116,7 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 			}
 		}
 
-		out <- e.buildBucket(bucket, config.ProjectID, blobs)
+		out <- models.NewRecord(e.buildBucket(bucket, config.ProjectID, blobs))
 	}
 
 	return
@@ -136,8 +137,8 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 	return
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assets.Blob) (bucket assets.Bucket) {
-	bucket = assets.Bucket{
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assets.Blob) (bucket *assets.Bucket) {
+	bucket = &assets.Bucket{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("%s/%s", projectID, b.Name),
 			Name:    b.Name,

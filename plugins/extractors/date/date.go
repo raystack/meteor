@@ -5,6 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"time"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,7 +41,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract checks if the event contains a date and returns it
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error) {
 	dateCount := 0
 	for {
 		select {
@@ -54,7 +55,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			if err != nil {
 				return err
 			}
-			out <- p
+			out <- models.NewRecord(p)
 
 			dateCount++
 			if dateCount >= maxDates {

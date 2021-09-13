@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
@@ -105,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"user_id": "user",
 			"host":    host,
-		}, make(chan<- interface{}))
+		}, make(chan<- models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -113,7 +114,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"user_id":    email,
@@ -128,7 +129,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for val := range extractOut {
-			urns = append(urns, val.(assets.Dashboard).Resource.Urn)
+			urns = append(urns, val.Data().(*assets.Dashboard).Resource.Urn)
 		}
 
 		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)

@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -59,7 +60,7 @@ func TestMain(m *testing.M) {
 
 		return
 	}
-	err, purgeContainer := test.CreateContainer(opts, retryFn)
+	purgeContainer, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +86,7 @@ func TestExtractorExtract(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"wrong-config": "wrong-value",
-		}, make(chan interface{}))
+		}, make(chan models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -93,7 +94,7 @@ func TestExtractorExtract(t *testing.T) {
 	t.Run("should return list of topic metadata", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		out := make(chan interface{})
+		out := make(chan models.Record)
 
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
@@ -105,9 +106,9 @@ func TestExtractorExtract(t *testing.T) {
 		}()
 
 		// build results
-		var results []assets.Topic
+		var results []*assets.Topic
 		for d := range out {
-			topic, ok := d.(assets.Topic)
+			topic, ok := d.Data().(*assets.Topic)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}
@@ -115,7 +116,7 @@ func TestExtractorExtract(t *testing.T) {
 		}
 
 		// assert results with expected data
-		expected := []assets.Topic{
+		expected := []*assets.Topic{
 			{
 				Resource: &common.Resource{
 					Urn:     "meteor-test-topic-1",
@@ -172,10 +173,10 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []assets.Topic, result []assets.Topic) {
+func assertResults(t *testing.T, expected []*assets.Topic, result []*assets.Topic) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]assets.Topic)
+	expectedMap := make(map[string]*assets.Topic)
 	for _, topic := range expected {
 		expectedMap[topic.Resource.Urn] = topic
 	}

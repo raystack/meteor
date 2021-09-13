@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func (p *mockExtractor) Validate(map[string]interface{}) error {
 	return nil
 }
 
-func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error) {
 	return nil
 }
 

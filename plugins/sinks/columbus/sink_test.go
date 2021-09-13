@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -24,7 +25,7 @@ var (
 func TestSink(t *testing.T) {
 	// sample metadata
 	var (
-		topic = assets.Topic{
+		topic = &assets.Topic{
 			Resource: &common.Resource{
 				Urn:  "my-topic-urn",
 				Name: "my-topic",
@@ -54,7 +55,7 @@ func TestSink(t *testing.T) {
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
 				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload))
-				err := columbusSink.Sink(context.TODO(), config, make(<-chan interface{}))
+				err := columbusSink.Sink(context.TODO(), config, make(<-chan models.Record))
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
@@ -65,7 +66,7 @@ func TestSink(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 
-		in := make(chan interface{})
+		in := make(chan models.Record)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -83,7 +84,7 @@ func TestSink(t *testing.T) {
 			wg.Done()
 		}()
 
-		in <- topic
+		in <- models.NewRecord(topic)
 		close(in)
 		wg.Wait()
 	})
@@ -97,7 +98,7 @@ func TestSink(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(404, columbusError)
 
-		in := make(chan interface{})
+		in := make(chan models.Record)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -113,7 +114,7 @@ func TestSink(t *testing.T) {
 			wg.Done()
 		}()
 
-		in <- topic
+		in <- models.NewRecord(topic)
 		wg.Wait()
 	})
 
@@ -122,7 +123,7 @@ func TestSink(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, `{"success": true}`)
 
-		in := make(chan interface{})
+		in := make(chan models.Record)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -138,13 +139,13 @@ func TestSink(t *testing.T) {
 			wg.Done()
 		}()
 
-		in <- topic
+		in <- models.NewRecord(topic)
 		close(in)
 		wg.Wait()
 	})
 
 	t.Run("should map fields using mapper from config", func(t *testing.T) {
-		metadata := assets.Topic{
+		metadata := &assets.Topic{
 			Resource: &common.Resource{
 				Urn:  "test-urn",
 				Name: "test-name",
@@ -161,7 +162,7 @@ func TestSink(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 
-		in := make(chan interface{})
+		in := make(chan models.Record)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -180,7 +181,7 @@ func TestSink(t *testing.T) {
 			wg.Done()
 		}()
 
-		in <- metadata
+		in <- models.NewRecord(metadata)
 		close(in)
 		wg.Wait()
 	})

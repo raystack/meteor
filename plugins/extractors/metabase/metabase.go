@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -72,7 +73,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract collects the metadata from the source. The metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	// build and validateconfig
 	err = utils.BuildConfig(configMap, &e.cfg)
 	if err != nil {
@@ -93,12 +94,12 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		if err != nil {
 			return err
 		}
-		out <- data
+		out <- models.NewRecord(data)
 	}
 	return nil
 }
 
-func (e *Extractor) buildDashboard(id string, name string) (data assets.Dashboard, err error) {
+func (e *Extractor) buildDashboard(id string, name string) (data *assets.Dashboard, err error) {
 	var dashboard Dashboard
 	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/"+id, nil, &dashboard)
 	if err != nil {
@@ -112,7 +113,7 @@ func (e *Extractor) buildDashboard(id string, name string) (data assets.Dashboar
 		tempCard.DashboardUrn = "metabase." + name
 		tempCards = append(tempCards, &tempCard)
 	}
-	data = assets.Dashboard{
+	data = &assets.Dashboard{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("metabase.%s", dashboard.Name),
 			Name:    dashboard.Name,

@@ -15,6 +15,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -105,14 +106,14 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
-		}, make(chan<- interface{}))
+		}, make(chan<- models.Record))
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
 				"host":     host,
@@ -123,9 +124,9 @@ func TestExtract(t *testing.T) {
 
 			assert.Nil(t, err)
 		}()
-		var results []assets.Table
+		var results []*assets.Table
 		for d := range extractOut {
-			table, ok := d.(assets.Table)
+			table, ok := d.Data().(*assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -195,8 +196,8 @@ func newExtractor() *elastic.Extractor {
 	return elastic.New(test.Logger)
 }
 
-func getExpectedVal() []assets.Table {
-	return []assets.Table{
+func getExpectedVal() []*assets.Table {
+	return []*assets.Table{
 		{
 			Resource: &common.Resource{
 				Urn:  "elasticsearch.index1",

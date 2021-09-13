@@ -5,6 +5,7 @@ import (
 	//
 	_ "embed"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -29,10 +30,10 @@ var sampleConfig = `
 // Info returns the plugin information
 func (p *Processor) Info() plugins.Info {
 	return plugins.Info{
-		Description:  "Send metadata to columbus http service",
+		Description:  "Append custom fields to records",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"http,sink"},
+		Tags:         []string{"processor"},
 	}
 }
 
@@ -42,14 +43,14 @@ func (p *Processor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Process processes the data
-func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
-	for data := range in {
-		data, err := p.process(data, config)
+func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) (err error) {
+	for record := range in {
+		result, err := p.process(record.Data(), config)
 		if err != nil {
 			return err
 		}
 
-		out <- data
+		out <- models.NewRecord(result)
 	}
 
 	return
@@ -79,7 +80,7 @@ func (p *Processor) process(data interface{}, config map[string]interface{}) (in
 }
 
 func init() {
- 	if err := registry.Processors.Register("enrich", func() plugins.Processor {
+	if err := registry.Processors.Register("enrich", func() plugins.Processor {
 		return New()
 	}); err != nil {
 		return

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -63,12 +64,13 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) (err error) {
+func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan models.Record) (err error) {
 	if err = utils.BuildConfig(configMap, &s.config); err != nil {
 		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
 	}
 
-	for data := range in {
+	for record := range in {
+		data := record.Data()
 		data, err = s.mapData(data)
 		if err != nil {
 			return errors.Wrap(err, "error mapping data")

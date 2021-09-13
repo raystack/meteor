@@ -13,6 +13,7 @@ import (
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -88,7 +89,7 @@ func TestExtract(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
-		}, make(chan<- interface{}))
+		}, make(chan<- models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -96,7 +97,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
@@ -110,9 +111,9 @@ func TestExtract(t *testing.T) {
 			assert.Nil(t, err)
 		}()
 
-		var results []assets.Table
+		var results []*assets.Table
 		for d := range extractOut {
-			table, ok := d.(assets.Table)
+			table, ok := d.Data().(*assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -122,8 +123,8 @@ func TestExtract(t *testing.T) {
 	})
 }
 
-func getExpected() []assets.Table {
-	return []assets.Table{
+func getExpected() []*assets.Table {
+	return []*assets.Table{
 		{
 			Resource: &common.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",

@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/gcs"
 	"github.com/odpf/meteor/test"
@@ -16,7 +17,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
 		err := gcs.New(test.Logger).Extract(context.TODO(), map[string]interface{}{
 			"wrong-config": "sample-project",
-		}, make(chan interface{}))
+		}, make(chan models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})

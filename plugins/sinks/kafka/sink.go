@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -59,15 +60,15 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) error {
+func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan models.Record) error {
 	var config Config
 	if err := utils.BuildConfig(configMap, &config); err != nil {
 		return err
 	}
 
 	s.writer = createWriter(config)
-	for val := range in {
-		if err := s.push(ctx, config, val); err != nil {
+	for record := range in {
+		if err := s.push(ctx, config, record.Data()); err != nil {
 			return err
 		}
 	}

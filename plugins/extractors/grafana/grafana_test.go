@@ -11,6 +11,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -36,7 +37,7 @@ func TestExtract(t *testing.T) {
 		err := grafana.New(test.Logger).Extract(context.TODO(), map[string]interface{}{
 			"base_url": "",
 			"api_key":  "qwerty123",
-		}, make(chan interface{}))
+		}, make(chan models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -45,7 +46,7 @@ func TestExtract(t *testing.T) {
 		err := grafana.New(test.Logger).Extract(context.TODO(), map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "",
-		}, make(chan interface{}))
+		}, make(chan models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -53,7 +54,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
 		extractor := grafana.New(test.Logger)
 
-		expectedData := []assets.Dashboard{
+		expectedData := []*assets.Dashboard{
 			{
 				Resource: &common.Resource{
 					Urn:     "grafana.HzK8qNW7z",
@@ -114,7 +115,7 @@ func TestExtract(t *testing.T) {
 			},
 		}
 
-		out := make(chan interface{})
+		out := make(chan models.Record)
 		go func() {
 			err := extractor.Extract(context.TODO(), map[string]interface{}{
 				"base_url": testServer.URL,
@@ -125,9 +126,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var actualData []assets.Dashboard
+		var actualData []*assets.Dashboard
 		for d := range out {
-			dashboard, ok := d.(assets.Dashboard)
+			dashboard, ok := d.Data().(*assets.Dashboard)
 			if !ok {
 				t.Fatal(errors.New("invalid metadata format"))
 			}

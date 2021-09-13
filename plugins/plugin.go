@@ -3,10 +3,11 @@ package plugins
 import (
 	"context"
 
+	"github.com/odpf/meteor/models"
 	"gopkg.in/yaml.v3"
 )
 
-// PluginType is the type of plugin. 
+// PluginType is the type of plugin.
 type PluginType string
 
 // PluginType names
@@ -28,21 +29,21 @@ type Info struct {
 type Extractor interface {
 	Info() Info
 	Validate(config map[string]interface{}) error
-	Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error)
+	Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error)
 }
 
 // Processor are the functions that are executed on the extracted data.
 type Processor interface {
 	Info() Info
 	Validate(config map[string]interface{}) error
-	Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error)
+	Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) (err error)
 }
 
 // Syncer is a plugin that can be used to sync data from one source to another.
 type Syncer interface {
 	Info() Info
 	Validate(config map[string]interface{}) error
-	Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error)
+	Sink(ctx context.Context, config map[string]interface{}, in <-chan models.Record) (err error)
 }
 
 // ParseInfo parses the plugin's meta.yaml file and returns an plugin Info struct.

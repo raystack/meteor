@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
@@ -98,7 +99,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	var wg sync.WaitGroup
 	var (
 		getDuration = r.startDuration()
-		channel     = make(chan interface{})
+		channel     = make(chan models.Record)
 	)
 	run.Recipe = recipe
 
@@ -118,7 +119,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// run processors
 	for _, processorRecipe := range recipe.Processors {
 		inChannel := channel
-		outChannel := make(chan interface{})
+		outChannel := make(chan models.Record)
 
 		// need to store the recipe since it would be needed inside a goroutine
 		// not storing it inside the loop scope would cause
@@ -169,7 +170,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 }
 
 // runExtractor runs an extractor.
-func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- interface{}) (err error) {
+func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- models.Record) (err error) {
 	extractor, err := r.extractorFactory.Get(sourceRecipe.Type)
 	if err != nil {
 		return
@@ -182,7 +183,7 @@ func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceReci
 }
 
 // runProcessor runs a processor.
-func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.ProcessorRecipe, in <-chan interface{}, out chan<- interface{}) (err error) {
+func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.ProcessorRecipe, in <-chan models.Record, out chan<- models.Record) (err error) {
 	processor, err := r.processorFactory.Get(processorRecipe.Name)
 	if err != nil {
 		return
@@ -195,7 +196,7 @@ func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.Process
 }
 
 // runSink runs a sink.
-func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-chan interface{}) (err error) {
+func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-chan models.Record) (err error) {
 	sink, err := r.sinkFactory.Get(sinkRecipe.Name)
 	if err != nil {
 		return

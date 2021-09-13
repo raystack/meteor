@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -62,7 +63,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 //Extract checks if the extractor is configured and
 // if so, then extracts the metadata and
 // returns the assets.
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.logger.Info("extracting bigtable metadata...")
 
 	var config Config
@@ -83,7 +84,11 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	if err != nil {
 		return
 	}
-	out <- result
+
+	for _, t := range result {
+		out <- models.NewRecord(t)
+	}
+
 	return
 }
 
@@ -98,7 +103,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []assets.Table, err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []*assets.Table, err error) {
 	for _, instance := range instances {
 		adminClient, err := e.createAdminClient(ctx, instance, projectID)
 		if err != nil {
@@ -114,7 +119,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				results = append(results, assets.Table{
+				results = append(results, &assets.Table{
 					Resource: &common.Resource{
 						Urn:     fmt.Sprintf("%s.%s.%s", projectID, instance, table),
 						Name:    table,

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq" // used to register the postgres driver
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -66,7 +67,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error) {
 
 	// Build and validate config received from receipe
 	var cfg Config
@@ -110,7 +111,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 				continue
 			}
 			// Publish metadata to channel
-			out <- result
+			out <- models.NewRecord(result)
 		}
 	}
 
@@ -166,7 +167,6 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 
 // Prepares the list of tables and the attached metadata
 func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *assets.Table, err error) {
-
 	result = &assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),

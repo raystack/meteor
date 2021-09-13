@@ -5,6 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 
 	"github.com/google/go-github/v37/github"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -49,7 +50,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
@@ -74,7 +75,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		if err != nil {
 			continue
 		}
-		out <- assets.User{
+		out <- models.NewRecord(&assets.User{
 			Resource: &common.Resource{
 				Urn: usr.GetURL(),
 			},
@@ -82,7 +83,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 			Username: usr.GetLogin(),
 			FullName: usr.GetName(),
 			Status:   "active",
-		}
+		})
 	}
 
 	return nil

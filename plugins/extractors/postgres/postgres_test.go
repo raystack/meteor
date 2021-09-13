@@ -12,6 +12,7 @@ import (
 	"database/sql"
 
 	_ "github.com/lib/pq"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
@@ -75,7 +76,7 @@ func TestExtract(t *testing.T) {
 		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
-		}, make(chan<- interface{}))
+		}, make(chan<- models.Record))
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -83,7 +84,7 @@ func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with postgres", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		extractOut := make(chan interface{})
+		extractOut := make(chan models.Record)
 
 		go func() {
 			err := newExtractor().Extract(ctx, map[string]interface{}{
@@ -99,7 +100,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for val := range extractOut {
-			urns = append(urns, val.(*assets.Table).Resource.Urn)
+			urns = append(urns, val.Data().(*assets.Table).Resource.Urn)
 
 		}
 		assert.Equal(t, []string{"test_db.article", "test_db.post"}, urns)

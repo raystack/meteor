@@ -6,6 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -39,7 +40,7 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
-	out         chan<- interface{}
+	out         chan<- models.Record
 	excludedDbs map[string]bool
 	logger      log.Logger
 }
@@ -68,7 +69,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract extracts the data from the MySQL server
 // and collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 
 	// build config
@@ -157,7 +158,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 	}
 
 	// push table to channel
-	e.out <- assets.Table{
+	e.out <- models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -165,7 +166,7 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 		Schema: &facets.Columns{
 			Columns: columns,
 		},
-	}
+	})
 
 	return
 }

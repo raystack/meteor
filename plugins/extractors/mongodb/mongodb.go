@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -42,7 +43,7 @@ var sampleConfig = `
 // Extractor manages the communication with the mongo server
 type Extractor struct {
 	// internal states
-	out      chan<- interface{}
+	out      chan<- models.Record
 	client   *mongo.Client
 	excluded map[string]bool
 	logger   log.Logger
@@ -72,7 +73,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 
 // Extract extracts the data from the mongo server
 // and outputs the data to the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
 	e.out = out
 
 	// build config
@@ -134,21 +135,21 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 			return err
 		}
 
-		e.out <- table
+		e.out <- models.NewRecord(table)
 	}
 
 	return
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table assets.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assets.Table, err error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
 		return
 	}
 
-	table = assets.Table{
+	table = &assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
 			Name: collectionName,

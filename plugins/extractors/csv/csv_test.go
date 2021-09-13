@@ -7,6 +7,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
@@ -22,7 +23,7 @@ func TestExtract(t *testing.T) {
 		err := csv.New(test.Logger).Extract(
 			context.TODO(),
 			config,
-			make(chan<- interface{}))
+			make(chan<- models.Record))
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
@@ -30,7 +31,7 @@ func TestExtract(t *testing.T) {
 		config := map[string]interface{}{
 			"path": "./testdata/test.csv",
 		}
-		out := make(chan interface{})
+		out := make(chan models.Record)
 		go func() {
 			err := csv.New(test.Logger).Extract(
 				context.TODO(),
@@ -40,9 +41,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []assets.Table
+		var results []*assets.Table
 		for d := range out {
-			table, ok := d.(assets.Table)
+			table, ok := d.Data().(*assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -50,7 +51,7 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []assets.Table{
+		expected := []*assets.Table{
 			{
 				Resource: &common.Resource{
 					Urn:     "test.csv",
@@ -73,7 +74,7 @@ func TestExtract(t *testing.T) {
 		config := map[string]interface{}{
 			"path": "./testdata",
 		}
-		out := make(chan interface{})
+		out := make(chan models.Record)
 		go func() {
 			err := csv.New(test.Logger).Extract(
 				context.TODO(),
@@ -83,9 +84,9 @@ func TestExtract(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		var results []assets.Table
+		var results []*assets.Table
 		for d := range out {
-			table, ok := d.(assets.Table)
+			table, ok := d.Data().(*assets.Table)
 			if !ok {
 				t.Fatal(errors.New("invalid table format"))
 			}
@@ -93,7 +94,7 @@ func TestExtract(t *testing.T) {
 			results = append(results, table)
 		}
 
-		expected := []assets.Table{
+		expected := []*assets.Table{
 			{
 				Resource: &common.Resource{
 					Urn:     "test-2.csv",

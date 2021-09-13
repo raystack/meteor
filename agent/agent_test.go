@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/agent"
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
@@ -34,17 +35,17 @@ var validRecipe = recipe.Recipe{
 	},
 }
 
-var finalData = []interface{}{
-	assets.Table{
+var finalData = []models.Record{
+	models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn: "foo-1-bar",
 		},
-	},
-	assets.Table{
+	}),
+	models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn: "foo-2-bar",
 		},
-	},
+	}),
 }
 
 var extrFactory = registry.NewExtractorFactory()
@@ -202,7 +203,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 type mockExtractor struct {
 	m    sync.Mutex
-	data []assets.Table
+	data []*assets.Table
 }
 
 func newMockExtractor() plugins.Extractor {
@@ -217,9 +218,9 @@ func (t *mockExtractor) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
+func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) error {
 	t.m.Lock()
-	t.data = []assets.Table{
+	t.data = []*assets.Table{
 		{
 			Resource: &common.Resource{
 				Urn: "foo-1",
@@ -232,7 +233,7 @@ func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface
 		},
 	}
 	for _, d := range t.data {
-		out <- d
+		out <- models.NewRecord(d)
 	}
 
 	t.m.Unlock()
@@ -255,23 +256,23 @@ func (t *mockProcessor) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
+func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) error {
 	for data := range in {
-		table, ok := data.(assets.Table)
+		table, ok := data.Data().(*assets.Table)
 		if !ok {
 			return errors.New("invalid data type")
 		}
 
 		table.Resource.Urn = table.Resource.Urn + "-bar"
 
-		out <- table
+		out <- models.NewRecord(table)
 	}
 
 	return nil
 }
 
 type mockPassthroughSink struct {
-	result []interface{}
+	result []models.Record
 }
 
 func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
@@ -288,9 +289,9 @@ func (m *mockPassthroughSink) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) error {
+func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan models.Record) error {
 	if m.result == nil {
-		m.result = []interface{}{}
+		m.result = []models.Record{}
 	}
 
 	for data := range in {
@@ -300,7 +301,7 @@ func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interf
 	return nil
 }
 
-func (m *mockPassthroughSink) GetResult() interface{} {
+func (m *mockPassthroughSink) GetResult() []models.Record {
 	return m.result
 }
 
@@ -326,7 +327,7 @@ func (t *failedProcessor) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (t *failedProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) error {
+func (t *failedProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) error {
 	for range in {
 		return errors.New("failed processor")
 	}
@@ -348,11 +349,11 @@ func (t *failedExtractor) Validate(config map[string]interface{}) error {
 	return nil
 }
 
-func (t *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) error {
-	out <- assets.Table{
+func (t *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) error {
+	out <- models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn: "id-1",
 		},
-	}
+	})
 	return errors.New("failed extractor")
 }
