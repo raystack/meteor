@@ -29,16 +29,16 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			Name: "test-recipe",
 		}
 		duration := 100
-		dataCount := "0"
+		dataCount := 0
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,dataCount=%s",
+			"%s.runDuration,name=%s,success=%s,dataCount=%d",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			dataCount,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,dataCount=%s",
+			"%s.run,name=%s,success=%s,dataCount=%d",
 			statsdPrefix,
 			recipe.Name,
 			"false",
@@ -59,16 +59,16 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			Name: "test-recipe",
 		}
 		duration := 100
-		dataCount := "0"
+		dataCount := 0
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,dataCount=%s",
+			"%s.runDuration,name=%s,success=%s,dataCount=%d",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			dataCount,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,dataCount=%s",
+			"%s.run,name=%s,success=%s,dataCount=%d",
 			statsdPrefix,
 			recipe.Name,
 			"true",
@@ -81,6 +81,6 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(recipe, duration, true, 0)
+		monitor.RecordRun(recipe, duration, true, dataCount)
 	})
 }

@@ -99,6 +99,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	var (
 		getDuration = r.startDuration()
 		channel     = make(chan interface{})
+		dataCount   = 0
 	)
 	run.Recipe = recipe
 
@@ -113,6 +114,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		}
 
 		close(extrChannel)
+		dataCount = len(extrChannel)
 	}()
 
 	// run processors
@@ -157,10 +159,9 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	success := run.Error == nil
 	durationInMs := getDuration()
-	dataCount := 0
 	r.monitor.RecordRun(recipe, durationInMs, success, dataCount)
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "Data Count", dataCount)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "data_count", dataCount)
 	} else {
 		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "err", run.Error)
 	}

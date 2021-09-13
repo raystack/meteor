@@ -47,12 +47,12 @@ func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe
 	}
 
 	return fmt.Sprintf(
-		"%s.%s,name=%s,success=%s,dataCount=%s",
+		"%s.%s,name=%s,success=%s,dataCount=%d",
 		m.prefix,
 		metricName,
 		recipe.Name,
 		successText,
-		strconv.Itoa(dataCount),
+		dataCount,
 	)
 }
 
