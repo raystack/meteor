@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -95,67 +94,46 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 
 // Run executes the specified recipe.
 func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
-	r.logger.Info("running recipe", "recipe", recipe.Name)
-	var wg sync.WaitGroup
-	var (
-		getDuration = r.startDuration()
-		channel     = make(chan models.Record)
-	)
 	run.Recipe = recipe
+	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	var (
+		ctx         = context.Background()
+		getDuration = r.startDuration()
+		emitter     = NewEmitter()
+	)
 
-	// run extractors
-	extrChannel := channel
+	runExtractor, err := r.initExtractor(ctx, recipe.Source, emitter)
+	if err != nil {
+		run.Error = err
+		return
+	}
+	if err = r.initProcessors(ctx, recipe.Processors, emitter); err != nil {
+		run.Error = err
+		return
+	}
+	if err = r.initSinks(ctx, recipe.Sinks, emitter); err != nil {
+		run.Error = err
+		return
+	}
+
+	// create a goroutine to let extractor concurrently emit data
+	// while emitter is listening via emitter.Listen().
 	go func() {
-		if err := r.runExtractor(ctx, recipe.Source, extrChannel); err != nil {
-			run.Error = r.buildTaskError(TaskTypeExtract, recipe.Source.Type, err)
+		err = runExtractor()
+		if err != nil {
+			run.Error = err
 		}
-
-		close(extrChannel)
+		emitter.Close()
 	}()
 
-	// run processors
-	for _, processorRecipe := range recipe.Processors {
-		inChannel := channel
-		outChannel := make(chan models.Record)
-
-		// need to store the recipe since it would be needed inside a goroutine
-		// not storing it inside the loop scope would cause
-		// processorRecipe to always be the last recipe in the loop
-		tempRecipe := processorRecipe
-		go func() {
-			if err := r.runProcessor(ctx, tempRecipe, inChannel, outChannel); err != nil {
-				run.Error = r.buildTaskError(TaskTypeProcess, tempRecipe.Name, err)
-			}
-
-			close(outChannel)
-		}()
-
-		// replace the channel with the new out channel
-		// this would allow the next processor or sink to
-		// receive the processed data instead of data directly from extractor
-		channel = outChannel
+	// start listening.
+	// this process is blocking
+	if err := emitter.Listen(); err != nil {
+		run.Error = err
 	}
 
-	// run sinks
-	for _, sinkRecipe := range recipe.Sinks {
-		// need to store the recipe since it would be needed inside a goroutine
-		// not storing it inside the loop scope would cause
-		// sinkRecipe to always be the last recipe in the loop
-		tempRecipe := sinkRecipe
-		wg.Add(1)
-		go func() {
-			if err := r.runSink(ctx, tempRecipe, channel); err != nil {
-				run.Error = r.buildTaskError(TaskTypeSink, tempRecipe.Name, err)
-			}
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
-
+	// code will reach here emitter.Listen() is done.
 	success := run.Error == nil
 	durationInMs := getDuration()
 	r.monitor.RecordRun(recipe, durationInMs, success)
@@ -169,52 +147,91 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-// runExtractor runs an extractor.
-func (r *Agent) runExtractor(ctx context.Context, sourceRecipe recipe.SourceRecipe, in chan<- models.Record) (err error) {
-	extractor, err := r.extractorFactory.Get(sourceRecipe.Type)
+func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, emitter *Emitter) (runFn func() error, err error) {
+	extractor, err := r.extractorFactory.Get(sr.Type)
 	if err != nil {
+		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Type)
 		return
 	}
-	if err = extractor.Extract(ctx, sourceRecipe.Config, in); err != nil {
+	err = extractor.Init(ctx, sr.Config)
+	if err != nil {
+		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Type)
 		return
+	}
+
+	runFn = func() (err error) {
+		err = extractor.Extract(ctx, emitter)
+		if err != nil {
+			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
+		}
+
+		return
+	}
+	return
+}
+
+func (r *Agent) initProcessors(ctx context.Context, prs []recipe.ProcessorRecipe, emitter *Emitter) (err error) {
+	for _, pr := range prs {
+		var proc plugins.Processor
+		proc, err = r.processorFactory.Get(pr.Name)
+		if err != nil {
+			err = errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
+			return
+		}
+		err = proc.Init(ctx, pr.Config)
+		if err != nil {
+			err = errors.Wrapf(err, "could not initiate processor \"%s\"", pr.Name)
+			return
+		}
+
+		emitter.SetMiddleware(r.runProcessor(ctx, proc, pr.Name))
 	}
 
 	return
 }
 
-// runProcessor runs a processor.
-func (r *Agent) runProcessor(ctx context.Context, processorRecipe recipe.ProcessorRecipe, in <-chan models.Record, out chan<- models.Record) (err error) {
-	processor, err := r.processorFactory.Get(processorRecipe.Name)
-	if err != nil {
-		return
-	}
-	if err = processor.Process(ctx, processorRecipe.Config, in, out); err != nil {
-		return
-	}
+func (r *Agent) initSinks(ctx context.Context, srs []recipe.SinkRecipe, emitter *Emitter) (err error) {
+	for _, sr := range srs {
+		var sink plugins.Syncer
+		sink, err = r.sinkFactory.Get(sr.Name)
+		if err != nil {
+			err = errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+			return
+		}
+		err = sink.Init(ctx, sr.Config)
+		if err != nil {
+			err = errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+			return
+		}
 
-	return
-}
-
-// runSink runs a sink.
-func (r *Agent) runSink(ctx context.Context, sinkRecipe recipe.SinkRecipe, in <-chan models.Record) (err error) {
-	sink, err := r.sinkFactory.Get(sinkRecipe.Name)
-	if err != nil {
-		return
-	}
-	if err = sink.Sink(ctx, sinkRecipe.Config, in); err != nil {
-		return
+		emitter.SetListener(r.runSink(ctx, sink, sr.Name), 0)
 	}
 
 	return
 }
 
-// buildTaskError builds a task error.
-func (r *Agent) buildTaskError(taskType TaskType, name string, err error) error {
-	return fmt.Errorf(
-		"error running %s task \"%s\": %s",
-		taskType,
-		name,
-		err)
+func (r *Agent) runProcessor(ctx context.Context, processor plugins.Processor, name string) EmitterMiddleware {
+	return func(src models.Record) (dst models.Record, err error) {
+		dst, err = processor.Process(ctx, src)
+		if err != nil {
+			err = errors.Wrapf(err, "error running processor \"%s\"", name)
+			return
+		}
+
+		return
+	}
+}
+
+func (r *Agent) runSink(ctx context.Context, sink plugins.Syncer, name string) func(records []models.Record) error {
+	return func(records []models.Record) (err error) {
+		err = sink.Sink(ctx, records)
+		if err != nil {
+			err = errors.Wrapf(err, "error running sink \"%s\"", name)
+			return
+		}
+
+		return
+	}
 }
 
 // startDuration starts a timer.

@@ -12,11 +12,11 @@ import (
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -71,36 +71,40 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtract(t *testing.T) {
+func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := postgres.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
-		}, make(chan<- models.Record))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with postgres", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan models.Record)
+		ctx := context.TODO()
+		extr := postgres.New(test.Logger)
 
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"user_id":       user,
-				"password":      pass,
-				"host":          host,
-				"database_name": testDB,
-			}, extractOut)
-			close(extractOut)
+		err := extr.Init(ctx, map[string]interface{}{
+			"user_id":       user,
+			"password":      pass,
+			"host":          host,
+			"database_name": testDB,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.Nil(t, err)
-		}()
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter)
+		assert.NoError(t, err)
 
 		var urns []string
-		for val := range extractOut {
-			urns = append(urns, val.Data().(*assets.Table).Resource.Urn)
+		for _, record := range emitter.Get() {
+			table := record.Data().(*assets.Table)
+			urns = append(urns, table.Resource.Urn)
 
 		}
 		assert.Equal(t, []string{"test_db.article", "test_db.post"}, urns)
@@ -108,7 +112,6 @@ func TestExtract(t *testing.T) {
 }
 
 func setup() (err error) {
-
 	var queries = []string{
 		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
 		fmt.Sprintf("CREATE DATABASE %s", testDB),
@@ -141,8 +144,4 @@ func execute(db *sql.DB, queries []string) (err error) {
 		}
 	}
 	return
-}
-
-func newExtractor() *postgres.Extractor {
-	return postgres.New(test.Logger)
 }

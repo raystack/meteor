@@ -42,6 +42,8 @@ var sampleConfig = `
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
+	config Config
+	db     *sql.DB
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -66,34 +68,37 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract collects metdata from the source. Metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error) {
-
+func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (err error) {
 	// Build and validate config received from receipe
-	var cfg Config
-	if err := utils.BuildConfig(config, &cfg); err != nil {
+	if err := utils.BuildConfig(config, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// Create database connection
-	db, err := connection(cfg, cfg.Database)
+	e.db, err = connection(e.config, e.config.Database)
 	if err != nil {
 		return err
 	}
 
+	return
+}
+
+// Extract collects metdata from the source. Metadata is collected through the out channel
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	defer e.db.Close()
+
 	// Get list of databases
-	dbs, err := e.getDatabases(cfg, db)
+	dbs, err := e.getDatabases()
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
 	// Iterate through all tables and databases
 	for _, database := range dbs {
 		// Open a new connection to the given database to collect
 		// tables information without this default database
 		// information will be returned
-		db, err := connection(cfg, database)
+		db, err := connection(e.config, database)
 		if err != nil {
 			e.logger.Error("failed to connect, skipping database", err)
 			continue
@@ -111,20 +116,20 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 				continue
 			}
 			// Publish metadata to channel
-			out <- models.NewRecord(result)
+			emitter.Emit(models.NewRecord(result))
 		}
 	}
 
 	return nil
 }
 
-func (e *Extractor) getDatabases(cfg Config, db *sql.DB) (list []string, err error) {
-	res, err := db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
+func (e *Extractor) getDatabases() (list []string, err error) {
+	res, err := e.db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return nil, err
 	}
 
-	excludeList := append(defaults, strings.Split(cfg.Exclude, ",")...)
+	excludeList := append(defaults, strings.Split(e.config.Exclude, ",")...)
 
 	for res.Next() {
 		var database string

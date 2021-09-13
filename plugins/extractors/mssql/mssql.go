@@ -42,9 +42,11 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {
-	out         chan<- models.Record
 	excludedDbs map[string]bool
 	logger      log.Logger
+	db          *sql.DB
+	config      Config
+	emitter     plugins.Emitter
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -69,14 +71,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the extractor is ready to extract
-// and then extract and push data into stream
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-	e.out = out
-
-	// build and verify config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -85,24 +81,21 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	e.buildExcludedDBs()
 
 	// create client
-	db, err := sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", config.UserID, config.Password, config.Host))
+	e.db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host))
 	if err != nil {
 		return
-	}
-	defer db.Close()
-
-	// extract and push data into stream
-	err = e.extract(db)
-	if err != nil {
-		return err
 	}
 
 	return
 }
 
-// Extract all tables from databases
-func (e *Extractor) extract(db *sql.DB) (err error) {
-	res, err := db.Query("SELECT name FROM sys.databases;")
+// Extract checks if the extractor is ready to extract
+// and then extract and push data into stream
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	defer e.db.Close()
+	e.emitter = emitter
+
+	res, err := e.db.Query("SELECT name FROM sys.databases;")
 	if err != nil {
 		return
 	}
@@ -112,22 +105,23 @@ func (e *Extractor) extract(db *sql.DB) (err error) {
 			return err
 		}
 
-		if err := e.extractTables(db, database); err != nil {
+		if err := e.extractTables(database); err != nil {
 			return err
 		}
 	}
+
 	return
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
+func (e *Extractor) extractTables(database string) (err error) {
 	// skip if database is excluded
 	if e.isExcludedDB(database) {
 		return
 	}
 
 	// extract tables
-	rows, err := db.Query(
+	rows, err := e.db.Query(
 		fmt.Sprintf(`SELECT TABLE_NAME FROM %s.INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';`, database))
 	if err != nil {
 		return
@@ -140,7 +134,7 @@ func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
 			return err
 		}
 
-		if err := e.processTable(db, database, tableName); err != nil {
+		if err := e.processTable(database, tableName); err != nil {
 			return err
 		}
 	}
@@ -148,14 +142,14 @@ func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
 	return
 }
 
-func (e *Extractor) processTable(db *sql.DB, database string, tableName string) (err error) {
-	columns, err := e.getColumns(db, database, tableName)
+func (e *Extractor) processTable(database string, tableName string) (err error) {
+	columns, err := e.getColumns(database, tableName)
 	if err != nil {
 		return
 	}
 
 	// push table to channel
-	e.out <- models.NewRecord(&assets.Table{
+	e.emitter.Emit(models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -163,19 +157,19 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 		Schema: &facets.Columns{
 			Columns: columns,
 		},
-	})
+	}))
 
 	return
 }
 
-func (e *Extractor) getColumns(db *sql.DB, database, tableName string) (columns []*facets.Column, err error) {
+func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Column, err error) {
 	query := fmt.Sprintf(
 		`SELECT COLUMN_NAME, DATA_TYPE, 
 		IS_NULLABLE, coalesce(CHARACTER_MAXIMUM_LENGTH,0) 
 		FROM %s.information_schema.columns 
 		WHERE TABLE_NAME = ?
 		ORDER BY COLUMN_NAME ASC`, database)
-	rows, err := db.Query(query, tableName)
+	rows, err := e.db.Query(query, tableName)
 	if err != nil {
 		return
 	}

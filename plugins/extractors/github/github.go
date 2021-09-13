@@ -31,6 +31,8 @@ var sampleConfig = `
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	logger log.Logger
+	config Config
+	client *github.Client
 }
 
 // Info returns the brief information about the extractor
@@ -48,34 +50,35 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract extracts the data from the extractor
-// The data is returned as a list of assets.Asset
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: config.Token},
+		&oauth2.Token{AccessToken: e.config.Token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
+	e.client = github.NewClient(tc)
 
-	client := github.NewClient(tc)
+	return
+}
 
-	users, _, err := client.Organizations.ListMembers(context.Background(), config.Org, nil)
+// Extract extracts the data from the extractor
+// The data is returned as a list of assets.Asset
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	users, _, err := e.client.Organizations.ListMembers(ctx, e.config.Org, nil)
 
 	if err != nil {
 		return err
 	}
 	for _, user := range users {
-		usr, _, err := client.Users.Get(ctx, *user.Login)
+		usr, _, err := e.client.Users.Get(ctx, *user.Login)
 		if err != nil {
 			continue
 		}
-		out <- models.NewRecord(&assets.User{
+		emitter.Emit(models.NewRecord(&assets.User{
 			Resource: &common.Resource{
 				Urn: usr.GetURL(),
 			},
@@ -83,7 +86,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 			Username: usr.GetLogin(),
 			FullName: usr.GetName(),
 			Status:   "active",
-		})
+		}))
 	}
 
 	return nil

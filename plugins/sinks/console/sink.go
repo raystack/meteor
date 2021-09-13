@@ -36,8 +36,12 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return nil
 }
 
-func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan models.Record) (err error) {
-	for record := range out {
+func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err error) {
+	return
+}
+
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	for _, record := range batch {
 		if err := s.process(record.Data()); err != nil {
 			return err
 		}

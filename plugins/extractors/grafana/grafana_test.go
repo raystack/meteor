@@ -4,7 +4,6 @@ package grafana_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +16,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,30 +32,31 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtract(t *testing.T) {
+func TestInit(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
-		err := grafana.New(test.Logger).Extract(context.TODO(), map[string]interface{}{
+		err := grafana.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"base_url": "",
 			"api_key":  "qwerty123",
-		}, make(chan models.Record))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
-		err := grafana.New(test.Logger).Extract(context.TODO(), map[string]interface{}{
+		err := grafana.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "",
-		}, make(chan models.Record))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
-		extractor := grafana.New(test.Logger)
 
-		expectedData := []*assets.Dashboard{
-			{
+		expectedData := []models.Record{
+			models.NewRecord(&assets.Dashboard{
 				Resource: &common.Resource{
 					Urn:     "grafana.HzK8qNW7z",
 					Name:    "new-dashboard-copy",
@@ -77,8 +78,8 @@ func TestExtract(t *testing.T) {
 						DashboardSource: "grafana",
 					},
 				},
-			},
-			{
+			}),
+			models.NewRecord(&assets.Dashboard{
 				Resource: &common.Resource{
 					Urn:     "grafana.5WsKOvW7z",
 					Name:    "test-dashboard-updated",
@@ -112,31 +113,24 @@ func TestExtract(t *testing.T) {
 						DashboardSource: "grafana",
 					},
 				},
-			},
+			}),
 		}
 
-		out := make(chan models.Record)
-		go func() {
-			err := extractor.Extract(context.TODO(), map[string]interface{}{
-				"base_url": testServer.URL,
-				"api_key":  "qwerty123",
-			}, out)
-			close(out)
-
-			assert.NoError(t, err)
-		}()
-
-		var actualData []*assets.Dashboard
-		for d := range out {
-			dashboard, ok := d.Data().(*assets.Dashboard)
-			if !ok {
-				t.Fatal(errors.New("invalid metadata format"))
-			}
-
-			actualData = append(actualData, dashboard)
+		ctx := context.TODO()
+		extractor := grafana.New(test.Logger)
+		err := extractor.Init(ctx, map[string]interface{}{
+			"base_url": testServer.URL,
+			"api_key":  "qwerty123",
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
 
-		assert.EqualValues(t, expectedData, actualData)
+		emitter := mocks.NewEmitter()
+		err = extractor.Extract(ctx, emitter)
+
+		assert.NoError(t, err)
+		assert.EqualValues(t, expectedData, emitter.Get())
 	})
 }
 

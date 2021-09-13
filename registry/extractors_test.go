@@ -1,40 +1,20 @@
 package registry_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
-
-type mockExtractor struct {
-}
-
-func (p *mockExtractor) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (p *mockExtractor) Validate(map[string]interface{}) error {
-	return nil
-}
-
-func (p *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) (err error) {
-	return nil
-}
-
-func newMockExtractor() plugins.Extractor {
-	return new(mockExtractor)
-}
 
 func TestFactoryGet(t *testing.T) {
 	t.Run("should return not found error if extractor does not exist", func(t *testing.T) {
 		name := "wrong-name"
 
 		factory := registry.Extractors
-		if err := factory.Register("mock", newMockExtractor); err != nil {
+		if err := factory.Register("mock", newExtractor(mocks.NewExtractor())); err != nil {
 			t.Error(err.Error())
 		}
 		_, err := factory.Get(name)
@@ -45,7 +25,7 @@ func TestFactoryGet(t *testing.T) {
 		name := "mock3"
 
 		factory := registry.Extractors
-		if err := factory.Register(name, newMockExtractor); err != nil {
+		if err := factory.Register(name, newExtractor(mocks.NewExtractor())); err != nil {
 			t.Error(err.Error())
 		}
 
@@ -54,19 +34,19 @@ func TestFactoryGet(t *testing.T) {
 			t.Error(err.Error())
 		}
 
-		assert.Equal(t, new(mockExtractor), extr)  // Same type
-		assert.True(t, new(mockExtractor) != extr) // Different instance
+		assert.Equal(t, mocks.NewExtractor(), extr)  // Same type
+		assert.True(t, mocks.NewExtractor() != extr) // Different instance
 	})
 }
 
 func TestFactoryRegister(t *testing.T) {
 	t.Run("should add extractor factory with given key", func(t *testing.T) {
 		factory := registry.Extractors
-		err := factory.Register("mock1", newMockExtractor)
+		err := factory.Register("mock1", newExtractor(mocks.NewExtractor()))
 		if err != nil {
 			t.Error(err.Error())
 		}
-		err = factory.Register("mock2", newMockExtractor)
+		err = factory.Register("mock2", newExtractor(mocks.NewExtractor()))
 		if err != nil {
 			t.Error(err.Error())
 		}
@@ -75,14 +55,20 @@ func TestFactoryRegister(t *testing.T) {
 		if err != nil {
 			t.Error(err.Error())
 		}
-		assert.Equal(t, new(mockExtractor), mock1)  // Same type
-		assert.True(t, new(mockExtractor) != mock1) // Different instance
+		assert.Equal(t, mocks.NewExtractor(), mock1)  // Same type
+		assert.True(t, mocks.NewExtractor() != mock1) // Different instance
 
 		mock2, err := factory.Get("mock2")
 		if err != nil {
 			t.Error(err.Error())
 		}
-		assert.Equal(t, new(mockExtractor), mock2)  // Same type
-		assert.True(t, new(mockExtractor) != mock2) // Different instance
+		assert.Equal(t, mocks.NewExtractor(), mock2)  // Same type
+		assert.True(t, mocks.NewExtractor() != mock2) // Different instance
 	})
+}
+
+func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
+	return func() plugins.Extractor {
+		return extr
+	}
 }

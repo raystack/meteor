@@ -47,6 +47,7 @@ type Extractor struct {
 	client   *mongo.Client
 	excluded map[string]bool
 	logger   log.Logger
+	config   Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -71,14 +72,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract extracts the data from the mongo server
-// and outputs the data to the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-	e.out = out
-
-	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -87,18 +82,18 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	e.buildExcludedCollections()
 
 	// setup client
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", config.UserID, config.Password, config.Host)
-	client, err := createAndConnnectClient(context.Background(), uri)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s", e.config.UserID, e.config.Password, e.config.Host)
+	e.client, err = createAndConnnectClient(ctx, uri)
 	if err != nil {
 		return
 	}
-	e.client = client
 
-	return e.extract(ctx)
+	return
 }
 
-// Extract and output collections from all databases found
-func (e *Extractor) extract(ctx context.Context) (err error) {
+// Extract extracts the data from the mongo server
+// and outputs the data to the out channel
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
 	databases, err := e.client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
@@ -106,15 +101,16 @@ func (e *Extractor) extract(ctx context.Context) (err error) {
 
 	for _, dbName := range databases {
 		database := e.client.Database(dbName)
-		if err := e.extractCollections(ctx, database); err != nil {
+		if err := e.extractCollections(ctx, database, emitter); err != nil {
 			return err
 		}
 	}
-	return err
+
+	return
 }
 
 // Extract and output collections from a single mongo database
-func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) (err error) {
+func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emitter plugins.Emitter) (err error) {
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
 		return
@@ -135,7 +131,7 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 			return err
 		}
 
-		e.out <- models.NewRecord(table)
+		emitter.Emit(models.NewRecord(table))
 	}
 
 	return

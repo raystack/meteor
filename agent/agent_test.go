@@ -1,9 +1,7 @@
 package agent_test
 
 import (
-	"context"
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/odpf/meteor/agent"
@@ -14,9 +12,12 @@ import (
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var mockCtx = mock.AnythingOfType("*context.emptyCtx")
 
 var validRecipe = recipe.Recipe{
 	Name: "sample",
@@ -29,7 +30,7 @@ var validRecipe = recipe.Recipe{
 		}},
 	},
 	Sinks: []recipe.SinkRecipe{
-		{Name: "mock-sink", Config: map[string]interface{}{
+		{Name: "test-sink", Config: map[string]interface{}{
 			"url": "http://localhost:3000/data",
 		}},
 	},
@@ -48,24 +49,6 @@ var finalData = []models.Record{
 	}),
 }
 
-var extrFactory = registry.NewExtractorFactory()
-var procFactory = registry.NewProcessorFactory()
-
-func init() {
-	if err := extrFactory.Register("test-extractor", newMockExtractor); err != nil {
-		return
-	}
-	if err := extrFactory.Register("failed-extractor", newFailedExtractor); err != nil {
-		return
-	}
-	if err := procFactory.Register("test-processor", newMockProcessor); err != nil {
-		return
-	}
-	if err := procFactory.Register("failed-processor", newFailedProcessor); err != nil {
-		return
-	}
-}
-
 func TestRunnerRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
 		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil, test.Logger)
@@ -74,286 +57,342 @@ func TestRunnerRun(t *testing.T) {
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
-	t.Run("should return error if extractor, processors or sinks could not be found", func(t *testing.T) {
-		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil, test.Logger)
+	t.Run("should return error if extractor could not be found", func(t *testing.T) {
+		proc := mocks.NewProcessor()
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(registry.NewExtractorFactory(), pf, sf, nil, test.Logger)
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
 
-	t.Run("should return error on failed extractor", func(t *testing.T) {
-		rcp := validRecipe
-		rcp.Source = recipe.SourceRecipe{
-			Type: "failed-extractor",
-		}
+	t.Run("should return error if processor could not be found", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		defer extr.AssertExpectations(t)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
 
-		mSink := new(mockPassthroughSink)
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
-			t.Error(err.Error())
-		}
+		sink := mocks.NewSink()
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
-		run := r.Run(rcp)
+		r := agent.NewAgent(ef, registry.NewProcessorFactory(), sf, nil, test.Logger)
+		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
 
-	t.Run("should return error on failed processor", func(t *testing.T) {
-		rcp := validRecipe
-		rcp.Processors = []recipe.ProcessorRecipe{
-			{Name: "failed-processor"},
-		}
+	t.Run("should return error if sink could not be found", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		defer extr.AssertExpectations(t)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
 
-		mSink := new(mockPassthroughSink)
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
-			t.Error(err.Error())
-		}
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
-		run := r.Run(rcp)
+		r := agent.NewAgent(ef, pf, registry.NewSinkFactory(), nil, test.Logger)
+		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
 
-	t.Run("should run extractor, processors and sinks", func(t *testing.T) {
-		mSink := new(mockPassthroughSink)
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
-			t.Error(err.Error())
+	t.Run("should return error when initiating extractor fails", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(errors.New("some error")).Once()
+		defer extr.AssertExpectations(t)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when initiating processor fails", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		defer extr.AssertExpectations(t)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(errors.New("some error")).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when initiating sink fails", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		defer extr.AssertExpectations(t)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(errors.New("some error")).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when extracting fails", func(t *testing.T) {
+		extr := mocks.NewExtractor()
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(errors.New("some error")).Once()
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when processing fails", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
 		}
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil).Once()
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], errors.New("some error")).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when sink fails", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Sink", mockCtx, data).Return(errors.New("some error"))
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return run on success", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Sink", mockCtx, data).Return(nil)
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
-
-		result := mSink.GetResult()
-		assert.Equal(t, finalData, result)
+		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
-	t.Run("should record metrics", func(t *testing.T) {
-		mSink := new(mockPassthroughSink)
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(mSink)); err != nil {
-			t.Error(err.Error())
+	t.Run("should collect run metrics", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
 		}
-		monitor := new(mockMonitor)
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Sink", mockCtx, data).Return(nil)
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		monitor := newMockMonitor()
 		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, monitor, test.Logger)
+		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
+		assert.Equal(t, validRecipe, run.Recipe)
 	})
 }
 
 func TestRunnerRunMultiple(t *testing.T) {
-	validRecipe2 := validRecipe
-	validRecipe2.Name = "sample-2"
-
 	t.Run("should return list of runs when finished", func(t *testing.T) {
-		failedProcessorName := "failed-processor"
-		failedRecipe := validRecipe
-		failedRecipe.Name = "failedRecipe"
-		failedRecipe.Processors = []recipe.ProcessorRecipe{
-			{Name: failedProcessorName},
-		}
-		recipeList := []recipe.Recipe{validRecipe, failedRecipe, validRecipe2}
-
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(new(mockPassthroughSink))); err != nil {
-			t.Error(err.Error())
+		validRecipe2 := validRecipe
+		validRecipe2.Name = "sample-2"
+		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
 		}
 
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil)
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil)
+		sink.On("Sink", mockCtx, data).Return(nil)
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
 		runs := r.RunMultiple(recipeList)
 
 		assert.Len(t, runs, len(recipeList))
-		for _, run := range runs {
-			if run.Recipe.Name == failedRecipe.Name {
-				assert.Error(t, run.Error)
-			} else {
-				assert.NoError(t, run.Error)
-			}
-		}
-	})
-
-	t.Run("should run all extractors, processors and sinks for all recipes", func(t *testing.T) {
-		validRecipe2.Sinks = []recipe.SinkRecipe{
-			{Name: "mock-sink-2"},
-		}
-
-		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
-
-		sink1 := new(mockPassthroughSink)
-		sink2 := new(mockPassthroughSink)
-		sinkFactory := registry.NewSinkFactory()
-		if err := sinkFactory.Register("mock-sink", newMockSinkFn(sink1)); err != nil {
-			t.Error(err.Error())
-		}
-		if err := sinkFactory.Register("mock-sink-2", newMockSinkFn(sink2)); err != nil {
-			t.Error(err.Error())
-		}
-
-		r := agent.NewAgent(extrFactory, procFactory, sinkFactory, nil, test.Logger)
-		r.RunMultiple(recipeList)
-
-		assert.Equal(t, finalData, sink1.GetResult())
-		assert.Equal(t, finalData, sink2.GetResult())
+		assert.Equal(t, []agent.Run{
+			{Recipe: validRecipe},
+			{Recipe: validRecipe2},
+		}, runs)
 	})
 }
 
-type mockExtractor struct {
-	m    sync.Mutex
-	data []*assets.Table
-}
-
-func newMockExtractor() plugins.Extractor {
-	return &mockExtractor{}
-}
-
-func (t *mockExtractor) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (t *mockExtractor) Validate(config map[string]interface{}) error {
-	return nil
-}
-
-func (t *mockExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) error {
-	t.m.Lock()
-	t.data = []*assets.Table{
-		{
-			Resource: &common.Resource{
-				Urn: "foo-1",
-			},
-		},
-		{
-			Resource: &common.Resource{
-				Urn: "foo-2",
-			},
-		},
+func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
+	return func() plugins.Extractor {
+		return extr
 	}
-	for _, d := range t.data {
-		out <- models.NewRecord(d)
+}
+
+func newProcessor(proc plugins.Processor) func() plugins.Processor {
+	return func() plugins.Processor {
+		return proc
 	}
-
-	t.m.Unlock()
-	return nil
-
 }
 
-// This test processor will append assets.Table.Urn with "-bar"
-type mockProcessor struct{}
-
-func newMockProcessor() plugins.Processor {
-	return &mockProcessor{}
-}
-
-func (t *mockProcessor) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (t *mockProcessor) Validate(config map[string]interface{}) error {
-	return nil
-}
-
-func (t *mockProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) error {
-	for data := range in {
-		table, ok := data.Data().(*assets.Table)
-		if !ok {
-			return errors.New("invalid data type")
-		}
-
-		table.Resource.Urn = table.Resource.Urn + "-bar"
-
-		out <- models.NewRecord(table)
-	}
-
-	return nil
-}
-
-type mockPassthroughSink struct {
-	result []models.Record
-}
-
-func newMockSinkFn(sink plugins.Syncer) func() plugins.Syncer {
+func newSink(sink plugins.Syncer) func() plugins.Syncer {
 	return func() plugins.Syncer {
 		return sink
 	}
-}
-
-func (m *mockPassthroughSink) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (m *mockPassthroughSink) Validate(config map[string]interface{}) error {
-	return nil
-}
-
-func (m *mockPassthroughSink) Sink(ctx context.Context, config map[string]interface{}, in <-chan models.Record) error {
-	if m.result == nil {
-		m.result = []models.Record{}
-	}
-
-	for data := range in {
-		m.result = append(m.result, data)
-	}
-
-	return nil
-}
-
-func (m *mockPassthroughSink) GetResult() []models.Record {
-	return m.result
 }
 
 type mockMonitor struct {
 	mock.Mock
 }
 
+func newMockMonitor() *mockMonitor {
+	return &mockMonitor{}
+}
+
 func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
 	m.Called(recipe, durationInMs, success)
-}
-
-type failedProcessor struct{}
-
-func newFailedProcessor() plugins.Processor {
-	return &failedProcessor{}
-}
-
-func (t *failedProcessor) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (t *failedProcessor) Validate(config map[string]interface{}) error {
-	return nil
-}
-
-func (t *failedProcessor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) error {
-	for range in {
-		return errors.New("failed processor")
-	}
-
-	return nil
-}
-
-type failedExtractor struct{}
-
-func newFailedExtractor() plugins.Extractor {
-	return &failedExtractor{}
-}
-
-func (t *failedExtractor) Info() plugins.Info {
-	return plugins.Info{}
-}
-
-func (t *failedExtractor) Validate(config map[string]interface{}) error {
-	return nil
-}
-
-func (t *failedExtractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- models.Record) error {
-	out <- models.NewRecord(&assets.Table{
-		Resource: &common.Resource{
-			Urn: "id-1",
-		},
-	})
-	return errors.New("failed extractor")
+	return
 }

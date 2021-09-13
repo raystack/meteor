@@ -33,6 +33,7 @@ type Extractor struct {
 	out    chan<- models.Record
 	conn   *kafka.Conn
 	logger log.Logger
+	config Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -57,30 +58,26 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the extractor is ready to extract
-// if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-	e.out = out
-
-	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// create conn
-	e.conn, err = kafka.Dial("tcp", config.Broker)
+	e.conn, err = kafka.Dial("tcp", e.config.Broker)
 	if err != nil {
 		return err
 	}
-	defer e.conn.Close()
 
-	return e.extract()
+	return
 }
 
-// Extract and output metadata from all topics in a broker
-func (e *Extractor) extract() (err error) {
+// Extract checks if the extractor is ready to extract
+// if so, then extracts metadata from the kafka broker
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	defer e.conn.Close()
+
 	partitions, err := e.conn.ReadPartitions()
 	if err != nil {
 		return
@@ -94,7 +91,7 @@ func (e *Extractor) extract() (err error) {
 
 	// process topics
 	for topicName := range topics {
-		e.out <- models.NewRecord(e.buildTopic(topicName))
+		emitter.Emit(models.NewRecord(e.buildTopic(topicName)))
 	}
 
 	return

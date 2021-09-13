@@ -5,7 +5,6 @@ package elastic_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,6 +21,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/elastic"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ const (
 
 var (
 	client *elasticsearch.Client
-	ctx    = context.Background()
+	ctx    = context.TODO()
 )
 
 func TestMain(m *testing.M) {
@@ -101,40 +101,31 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtract(t *testing.T) {
-
+func TestInit(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := newExtractor().Init(ctx, map[string]interface{}{
 			"password": "pass",
-		}, make(chan<- models.Record))
+		})
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan models.Record)
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"host":     host,
-				"user":     user,
-				"password": pass,
-			}, extractOut)
-			close(extractOut)
-
-			assert.Nil(t, err)
-		}()
-		var results []*assets.Table
-		for d := range extractOut {
-			table, ok := d.Data().(*assets.Table)
-			if !ok {
-				t.Fatal(errors.New("invalid table format"))
-			}
-
-			results = append(results, table)
+		extr := newExtractor()
+		err := extr.Init(ctx, map[string]interface{}{
+			"host":     host,
+			"user":     user,
+			"password": pass,
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
 
-		assert.Equal(t, getExpectedVal(), results)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter)
+		assert.NoError(t, err)
+		assert.Equal(t, getExpectedVal(), emitter.Get())
 	})
 }
 
@@ -196,9 +187,9 @@ func newExtractor() *elastic.Extractor {
 	return elastic.New(test.Logger)
 }
 
-func getExpectedVal() []*assets.Table {
-	return []*assets.Table{
-		{
+func getExpectedVal() []models.Record {
+	return []models.Record{
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  "elasticsearch.index1",
 				Name: "index1",
@@ -218,8 +209,8 @@ func getExpectedVal() []*assets.Table {
 			Profile: &assets.TableProfile{
 				TotalRows: 1,
 			},
-		},
-		{
+		}),
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  "elastic.index2",
 				Name: "index2",
@@ -239,6 +230,6 @@ func getExpectedVal() []*assets.Table {
 			Profile: &assets.TableProfile{
 				TotalRows: 1,
 			},
-		},
+		}),
 	}
 }

@@ -30,11 +30,6 @@ type Config struct {
 var sampleConfig = `
  project_id: google-project-id`
 
-// Extractor used to extract bigtable metadata
-type Extractor struct {
-	logger log.Logger
-}
-
 // InstancesFetcher is an interface for fetching instances
 type InstancesFetcher interface {
 	Instances(context.Context) ([]*bigtable.InstanceInfo, error)
@@ -44,6 +39,19 @@ var (
 	instanceAdminClientCreator = createInstanceAdminClient
 	instanceInfoGetter         = getInstancesInfo
 )
+
+// Extractor used to extract bigtable metadata
+type Extractor struct {
+	config        Config
+	logger        log.Logger
+	instanceNames []string
+}
+
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
 
 // Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
@@ -60,33 +68,32 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-//Extract checks if the extractor is configured and
-// if so, then extracts the metadata and
-// returns the assets.
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-	e.logger.Info("extracting bigtable metadata...")
-
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	var config Config
 	err = utils.BuildConfig(configMap, &config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	instanceAdminClient, err := instanceAdminClientCreator(ctx, config)
+	client, err := instanceAdminClientCreator(ctx, config)
 	if err != nil {
 		return
 	}
-	instanceNames, err := instanceInfoGetter(ctx, instanceAdminClient)
-	if err != nil {
-		return
-	}
-	result, err := e.getTablesInfo(ctx, instanceNames, config.ProjectID)
+	e.instanceNames, err = instanceInfoGetter(ctx, client)
 	if err != nil {
 		return
 	}
 
-	for _, t := range result {
-		out <- models.NewRecord(t)
+	return
+}
+
+//Extract checks if the extractor is configured and
+// if so, then extracts the metadata and
+// returns the assets.
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	err = e.getTablesInfo(ctx, emitter)
+	if err != nil {
+		return
 	}
 
 	return
@@ -103,11 +110,11 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, projectID string) (results []*assets.Table, err error) {
-	for _, instance := range instances {
-		adminClient, err := e.createAdminClient(ctx, instance, projectID)
+func (e *Extractor) getTablesInfo(ctx context.Context, emitter plugins.Emitter) (err error) {
+	for _, instance := range e.instanceNames {
+		adminClient, err := e.createAdminClient(ctx, instance, e.config.ProjectID)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		tables, _ := adminClient.Tables(ctx)
 		wg := sync.WaitGroup{}
@@ -119,9 +126,9 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				results = append(results, &assets.Table{
+				emitter.Emit(models.NewRecord(&assets.Table{
 					Resource: &common.Resource{
-						Urn:     fmt.Sprintf("%s.%s.%s", projectID, instance, table),
+						Urn:     fmt.Sprintf("%s.%s.%s", e.config.ProjectID, instance, table),
 						Name:    table,
 						Service: "bigtable",
 					},
@@ -130,7 +137,8 @@ func (e *Extractor) getTablesInfo(ctx context.Context, instances []string, proje
 							"column_family": string(familyInfoBytes),
 						}),
 					},
-				})
+				}))
+
 				wg.Done()
 			}(table)
 		}
@@ -150,9 +158,7 @@ func (e *Extractor) createAdminClient(ctx context.Context, instance string, proj
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

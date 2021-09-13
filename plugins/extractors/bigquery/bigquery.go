@@ -62,6 +62,12 @@ type Extractor struct {
 	config Config
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 // Info returns the detailed information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
@@ -78,7 +84,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract checks if the table is valid and extracts the table schema
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
@@ -89,6 +95,11 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		return
 	}
 
+	return
+}
+
+// Extract checks if the table is valid and extracts the table schema
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	for {
@@ -99,7 +110,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch dataset")
 		}
-		e.extractTable(ctx, ds, out)
+		e.extractTable(ctx, ds, emitter)
 	}
 
 	return
@@ -116,7 +127,7 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 }
 
 // Create big query client
-func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out chan<- models.Record) {
+func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emitter plugins.Emitter) {
 	tb := ds.Tables(ctx)
 	for {
 		table, err := tb.Next()
@@ -133,7 +144,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 			continue
 		}
 
-		out <- models.NewRecord(e.buildTable(ctx, table, tmd))
+		emitter.Emit(models.NewRecord(e.buildTable(ctx, table, tmd)))
 	}
 }
 
@@ -351,9 +362,7 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

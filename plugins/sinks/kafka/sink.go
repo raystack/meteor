@@ -41,6 +41,7 @@ type ProtoReflector interface {
 
 type Sink struct {
 	writer *kafka.Writer
+	config Config
 }
 
 func New() plugins.Syncer {
@@ -60,27 +61,29 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan models.Record) error {
-	var config Config
-	if err := utils.BuildConfig(configMap, &config); err != nil {
+func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	if err := utils.BuildConfig(configMap, &s.config); err != nil {
 		return err
 	}
 
-	s.writer = createWriter(config)
-	for record := range in {
-		if err := s.push(ctx, config, record.Data()); err != nil {
+	s.writer = createWriter(s.config)
+
+	return
+}
+
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	defer s.writer.Close()
+
+	for _, record := range batch {
+		if err := s.push(ctx, record.Data()); err != nil {
 			return err
 		}
 	}
 
-	if err := s.writer.Close(); err != nil {
-		return errors.Wrap(err, "failed to close writer")
-	}
-
-	return nil
+	return
 }
 
-func (s *Sink) push(ctx context.Context, config Config, payload interface{}) error {
+func (s *Sink) push(ctx context.Context, payload interface{}) error {
 	// struct needs to be cast to pointer to implement proto methods
 	payload = castModelToPointer(payload)
 
@@ -89,7 +92,7 @@ func (s *Sink) push(ctx context.Context, config Config, payload interface{}) err
 		return err
 	}
 
-	kafkaKey, err := s.buildKey(payload, config.KeyPath)
+	kafkaKey, err := s.buildKey(payload, s.config.KeyPath)
 	if err != nil {
 		return err
 	}

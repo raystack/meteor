@@ -23,12 +23,6 @@ import (
 //go:embed README.md
 var summary string
 
-var (
-	client = &http.Client{
-		Timeout: 4 * time.Second,
-	}
-)
-
 var sampleConfig = `
  host: http://localhost:3000
  user_id: meteor_tester
@@ -45,9 +39,10 @@ type Config struct {
 // Extractor manages the extraction of data
 // from the metabase server
 type Extractor struct {
-	cfg       Config
+	config    Config
 	sessionID string
 	logger    log.Logger
+	client    *http.Client
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -72,19 +67,28 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract collects the metadata from the source. The metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build and validateconfig
-	err = utils.BuildConfig(configMap, &e.cfg)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
+
+	e.client = &http.Client{
+		Timeout: 4 * time.Second,
+	}
+
 	// get session id for further api calls in metabase
 	e.sessionID, err = e.getSessionID()
 	if err != nil {
 		return
 	}
 
+	return nil
+}
+
+// Extract collects the metadata from the source. The metadata is collected through the out channel
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
 	dashboards, err := e.getDashboardsList()
 	if err != nil {
 		return
@@ -94,14 +98,14 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 		if err != nil {
 			return err
 		}
-		out <- models.NewRecord(data)
+		emitter.Emit(models.NewRecord(data))
 	}
 	return nil
 }
 
 func (e *Extractor) buildDashboard(id string, name string) (data *assets.Dashboard, err error) {
 	var dashboard Dashboard
-	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/"+id, nil, &dashboard)
+	err = e.makeRequest("GET", e.config.Host+"/api/dashboard/"+id, nil, &dashboard)
 	if err != nil {
 		return
 	}
@@ -126,7 +130,7 @@ func (e *Extractor) buildDashboard(id string, name string) (data *assets.Dashboa
 }
 
 func (e *Extractor) getDashboardsList() (data []Dashboard, err error) {
-	err = e.makeRequest("GET", e.cfg.Host+"/api/dashboard/", nil, &data)
+	err = e.makeRequest("GET", e.config.Host+"/api/dashboard/", nil, &data)
 	if err != nil {
 		return
 	}
@@ -134,19 +138,19 @@ func (e *Extractor) getDashboardsList() (data []Dashboard, err error) {
 }
 
 func (e *Extractor) getSessionID() (sessionID string, err error) {
-	if e.cfg.SessionID != "" {
-		return e.cfg.SessionID, nil
+	if e.config.SessionID != "" {
+		return e.config.SessionID, nil
 	}
 
 	payload := map[string]interface{}{
-		"username": e.cfg.UserID,
-		"password": e.cfg.Password,
+		"username": e.config.UserID,
+		"password": e.config.Password,
 	}
 	type responseID struct {
 		ID string `json:"id"`
 	}
 	var data responseID
-	err = e.makeRequest("POST", e.cfg.Host+"/api/session", payload, &data)
+	err = e.makeRequest("POST", e.config.Host+"/api/session", payload, &data)
 	if err != nil {
 		return
 	}
@@ -167,10 +171,10 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if e.cfg.SessionID != "" {
-		req.Header.Set("X-Metabase-Session", e.cfg.SessionID)
+	if e.config.SessionID != "" {
+		req.Header.Set("X-Metabase-Session", e.config.SessionID)
 	}
-	res, err := client.Do(req)
+	res, err := e.client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 		return

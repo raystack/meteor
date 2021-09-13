@@ -4,7 +4,6 @@ package mongodb_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -89,43 +89,37 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
-func TestExtract(t *testing.T) {
+
+func TestInit(t *testing.T) {
 	t.Run("should return error for invalid", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := mongodb.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": pass,
 			"host":     host,
-		}, make(chan models.Record))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan models.Record)
+		ctx := context.TODO()
+		extr := mongodb.New(test.Logger)
 
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"user_id":  user,
-				"password": pass,
-				"host":     host,
-			}, extractOut)
-			close(extractOut)
-
-			assert.Nil(t, err)
-		}()
-
-		var results []*assets.Table
-		for d := range extractOut {
-			table, ok := d.Data().(*assets.Table)
-			if !ok {
-				t.Fatal(errors.New("invalid table format"))
-			}
-
-			results = append(results, table)
+		err := extr.Init(ctx, map[string]interface{}{
+			"user_id":  user,
+			"password": pass,
+			"host":     host,
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
 
-		assert.Equal(t, getExpected(), results)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter)
+
+		assert.NoError(t, err)
+		assert.Equal(t, getExpected(), emitter.Get())
 	})
 }
 
@@ -166,13 +160,9 @@ func createCollection(ctx context.Context, collectionName string, data []interfa
 	return
 }
 
-func newExtractor() *mongodb.Extractor {
-	return mongodb.New(test.Logger)
-}
-
-func getExpected() []*assets.Table {
-	return []*assets.Table{
-		{
+func getExpected() []models.Record {
+	return []models.Record{
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  testDB + ".connections",
 				Name: "connections",
@@ -180,8 +170,8 @@ func getExpected() []*assets.Table {
 			Profile: &assets.TableProfile{
 				TotalRows: 3,
 			},
-		},
-		{
+		}),
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  testDB + ".posts",
 				Name: "posts",
@@ -189,8 +179,8 @@ func getExpected() []*assets.Table {
 			Profile: &assets.TableProfile{
 				TotalRows: 2,
 			},
-		},
-		{
+		}),
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  testDB + ".stats",
 				Name: "stats",
@@ -198,6 +188,6 @@ func getExpected() []*assets.Table {
 			Profile: &assets.TableProfile{
 				TotalRows: 1,
 			},
-		},
+		}),
 	}
 }

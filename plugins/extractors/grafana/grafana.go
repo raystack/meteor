@@ -31,6 +31,7 @@ var sampleConfig = `
 // Extractor manages the communication with the Grafana Server
 type Extractor struct {
 	client *Client
+	config Config
 	logger log.Logger
 }
 
@@ -56,23 +57,22 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the extractor is configured and
-// if so, then it extracts the assets from the extractor.
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// build client
-	e.client = NewClient(&http.Client{}, config)
+	e.client = NewClient(&http.Client{}, e.config)
 
-	return e.extract(out)
+	return
 }
 
-func (e *Extractor) extract(out chan<- models.Record) (err error) {
+// Extract checks if the extractor is configured and
+// if so, then it extracts the assets from the extractor.
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
 	uids, err := e.client.SearchAllDashboardUIDs()
 	if err != nil {
 		return
@@ -84,7 +84,7 @@ func (e *Extractor) extract(out chan<- models.Record) (err error) {
 
 	for _, dashboardDetail := range dashboardDetails {
 		dashboard := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
-		out <- models.NewRecord(dashboard)
+		emitter.Emit(models.NewRecord(dashboard))
 	}
 
 	return

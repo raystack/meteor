@@ -15,7 +15,9 @@ import (
 var summary string
 
 // Processor work in a list of data
-type Processor struct{}
+type Processor struct {
+	config map[string]interface{}
+}
 
 // New create a new processor
 func New() *Processor {
@@ -43,27 +45,29 @@ func (p *Processor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Process processes the data
-func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan models.Record, out chan<- models.Record) (err error) {
-	for record := range in {
-		result, err := p.process(record.Data(), config)
-		if err != nil {
-			return err
-		}
-
-		out <- models.NewRecord(result)
-	}
-
+func (p *Processor) Init(ctx context.Context, config map[string]interface{}) (err error) {
+	p.config = config
 	return
 }
 
-func (p *Processor) process(data interface{}, config map[string]interface{}) (interface{}, error) {
+// Process processes the data
+func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
+	result, err := p.process(src.Data())
+	if err != nil {
+		return src, err
+	}
+
+	return models.NewRecord(result), nil
+}
+
+func (p *Processor) process(data interface{}) (interface{}, error) {
 	customProps := utils.GetCustomProperties(data)
 	if customProps == nil {
 		return data, nil
 	}
 
 	// update custom properties using value from config
-	for key, value := range config {
+	for key, value := range p.config {
 		stringVal, ok := value.(string)
 		if ok {
 			customProps[key] = stringVal

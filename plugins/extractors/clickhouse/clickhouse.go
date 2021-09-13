@@ -17,8 +17,6 @@ import (
 	"github.com/odpf/salt/log"
 )
 
-var db *sql.DB
-
 //go:embed README.md
 var summary string
 
@@ -37,8 +35,9 @@ var sampleConfig = `
 // Extractor manages the output stream
 // and logger interface for the extractor
 type Extractor struct {
-	out    chan<- models.Record
+	config Config
 	logger log.Logger
+	db     *sql.DB
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -63,22 +62,13 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-//Extract checks if the extractor is configured and
-// if the connection to the DB is successful
-// and then starts the extraction process
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
-	e.out = out
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", config.Host, config.UserID, config.Password))
-	if err != nil {
-		return
-	}
-	err = e.extractTables()
+	e.db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", e.config.Host, e.config.UserID, e.config.Password))
 	if err != nil {
 		return
 	}
@@ -86,8 +76,20 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return
 }
 
-func (e *Extractor) extractTables() (err error) {
-	res, err := db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
+//Extract checks if the extractor is configured and
+// if the connection to the DB is successful
+// and then starts the extraction process
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	err = e.extractTables(emitter)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (e *Extractor) extractTables(emitter plugins.Emitter) (err error) {
+	res, err := e.db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
 	}
@@ -104,14 +106,14 @@ func (e *Extractor) extractTables() (err error) {
 			return
 		}
 
-		e.out <- models.NewRecord(&assets.Table{
+		emitter.Emit(models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 				Name: tableName,
 			}, Schema: &facets.Columns{
 				Columns: columns,
 			},
-		})
+		}))
 	}
 	return
 }
@@ -119,7 +121,7 @@ func (e *Extractor) extractTables() (err error) {
 func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*facets.Column, err error) {
 	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
-	rows, err := db.Query(sqlStr)
+	rows, err := e.db.Query(sqlStr)
 	if err != nil {
 		return
 	}

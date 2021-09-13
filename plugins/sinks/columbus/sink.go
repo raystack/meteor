@@ -64,12 +64,16 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan models.Record) (err error) {
+func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	if err = utils.BuildConfig(configMap, &s.config); err != nil {
 		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
 	}
 
-	for record := range in {
+	return
+}
+
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	for _, record := range batch {
 		data := record.Data()
 		data, err = s.mapData(data)
 		if err != nil {

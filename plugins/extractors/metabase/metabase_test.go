@@ -15,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -100,44 +100,43 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtract(t *testing.T) {
-
+func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := metabase.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"user_id": "user",
 			"host":    host,
-		}, make(chan<- models.Record))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
-
-	t.Run("should return dashboard model", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		extractOut := make(chan models.Record)
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"user_id":    email,
-				"password":   pass,
-				"host":       host,
-				"session_id": session_id,
-			}, extractOut)
-			close(extractOut)
-
-			assert.NoError(t, err)
-		}()
-
-		var urns []string
-		for val := range extractOut {
-			urns = append(urns, val.Data().(*assets.Dashboard).Resource.Urn)
-		}
-
-		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
-	})
 }
 
-func newExtractor() *metabase.Extractor {
-	return metabase.New(test.Logger)
+func TestExtract(t *testing.T) {
+	t.Run("should return dashboard model", func(t *testing.T) {
+		ctx := context.TODO()
+		extr := metabase.New(test.Logger)
+		err := extr.Init(ctx, map[string]interface{}{
+			"user_id":    email,
+			"password":   pass,
+			"host":       host,
+			"session_id": session_id,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter)
+
+		assert.NoError(t, err)
+
+		var urns []string
+		for _, record := range emitter.Get() {
+			dashboard := record.Data().(*assets.Dashboard)
+			urns = append(urns, dashboard.Resource.Urn)
+		}
+		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
+	})
 }
 
 func setup() (err error) {

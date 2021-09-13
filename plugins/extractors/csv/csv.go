@@ -37,7 +37,9 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
-	logger log.Logger
+	config    Config
+	logger    log.Logger
+	filePaths []string
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -62,33 +64,32 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-//Extract checks if the extractor is configured and
-// returns the extracted data
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- models.Record) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// build file paths to read from
-	filePaths, err := e.buildFilePaths(config.Path)
+	e.filePaths, err = e.buildFilePaths(e.config.Path)
 	if err != nil {
 		return
 	}
 
-	return e.extract(filePaths, out)
+	return
 }
 
-func (e *Extractor) extract(filePaths []string, out chan<- models.Record) (err error) {
-	for _, filePath := range filePaths {
+//Extract checks if the extractor is configured and
+// returns the extracted data
+func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+	for _, filePath := range e.filePaths {
 		table, err := e.buildTable(filePath)
 		if err != nil {
 			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
 		}
 
-		out <- models.NewRecord(table)
+		emitter.Emit(models.NewRecord(table))
 	}
 
 	return
