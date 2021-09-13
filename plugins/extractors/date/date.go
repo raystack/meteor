@@ -5,7 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"time"
 
-	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 

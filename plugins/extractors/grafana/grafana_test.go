@@ -11,10 +11,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/assert"
 )

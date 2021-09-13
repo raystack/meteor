@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigtable/mocks"
-	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/mock"
 

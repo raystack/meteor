@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 

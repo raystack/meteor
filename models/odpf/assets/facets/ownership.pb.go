@@ -7,7 +7,7 @@
 package facets
 
 import (
-	_ "github.com/odpf/meteor/proto/odpf/assets/common"
+	_ "github.com/odpf/meteor/models/odpf/assets/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

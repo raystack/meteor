@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 
 	"cloud.google.com/go/bigtable"
@@ -59,8 +59,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-//Extract checks if the extractor is configured and 
-// if so, then extracts the metadata and 
+//Extract checks if the extractor is configured and
+// if so, then extracts the metadata and
 // returns the assets.
 func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
 	e.logger.Info("extracting bigtable metadata...")

@@ -4,9 +4,9 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	kafka "github.com/segmentio/kafka-go"
 
@@ -29,8 +29,8 @@ var sampleConfig = `
 // from a kafka broker
 type Extractor struct {
 	// internal states
-	out  chan<- interface{}
-	conn *kafka.Conn
+	out    chan<- interface{}
+	conn   *kafka.Conn
 	logger log.Logger
 }
 

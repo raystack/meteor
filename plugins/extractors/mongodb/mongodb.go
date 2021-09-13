@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -45,7 +45,7 @@ type Extractor struct {
 	out      chan<- interface{}
 	client   *mongo.Client
 	excluded map[string]bool
-	logger log.Logger
+	logger   log.Logger
 }
 
 // New returns a pointer to an initialized Extractor Object
