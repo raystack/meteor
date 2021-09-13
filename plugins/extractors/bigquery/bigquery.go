@@ -96,7 +96,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			break
 		}
 		if err != nil {
-			return errors.Wrapf(err, "failed to fetch dataset %s", ds.DatasetID)
+			return errors.Wrapf(err, "failed to fetch dataset")
 		}
 		e.extractTable(ctx, ds, out)
 	}
@@ -123,7 +123,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to scan, skipping table", "err", err, "table", table.FullyQualifiedName())
+			e.logger.Error("failed to scan, skipping table", "err", err)
 			continue
 		}
 		tmd, err := table.Metadata(ctx)
