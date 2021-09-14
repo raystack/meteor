@@ -88,7 +88,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 }
 
 // Extract collects the metadata from the source. The metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
 	dashboards, err := e.getDashboardsList()
 	if err != nil {
 		return
@@ -98,7 +98,7 @@ func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err e
 		if err != nil {
 			return err
 		}
-		emitter.Emit(models.NewRecord(data))
+		push(models.NewRecord(data))
 	}
 	return nil
 }

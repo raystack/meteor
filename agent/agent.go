@@ -100,40 +100,40 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	var (
 		ctx         = context.Background()
 		getDuration = r.startDuration()
-		emitter     = NewEmitter()
+		stream      = newStream()
 	)
 
-	runExtractor, err := r.initExtractor(ctx, recipe.Source, emitter)
+	runExtractor, err := r.initExtractor(ctx, recipe.Source, stream)
 	if err != nil {
 		run.Error = err
 		return
 	}
-	if err = r.initProcessors(ctx, recipe.Processors, emitter); err != nil {
+	if err = r.initProcessors(ctx, recipe.Processors, stream); err != nil {
 		run.Error = err
 		return
 	}
-	if err = r.initSinks(ctx, recipe.Sinks, emitter); err != nil {
+	if err = r.initSinks(ctx, recipe.Sinks, stream); err != nil {
 		run.Error = err
 		return
 	}
 
 	// create a goroutine to let extractor concurrently emit data
-	// while emitter is listening via emitter.Listen().
+	// while stream is listening via stream.Listen().
 	go func() {
 		err = runExtractor()
 		if err != nil {
 			run.Error = err
 		}
-		emitter.Close()
+		stream.Close()
 	}()
 
 	// start listening.
 	// this process is blocking
-	if err := emitter.Listen(); err != nil {
+	if err := stream.broadcast(); err != nil {
 		run.Error = err
 	}
 
-	// code will reach here emitter.Listen() is done.
+	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
 	durationInMs := getDuration()
 	r.monitor.RecordRun(recipe, durationInMs, success)
@@ -147,7 +147,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, emitter *Emitter) (runFn func() error, err error) {
+func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, str *stream) (runFn func() error, err error) {
 	extractor, err := r.extractorFactory.Get(sr.Type)
 	if err != nil {
 		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Type)
@@ -160,7 +160,7 @@ func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, emitt
 	}
 
 	runFn = func() (err error) {
-		err = extractor.Extract(ctx, emitter)
+		err = extractor.Extract(ctx, str.push)
 		if err != nil {
 			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
 		}
@@ -170,7 +170,7 @@ func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, emitt
 	return
 }
 
-func (r *Agent) initProcessors(ctx context.Context, prs []recipe.ProcessorRecipe, emitter *Emitter) (err error) {
+func (r *Agent) initProcessors(ctx context.Context, prs []recipe.ProcessorRecipe, str *stream) (err error) {
 	for _, pr := range prs {
 		var proc plugins.Processor
 		proc, err = r.processorFactory.Get(pr.Name)
@@ -184,13 +184,13 @@ func (r *Agent) initProcessors(ctx context.Context, prs []recipe.ProcessorRecipe
 			return
 		}
 
-		emitter.SetMiddleware(r.runProcessor(ctx, proc, pr.Name))
+		str.setMiddleware(r.runProcessor(ctx, proc, pr.Name))
 	}
 
 	return
 }
 
-func (r *Agent) initSinks(ctx context.Context, srs []recipe.SinkRecipe, emitter *Emitter) (err error) {
+func (r *Agent) initSinks(ctx context.Context, srs []recipe.SinkRecipe, stream *stream) (err error) {
 	for _, sr := range srs {
 		var sink plugins.Syncer
 		sink, err = r.sinkFactory.Get(sr.Name)
@@ -204,13 +204,13 @@ func (r *Agent) initSinks(ctx context.Context, srs []recipe.SinkRecipe, emitter 
 			return
 		}
 
-		emitter.SetListener(r.runSink(ctx, sink, sr.Name), 0)
+		stream.subscribe(r.runSink(ctx, sink, sr.Name), 0)
 	}
 
 	return
 }
 
-func (r *Agent) runProcessor(ctx context.Context, processor plugins.Processor, name string) EmitterMiddleware {
+func (r *Agent) runProcessor(ctx context.Context, processor plugins.Processor, name string) streamMiddleware {
 	return func(src models.Record) (dst models.Record, err error) {
 		dst, err = processor.Process(ctx, src)
 		if err != nil {

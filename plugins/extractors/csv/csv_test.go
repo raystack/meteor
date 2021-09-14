@@ -38,8 +38,8 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter)
+		pushFunc := mocks.NewPushFunc()
+		err = extr.Extract(ctx, pushFunc.Push)
 		assert.NoError(t, err)
 
 		expected := []models.Record{
@@ -59,7 +59,7 @@ func TestExtract(t *testing.T) {
 			}),
 		}
 
-		assert.Equal(t, expected, emitter.Get())
+		assert.Equal(t, expected, pushFunc.Get())
 	})
 
 	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
@@ -72,8 +72,8 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter)
+		pushFunc := mocks.NewPushFunc()
+		err = extr.Extract(ctx, pushFunc.Push)
 		assert.NoError(t, err)
 
 		expected := []models.Record{
@@ -106,6 +106,6 @@ func TestExtract(t *testing.T) {
 				},
 			}),
 		}
-		assert.Equal(t, expected, emitter.Get())
+		assert.Equal(t, expected, pushFunc.Get())
 	})
 }

@@ -97,12 +97,12 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter)
+		pushFunc := mocks.NewPushFunc()
+		err = extr.Extract(ctx, pushFunc.Push)
 		assert.NoError(t, err)
 
 		var urns []string
-		for _, record := range emitter.Get() {
+		for _, record := range pushFunc.Get() {
 			table := record.Data().(*assets.Table)
 			urns = append(urns, table.Resource.Urn)
 

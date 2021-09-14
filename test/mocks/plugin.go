@@ -40,11 +40,11 @@ func (m *Extractor) SetEmit(records []models.Record) {
 	m.records = records
 }
 
-func (m *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) error {
-	args := m.Called(ctx, emitter)
+func (m *Extractor) Extract(ctx context.Context, push plugins.PushFunc) error {
+	args := m.Called(ctx, push)
 
 	for _, r := range m.records {
-		emitter.Emit(r)
+		push(r)
 	}
 
 	return args.Error(0)
@@ -76,18 +76,18 @@ func (m *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	return args.Error(0)
 }
 
-type Emitter struct {
+type PushFunc struct {
 	data []models.Record
 }
 
-func NewEmitter() *Emitter {
-	return &Emitter{}
+func NewPushFunc() *PushFunc {
+	return &PushFunc{}
 }
 
-func (m *Emitter) Emit(record models.Record) {
+func (m *PushFunc) Push(record models.Record) {
 	m.data = append(m.data, record)
 }
 
-func (m *Emitter) Get() []models.Record {
+func (m *PushFunc) Get() []models.Record {
 	return m.data
 }

@@ -6,19 +6,19 @@ import (
 	"github.com/odpf/meteor/models"
 )
 
-type Batch struct {
+type batch struct {
 	data []models.Record
 	size int
 }
 
-func NewBatch(size int) *Batch {
-	return &Batch{
+func newBatch(size int) *batch {
+	return &batch{
 		size: size,
 	}
 }
 
-func (b *Batch) Add(d models.Record) error {
-	if b.IsFull() {
+func (b *batch) add(d models.Record) error {
+	if b.isFull() {
 		return errors.New("batch: cannot add, batch is full!")
 	}
 
@@ -26,14 +26,14 @@ func (b *Batch) Add(d models.Record) error {
 	return nil
 }
 
-func (b *Batch) Flush() []models.Record {
+func (b *batch) flush() []models.Record {
 	data := b.data
 	b.data = []models.Record{}
 
 	return data
 }
 
-func (b *Batch) IsFull() bool {
+func (b *batch) isFull() bool {
 	// size 0 means there is no limit, hence will not ever be full
 	if b.size == 0 {
 		return false
@@ -42,6 +42,6 @@ func (b *Batch) IsFull() bool {
 	return len(b.data) >= b.size
 }
 
-func (b *Batch) IsEmpty() bool {
+func (b *batch) isEmpty() bool {
 	return len(b.data) == 0
 }

@@ -67,7 +67,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
-func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
 	users, _, err := e.client.Organizations.ListMembers(ctx, e.config.Org, nil)
 
 	if err != nil {
@@ -78,7 +78,7 @@ func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err e
 		if err != nil {
 			continue
 		}
-		emitter.Emit(models.NewRecord(&assets.User{
+		push(models.NewRecord(&assets.User{
 			Resource: &common.Resource{
 				Urn: usr.GetURL(),
 			},

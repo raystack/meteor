@@ -174,7 +174,7 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should return error when extracting fails", func(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(errors.New("some error")).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(errors.New("some error")).Once()
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 
@@ -203,7 +203,7 @@ func TestRunnerRun(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(nil).Once()
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 
@@ -233,7 +233,7 @@ func TestRunnerRun(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(nil)
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 
@@ -264,7 +264,7 @@ func TestRunnerRun(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(nil)
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 
@@ -296,7 +296,7 @@ func TestRunnerRun(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(nil)
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 
@@ -337,7 +337,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil)
-		extr.On("Extract", mockCtx, mock.AnythingOfType("*agent.Emitter")).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.PushFunc")).Return(nil)
 		ef := registry.NewExtractorFactory()
 		ef.Register("test-extractor", newExtractor(extr))
 

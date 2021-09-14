@@ -72,7 +72,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract checks if the extractor is configured and
 // if so, then it extracts the assets from the extractor.
-func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
 	uids, err := e.client.SearchAllDashboardUIDs()
 	if err != nil {
 		return
@@ -84,7 +84,7 @@ func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err e
 
 	for _, dashboardDetail := range dashboardDetails {
 		dashboard := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
-		emitter.Emit(models.NewRecord(dashboard))
+		push(models.NewRecord(dashboard))
 	}
 
 	return

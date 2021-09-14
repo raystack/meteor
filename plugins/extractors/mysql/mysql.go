@@ -44,7 +44,7 @@ type Extractor struct {
 	logger      log.Logger
 	config      Config
 	db          *sql.DB
-	emitter     plugins.Emitter
+	push        plugins.PushFunc
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -89,9 +89,9 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract extracts the data from the MySQL server
 // and collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
 	defer e.db.Close()
-	e.emitter = emitter
+	e.push = push
 
 	res, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
@@ -152,7 +152,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	}
 
 	// push table to channel
-	e.emitter.Emit(models.NewRecord(&assets.Table{
+	e.push(models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,

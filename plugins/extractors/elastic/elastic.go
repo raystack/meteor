@@ -81,7 +81,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	return
 }
 
-func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err error) {
+func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
 	res, err := e.client.Cluster.Health(
 		e.client.Cluster.Health.WithLevel("indices"),
 	)
@@ -123,7 +123,7 @@ func (e *Extractor) Extract(ctx context.Context, emitter plugins.Emitter) (err e
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 
-		emitter.Emit(models.NewRecord(&assets.Table{
+		push(models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
 				Name: indexName,
