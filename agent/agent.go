@@ -103,18 +103,24 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		stream      = newStream()
 	)
 
-	runExtractor, err := r.initExtractor(ctx, recipe.Source, stream)
+	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
 		run.Error = err
 		return
 	}
-	if err = r.initProcessors(ctx, recipe.Processors, stream); err != nil {
-		run.Error = err
-		return
+
+	for _, pr := range recipe.Processors {
+		if err := r.setupProcessor(ctx, pr, stream); err != nil {
+			run.Error = err
+			return
+		}
 	}
-	if err = r.initSinks(ctx, recipe.Sinks, stream); err != nil {
-		run.Error = err
-		return
+
+	for _, sr := range recipe.Sinks {
+		if err := r.setupSink(ctx, sr, stream); err != nil {
+			run.Error = err
+			return
+		}
 	}
 
 	// create a goroutine to let extractor concurrently emit data
@@ -147,7 +153,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, str *stream) (runFn func() error, err error) {
+func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str *stream) (runFn func() error, err error) {
 	extractor, err := r.extractorFactory.Get(sr.Type)
 	if err != nil {
 		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Type)
@@ -170,68 +176,56 @@ func (r *Agent) initExtractor(ctx context.Context, sr recipe.SourceRecipe, str *
 	return
 }
 
-func (r *Agent) initProcessors(ctx context.Context, prs []recipe.ProcessorRecipe, str *stream) (err error) {
-	for _, pr := range prs {
-		var proc plugins.Processor
-		proc, err = r.processorFactory.Get(pr.Name)
-		if err != nil {
-			err = errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
-			return
-		}
-		err = proc.Init(ctx, pr.Config)
-		if err != nil {
-			err = errors.Wrapf(err, "could not initiate processor \"%s\"", pr.Name)
-			return
-		}
-
-		str.setMiddleware(r.runProcessor(ctx, proc, pr.Name))
+func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, str *stream) (err error) {
+	var proc plugins.Processor
+	proc, err = r.processorFactory.Get(pr.Name)
+	if err != nil {
+		err = errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
+		return
+	}
+	err = proc.Init(ctx, pr.Config)
+	if err != nil {
+		err = errors.Wrapf(err, "could not initiate processor \"%s\"", pr.Name)
+		return
 	}
 
-	return
-}
-
-func (r *Agent) initSinks(ctx context.Context, srs []recipe.SinkRecipe, stream *stream) (err error) {
-	for _, sr := range srs {
-		var sink plugins.Syncer
-		sink, err = r.sinkFactory.Get(sr.Name)
+	str.setMiddleware(func(src models.Record) (dst models.Record, err error) {
+		dst, err = proc.Process(ctx, src)
 		if err != nil {
-			err = errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
-			return
-		}
-		err = sink.Init(ctx, sr.Config)
-		if err != nil {
-			err = errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
-			return
-		}
-
-		stream.subscribe(r.runSink(ctx, sink, sr.Name), 0)
-	}
-
-	return
-}
-
-func (r *Agent) runProcessor(ctx context.Context, processor plugins.Processor, name string) streamMiddleware {
-	return func(src models.Record) (dst models.Record, err error) {
-		dst, err = processor.Process(ctx, src)
-		if err != nil {
-			err = errors.Wrapf(err, "error running processor \"%s\"", name)
+			err = errors.Wrapf(err, "error running processor \"%s\"", pr.Name)
 			return
 		}
 
 		return
-	}
+	})
+
+	return
 }
 
-func (r *Agent) runSink(ctx context.Context, sink plugins.Syncer, name string) func(records []models.Record) error {
-	return func(records []models.Record) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream) (err error) {
+	var sink plugins.Syncer
+	sink, err = r.sinkFactory.Get(sr.Name)
+	if err != nil {
+		err = errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+		return
+	}
+	err = sink.Init(ctx, sr.Config)
+	if err != nil {
+		err = errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+		return
+	}
+
+	stream.subscribe(func(records []models.Record) (err error) {
 		err = sink.Sink(ctx, records)
 		if err != nil {
-			err = errors.Wrapf(err, "error running sink \"%s\"", name)
+			err = errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
 			return
 		}
 
 		return
-	}
+	}, 0)
+
+	return
 }
 
 // startDuration starts a timer.
