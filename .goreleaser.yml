@@ -1,9 +1,14 @@
 project_name: meteor
 
+release:  
+  prerelease: auto
+  draft: true
+
 before:
   hooks:
     - go mod tidy
     - make clean
+
 builds:
   - main: ./main.go
     id: "meteor"
@@ -11,7 +16,9 @@ builds:
     flags:
       - -a
     ldflags:
-      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
+      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} 
+      - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
+      - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
     goos:
       - darwin
       - linux
@@ -23,6 +30,7 @@ builds:
       - arm64
     env:
       - CGO_ENABLED=0
+
 archives:
   - replacements:
       darwin: macos
@@ -33,13 +41,13 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-release:
-  draft: true
-  prerelease: auto
+
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -47,6 +55,7 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^build:'
+
 dockers:
   -
     goos: linux
@@ -58,6 +67,7 @@ dockers:
       - 'docker.io/odpf/{{.ProjectName}}:latest'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Tag }}-amd64'
+
 brews:
   - name: meteor
     tap:

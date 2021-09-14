@@ -67,7 +67,7 @@ func GenRecipeCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
-	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sinks types")
+	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
 
 	return cmd
