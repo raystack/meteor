@@ -26,7 +26,7 @@ Explore the following resources to get started with Meteor:
 * [Concepts](https://odpf.gitbook.io/meteor/concepts/overview) describes all important Meteor concepts.
 * [Contribute](https://odpf.gitbook.io/meteor/contribute/contributing) contains resources for anyone who wants to contribute to Meteor.
 
-## Installation 
+## Installation
 
 `meteor` is available via Homebrew and as a downloadable binary from the [releases](https://github.com/odpf/meteor/releases) page.
 
