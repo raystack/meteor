@@ -8,7 +8,7 @@ import (
 )
 
 type streamMiddleware func(src models.Record) (dst models.Record, err error)
-type subscription struct {
+type subscriber struct {
 	callback  func([]models.Record) error
 	channel   chan models.Record
 	batchSize int
@@ -16,7 +16,7 @@ type subscription struct {
 
 type stream struct {
 	middlewares []streamMiddleware
-	listeners   []*subscription
+	subscribers []*subscriber
 	hasClosed   bool
 	err         error
 }
@@ -28,7 +28,7 @@ func newStream() *stream {
 // subscribe() will register callback with a batch size to the emitter.
 // Calling this will not start listening yet, use broadcast() to start sending data to subscriber.
 func (s *stream) subscribe(callback func(batchedData []models.Record) error, batchSize int) *stream {
-	s.listeners = append(s.listeners, &subscription{
+	s.subscribers = append(s.subscribers, &subscriber{
 		callback:  callback,
 		batchSize: batchSize,
 		channel:   make(chan models.Record),
@@ -41,11 +41,11 @@ func (s *stream) subscribe(callback func(batchedData []models.Record) error, bat
 // This process is blocking, so most times you would want to call this inside a goroutine.
 func (s *stream) broadcast() error {
 	var wg sync.WaitGroup
-	for _, l := range s.listeners {
+	for _, l := range s.subscribers {
 		wg.Add(1)
-		go func(l *subscription) {
+		go func(l *subscriber) {
 			batch := newBatch(l.batchSize)
-			// listen to channel and emit data to listener callback if batch is full
+			// listen to channel and emit data to subscriber callback if batch is full
 			for d := range l.channel {
 				batch.add(d)
 				if batch.isFull() {
@@ -77,7 +77,7 @@ func (s *stream) broadcast() error {
 }
 
 // push() will run the record through all the registered middleware
-// and emit the record to all registerd listeners.
+// and emit the record to all registerd subscribers.
 func (s *stream) push(data models.Record) {
 	data, err := s.runMiddlewares(data)
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *stream) push(data models.Record) {
 		return
 	}
 
-	for _, l := range s.listeners {
+	for _, l := range s.subscribers {
 		l.channel <- data
 	}
 	return
@@ -110,7 +110,7 @@ func (s *stream) Close() {
 		return
 	}
 
-	for _, l := range s.listeners {
+	for _, l := range s.subscribers {
 		close(l.channel)
 	}
 	s.hasClosed = true
