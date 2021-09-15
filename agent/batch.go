@@ -7,13 +7,13 @@ import (
 )
 
 type batch struct {
-	data []models.Record
-	size int
+	data     []models.Record
+	capacity int
 }
 
-func newBatch(size int) *batch {
+func newBatch(capacity int) *batch {
 	return &batch{
-		size: size,
+		capacity: capacity,
 	}
 }
 
@@ -35,11 +35,11 @@ func (b *batch) flush() []models.Record {
 
 func (b *batch) isFull() bool {
 	// size 0 means there is no limit, hence will not ever be full
-	if b.size == 0 {
+	if b.capacity == 0 {
 		return false
 	}
 
-	return len(b.data) >= b.size
+	return len(b.data) >= b.capacity
 }
 
 func (b *batch) isEmpty() bool {

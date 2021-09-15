@@ -17,7 +17,7 @@ type subscriber struct {
 type stream struct {
 	middlewares []streamMiddleware
 	subscribers []*subscriber
-	hasClosed   bool
+	closed      bool
 	err         error
 }
 
@@ -68,12 +68,7 @@ func (s *stream) broadcast() error {
 
 	wg.Wait()
 
-	// there could be error when emitting
-	if s.err != nil {
-		return s.err
-	}
-
-	return nil
+	return s.err
 }
 
 // push() will run the record through all the registered middleware
@@ -106,14 +101,14 @@ func (s *stream) closeWithError(err error) {
 
 // Close the emitter and signalling all subscriber of the event.
 func (s *stream) Close() {
-	if s.hasClosed {
+	if s.closed {
 		return
 	}
 
 	for _, l := range s.subscribers {
 		close(l.channel)
 	}
-	s.hasClosed = true
+	s.closed = true
 }
 
 func (s *stream) runMiddlewares(d models.Record) (res models.Record, err error) {
