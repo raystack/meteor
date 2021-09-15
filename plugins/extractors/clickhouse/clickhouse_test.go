@@ -108,13 +108,13 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushFunc := mocks.NewPushFunc()
-		err = extr.Extract(ctx, pushFunc.Push)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, getExpected(), pushFunc.Get())
+		assert.Equal(t, getExpected(), emitter.Get())
 	})
 }
 

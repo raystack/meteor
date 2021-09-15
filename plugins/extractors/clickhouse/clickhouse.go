@@ -79,8 +79,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 //Extract checks if the extractor is configured and
 // if the connection to the DB is successful
 // and then starts the extraction process
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
-	err = e.extractTables(push)
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	err = e.extractTables(emit)
 	if err != nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 	return
 }
 
-func (e *Extractor) extractTables(push plugins.PushFunc) (err error) {
+func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 	res, err := e.db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return
@@ -106,7 +106,7 @@ func (e *Extractor) extractTables(push plugins.PushFunc) (err error) {
 			return
 		}
 
-		push(models.NewRecord(&assets.Table{
+		emit(models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
 				Name: tableName,

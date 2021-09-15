@@ -90,8 +90,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 //Extract checks if the extractor is configured and
 // if so, then extracts the metadata and
 // returns the assets.
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
-	err = e.getTablesInfo(ctx, push)
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	err = e.getTablesInfo(ctx, emit)
 	if err != nil {
 		return
 	}
@@ -110,7 +110,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err error) {
 	for _, instance := range e.instanceNames {
 		adminClient, err := e.createAdminClient(ctx, instance, e.config.ProjectID)
 		if err != nil {
@@ -126,7 +126,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, push plugins.PushFunc) (e
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				push(models.NewRecord(&assets.Table{
+				emit(models.NewRecord(&assets.Table{
 					Resource: &common.Resource{
 						Urn:     fmt.Sprintf("%s.%s.%s", e.config.ProjectID, instance, table),
 						Name:    table,

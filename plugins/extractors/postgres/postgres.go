@@ -84,7 +84,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 }
 
 // Extract collects metdata from the source. Metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
 
 	// Get list of databases
@@ -116,7 +116,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 				continue
 			}
 			// Publish metadata to channel
-			push(models.NewRecord(result))
+			emit(models.NewRecord(result))
 		}
 	}
 

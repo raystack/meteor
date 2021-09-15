@@ -82,14 +82,14 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 //Extract checks if the extractor is configured and
 // returns the extracted data
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	for _, filePath := range e.filePaths {
 		table, err := e.buildTable(filePath)
 		if err != nil {
 			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
 		}
 
-		push(models.NewRecord(table))
+		emit(models.NewRecord(table))
 	}
 
 	return

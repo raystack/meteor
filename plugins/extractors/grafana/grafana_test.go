@@ -126,11 +126,11 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushFunc := mocks.NewPushFunc()
-		err = extractor.Extract(ctx, pushFunc.Push)
+		emitter := mocks.NewEmitter()
+		err = extractor.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.EqualValues(t, expectedData, pushFunc.Get())
+		assert.EqualValues(t, expectedData, emitter.Get())
 	})
 }
 

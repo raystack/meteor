@@ -17,7 +17,7 @@ const (
 	PluginTypeSink      PluginType = "sink"
 )
 
-type PushFunc func(models.Record)
+type Emit func(models.Record)
 
 // Info represents the meta.yaml file of a plugin.
 type Info struct {
@@ -42,7 +42,7 @@ type Plugin interface {
 // Extractor is a plugin that extracts data from a source.
 type Extractor interface {
 	Plugin
-	Extract(ctx context.Context, push PushFunc) (err error)
+	Extract(ctx context.Context, emit Emit) (err error)
 }
 
 // Processor are the functions that are executed on the extracted data.

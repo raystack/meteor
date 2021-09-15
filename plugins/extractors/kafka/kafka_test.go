@@ -103,8 +103,8 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushFunc := mocks.NewPushFunc()
-		err = extr.Extract(ctx, pushFunc.Push)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
 		// assert results with expected data
@@ -133,7 +133,7 @@ func TestExtract(t *testing.T) {
 		}
 		// We need this function because the extractor cannot guarantee order
 		// so comparing expected slice and result slice will not be consistent
-		assertResults(t, expected, pushFunc.Get())
+		assertResults(t, expected, emitter.Get())
 	})
 }
 

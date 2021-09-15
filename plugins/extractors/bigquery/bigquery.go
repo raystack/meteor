@@ -99,7 +99,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 }
 
 // Extract checks if the table is valid and extracts the table schema
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	for {
@@ -110,7 +110,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch dataset")
 		}
-		e.extractTable(ctx, ds, push)
+		e.extractTable(ctx, ds, emit)
 	}
 
 	return
@@ -127,7 +127,7 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 }
 
 // Create big query client
-func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, push plugins.PushFunc) {
+func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit plugins.Emit) {
 	tb := ds.Tables(ctx)
 	for {
 		table, err := tb.Next()
@@ -144,7 +144,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, push
 			continue
 		}
 
-		push(models.NewRecord(e.buildTable(ctx, table, tmd)))
+		emit(models.NewRecord(e.buildTable(ctx, table, tmd)))
 	}
 }
 

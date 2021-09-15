@@ -93,7 +93,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract extracts the data from the mongo server
 // and outputs the data to the out channel
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	databases, err := e.client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
@@ -101,7 +101,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 
 	for _, dbName := range databases {
 		database := e.client.Database(dbName)
-		if err := e.extractCollections(ctx, database, push); err != nil {
+		if err := e.extractCollections(ctx, database, emit); err != nil {
 			return err
 		}
 	}
@@ -110,7 +110,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 }
 
 // Extract and output collections from a single mongo database
-func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, push plugins.PushFunc) (err error) {
+func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emit plugins.Emit) (err error) {
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
 		return
@@ -131,7 +131,7 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 			return err
 		}
 
-		push(models.NewRecord(table))
+		emit(models.NewRecord(table))
 	}
 
 	return

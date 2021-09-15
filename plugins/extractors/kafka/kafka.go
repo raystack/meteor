@@ -75,7 +75,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.conn.Close()
 
 	partitions, err := e.conn.ReadPartitions()
@@ -91,7 +91,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 
 	// process topics
 	for topicName := range topics {
-		push(models.NewRecord(e.buildTopic(topicName)))
+		emit(models.NewRecord(e.buildTopic(topicName)))
 	}
 
 	return

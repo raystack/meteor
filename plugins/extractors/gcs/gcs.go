@@ -94,7 +94,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	return
 }
 
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	it := e.client.Buckets(ctx, e.config.ProjectID)
 	for {
 		bucket, err := it.Next()
@@ -113,7 +113,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 			}
 		}
 
-		push(models.NewRecord(e.buildBucket(bucket, e.config.ProjectID, blobs)))
+		emit(models.NewRecord(e.buildBucket(bucket, e.config.ProjectID, blobs)))
 	}
 
 	return

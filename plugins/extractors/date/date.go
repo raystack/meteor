@@ -52,7 +52,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 }
 
 // Extract checks if the event contains a date and returns it
-func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	dateCount := 0
 	for {
 		select {
@@ -66,7 +66,7 @@ func (e *Extractor) Extract(ctx context.Context, push plugins.PushFunc) (err err
 			if err != nil {
 				return err
 			}
-			push(models.NewRecord(p))
+			emit(models.NewRecord(p))
 
 			dateCount++
 			if dateCount >= maxDates {

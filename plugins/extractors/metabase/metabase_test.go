@@ -125,13 +125,13 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushFunc := mocks.NewPushFunc()
-		err = extr.Extract(ctx, pushFunc.Push)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
 
 		var urns []string
-		for _, record := range pushFunc.Get() {
+		for _, record := range emitter.Get() {
 			dashboard := record.Data().(*assets.Dashboard)
 			urns = append(urns, dashboard.Resource.Urn)
 		}
