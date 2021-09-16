@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
@@ -9,6 +11,7 @@ import (
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
@@ -60,20 +63,30 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			report := []string{""}
 			var success = 0
 			var failures = 0
-
+			tabular_report := [][]string{}
+			tabular_report = append(tabular_report, []string{"Recipe Name", "Source Type", "Run Status", "Run Duration (in ms)"})
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
+				report_row := []string{run.Recipe.Name, run.Recipe.Source.Type}
+
 				if run.Error != nil {
-					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
+					lg.Error(run.Error.Error(), "recipe")
 					report = append(report, fmt.Sprint(cs.FailureIcon(), cs.Redf(" failed to run recipe %s", run.Recipe.Name)))
 					failures++
-					continue
+					report_row = append(report_row, cs.Redf("failure"))
+				} else {
+					report = append(report, fmt.Sprint(cs.SuccessIcon(), cs.Greenf(" successfully ran recipe `%s`", run.Recipe.Name)))
+					report_row = append(report_row, cs.Greenf("successful"))
+					success++
 				}
-				success++
-				report = append(report, fmt.Sprint(cs.SuccessIcon(), cs.Greenf(" successfully ran recipe `%s`", run.Recipe.Name)))
+
+				report_row = append(report_row, strconv.Itoa(run.DurationInMs))
+				tabular_report = append(tabular_report, report_row)
 			}
 
+			fmt.Print("\n\n")
+			printer.Table(os.Stdout, tabular_report)
 			for _, line := range report {
 				fmt.Println(line)
 			}
