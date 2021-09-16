@@ -60,11 +60,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				return nil
 			}
 
-			report := []string{""}
 			var success = 0
 			var failures = 0
 			tabular_report := [][]string{}
-			tabular_report = append(tabular_report, []string{"Recipe Name", "Source Type", "Run Status", "Run Duration (in ms)"})
+			tabular_report = append(tabular_report, []string{"Recipe", "Source", "Status", "Duration(ms)"})
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
@@ -72,13 +71,11 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe")
-					report = append(report, fmt.Sprint(cs.FailureIcon(), cs.Redf(" failed to run recipe %s", run.Recipe.Name)))
 					failures++
-					report_row = append(report_row, cs.Redf("failure"))
+					report_row = append(report_row, cs.FailureIcon()+cs.Redf("failure"))
 				} else {
-					report = append(report, fmt.Sprint(cs.SuccessIcon(), cs.Greenf(" successfully ran recipe `%s`", run.Recipe.Name)))
-					report_row = append(report_row, cs.Greenf("successful"))
 					success++
+					report_row = append(report_row, cs.SuccessIcon()+cs.Greenf("successful"))
 				}
 
 				report_row = append(report_row, strconv.Itoa(run.DurationInMs))
@@ -87,9 +84,6 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 			fmt.Print("\n\n")
 			printer.Table(os.Stdout, tabular_report)
-			for _, line := range report {
-				fmt.Println(line)
-			}
 			fmt.Printf("Total: %d, Success: %d, Failures: %d\n", len(recipes), success, failures)
 
 			return nil
