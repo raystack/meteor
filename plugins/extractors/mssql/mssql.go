@@ -8,6 +8,7 @@ import (
 
 	"github.com/odpf/salt/log"
 
+  _ "github.com/denisenkom/go-mssqldb"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"

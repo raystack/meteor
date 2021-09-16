@@ -20,7 +20,7 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
 		Args:    cobra.ExactValidArgs(1),
-		Short:   "Check of issues in recipes",
+		Short:   "Check for issues in recipes",
 		Long: heredoc.Doc(`
 			Check for issues specified recipes.
 

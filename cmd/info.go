@@ -67,7 +67,7 @@ func InfoExtCmd() *cobra.Command {
 			The list of supported extractors is available via the 'meteor list extractors' command.
 		`),
 		Example: heredoc.Doc(`
-			$ meteor info extractor bigquery
+			$ meteor info extractor postgres
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
