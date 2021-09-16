@@ -8,10 +8,11 @@ import (
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -33,8 +34,9 @@ var sampleConfig = `
  host: elastic_server`
 
 type Extractor struct {
-	out    chan<- interface{}
+	config Config
 	logger log.Logger
+	client *elasticsearch.Client
 }
 
 func New(logger log.Logger) *Extractor {
@@ -56,40 +58,32 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.out = out
-
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	//build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
-		// fmt.Println("1.25")
 		return plugins.InvalidConfigError{}
 	}
 
 	//build elasticsearch client
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			config.Host,
+			e.config.Host,
 		},
-		Username: config.User,
-		Password: config.Password,
+		Username: e.config.User,
+		Password: e.config.Password,
 	}
-	client, err := elasticsearch.NewClient(cfg)
+	e.client, err = elasticsearch.NewClient(cfg)
 	if err != nil {
 		return
 	}
 
-	err = e.extractIndexes(client)
-	if err != nil {
-		return
-	}
 	return
 }
 
-func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
-	res, err := client.Cluster.Health(
-		client.Cluster.Health.WithLevel("indices"),
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	res, err := e.client.Cluster.Health(
+		e.client.Cluster.Health.WithLevel("indices"),
 	)
 	if err != nil {
 		return
@@ -102,7 +96,7 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 	x := reflect.ValueOf(r["indices"]).MapRange()
 	for x.Next() {
 		indexName := x.Key().String()
-		docProperties, err1 := e.listIndexInfo(client, x.Key().String())
+		docProperties, err1 := e.listIndexInfo(x.Key().String())
 		if err1 != nil {
 			err = err1
 			return
@@ -114,8 +108,8 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 				DataType: docProperties[i].(map[string]interface{})["type"].(string),
 			})
 		}
-		countRes, err1 := client.Search(
-			client.Search.WithIndex(x.Key().String()),
+		countRes, err1 := e.client.Search(
+			e.client.Search.WithIndex(x.Key().String()),
 		)
 		if err1 != nil {
 			err = err1
@@ -129,7 +123,7 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 
-		e.out <- assets.Table{
+		emit(models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
 				Name: indexName,
@@ -140,15 +134,15 @@ func (e *Extractor) extractIndexes(client *elasticsearch.Client) (err error) {
 			Profile: &assets.TableProfile{
 				TotalRows: int64(docCount),
 			},
-		}
+		}))
 	}
 	return
 }
 
-func (e *Extractor) listIndexInfo(client *elasticsearch.Client, index string) (result map[string]interface{}, err error) {
+func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, err error) {
 	var r map[string]interface{}
-	res, err := client.Indices.GetMapping(
-		client.Indices.GetMapping.WithIndex(index),
+	res, err := e.client.Indices.GetMapping(
+		e.client.Indices.GetMapping.WithIndex(index),
 	)
 	if err != nil {
 		return

@@ -5,9 +5,10 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -52,6 +53,7 @@ var sampleConfig = `
 type Extractor struct {
 	client *storage.Client
 	logger log.Logger
+	config Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -76,28 +78,24 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the extractor is configured and
-// if so, create a client and extract the data
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// create client
-	client, err := e.createClient(ctx, config)
+	e.client, err = e.createClient(ctx)
 	if err != nil {
 		return
 	}
-	e.client = client
 
-	return e.extract(ctx, out, config)
+	return
 }
 
-func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config Config) (err error) {
-	it := e.client.Buckets(ctx, config.ProjectID)
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	it := e.client.Buckets(ctx, e.config.ProjectID)
 	for {
 		bucket, err := it.Next()
 		if err == iterator.Done {
@@ -108,14 +106,14 @@ func (e *Extractor) extract(ctx context.Context, out chan<- interface{}, config 
 		}
 
 		var blobs []*assets.Blob
-		if config.ExtractBlob {
-			blobs, err = e.extractBlobs(ctx, bucket.Name, config.ProjectID)
+		if e.config.ExtractBlob {
+			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
 				return err
 			}
 		}
 
-		out <- e.buildBucket(bucket, config.ProjectID, blobs)
+		emit(models.NewRecord(e.buildBucket(bucket, e.config.ProjectID, blobs)))
 	}
 
 	return
@@ -136,8 +134,8 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 	return
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assets.Blob) (bucket assets.Bucket) {
-	bucket = assets.Bucket{
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assets.Blob) (bucket *assets.Bucket) {
+	bucket = &assets.Bucket{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("%s/%s", projectID, b.Name),
 			Name:    b.Name,
@@ -178,13 +176,13 @@ func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *asse
 	}
 }
 
-func (e *Extractor) createClient(ctx context.Context, config Config) (*storage.Client, error) {
-	if config.ServiceAccountJSON == "" {
+func (e *Extractor) createClient(ctx context.Context) (*storage.Client, error) {
+	if e.config.ServiceAccountJSON == "" {
 		e.logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
 		return storage.NewClient(ctx)
 	}
 
-	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
 }
 
 // Register the extractor to catalog

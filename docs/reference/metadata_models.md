@@ -38,8 +38,8 @@ To check their implementation please refer [here](../../proto/odpf/meta/README.m
 
 ```golang
 import(
-"github.com/odpf/meteor/proto/odpf/assets"
-"github.com/odpf/meteor/proto/odpf/assets/facets"
+"github.com/odpf/meteor/models/odpf/assets"
+"github.com/odpf/meteor/models/odpf/assets/facets"
 )
 
 func main(){

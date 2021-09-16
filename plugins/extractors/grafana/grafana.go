@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -30,6 +31,7 @@ var sampleConfig = `
 // Extractor manages the communication with the Grafana Server
 type Extractor struct {
 	client *Client
+	config Config
 	logger log.Logger
 }
 
@@ -55,23 +57,22 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the extractor is configured and
-// if so, then it extracts the assets from the extractor.
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// build client
-	e.client = NewClient(&http.Client{}, config)
+	e.client = NewClient(&http.Client{}, e.config)
 
-	return e.extract(out)
+	return
 }
 
-func (e *Extractor) extract(out chan<- interface{}) (err error) {
+// Extract checks if the extractor is configured and
+// if so, then it extracts the assets from the extractor.
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	uids, err := e.client.SearchAllDashboardUIDs()
 	if err != nil {
 		return
@@ -82,19 +83,20 @@ func (e *Extractor) extract(out chan<- interface{}) (err error) {
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
-		out <- e.grafanaDashboardToMeteorDashboard(dashboardDetail)
+		dashboard := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
+		emit(models.NewRecord(dashboard))
 	}
 
 	return
 }
 
-func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) assets.Dashboard {
+func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) *assets.Dashboard {
 	charts := make([]*assets.Chart, len(dashboard.Dashboard.Panels))
 	for i, panel := range dashboard.Dashboard.Panels {
 		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
 		charts[i] = &c
 	}
-	return assets.Dashboard{
+	return &assets.Dashboard{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
 			Name:    dashboard.Meta.Slug,

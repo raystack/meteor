@@ -5,19 +5,20 @@ package mssql_test
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mssql"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -76,43 +77,36 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtract(t *testing.T) {
+func TestInit(t *testing.T) {
 	t.Run("should error for invalid configurations", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := mssql.New(test.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
-		}, make(chan<- interface{}))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		out := make(chan interface{})
+		ctx := context.TODO()
+		extr := mssql.New(test.Logger)
 
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"user_id":  user,
-				"password": pass,
-				"host":     host,
-			}, out)
-			close(out)
-
-			assert.Nil(t, err)
-		}()
-
-		var results []assets.Table
-		for d := range out {
-			table, ok := d.(assets.Table)
-			if !ok {
-				t.Fatal(errors.New("invalid table format"))
-			}
-
-			results = append(results, table)
+		err := extr.Init(ctx, map[string]interface{}{
+			"user_id":  user,
+			"password": pass,
+			"host":     host,
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
 
-		assert.Equal(t, getExpected(), results)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+
+		assert.NoError(t, err)
+		assert.Equal(t, getExpected(), emitter.Get())
 	})
 }
 
@@ -149,13 +143,9 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func newExtractor() *mssql.Extractor {
-	return mssql.New(test.Logger)
-}
-
-func getExpected() (expected []assets.Table) {
-	return []assets.Table{
-		{
+func getExpected() []models.Record {
+	return []models.Record{
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",
 				Name: "applicant",
@@ -182,8 +172,8 @@ func getExpected() (expected []assets.Table) {
 					},
 				},
 			},
-		},
-		{
+		}),
+		models.NewRecord(&assets.Table{
 			Resource: &common.Resource{
 				Urn:  "mockdata_meteor_metadata_test.jobs",
 				Name: "jobs",
@@ -210,6 +200,6 @@ func getExpected() (expected []assets.Table) {
 					},
 				},
 			},
-		},
+		}),
 	}
 }

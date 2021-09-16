@@ -10,9 +10,10 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
@@ -36,7 +37,9 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
-	logger log.Logger
+	config    Config
+	logger    log.Logger
+	filePaths []string
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -61,39 +64,38 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-//Extract checks if the extractor is configured and
-// returns the extracted data
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// build file paths to read from
-	filePaths, err := e.buildFilePaths(config.Path)
+	e.filePaths, err = e.buildFilePaths(e.config.Path)
 	if err != nil {
 		return
-	}
-
-	return e.extract(filePaths, out)
-}
-
-func (e *Extractor) extract(filePaths []string, out chan<- interface{}) (err error) {
-	for _, filePath := range filePaths {
-		table, err := e.buildTable(filePath)
-		if err != nil {
-			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
-		}
-
-		out <- table
 	}
 
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (table assets.Table, err error) {
+//Extract checks if the extractor is configured and
+// returns the extracted data
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	for _, filePath := range e.filePaths {
+		table, err := e.buildTable(filePath)
+		if err != nil {
+			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
+		}
+
+		emit(models.NewRecord(table))
+	}
+
+	return
+}
+
+func (e *Extractor) buildTable(filePath string) (table *assets.Table, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -112,7 +114,7 @@ func (e *Extractor) buildTable(filePath string) (table assets.Table, err error) 
 	}
 
 	fileName := stat.Name()
-	table = assets.Table{
+	table = &assets.Table{
 		Resource: &common.Resource{
 			Urn:     fileName,
 			Name:    fileName,

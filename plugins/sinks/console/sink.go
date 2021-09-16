@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -35,9 +36,13 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return nil
 }
 
-func (s *Sink) Sink(ctx context.Context, config map[string]interface{}, out <-chan interface{}) (err error) {
-	for val := range out {
-		if err := s.process(val); err != nil {
+func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err error) {
+	return
+}
+
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	for _, record := range batch {
+		if err := s.process(record.Data()); err != nil {
 			return err
 		}
 	}

@@ -6,11 +6,12 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
+  _ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -40,9 +41,11 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
-	out         chan<- interface{}
 	excludedDbs map[string]bool
 	logger      log.Logger
+	config      Config
+	db          *sql.DB
+	emit        plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -67,14 +70,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract extracts the data from the MySQL server
-// and collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.out = out
-
-	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -83,14 +80,7 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	e.buildExcludedDBs()
 
 	// create client
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", config.UserID, config.Password, config.Host))
-	if err != nil {
-		return
-	}
-	defer db.Close()
-
-	// extraction process
-	err = e.extract(db)
+	e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host))
 	if err != nil {
 		return
 	}
@@ -98,9 +88,13 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	return
 }
 
-// Extract all tables from databases
-func (e *Extractor) extract(db *sql.DB) (err error) {
-	res, err := db.Query("SHOW DATABASES;")
+// Extract extracts the data from the MySQL server
+// and collected through the out channel
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	defer e.db.Close()
+	e.emit = emit
+
+	res, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
 		return
 	}
@@ -110,26 +104,27 @@ func (e *Extractor) extract(db *sql.DB) (err error) {
 			return err
 		}
 
-		if err := e.extractTables(db, database); err != nil {
+		if err := e.extractTables(database); err != nil {
 			return err
 		}
 	}
+
 	return
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
+func (e *Extractor) extractTables(database string) (err error) {
 	// skip if database is default
 	if e.isExcludedDB(database) {
 		return
 	}
 
 	// extract tables
-	_, err = db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
 		return
 	}
-	rows, err := db.Query("SHOW TABLES;")
+	rows, err := e.db.Query("SHOW TABLES;")
 	if err != nil {
 		return
 	}
@@ -141,7 +136,7 @@ func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
 			return err
 		}
 
-		if err := e.processTable(db, database, tableName); err != nil {
+		if err := e.processTable(database, tableName); err != nil {
 			return err
 		}
 	}
@@ -150,15 +145,15 @@ func (e *Extractor) extractTables(db *sql.DB, database string) (err error) {
 }
 
 // Build and push table to out channel
-func (e *Extractor) processTable(db *sql.DB, database string, tableName string) (err error) {
+func (e *Extractor) processTable(database string, tableName string) (err error) {
 	var columns []*facets.Column
-	columns, err = e.extractColumns(db, tableName)
+	columns, err = e.extractColumns(tableName)
 	if err != nil {
 		return
 	}
 
 	// push table to channel
-	e.out <- assets.Table{
+	e.emit(models.NewRecord(&assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -166,19 +161,19 @@ func (e *Extractor) processTable(db *sql.DB, database string, tableName string) 
 		Schema: &facets.Columns{
 			Columns: columns,
 		},
-	}
+	}))
 
 	return
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(db *sql.DB, tableName string) (columns []*facets.Column, err error) {
+func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, err error) {
 	query := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC`
-	rows, err := db.Query(query, tableName)
+	rows, err := e.db.Query(query, tableName)
 	if err != nil {
 		return
 	}

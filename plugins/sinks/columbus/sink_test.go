@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"testing"
 
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,25 +21,25 @@ var (
 	host = "http://columbus.com"
 )
 
-func TestSink(t *testing.T) {
-	// sample metadata
-	var (
-		topic = assets.Topic{
-			Resource: &common.Resource{
-				Urn:  "my-topic-urn",
-				Name: "my-topic",
+// sample metadata
+var (
+	topic = &assets.Topic{
+		Resource: &common.Resource{
+			Urn:  "my-topic-urn",
+			Name: "my-topic",
+		},
+		Ownership: &facets.Ownership{
+			Owners: []*facets.Owner{
+				{Name: "admin-A"},
 			},
-			Ownership: &facets.Ownership{
-				Owners: []*facets.Owner{
-					{Name: "admin-A"},
-				},
-			},
-		}
-		requestPayload = `[{"resource":{"urn":"my-topic-urn","name":"my-topic"},"ownership":{"owners":[{"name":"admin-A"}]}}]`
-		columbusType   = "my-type"
-		url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
-	)
+		},
+	}
+	requestPayload = `[{"resource":{"urn":"my-topic-urn","name":"my-topic"},"ownership":{"owners":[{"name":"admin-A"}]}}]`
+	columbusType   = "my-type"
+	url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
+)
 
+func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
 		invalidConfigs := []map[string]interface{}{
 			{
@@ -54,38 +54,31 @@ func TestSink(t *testing.T) {
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
 				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload))
-				err := columbusSink.Sink(context.TODO(), config, make(<-chan interface{}))
+				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
 		}
 	})
+}
 
+func TestSink(t *testing.T) {
 	t.Run("should create the right request to columbus", func(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
+		ctx := context.TODO()
 
-		in := make(chan interface{})
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			columbusSink := columbus.New(client)
-			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
-				"host": host,
-				"type": columbusType,
-			}, in)
-			if err != nil {
-				t.Error(err.Error())
-			}
+		columbusSink := columbus.New(client)
+		err := columbusSink.Init(ctx, map[string]interface{}{
+			"host": host,
+			"type": columbusType,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			client.Assert(t)
-
-			wg.Done()
-		}()
-
-		in <- topic
-		close(in)
-		wg.Wait()
+		columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		client.Assert(t)
 	})
 
 	t.Run("should return error if columbus host returns error", func(t *testing.T) {
@@ -96,55 +89,45 @@ func TestSink(t *testing.T) {
 		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(404, columbusError)
+		ctx := context.TODO()
 
-		in := make(chan interface{})
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			columbusSink := columbus.New(client)
-			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
-				"host": host,
-				"type": "my-type",
-			}, in)
+		columbusSink := columbus.New(client)
+		err := columbusSink.Init(ctx, map[string]interface{}{
+			"host": host,
+			"type": "my-type",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.Equal(t, errMessage, err.Error())
-			client.Assert(t)
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		assert.Equal(t, errMessage, err.Error())
 
-			wg.Done()
-		}()
-
-		in <- topic
-		wg.Wait()
+		client.Assert(t)
 	})
 
 	t.Run("should return no error if columbus returns 200", func(t *testing.T) {
 		// setup mock client
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, `{"success": true}`)
+		ctx := context.TODO()
 
-		in := make(chan interface{})
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			columbusSink := columbus.New(client)
-			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
-				"host": host,
-				"type": "my-type",
-			}, in)
+		columbusSink := columbus.New(client)
+		err := columbusSink.Init(ctx, map[string]interface{}{
+			"host": host,
+			"type": "my-type",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.NoError(t, err)
-			client.Assert(t)
-
-			wg.Done()
-		}()
-
-		in <- topic
-		close(in)
-		wg.Wait()
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		assert.NoError(t, err)
+		client.Assert(t)
 	})
 
 	t.Run("should map fields using mapper from config", func(t *testing.T) {
-		metadata := assets.Topic{
+		metadata := &assets.Topic{
 			Resource: &common.Resource{
 				Urn:  "test-urn",
 				Name: "test-name",
@@ -161,28 +144,20 @@ func TestSink(t *testing.T) {
 		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 
-		in := make(chan interface{})
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			columbusSink := columbus.New(client)
-			err := columbusSink.Sink(context.TODO(), map[string]interface{}{
-				"host":    host,
-				"type":    columbusType,
-				"mapping": mapping,
-			}, in)
-			if err != nil {
-				t.Error(err.Error())
-			}
+		ctx := context.TODO()
+		columbusSink := columbus.New(client)
+		err := columbusSink.Init(ctx, map[string]interface{}{
+			"host":    host,
+			"type":    columbusType,
+			"mapping": mapping,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			client.Assert(t)
-
-			wg.Done()
-		}()
-
-		in <- metadata
-		close(in)
-		wg.Wait()
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(metadata)})
+		assert.NoError(t, err)
+		client.Assert(t)
 	})
 }
 

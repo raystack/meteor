@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -42,10 +43,11 @@ var sampleConfig = `
 // Extractor manages the communication with the mongo server
 type Extractor struct {
 	// internal states
-	out      chan<- interface{}
+	out      chan<- models.Record
 	client   *mongo.Client
 	excluded map[string]bool
-	logger log.Logger
+	logger   log.Logger
+	config   Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -70,14 +72,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract extracts the data from the mongo server
-// and outputs the data to the out channel
-func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{}, out chan<- interface{}) (err error) {
-	e.out = out
-
-	// build config
-	var config Config
-	err = utils.BuildConfig(configMap, &config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -86,18 +82,18 @@ func (e *Extractor) Extract(ctx context.Context, configMap map[string]interface{
 	e.buildExcludedCollections()
 
 	// setup client
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", config.UserID, config.Password, config.Host)
-	client, err := createAndConnnectClient(context.Background(), uri)
+	uri := fmt.Sprintf("mongodb://%s:%s@%s", e.config.UserID, e.config.Password, e.config.Host)
+	e.client, err = createAndConnnectClient(ctx, uri)
 	if err != nil {
 		return
 	}
-	e.client = client
 
-	return e.extract(ctx)
+	return
 }
 
-// Extract and output collections from all databases found
-func (e *Extractor) extract(ctx context.Context) (err error) {
+// Extract extracts the data from the mongo server
+// and outputs the data to the out channel
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	databases, err := e.client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return
@@ -105,15 +101,16 @@ func (e *Extractor) extract(ctx context.Context) (err error) {
 
 	for _, dbName := range databases {
 		database := e.client.Database(dbName)
-		if err := e.extractCollections(ctx, database); err != nil {
+		if err := e.extractCollections(ctx, database, emit); err != nil {
 			return err
 		}
 	}
-	return err
+
+	return
 }
 
 // Extract and output collections from a single mongo database
-func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) (err error) {
+func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emit plugins.Emit) (err error) {
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
 		return
@@ -134,21 +131,21 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database) 
 			return err
 		}
 
-		e.out <- table
+		emit(models.NewRecord(table))
 	}
 
 	return
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table assets.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assets.Table, err error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
 		return
 	}
 
-	table = assets.Table{
+	table = &assets.Table{
 		Resource: &common.Resource{
 			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
 			Name: collectionName,

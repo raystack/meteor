@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -40,6 +41,7 @@ type ProtoReflector interface {
 
 type Sink struct {
 	writer *kafka.Writer
+	config Config
 }
 
 func New() plugins.Syncer {
@@ -59,27 +61,29 @@ func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Sink(ctx context.Context, configMap map[string]interface{}, in <-chan interface{}) error {
-	var config Config
-	if err := utils.BuildConfig(configMap, &config); err != nil {
+func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	if err := utils.BuildConfig(configMap, &s.config); err != nil {
 		return err
 	}
 
-	s.writer = createWriter(config)
-	for val := range in {
-		if err := s.push(ctx, config, val); err != nil {
+	s.writer = createWriter(s.config)
+
+	return
+}
+
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	defer s.writer.Close()
+
+	for _, record := range batch {
+		if err := s.push(ctx, record.Data()); err != nil {
 			return err
 		}
 	}
 
-	if err := s.writer.Close(); err != nil {
-		return errors.Wrap(err, "failed to close writer")
-	}
-
-	return nil
+	return
 }
 
-func (s *Sink) push(ctx context.Context, config Config, payload interface{}) error {
+func (s *Sink) push(ctx context.Context, payload interface{}) error {
 	// struct needs to be cast to pointer to implement proto methods
 	payload = castModelToPointer(payload)
 
@@ -88,7 +92,7 @@ func (s *Sink) push(ctx context.Context, config Config, payload interface{}) err
 		return err
 	}
 
-	kafkaKey, err := s.buildKey(payload, config.KeyPath)
+	kafkaKey, err := s.buildKey(payload, s.config.KeyPath)
 	if err != nil {
 		return err
 	}

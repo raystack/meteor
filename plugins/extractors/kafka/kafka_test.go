@@ -4,7 +4,6 @@ package kafka_test
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 
@@ -12,11 +11,13 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	kafkaLib "github.com/segmentio/kafka-go"
@@ -59,7 +60,7 @@ func TestMain(m *testing.M) {
 
 		return
 	}
-	err, purgeContainer := test.CreateContainer(opts, retryFn)
+	purgeContainer, err := test.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,66 +82,58 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestExtractorExtract(t *testing.T) {
+func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := newExtractor().Extract(context.TODO(), map[string]interface{}{
+		err := newExtractor().Init(context.TODO(), map[string]interface{}{
 			"wrong-config": "wrong-value",
-		}, make(chan interface{}))
+		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+}
 
+func TestExtract(t *testing.T) {
 	t.Run("should return list of topic metadata", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		out := make(chan interface{})
-
-		go func() {
-			err := newExtractor().Extract(ctx, map[string]interface{}{
-				"broker": brokerHost,
-			}, out)
-			close(out)
-
-			assert.Nil(t, err)
-		}()
-
-		// build results
-		var results []assets.Topic
-		for d := range out {
-			topic, ok := d.(assets.Topic)
-			if !ok {
-				t.Fatal(errors.New("invalid metadata format"))
-			}
-			results = append(results, topic)
+		ctx := context.TODO()
+		extr := newExtractor()
+		err := extr.Init(ctx, map[string]interface{}{
+			"broker": brokerHost,
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
 
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+
 		// assert results with expected data
-		expected := []assets.Topic{
-			{
+		expected := []models.Record{
+			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
 					Urn:     "meteor-test-topic-1",
 					Name:    "meteor-test-topic-1",
 					Service: "kafka",
 				},
-			},
-			{
+			}),
+			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
 					Urn:     "meteor-test-topic-2",
 					Name:    "meteor-test-topic-2",
 					Service: "kafka",
 				},
-			},
-			{
+			}),
+			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
 					Urn:     "meteor-test-topic-3",
 					Name:    "meteor-test-topic-3",
 					Service: "kafka",
 				},
-			},
+			}),
 		}
 		// We need this function because the extractor cannot guarantee order
 		// so comparing expected slice and result slice will not be consistent
-		assertResults(t, expected, results)
+		assertResults(t, expected, emitter.Get())
 	})
 }
 
@@ -172,15 +165,17 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []assets.Topic, result []assets.Topic) {
+func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]assets.Topic)
-	for _, topic := range expected {
+	expectedMap := make(map[string]*assets.Topic)
+	for _, record := range expected {
+		topic := record.Data().(*assets.Topic)
 		expectedMap[topic.Resource.Urn] = topic
 	}
 
-	for _, topic := range result {
+	for _, record := range result {
+		topic := record.Data().(*assets.Topic)
 		assert.Contains(t, expectedMap, topic.Resource.Urn)
 		assert.Equal(t, expectedMap[topic.Resource.Urn], topic)
 

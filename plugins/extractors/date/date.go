@@ -5,7 +5,8 @@ import (
 	_ "embed" // used to print the embedded assets
 	"time"
 
-	"github.com/odpf/meteor/proto/odpf/assets/common"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -24,6 +25,12 @@ type Extractor struct {
 	logger log.Logger
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 // Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
@@ -40,7 +47,12 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract checks if the event contains a date and returns it
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
+func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (err error) {
+	return
+}
+
+// Extract checks if the event contains a date and returns it
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	dateCount := 0
 	for {
 		select {
@@ -54,7 +66,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 			if err != nil {
 				return err
 			}
-			out <- p
+			emit(models.NewRecord(p))
 
 			dateCount++
 			if dateCount >= maxDates {
@@ -78,9 +90,7 @@ func (e *Extractor) Process() (*common.Event, error) {
 
 func init() {
 	if err := registry.Extractors.Register("date", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

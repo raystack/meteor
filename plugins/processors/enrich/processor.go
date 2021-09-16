@@ -5,6 +5,7 @@ import (
 	//
 	_ "embed"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -14,7 +15,9 @@ import (
 var summary string
 
 // Processor work in a list of data
-type Processor struct{}
+type Processor struct {
+	config map[string]interface{}
+}
 
 // New create a new processor
 func New() *Processor {
@@ -29,10 +32,10 @@ var sampleConfig = `
 // Info returns the plugin information
 func (p *Processor) Info() plugins.Info {
 	return plugins.Info{
-		Description:  "Send metadata to columbus http service",
+		Description:  "Append custom fields to records",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"http,sink"},
+		Tags:         []string{"processor"},
 	}
 }
 
@@ -42,27 +45,29 @@ func (p *Processor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Process processes the data
-func (p *Processor) Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error) {
-	for data := range in {
-		data, err := p.process(data, config)
-		if err != nil {
-			return err
-		}
-
-		out <- data
-	}
-
+func (p *Processor) Init(ctx context.Context, config map[string]interface{}) (err error) {
+	p.config = config
 	return
 }
 
-func (p *Processor) process(data interface{}, config map[string]interface{}) (interface{}, error) {
+// Process processes the data
+func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
+	result, err := p.process(src.Data())
+	if err != nil {
+		return src, err
+	}
+
+	return models.NewRecord(result), nil
+}
+
+func (p *Processor) process(data interface{}) (interface{}, error) {
 	customProps := utils.GetCustomProperties(data)
 	if customProps == nil {
 		return data, nil
 	}
 
 	// update custom properties using value from config
-	for key, value := range config {
+	for key, value := range p.config {
 		stringVal, ok := value.(string)
 		if ok {
 			customProps[key] = stringVal
@@ -79,7 +84,7 @@ func (p *Processor) process(data interface{}, config map[string]interface{}) (in
 }
 
 func init() {
- 	if err := registry.Processors.Register("enrich", func() plugins.Processor {
+	if err := registry.Processors.Register("enrich", func() plugins.Processor {
 		return New()
 	}); err != nil {
 		return

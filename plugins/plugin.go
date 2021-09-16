@@ -3,10 +3,11 @@ package plugins
 import (
 	"context"
 
+	"github.com/odpf/meteor/models"
 	"gopkg.in/yaml.v3"
 )
 
-// PluginType is the type of plugin. 
+// PluginType is the type of plugin.
 type PluginType string
 
 // PluginType names
@@ -16,6 +17,8 @@ const (
 	PluginTypeSink      PluginType = "sink"
 )
 
+type Emit func(models.Record)
+
 // Info represents the meta.yaml file of a plugin.
 type Info struct {
 	Description  string   `yaml:"description"`
@@ -24,25 +27,34 @@ type Info struct {
 	Summary      string   `yaml:"summary"`
 }
 
+type Plugin interface {
+	// Info returns plugin's information.
+	Info() Info
+
+	// Validate checks if the given config is valid for the plugin.
+	Validate(config map[string]interface{}) error
+
+	// Init will be called once before running the plugin.
+	// This is where you want to initiate any client or test any connection to external service.
+	Init(ctx context.Context, config map[string]interface{}) error
+}
+
 // Extractor is a plugin that extracts data from a source.
 type Extractor interface {
-	Info() Info
-	Validate(config map[string]interface{}) error
-	Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error)
+	Plugin
+	Extract(ctx context.Context, emit Emit) (err error)
 }
 
 // Processor are the functions that are executed on the extracted data.
 type Processor interface {
-	Info() Info
-	Validate(config map[string]interface{}) error
-	Process(ctx context.Context, config map[string]interface{}, in <-chan interface{}, out chan<- interface{}) (err error)
+	Plugin
+	Process(ctx context.Context, src models.Record) (dst models.Record, err error)
 }
 
 // Syncer is a plugin that can be used to sync data from one source to another.
 type Syncer interface {
-	Info() Info
-	Validate(config map[string]interface{}) error
-	Sink(ctx context.Context, config map[string]interface{}, in <-chan interface{}) (err error)
+	Plugin
+	Sink(ctx context.Context, batch []models.Record) (err error)
 }
 
 // ParseInfo parses the plugin's meta.yaml file and returns an plugin Info struct.

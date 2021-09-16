@@ -10,10 +10,11 @@ import (
 	"sync"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/proto/odpf/assets"
-	"github.com/odpf/meteor/proto/odpf/assets/common"
-	"github.com/odpf/meteor/proto/odpf/assets/facets"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -61,6 +62,12 @@ type Extractor struct {
 	config Config
 }
 
+func New(logger log.Logger) *Extractor {
+	return &Extractor{
+		logger: logger,
+	}
+}
+
 // Info returns the detailed information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
@@ -77,8 +84,8 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 // Extract checks if the table is valid and extracts the table schema
-func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, out chan<- interface{}) (err error) {
-	err = utils.BuildConfig(config, &e.config)
+func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -88,6 +95,11 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		return
 	}
 
+	return
+}
+
+// Extract checks if the table is valid and extracts the table schema
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	for {
@@ -98,7 +110,7 @@ func (e *Extractor) Extract(ctx context.Context, config map[string]interface{}, 
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch dataset")
 		}
-		e.extractTable(ctx, ds, out)
+		e.extractTable(ctx, ds, emit)
 	}
 
 	return
@@ -115,7 +127,7 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 }
 
 // Create big query client
-func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out chan<- interface{}) {
+func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit plugins.Emit) {
 	tb := ds.Tables(ctx)
 	for {
 		table, err := tb.Next()
@@ -132,12 +144,12 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, out 
 			continue
 		}
 
-		out <- e.buildTable(ctx, table, tmd)
+		emit(models.NewRecord(e.buildTable(ctx, table, tmd)))
 	}
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) assets.Table {
+func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assets.Table {
 	var partitionField string
 	if md.TimePartitioning != nil {
 		partitionField = md.TimePartitioning.Field
@@ -148,7 +160,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		e.logger.Warn("error building preview", "err", err, "table", t.FullyQualifiedName())
 	}
 
-	return assets.Table{
+	return &assets.Table{
 		Resource: &common.Resource{
 			Urn:     fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
 			Name:    t.TableID,
@@ -350,9 +362,7 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
