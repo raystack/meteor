@@ -6,6 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/proto/odpf/assets"
 	"github.com/odpf/meteor/proto/odpf/assets/common"
