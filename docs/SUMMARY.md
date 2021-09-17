@@ -5,8 +5,11 @@
 
 ## Guides
 
-* [Installation](guides/installation.md)
-* [Usage](guides/usage.md)
+* [Introduction](guides/introduction.md)
+* [Installation](guides/0_Installation.md)
+* [Manage Recipes](guides/2_manage_recipes.md)
+* [Run Recipes](guides/3_run_recipes.md)
+* [Deployment](guides/4_deployment.md)
 
 ## Concepts
 
@@ -20,6 +23,7 @@
 
 * [Commands](reference/commands.md)
 * [Configuration](reference/configuration.md)
+* [Models](reference/metadata_models.md)
 * [Extractors](reference/extractors.md)
 * [Processors](reference/processors.md)
 * [Sinks](reference/sinks.md)
