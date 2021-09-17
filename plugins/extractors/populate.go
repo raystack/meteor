@@ -16,4 +16,5 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/mssql"
 	_ "github.com/odpf/meteor/plugins/extractors/mysql"
 	_ "github.com/odpf/meteor/plugins/extractors/postgres"
+	_ "github.com/odpf/meteor/plugins/extractors/superset"
 )

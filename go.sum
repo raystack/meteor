@@ -459,10 +459,6 @@ github.com/muesli/termenv v0.9.0/go.mod h1:R/LzAKf+suGs4IsO95y7+7DpFHO0KABgnZqtl
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/odpf/salt v0.0.0-20210910080317-2357c9c5287c h1:jaekBiaCyiRd1qhq7a3zOsifM5uOtQeUlQOt7QAnPHY=
-github.com/odpf/salt v0.0.0-20210910080317-2357c9c5287c/go.mod h1:/KxVYLrR36QFVSlaS3IL1b/hZHmLdXuZu+cukpyvxok=
-github.com/odpf/salt v0.0.0-20210919001227-5e300ea77aea h1:6+eJn/KpecACT39vMKDeLcg2oHjfh1e2tfClKEXA2Z8=
-github.com/odpf/salt v0.0.0-20210919001227-5e300ea77aea/go.mod h1:a0e+Px6w5350jq9THbrOFuRf7ooL9BHXF3r3tBBq1co=
 github.com/odpf/salt v0.0.0-20210919015538-3fd8ab22acea h1:/wywsQrCWV76QE5otGicnB8XojTXyLvg8QMfbnk/7qQ=
 github.com/odpf/salt v0.0.0-20210919015538-3fd8ab22acea/go.mod h1:a0e+Px6w5350jq9THbrOFuRf7ooL9BHXF3r3tBBq1co=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
