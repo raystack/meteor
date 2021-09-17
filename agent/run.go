@@ -11,11 +11,12 @@ const (
 	// TaskTypeProcess is the type of task that processes a record
 	TaskTypeProcess TaskType = "process"
 	// TaskTypeSink is the type of task that sends a record to a sink
-	TaskTypeSink    TaskType = "sink"
+	TaskTypeSink TaskType = "sink"
 )
 
 // Run contains the json data
 type Run struct {
-	Recipe recipe.Recipe `json:"recipe"`
-	Error  error         `json:"error"`
+	Recipe       recipe.Recipe `json:"recipe"`
+	Error        error         `json:"error"`
+	DurationInMs int           `json:"duration_in_ms"`
 }
