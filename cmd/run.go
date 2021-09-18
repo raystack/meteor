@@ -19,7 +19,7 @@ import (
 // RunCmd creates a command object for the "run" action.
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	return &cobra.Command{
-		Use:   "run [COMMAND]",
+		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
 		Long: heredoc.Doc(`
 			Execute specified recipes for metadata extraction.

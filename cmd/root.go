@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/salt/cmdx"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
@@ -10,11 +11,18 @@ import (
 // New adds all child commands to the root command and sets flags appropriately.
 func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:           "meteor <command> <subcommand> [flags]",
-		Short:         "Metadata CLI",
-		Long:          heredoc.Doc(`Metadata collection tool.`),
+		Use:   "meteor <command> <subcommand> [flags]",
+		Short: "Metadata CLI",
+		Long: heredoc.Doc(`
+			Metadata collection tool.
+
+			Meteor is a plugin driven agent for collecting metadata. 
+			Meteor has plugins to source metadata from a variety of data stores, 
+			services and message queues. It also has sink plugins to send metadata 
+			to variety of third party APIs and catalog services.
+		`),
 		SilenceErrors: true,
-		SilenceUsage:  true,
+		SilenceUsage:  false,
 		Example: heredoc.Doc(`
 			$ meteor list extractors
 			$ meteor run recipe.yaml
@@ -28,13 +36,7 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().Bool("help", false, "Show help for command")
-
-	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		RootHelpFunc(cmd, args)
-	})
-	cmd.SetUsageFunc(RootUsageFunc)
-	cmd.SetFlagErrorFunc(RootFlagErrorFunc)
+	cmdx.SetHelp(cmd)
 
 	cmd.AddCommand(VersionCmd())
 	cmd.AddCommand(GenCmd(lg))
