@@ -8,13 +8,13 @@ import (
 
 // Monitor is the interface for monitoring the agent.
 type Monitor interface {
-	RecordRun(recipe recipe.Recipe, durationInMs int, success bool)
+	RecordRun(recipe recipe.Recipe, durationInMs, docCount int, success bool)
 }
 
 // defaultMonitor is the default implementation of Monitor.
 type defaultMonitor struct{}
 
-func (m *defaultMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {}
+func (m *defaultMonitor) RecordRun(recipe recipe.Recipe, durationInMs, docCount int, success bool) {}
 
 func isNilMonitor(monitor Monitor) bool {
 	v := reflect.ValueOf(monitor)

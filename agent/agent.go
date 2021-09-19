@@ -101,6 +101,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		ctx         = context.Background()
 		getDuration = r.startDuration()
 		stream      = newStream()
+		dataCount   = 0
 	)
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
@@ -133,6 +134,8 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		stream.Close()
 	}()
 
+	dataCount = len(stream.subscribers)
+
 	// start listening.
 	// this process is blocking
 	if err := stream.broadcast(); err != nil {
@@ -142,13 +145,13 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
 	durationInMs := getDuration()
-	r.monitor.RecordRun(recipe, durationInMs, success)
+	r.monitor.RecordRun(recipe, durationInMs, dataCount, success)
 	run.DurationInMs = durationInMs
 
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "data_count", dataCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "data_count", dataCount, "err", run.Error)
 	}
 
 	return

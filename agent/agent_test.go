@@ -315,7 +315,7 @@ func TestRunnerRun(t *testing.T) {
 		sf.Register("test-sink", newSink(sink))
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
+		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), 1, true).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
@@ -392,7 +392,7 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
-	m.Called(recipe, durationInMs, success)
+func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs, docCount int, success bool) {
+	m.Called(recipe, durationInMs, docCount, success)
 	return
 }

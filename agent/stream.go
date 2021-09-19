@@ -84,7 +84,6 @@ func (s *stream) push(data models.Record) {
 	for _, l := range s.subscribers {
 		l.channel <- data
 	}
-	return
 }
 
 // setMiddleware registers a middleware that will be used to

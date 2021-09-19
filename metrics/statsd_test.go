@@ -48,7 +48,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(recipe, duration, false)
+		monitor.RecordRun(recipe, duration, 2, false)
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -75,6 +75,6 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(recipe, duration, true)
+		monitor.RecordRun(recipe, duration, 2, true)
 	})
 }
