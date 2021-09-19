@@ -19,14 +19,13 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			Meteor is a plugin driven agent for collecting metadata. 
 			Meteor has plugins to source metadata from a variety of data stores, 
 			services and message queues. It also has sink plugins to send metadata 
-			to variety of third party APIs and catalog services.
-		`),
+			to variety of third party APIs and catalog services.`),
 		SilenceErrors: true,
 		SilenceUsage:  false,
 		Example: heredoc.Doc(`
 			$ meteor list extractors
 			$ meteor run recipe.yaml
-			$ meteor gen recipe --extractor=date
+			$ meteor gen recipe --extractor=date --sink console
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",

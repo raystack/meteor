@@ -38,6 +38,7 @@ func InfoSinkCmd() *cobra.Command {
 		`),
 		Example: heredoc.Doc(`
 			$ meteor info sink console
+			$ meteor info sink columbus
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
@@ -68,6 +69,7 @@ func InfoExtCmd() *cobra.Command {
 		`),
 		Example: heredoc.Doc(`
 			$ meteor info extractor postgres
+			$ meteor info extractor bigquery
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{

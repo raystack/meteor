@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"strings"
-
 	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
 )
@@ -30,12 +28,13 @@ func (f *ProcessorFactory) Info(name string) (info plugins.Info, err error) {
 }
 
 // List returns a list of registered processors.
-func (f *ProcessorFactory) List() (names [][]string) {
+func (f *ProcessorFactory) List() map[string]plugins.Info {
+	list := make(map[string]plugins.Info)
 	for name := range f.fnStore {
 		info, _ := f.Info(name)
-		names = append(names, []string{name, info.Description, strings.Join(info.Tags, ",")})
+		list[name] = info
 	}
-	return
+	return list
 }
 
 // Register registers a Processor.

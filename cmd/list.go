@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
+	"github.com/odpf/salt/term"
 
 	"github.com/spf13/cobra"
 )
@@ -51,9 +53,19 @@ func ListExtCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			cs := term.NewColorScheme()
+
 			extractors := registry.Extractors.List()
 			fmt.Printf(" \nShowing %d of %d extractors\n \n", len(extractors), len(extractors))
-			printer.Table(os.Stdout, extractors)
+
+			report := [][]string{}
+			index := 1
+
+			for n, i := range extractors {
+				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				index++
+			}
+			printer.Table(os.Stdout, report)
 		},
 	}
 	return cmd
@@ -82,9 +94,18 @@ func ListSinksCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			cs := term.NewColorScheme()
+
 			sinks := registry.Sinks.List()
 			fmt.Printf(" \nShowing %d of %d sinks\n \n", len(sinks), len(sinks))
-			printer.Table(os.Stdout, sinks)
+
+			report := [][]string{}
+			index := 1
+			for n, i := range sinks {
+				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				index++
+			}
+			printer.Table(os.Stdout, report)
 		},
 	}
 	return cmd
@@ -113,9 +134,19 @@ func ListProccCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			cs := term.NewColorScheme()
+
 			processors := registry.Processors.List()
 			fmt.Printf(" \nShowing %d of %d processors\n \n", len(processors), len(processors))
-			printer.Table(os.Stdout, processors)
+
+			report := [][]string{}
+			index := 1
+
+			for n, i := range processors {
+				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				index++
+			}
+			printer.Table(os.Stdout, report)
 		},
 	}
 	return cmd
