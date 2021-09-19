@@ -69,10 +69,10 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 					for _, err := range errs {
 						lg.Error(err.Error())
 					}
-					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("%d errors, and 0 warning", len(errs))}
+					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
 					failures++
 				} else {
-					row = []string{fmt.Sprintf("%s  %s", cs.SuccessIcon(), recipe.Name), cs.Greyf("%d errors, and 0 warning", len(errs))}
+					row = []string{fmt.Sprintf("%s  %s", cs.SuccessIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
 					success++
 				}
 				report = append(report, row)
