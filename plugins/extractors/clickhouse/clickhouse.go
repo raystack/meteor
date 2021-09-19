@@ -53,7 +53,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Column-oriented DBMS for online analytical processing.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 

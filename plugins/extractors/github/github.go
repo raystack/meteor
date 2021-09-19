@@ -41,7 +41,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "User list from Github organisation.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"platform,extractor"},
+		Tags:         []string{"platform", "extractor"},
 	}
 }
 

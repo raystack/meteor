@@ -50,7 +50,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Search engine based on the Lucene library.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 

@@ -74,7 +74,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Big Query table metadata and metrics",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"gcp,table,extractor"},
+		Tags:         []string{"gcp", "table", "extractor"},
 	}
 }
 

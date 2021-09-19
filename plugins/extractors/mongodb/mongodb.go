@@ -63,7 +63,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Collection metadata from MongoDB Server",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 

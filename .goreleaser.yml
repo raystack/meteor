@@ -13,21 +13,13 @@ builds:
   - main: ./main.go
     id: "meteor"
     binary: meteor
-    flags:
-      - -a
+    flags: [-a]
     ldflags:
       - -X github.com/odpf/meteor/cmd.Version={{.Tag}} 
       - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
       - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
-    goos:
-      - darwin
-      - linux
-      - windows
-    goarch:
-      - amd64
-      - 386
-      - arm
-      - arm64
+    goos: [darwin, linux, windows]
+    goarch: [amd64, 386, arm, arm64]
     env:
       - CGO_ENABLED=0
 
@@ -70,16 +62,19 @@ dockers:
 
 brews:
   - name: meteor
+    homepage: "https://github.com/odpf/meteor"
+    description: "Metadata collection tool."
     tap:
       owner: odpf
       name: homebrew-taps
     license: "Apache 2.0"
     folder: Formula
+
     dependencies:
       - name: git
     install: |-
       bin.install "meteor"
     commit_author:
-      name: Stewart Jingga
-      email: stewart_jingga@yahoo.com
+      name: Ravi Suhag
+      email: ravi.suhag@gmail.com
       

@@ -59,7 +59,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Compressed, high-performance, proprietary data storage system.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"gcp,extractor"},
+		Tags:         []string{"gcp", "extractor"},
 	}
 }
 

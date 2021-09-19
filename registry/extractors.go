@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"strings"
-
 	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
 )
@@ -30,12 +28,13 @@ func (f *ExtractorFactory) Info(name string) (plugins.Info, error) {
 }
 
 // List returns a list of registered Extractors.
-func (f *ExtractorFactory) List() (names [][]string) {
+func (f *ExtractorFactory) List() map[string]plugins.Info {
+	list := make(map[string]plugins.Info)
 	for name := range f.fnStore {
 		info, _ := f.Info(name)
-		names = append(names, []string{name, info.Description, strings.Join(info.Tags, ",")})
+		list[name] = info
 	}
-	return
+	return list
 }
 
 // Register registers an Extractor.

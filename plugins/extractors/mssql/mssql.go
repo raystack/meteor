@@ -8,7 +8,7 @@ import (
 
 	"github.com/odpf/salt/log"
 
-  _ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -63,7 +63,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Table metdata from MSSQL server",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"microsoft,extractor"},
+		Tags:         []string{"microsoft", "extractor"},
 	}
 }
 
