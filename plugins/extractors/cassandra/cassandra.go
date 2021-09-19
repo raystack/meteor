@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+
 	"github.com/gocql/gocql"
 	"github.com/odpf/meteor/models"
 	_ "github.com/odpf/meteor/models"
@@ -33,7 +34,7 @@ type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
 	Host     string `mapstructure:"host" validate:"required"`
-	Port     int `mapstructure:"port" validate:"required"`
+	Port     int    `mapstructure:"port" validate:"required"`
 }
 
 var sampleConfig = `
@@ -46,10 +47,10 @@ var sampleConfig = `
 // Extractor manages the extraction of data from cassandra
 type Extractor struct {
 	excludedKeyspaces map[string]bool
-	logger      log.Logger
-	config 		Config
-	session     *gocql.Session
-	emit 		plugins.Emit
+	logger            log.Logger
+	config            Config
+	session           *gocql.Session
+	emit              plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -65,7 +66,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Table metadata from cassandra server.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 
@@ -193,11 +194,11 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 		}
 
 		columns = append(columns, &facets.Column{
-			Name:        fieldName,
-			DataType:    dataType,
+			Name:     fieldName,
+			DataType: dataType,
 		})
 	}
-	
+
 	return
 }
 

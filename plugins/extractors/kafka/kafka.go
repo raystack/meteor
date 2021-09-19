@@ -49,7 +49,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Topic list from Apache Kafka.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 
