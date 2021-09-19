@@ -29,6 +29,10 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
+			"help:learn": heredoc.Doc(`
+				Use 'meteor <command> <subcommand> --help' for more information about a command.
+				Read the manual at https://odpf.gitbook.io/meteor/
+			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/meteor/issues
 			`),
