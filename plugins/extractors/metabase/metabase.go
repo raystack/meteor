@@ -58,7 +58,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Dashboard list from Metabase server.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 

@@ -55,7 +55,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Comma separated file",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"file,extractor"},
+		Tags:         []string{"file", "extractor"},
 	}
 }
 

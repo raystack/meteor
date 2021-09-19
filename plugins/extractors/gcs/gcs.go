@@ -69,7 +69,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Online file storage web service for storing and accessing data.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"gcp,extractor"},
+		Tags:         []string{"gcp", "extractor"},
 	}
 }
 

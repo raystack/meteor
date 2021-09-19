@@ -42,8 +42,7 @@ func GenRecipeCmd() *cobra.Command {
 
 			The recipe will be printed on standard output.
 			Specify recipe name with the first argument without extension.
-			Use commma to separate multiple sinks and processors.
-		`),
+			Use commma to separate multiple sinks and processors.`),
 		Example: heredoc.Doc(`
 			# generate a recipe with a bigquery extractor and a console sink
 			$ meteor gen recipe sample -e bigquery -s console
@@ -69,7 +68,6 @@ func GenRecipeCmd() *cobra.Command {
 			if processors != "" {
 				procList = strings.Split(processors, ",")
 			}
-
 			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}

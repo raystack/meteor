@@ -37,7 +37,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Print current date from system",
 		SampleConfig: "",
 		Summary:      summary,
-		Tags:         []string{"system,extractor"},
+		Tags:         []string{"system", "extractor"},
 	}
 }
 

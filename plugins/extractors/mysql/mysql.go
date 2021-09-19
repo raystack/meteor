@@ -6,11 +6,11 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
-  _ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -61,7 +61,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Table metadata from MySQL server.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 

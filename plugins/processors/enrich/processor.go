@@ -35,7 +35,7 @@ func (p *Processor) Info() plugins.Info {
 		Description:  "Append custom fields to records",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"processor"},
+		Tags:         []string{"processor", "transform"},
 	}
 }
 
