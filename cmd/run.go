@@ -28,8 +28,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			and in Meteor they are used to define how metadata will be collected. 
 			
 			If a recipe file is provided, recipe will be executed as a single recipe.
-			If a recipe directory is provided, recipes will be executed as a group of recipes.
-		`),
+			If a recipe directory is provided, recipes will be executed as a group of recipes.`),
 		Example: heredoc.Doc(`
 			$ meteor run recipe.yml
 

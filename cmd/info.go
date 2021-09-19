@@ -34,8 +34,7 @@ func InfoSinkCmd() *cobra.Command {
 		Long: heredoc.Doc(`
 			Display sink information.
 			
-			The list of supported sinks is available via the 'meteor list sinks' command.
-		`),
+			The list of supported sinks is available via the 'meteor list sinks' command.`),
 		Example: heredoc.Doc(`
 			$ meteor info sink console
 			$ meteor info sink columbus

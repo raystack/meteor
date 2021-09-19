@@ -82,8 +82,7 @@ func ListSinksCmd() *cobra.Command {
 
 			This command lists all available sinks.
 			Sinks are used to send data to a target.
-			For example, you can use a sink to send metadata to standard output.
-		`),
+			For example, you can use a sink to send metadata to standard output.`),
 		Example: heredoc.Doc(`
 			$ meteor list sinks
 
@@ -122,8 +121,7 @@ func ListProccCmd() *cobra.Command {
 
 			This command lists all available processors.
 			Processors are used to transform data before it is sent to a sink.
-			For example, you can use a processor to enrich custom attributes.
-		`),
+			For example, you can use a processor to enrich custom attributes.`),
 		Example: heredoc.Doc(`
 			$ meteor list processors
 
