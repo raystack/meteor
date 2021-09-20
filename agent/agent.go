@@ -124,6 +124,12 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		}
 	}
 
+	// to gather total data count
+	stream.setMiddleware(func(src models.Record) (models.Record, error) {
+		dataCount++
+		return src, nil
+	})
+
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
@@ -133,8 +139,6 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		}
 		stream.Close()
 	}()
-
-	dataCount = len(stream.subscribers)
 
 	// start listening.
 	// this process is blocking
