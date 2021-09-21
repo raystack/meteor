@@ -27,11 +27,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			A recipe is a set of instructions and configurations defined by user, 
 			and in Meteor they are used to define how metadata will be collected. 
 			
-			If a recipe file is provided, recipe will be 
-			executed as a single recipe.
-			If a recipe directory is provided, recipes will 
-			be executed as a group of recipes.
-		`),
+			If a recipe file is provided, recipe will be executed as a single recipe.
+			If a recipe directory is provided, recipes will be executed as a group of recipes.`),
 		Example: heredoc.Doc(`
 			$ meteor run recipe.yml
 
@@ -56,37 +53,39 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				fmt.Println(cs.WarningIcon(), cs.Yellowf(" no recipe found in [%s]", args[0]))
+				fmt.Println(cs.WarningIcon(), cs.Yellowf("No recipe found in [%s]", args[0]))
 				return nil
 			}
 
+			report := [][]string{}
 			var success = 0
 			var failures = 0
-			tabular_report := [][]string{}
-			tabular_report = append(tabular_report, []string{"Recipe", "Source", "Status", "Duration(ms)", "Records"})
+			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
+
+			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
-				report_row := []string{run.Recipe.Name, run.Recipe.Source.Type}
-
+				row := []string{}
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe")
 					failures++
-					report_row = append(report_row, cs.FailureIcon()+cs.Redf("failure"))
+					row = append(row, cs.FailureIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				} else {
 					success++
-					report_row = append(report_row, cs.SuccessIcon()+cs.Greenf("successful"))
+					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
-
-				report_row = append(report_row, strconv.Itoa(run.DurationInMs))
-				report_row = append(report_row, strconv.Itoa(run.RecordCount))
-				tabular_report = append(tabular_report, report_row)
+				report = append(report, row)
 			}
 
-			fmt.Print("\n\n")
-			printer.Table(os.Stdout, tabular_report)
-			fmt.Printf("Total: %d, Success: %d, Failures: %d\n", len(recipes), success, failures)
-
+			// Print the report
+			if failures > 0 {
+				fmt.Println("\nSome recipes were not successful")
+			} else {
+				fmt.Println("\nAll recipes ran successful")
+			}
+			fmt.Printf("%d failing, %d successful, and %d total\n\n", failures, success, len(recipes))
+			printer.Table(os.Stdout, report)
 			return nil
 		},
 	}

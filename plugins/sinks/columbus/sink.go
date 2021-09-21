@@ -56,7 +56,7 @@ func (s *Sink) Info() plugins.Info {
 		Description:  "Send metadata to columbus http service",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"http,sink"},
+		Tags:         []string{"http", "sink"},
 	}
 }
 
