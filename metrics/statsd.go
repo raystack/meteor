@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	statsd "github.com/etsy/statsd/examples/go"
+	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/recipe"
 )
 
@@ -29,13 +30,13 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 }
 
 // RecordRun records a run behavior
-func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration, recordCount int, success bool) {
+func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	m.client.Timing(
-		m.createMetricName(runDurationMetricName, recipe, success),
-		int64(duration),
+		m.createMetricName(runDurationMetricName, run.Recipe, run.Success),
+		int64(run.DurationInMs),
 	)
 	m.client.Increment(
-		m.createMetricName(runMetricName, recipe, success),
+		m.createMetricName(runMetricName, run.Recipe, run.Success),
 	)
 }
 

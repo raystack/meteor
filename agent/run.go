@@ -20,4 +20,5 @@ type Run struct {
 	Error        error         `json:"error"`
 	DurationInMs int           `json:"duration_in_ms"`
 	RecordCount  int           `json:"record_count"`
+	Success      bool          `json:"success"`
 }

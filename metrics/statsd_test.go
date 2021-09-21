@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/mock"
@@ -48,7 +49,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(recipe, duration, 2, false)
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -75,6 +76,6 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(recipe, duration, 2, true)
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true})
 	})
 }

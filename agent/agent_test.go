@@ -314,8 +314,9 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
+		monitor_run := agent.Run{Recipe: validRecipe, RecordCount: 1, Success: true}
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), 1, true).Once()
+		monitor.On("RecordRun", monitor_run).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
@@ -359,8 +360,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe, RecordCount: len(data)},
-			{Recipe: validRecipe2, RecordCount: len(data)},
+			{Recipe: validRecipe, RecordCount: len(data), Success: true},
+			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
 }
@@ -391,6 +392,6 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs, recordCount int, success bool) {
-	m.Called(recipe, durationInMs, recordCount, success)
+func (m *mockMonitor) RecordRun(run agent.Run) {
+	m.Called(run)
 }
