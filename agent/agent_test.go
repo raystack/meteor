@@ -359,8 +359,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe},
-			{Recipe: validRecipe2},
+			{Recipe: validRecipe, RecordCount: len(data)},
+			{Recipe: validRecipe2, RecordCount: len(data)},
 		}, runs)
 	})
 }
