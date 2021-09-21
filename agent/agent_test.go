@@ -333,7 +333,6 @@ func TestRunnerRunMultiple(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),
 		}
-
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil)
@@ -392,7 +391,6 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs, docCount int, success bool) {
-	m.Called(recipe, durationInMs, docCount, success)
-	return
+func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs, recordCount int, success bool) {
+	m.Called(recipe, durationInMs, recordCount, success)
 }

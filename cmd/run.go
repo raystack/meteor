@@ -63,7 +63,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			var success = 0
 			var failures = 0
 			tabular_report := [][]string{}
-			tabular_report = append(tabular_report, []string{"Recipe", "Source", "Status", "Duration(ms)"})
+			tabular_report = append(tabular_report, []string{"Recipe", "Source", "Status", "Duration(ms)", "Records"})
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
@@ -79,6 +79,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				}
 
 				report_row = append(report_row, strconv.Itoa(run.DurationInMs))
+				report_row = append(report_row, strconv.Itoa(run.RecordCount))
 				tabular_report = append(tabular_report, report_row)
 			}
 

@@ -29,7 +29,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 }
 
 // RecordRun records a run behavior
-func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration, docCount int, success bool) {
+func (m *StatsdMonitor) RecordRun(recipe recipe.Recipe, duration, recordCount int, success bool) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, recipe, success),
 		int64(duration),

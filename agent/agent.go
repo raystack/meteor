@@ -101,9 +101,8 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		ctx         = context.Background()
 		getDuration = r.startDuration()
 		stream      = newStream()
-		dataCount   = 0
 	)
-
+	run.RecordCount = 0
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
 		run.Error = err
@@ -124,9 +123,9 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		}
 	}
 
-	// to gather total data count
+	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
-		dataCount++
+		run.RecordCount++
 		return src, nil
 	})
 
@@ -149,13 +148,13 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
 	durationInMs := getDuration()
-	r.monitor.RecordRun(recipe, durationInMs, dataCount, success)
+	r.monitor.RecordRun(recipe, durationInMs, run.RecordCount, success)
 	run.DurationInMs = durationInMs
 
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "data_count", dataCount)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "data_count", dataCount, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 
 	return
