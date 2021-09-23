@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	runDurationMetricName = "runDuration"
-	runMetricName         = "run"
+	runDurationMetricName    = "runDuration"
+	runRecordCountMetricName = "runRecordCount"
+	runMetricName            = "run"
 )
 
 // StatsdMonitor reprsents the statsd monitor.
@@ -32,33 +33,39 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 // RecordRun records a run behavior
 func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	m.client.Timing(
-		m.createMetricName(runDurationMetricName, run.Recipe, run.Success),
+		m.createMetricName(runDurationMetricName, run.Recipe, run.Success, run.RecordCount),
 		int64(run.DurationInMs),
 	)
 	m.client.Increment(
-		m.createMetricName(runMetricName, run.Recipe, run.Success),
+		m.createMetricName(runMetricName, run.Recipe, run.Success, run.RecordCount),
+	)
+	m.client.IncrementByValue(
+		m.createMetricName(runRecordCountMetricName, run.Recipe, run.Success, run.RecordCount),
+		run.RecordCount,
 	)
 }
 
 // createMetricName creates a metric name for a given recipe and success
-func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
+func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool, recordCount int) string {
 	var successText = "false"
 	if success {
 		successText = "true"
 	}
 
 	return fmt.Sprintf(
-		"%s.%s,name=%s,success=%s",
+		"%s.%s,name=%s,success=%s,records=%d",
 		m.prefix,
 		metricName,
 		recipe.Name,
 		successText,
+		recordCount,
 	)
 }
 
 type statsdClient interface {
 	Timing(string, int64)
 	Increment(string)
+	IncrementByValue(string, int)
 }
 
 // NewStatsdClient returns a new statsd client if the given address is valid
