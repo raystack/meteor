@@ -166,7 +166,6 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str 
 		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Type)
 		return
 	}
-	fmt.Println("1")
 
 	runFn = func() (err error) {
 		defer recoverFunc()
