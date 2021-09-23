@@ -96,8 +96,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.db.Close()
 	e.emit = emit
 
-	z := 0
-	fmt.Println(1 / z)
 	res, err := e.db.Query("SELECT name FROM sys.databases;")
 	if err != nil {
 		return
