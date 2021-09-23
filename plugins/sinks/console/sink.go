@@ -41,6 +41,8 @@ func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err err
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+	z := 0
+	fmt.Println(1 / z)
 	for _, record := range batch {
 		if err := s.process(record.Data()); err != nil {
 			return err
