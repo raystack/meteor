@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -125,6 +126,12 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
+	defer func() {
+		if err := recover(); err != nil {
+			run.Error = err.(error)
+			fmt.Println("panic caught:", err)
+		}
+	}()
 	go func() {
 		err = runExtractor()
 		if err != nil {
@@ -165,8 +172,14 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str 
 		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Type)
 		return
 	}
+	fmt.Println("1")
 
 	runFn = func() (err error) {
+		defer func() {
+			if err := recover(); err != nil {
+				fmt.Println("panic caught:", err)
+			}
+		}()
 		err = extractor.Extract(ctx, str.push)
 		if err != nil {
 			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
