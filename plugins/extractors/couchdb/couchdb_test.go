@@ -1,3 +1,5 @@
+//+build integration
+
 package couchdb_test
 
 import (
