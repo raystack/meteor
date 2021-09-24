@@ -16,6 +16,12 @@ require (
 	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
 	github.com/etsy/statsd v0.9.0
+	github.com/flimzy/diff v0.1.7 // indirect
+	github.com/flimzy/kivik v2.0.0+incompatible
+	github.com/flimzy/testy v0.1.17 // indirect
+	github.com/go-kivik/couchdb/v4 v4.0.0-20210606123901-7c3aefbfa34c
+	github.com/go-kivik/kivik v2.0.0+incompatible // indirect
+	github.com/go-kivik/kivik/v4 v4.0.0-20210606210530-2cf07af3502e // indirect
 	github.com/go-playground/validator/v10 v10.7.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
