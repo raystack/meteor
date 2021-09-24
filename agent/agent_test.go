@@ -394,5 +394,4 @@ func newMockMonitor() *mockMonitor {
 
 func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
 	m.Called(recipe, durationInMs, success)
-	return
 }
