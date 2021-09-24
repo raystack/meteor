@@ -17,17 +17,17 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
 	github.com/etsy/statsd v0.9.0
 	github.com/flimzy/diff v0.1.7 // indirect
-	github.com/flimzy/kivik v2.0.0+incompatible
 	github.com/flimzy/testy v0.1.17 // indirect
-	github.com/go-kivik/couchdb/v4 v4.0.0-20210606123901-7c3aefbfa34c
-	github.com/go-kivik/kivik v2.0.0+incompatible // indirect
-	github.com/go-kivik/kivik/v4 v4.0.0-20210606210530-2cf07af3502e // indirect
+	github.com/go-kivik/couchdb v2.0.0+incompatible
+	github.com/go-kivik/kivik v2.0.0+incompatible
+	github.com/go-kivik/kiviktest v2.0.0+incompatible // indirect
 	github.com/go-playground/validator/v10 v10.7.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-github/v37 v37.0.0
+	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
 	github.com/klauspost/compress v1.12.2 // indirect
@@ -46,6 +46,7 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
+	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.mongodb.org/mongo-driver v1.5.3
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect
