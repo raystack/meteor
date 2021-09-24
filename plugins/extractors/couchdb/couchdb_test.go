@@ -15,6 +15,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/couchdb"
 	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -101,10 +102,10 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// emitter := mocks.NewEmitter()
-		// err = extr.Extract(ctx, emitter.Push)
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
 
-		// assert.NoError(t, err)
+		assert.NoError(t, err)
 		// assert.Equal(t, getExpected(), emitter.Get())
 	})
 }

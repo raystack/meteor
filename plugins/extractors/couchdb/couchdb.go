@@ -5,9 +5,8 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	_ "github.com/go-kivik/couchdb"
+	"github.com/go-kivik/kivik"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -18,7 +17,11 @@ import (
 //go:embed README.md
 var summary string
 
-var defaultDBList = []string{}
+var defaultDBList = []string{
+	"_global_changes",
+	"_replicator",
+	"_users",
+}
 
 // Config hold the set of configuration for the extractor
 type Config struct {
@@ -34,6 +37,7 @@ var sampleConfig = `
 
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
+	client      *kivik.Client
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
@@ -62,6 +66,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Initialise the Extractor with Configurations
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
@@ -72,10 +77,10 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	// e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host))
-	// if err != nil {
-	// return
-	// }
+	e.client, err = kivik.New("couch", fmt.Sprintf("http://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host))
+	if err != nil {
+		return
+	}
 
 	return
 }
@@ -83,77 +88,70 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the MySQL server
 // and collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	// defer e.db.Close()
+	defer e.client.Close(context.TODO())
 	e.emit = emit
 
-	// res, err := e.db.Query("SHOW DATABASES;")
+	res, err := e.client.AllDBs(context.TODO())
 	if err != nil {
 		return
 	}
-	// for res.Next() {
-	// var database string
-	// if err := res.Scan(&database); err != nil {
-	// return err
-	// }
 
-	// if err := e.extractTables(database); err != nil {
-	// return err
-	// }
-	// }
-
+	for _, dbName := range res {
+		if err := e.extractTables(dbName); err != nil {
+			return err
+		}
+	}
 	return
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(dbName string) (err error) {
 	// skip if database is default
-	if e.isExcludedDB(database) {
+	if e.isExcludedDB(dbName) {
+		return
+	}
+	fmt.Println(dbName)
+	db := e.client.DB(context.TODO(), dbName)
+
+	// extract documents
+	rows, err := db.AllDocs(context.TODO())
+	if err != nil {
 		return
 	}
 
-	// extract tables
-	// _, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
-	// if err != nil {
-	// return
-	// }
-	// rows, err := e.db.Query("SHOW TABLES;")
-	// if err != nil {
-	// return
-	// }
-
 	// process each rows
-	// for rows.Next() {
-	// var tableName string
-	// if err := rows.Scan(&tableName); err != nil {
-	// return err
-	// }
-
-	// if err := e.processTable(database, tableName); err != nil {
-	// return err
-	// }
-	// }
+	for rows.Next() {
+		var row_rev map[string]interface{}
+		if err := rows.ScanValue(&row_rev); err != nil {
+			return err
+		}
+		fmt.Println(row_rev["rev"])
+		// if err := e.processTable(dbName, tableName); err != nil {
+		// return err
+		// }
+	}
 
 	return
 }
 
 // Build and push table to out channel
-func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*facets.Column
-	columns, err = e.extractColumns(tableName)
-	if err != nil {
-		return
-	}
-
+func (e *Extractor) processTable(dbName string, docName string) (err error) {
+	//var columns []*facets.Column
+	// columns, err = e.extractColumns(docName)
+	// if err != nil {
+	// return
+	// }
+	fmt.Println(dbName, docName)
 	// push table to channel
-	e.emit(models.NewRecord(&assets.Table{
-		Resource: &common.Resource{
-			Urn:  fmt.Sprintf("%s.%s", database, tableName),
-			Name: tableName,
-		},
-		Schema: &facets.Columns{
-			Columns: columns,
-		},
-	}))
+	// e.emit(models.NewRecord(&assets.Table{
+	// Resource: &common.Resource{
+	// Urn:  fmt.Sprintf("%s.%s", dbName, docName),
+	// Name: docName,
+	// },
+	// Schema: &facets.Columns{
+	// Columns: columns,
+	// },
+	// }))
 
 	return
 }
