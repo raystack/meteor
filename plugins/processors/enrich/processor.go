@@ -52,7 +52,7 @@ func (p *Processor) Init(ctx context.Context, config map[string]interface{}) (er
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
-	result, err := p.process(src.Data())
+	result, err := p.process(src)
 	if err != nil {
 		return src, err
 	}
@@ -60,7 +60,8 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 	return models.NewRecord(result), nil
 }
 
-func (p *Processor) process(data interface{}) (interface{}, error) {
+func (p *Processor) process(record models.Record) (models.Metadata, error) {
+	data := record.Data()
 	customProps := utils.GetCustomProperties(data)
 	if customProps == nil {
 		return data, nil
