@@ -29,8 +29,10 @@ const (
 )
 
 var (
-	host   = "localhost:" + port
-	client *kivik.Client
+	host     = "localhost:" + port
+	client   *kivik.Client
+	dbs      = []string{"applicant", "jobs"}
+	docCount = 3
 )
 
 func TestMain(m *testing.M) {
@@ -106,12 +108,11 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		// assert.Equal(t, getExpected(), emitter.Get())
+		assert.Equal(t, docCount*len(dbs), len(emitter.Get()))
 	})
 }
 
 func setup() (err error) {
-	dbs := []string{"applicant", "jobs"}
 	for _, database := range dbs {
 		// create database
 		err = client.CreateDB(context.TODO(), database)
@@ -130,92 +131,22 @@ func setup() (err error) {
 
 func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
 	for _, query := range queries {
-		fmt.Println(query)
-		rev, err := db.Put(context.TODO(), query["_id"].(string), query)
+		_, err := db.Put(context.TODO(), query["_id"].(string), query)
 		if err != nil {
 			return err
 		}
-		fmt.Println(rev)
 	}
 	return
 }
 
 func mockdata(dbName string) (mockSetupData []map[string]interface{}) {
-	for i := 0; i < 3; i++ {
+	for i := 0; i < docCount; i++ {
 		doc := map[string]interface{}{
 			"_id":    kivik.UserPrefix + dbName + strconv.Itoa(i),
-			"field1": "data",
+			"field1": 1,
 			"field2": "data",
 		}
 		mockSetupData = append(mockSetupData, doc)
 	}
 	return
 }
-
-// func getExpected() []models.Record {
-// return []models.Record{
-// models.NewRecord(&assets.Table{
-// Resource: &common.Resource{
-// Urn:  "mockdata_meteor_metadata_test.applicant",
-// Name: "applicant",
-// },
-// Schema: &facets.Columns{
-// Columns: []*facets.Column{
-// {
-// Name:        "applicant_id",
-// DataType:    "int",
-// Description: "",
-// IsNullable:  true,
-// Length:      0,
-// },
-// {
-// Name:        "first_name",
-// DataType:    "varchar",
-// Description: "",
-// IsNullable:  true,
-// Length:      255,
-// },
-// {
-// Name:        "last_name",
-// DataType:    "varchar",
-// Description: "",
-// IsNullable:  true,
-// Length:      255,
-// },
-// },
-// },
-// }),
-// models.NewRecord(&assets.Table{
-// Resource: &common.Resource{
-// Urn:  "mockdata_meteor_metadata_test.jobs",
-// Name: "jobs",
-// },
-// Schema: &facets.Columns{
-// Columns: []*facets.Column{
-// {
-// Name:        "department",
-// DataType:    "varchar",
-// Description: "",
-// IsNullable:  true,
-// Length:      255,
-// },
-// {
-// Name:        "job",
-// DataType:    "varchar",
-// Description: "",
-// IsNullable:  true,
-// Length:      255,
-// },
-// {
-// Name:        "job_id",
-// DataType:    "int",
-// Description: "",
-// IsNullable:  true,
-// Length:      0,
-// },
-// },
-// },
-// }),
-// }
-// }
-//

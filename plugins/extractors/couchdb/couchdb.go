@@ -4,9 +4,13 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"reflect"
 
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
+	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -38,6 +42,7 @@ var sampleConfig = `
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
 	client      *kivik.Client
+	db          *kivik.DB
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
@@ -110,81 +115,72 @@ func (e *Extractor) extractTables(dbName string) (err error) {
 	if e.isExcludedDB(dbName) {
 		return
 	}
-	fmt.Println(dbName)
-	db := e.client.DB(context.TODO(), dbName)
+	e.db = e.client.DB(context.TODO(), dbName)
 
 	// extract documents
-	rows, err := db.AllDocs(context.TODO())
+	rows, err := e.db.AllDocs(context.TODO())
 	if err != nil {
 		return
 	}
 
 	// process each rows
 	for rows.Next() {
-		var row_rev map[string]interface{}
-		if err := rows.ScanValue(&row_rev); err != nil {
+		docID := rows.ID()
+		if err := e.processTable(dbName, docID); err != nil {
 			return err
 		}
-		fmt.Println(row_rev["rev"])
-		// if err := e.processTable(dbName, tableName); err != nil {
-		// return err
-		// }
 	}
 
 	return
 }
 
-// Build and push table to out channel
-func (e *Extractor) processTable(dbName string, docName string) (err error) {
-	//var columns []*facets.Column
-	// columns, err = e.extractColumns(docName)
-	// if err != nil {
-	// return
-	// }
-	fmt.Println(dbName, docName)
+// Build and push document to output channel
+func (e *Extractor) processTable(dbName string, docID string) (err error) {
+	var columns []*facets.Column
+	columns, err = e.extractColumns(docID)
+	if err != nil {
+		return
+	}
+
 	// push table to channel
-	// e.emit(models.NewRecord(&assets.Table{
-	// Resource: &common.Resource{
-	// Urn:  fmt.Sprintf("%s.%s", dbName, docName),
-	// Name: docName,
-	// },
-	// Schema: &facets.Columns{
-	// Columns: columns,
-	// },
-	// }))
+	e.emit(models.NewRecord(&assets.Table{
+		Resource: &common.Resource{
+			Urn:  fmt.Sprintf("%s.%s", dbName, docID),
+			Name: docID,
+		},
+		Schema: &facets.Columns{
+			Columns: columns,
+		},
+	}))
 
 	return
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, err error) {
-	// query := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
-	// IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
-	// FROM information_schema.columns
-	// WHERE table_name = ?
-	// ORDER BY COLUMN_NAME ASC`
-	// rows, err := e.db.Query(query, tableName)
-	// if err != nil {
-	// return
-	// }
+func (e *Extractor) extractColumns(docID string) (columns []*facets.Column, err error) {
+	size, rev, err := e.db.GetMeta(context.TODO(), docID)
+	if err != nil {
+		return
+	}
+	row := e.db.Get(context.TODO(), docID)
+	var fields map[string]interface{}
+	err = row.ScanDoc(&fields)
+	if err != nil {
+		return
+	}
 
-	// for rows.Next() {
-	// var fieldName, fieldDesc, dataType, isNullableString string
-	// var length int
-	// err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
-	// if err != nil {
-	// return
-	// }
+	for k := range fields {
+		if k == "_id" || k == "_rev" {
+			continue
+		}
 
-	// columns = append(columns, &facets.Column{
-	// Name:        fieldName,
-	// DataType:    dataType,
-	// Description: fieldDesc,
-	// IsNullable:  e.isNullable(isNullableString),
-	// Length:      int64(length),
-	// })
-	// }
-
+		columns = append(columns, &facets.Column{
+			Name:        k,
+			DataType:    reflect.ValueOf(fields[k]).Kind().String(),
+			Description: rev,
+			Length:      size,
+		})
+	}
 	return
 }
 
@@ -200,10 +196,6 @@ func (e *Extractor) buildExcludedDBs() {
 func (e *Extractor) isExcludedDB(database string) bool {
 	_, ok := e.excludedDbs[database]
 	return ok
-}
-
-func (e *Extractor) isNullable(value string) bool {
-	return value == "YES"
 }
 
 // Register the extractor to catalog
