@@ -23,22 +23,19 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
-| `resource.name` | `my_table` |
+| `resource.urn` | `database_name.docID` |
+| `resource.name` | `docID` |
 | `resource.service` | `couchdb` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
 | `schema` | [][Column](#column) |
 
 ### Column
 
 | Field | Sample Value |
 | :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
+| `name` | `field1` |
+| `description` | `rev for revision history` |
+| `data_type` | `float64` |
+| `length` | `` |
 
 ## Contributing
 
