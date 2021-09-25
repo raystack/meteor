@@ -138,6 +138,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 			e.logger.Error("failed to scan, skipping table", "err", err)
 			continue
 		}
+		e.logger.Debug("extracting table", "table", table.FullyQualifiedName())
 		tmd, err := table.Metadata(ctx)
 		if err != nil {
 			e.logger.Error("failed to fetch table's metadata, skipping table", "err", err, "table", table.FullyQualifiedName())

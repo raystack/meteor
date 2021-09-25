@@ -2,13 +2,13 @@ package enrich
 
 import (
 	"context"
-	//
 	_ "embed"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 )
 
 //go:embed README.md
@@ -17,11 +17,14 @@ var summary string
 // Processor work in a list of data
 type Processor struct {
 	config map[string]interface{}
+	logger log.Logger
 }
 
 // New create a new processor
-func New() *Processor {
-	return new(Processor)
+func New(logger log.Logger) *Processor {
+	return &Processor{
+		logger: logger,
+	}
 }
 
 var sampleConfig = `
@@ -62,6 +65,7 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 
 func (p *Processor) process(record models.Record) (models.Metadata, error) {
 	data := record.Data()
+	p.logger.Debug("enriching record", "record", data.GetResource().Urn)
 	customProps := utils.GetCustomProperties(data)
 	if customProps == nil {
 		return data, nil
@@ -86,7 +90,7 @@ func (p *Processor) process(record models.Record) (models.Metadata, error) {
 
 func init() {
 	if err := registry.Processors.Register("enrich", func() plugins.Processor {
-		return New()
+		return New(plugins.GetLog())
 	}); err != nil {
 		return
 	}

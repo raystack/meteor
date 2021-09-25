@@ -14,6 +14,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 )
 
@@ -44,10 +45,11 @@ type httpClient interface {
 type Sink struct {
 	client httpClient
 	config Config
+	logger log.Logger
 }
 
-func New(c httpClient) plugins.Syncer {
-	sink := &Sink{client: c}
+func New(c httpClient, logger log.Logger) plugins.Syncer {
+	sink := &Sink{client: c, logger: logger}
 	return sink
 }
 
@@ -75,6 +77,7 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
+		s.logger.Debug("sinking data to columbus", "record", metadata.GetResource().Urn)
 		columbusPayload, err := s.buildColumbusPayload(metadata)
 
 		if err != nil {
@@ -189,7 +192,7 @@ func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
 
 func init() {
 	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
-		return New(&http.Client{})
+		return New(&http.Client{}, plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
