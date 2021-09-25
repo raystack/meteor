@@ -13,6 +13,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	defaultBatchSize = 1
+)
+
 // Agent runs recipes for specified plugins.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
@@ -224,7 +228,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		}
 
 		return
-	}, 0)
+	}, defaultBatchSize)
 
 	return
 }
