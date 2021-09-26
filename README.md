@@ -6,7 +6,8 @@
 [![Version](https://img.shields.io/github/v/release/odpf/meteor?logo=semantic-release)](Version)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 
-Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to source metadata from a variety of data stores, services and message queues. It also has sink plugins to send metadata to variety of third party APIs and catalog services.
+Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to source metadata from a variety of data stores, services and message queues. 
+It also has sink plugins to send metadata to variety of third party APIs and catalog services.
 
 <p align="center"><img src="./docs/assets/overview_4.svg" /></p>
 
@@ -28,19 +29,62 @@ Explore the following resources to get started with Meteor:
 
 ## Installation
 
-`meteor` is available via Homebrew and as a downloadable binary from the [releases](https://github.com/odpf/meteor/releases) page.
+Install Meteor on macOS, Windows, Linux, OpenBSD, FreeBSD, and on any machine.
 
-**Homebrew**
+#### Binary (Cross-platform)
+
+Download the appropriate version for your platform from [releases](https://github.com/odpf/meteor/releases) page. Once downloaded, the binary can be run from anywhere. 
+You don’t need to install it into a global location. This works well for shared hosts and other systems where you don’t have a privileged account.
+Ideally, you should install it somewhere in your PATH for easy use. /usr/local/bin is the most probable location.
+
+#### Homebrew
+
 ```sh
-# install meteor (requires homebrew installed)
+# Install meteor (requires homebrew installed)
 $ brew install odpf/taps/meteor
 
-# upgrade meteor (requires homebrew installed)
+# Upgrade meteor (requires homebrew installed)
 $ brew upgrade meteor
 
-# check for meteor installation
-$ meteor --help
+# Check for installed meteor version 
+$ meteor version
 ```
+
+## Usage
+Meteor’s CLI is fully featured but simple to use, even for those who have very limited experience working from the command line. Run `meteor --help` to see list of all available commands and instructions to use. 
+
+```
+$ meteor --help
+
+Metadata collection tool.
+
+USAGE
+  meteor <command> <subcommand> [flags]
+
+CORE COMMANDS
+  gen         Generate sample recipes and plugins
+  info        Display plugin information
+  lint        Check of issues in recipes
+  list        List available plugins in meteor
+  run         Execute recipes for metadata extraction
+
+ADDITIONAL COMMANDS
+  completion  Generate the autocompletion script
+  help        Help about any command
+  version     Print meteor version information
+
+FLAGS
+  --help   Show help for command
+
+EXAMPLES
+  $ meteor list extractors
+  $ meteor run recipe.yaml
+  $ meteor gen recipe --extractor=date
+
+FEEDBACK
+  Open an issue here https://github.com/odpf/meteor/issues
+```
+
 
 ## Running locally
 
