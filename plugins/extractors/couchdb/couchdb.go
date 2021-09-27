@@ -39,7 +39,7 @@ var sampleConfig = `
  user_id: admin
  password: couchdb`
 
-// Extractor manages the extraction of data from MySQL
+// Extractor manages the extraction of data from CouchDB
 type Extractor struct {
 	client      *kivik.Client
 	db          *kivik.DB
@@ -90,7 +90,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	return
 }
 
-// Extract extracts the data from the MySQL server
+// Extract extracts the data from the CouchDB server
 // and collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.client.Close(context.TODO())
