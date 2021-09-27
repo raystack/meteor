@@ -5,6 +5,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/bigtable"
 	_ "github.com/odpf/meteor/plugins/extractors/cassandra"
 	_ "github.com/odpf/meteor/plugins/extractors/couchdb"
+	_ "github.com/odpf/meteor/plugins/extractors/clickhouse"
 	_ "github.com/odpf/meteor/plugins/extractors/csv"
 	_ "github.com/odpf/meteor/plugins/extractors/date"
 	_ "github.com/odpf/meteor/plugins/extractors/elastic"
@@ -17,4 +18,5 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/mssql"
 	_ "github.com/odpf/meteor/plugins/extractors/mysql"
 	_ "github.com/odpf/meteor/plugins/extractors/postgres"
+	_ "github.com/odpf/meteor/plugins/extractors/superset"
 )

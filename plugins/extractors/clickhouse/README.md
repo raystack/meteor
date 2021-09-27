@@ -1,4 +1,4 @@
-# mysql
+# clickhouse
 
 ## Usage
 
