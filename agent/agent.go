@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -130,11 +131,16 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				run.Error = fmt.Errorf("%s", r)
+			}
+			stream.Close()
+		}()
 		err = runExtractor()
 		if err != nil {
 			run.Error = err
 		}
-		stream.Close()
 	}()
 
 	// start listening.
