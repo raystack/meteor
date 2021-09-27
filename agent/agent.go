@@ -127,11 +127,16 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				run.Error = fmt.Errorf("%s", r)
+			}
+			stream.Close()
+		}()
 		err = runExtractor()
 		if err != nil {
 			run.Error = err
 		}
-		stream.Close()
 	}()
 
 	// start listening.
@@ -168,7 +173,6 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str 
 	}
 
 	runFn = func() (err error) {
-		defer recoverFunc()
 		err = extractor.Extract(ctx, str.push)
 		if err != nil {
 			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
@@ -193,7 +197,6 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, s
 	}
 
 	str.setMiddleware(func(src models.Record) (dst models.Record, err error) {
-		defer recoverFunc()
 		dst, err = proc.Process(ctx, src)
 		if err != nil {
 			err = errors.Wrapf(err, "error running processor \"%s\"", pr.Name)
@@ -220,7 +223,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 	}
 
 	stream.subscribe(func(records []models.Record) (err error) {
-		defer recoverFunc()
 		err = sink.Sink(ctx, records)
 		if err != nil {
 			err = errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
@@ -238,11 +240,5 @@ func (r *Agent) startDuration() func() int {
 	start := time.Now()
 	return func() int {
 		return int(time.Since(start).Milliseconds())
-	}
-}
-
-func recoverFunc() {
-	if err := recover(); err != nil {
-		fmt.Println("panic caught:", err)
 	}
 }
