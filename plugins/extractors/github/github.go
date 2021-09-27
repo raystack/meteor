@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"github.com/pkg/errors"
 
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/models"
@@ -50,6 +51,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
@@ -71,11 +73,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	users, _, err := e.client.Organizations.ListMembers(ctx, e.config.Org, nil)
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch organizations")
 	}
 	for _, user := range users {
 		usr, _, err := e.client.Users.Get(ctx, *user.Login)
 		if err != nil {
+			e.logger.Error("failed to fetch user" , "error", err)
 			continue
 		}
 		emit(models.NewRecord(&assets.User{
@@ -92,7 +95,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return nil
 }
 
-// Register the extractor to catalog
+// init registers the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("github", func() plugins.Extractor {
 		return &Extractor{

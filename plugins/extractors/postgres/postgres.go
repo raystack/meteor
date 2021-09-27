@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	_ "github.com/lib/pq" // used to register the postgres driver
@@ -59,7 +60,7 @@ func (e *Extractor) Info() plugins.Info {
 		Description:  "Table metadata and metrics from Postgres SQL sever.",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
-		Tags:         []string{"oss,extractor"},
+		Tags:         []string{"oss", "extractor"},
 	}
 }
 
@@ -68,8 +69,9 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (err error) {
-	// Build and validate config received from receipe
+	// Build and validate config received from recipe
 	if err := utils.BuildConfig(config, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
@@ -77,20 +79,20 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 	// Create database connection
 	e.db, err = connection(e.config, e.config.Database)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create connection")
 	}
 
 	return
 }
 
-// Extract collects metdata from the source. Metadata is collected through the out channel
+// Extract collects metadata from the source. Metadata is collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
 
 	// Get list of databases
 	dbs, err := e.getDatabases()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to fetch databases")
 	}
 
 	// Iterate through all tables and databases
@@ -100,19 +102,19 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		// information will be returned
 		db, err := connection(e.config, database)
 		if err != nil {
-			e.logger.Error("failed to connect, skipping database", err)
+			e.logger.Error("failed to connect, skipping database", "error", err)
 			continue
 		}
 		tables, err := e.getTables(db, database)
 		if err != nil {
-			e.logger.Error("failed to get tables, skipping database ", err)
+			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
 
 		for _, table := range tables {
 			result, err := e.getTableMetadata(db, database, table)
 			if err != nil {
-				e.logger.Error("failed to get table metadata, skipping table", err)
+				e.logger.Error("failed to get table metadata, skipping table", "error", err)
 				continue
 			}
 			// Publish metadata to channel
@@ -199,14 +201,14 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 				WHERE TABLE_NAME = '%s' ORDER BY COLUMN_NAME ASC;`
 	rows, err := db.Query(fmt.Sprintf(sqlStr, tableName))
 	if err != nil {
-		return nil, err
+		err = errors.Wrap(err, "failed to fetch data from query")
+		return
 	}
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
-		if err != nil {
-			e.logger.Error("failed to scan row, skipping", err)
+		if err = rows.Scan(&fieldName, &dataType, &isNullableString, &length); err != nil {
+			e.logger.Error("failed to get fields", "error", err)
 			continue
 		}
 		result = append(result, &facets.Column{
@@ -224,7 +226,7 @@ func isNullable(value string) bool {
 	return value == "YES"
 }
 
-// Generate a connecion string
+// connection generates a connection string
 func connection(cfg Config, database string) (db *sql.DB, err error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", cfg.UserID, cfg.Password, cfg.Host, database)
 	return sql.Open("postgres", connStr)

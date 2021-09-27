@@ -6,6 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -68,7 +69,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 }
 
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	// build and validateconfig
+	// build and validate config
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
@@ -79,9 +80,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// get session id for further api calls in metabase
-	e.sessionID, err = e.getSessionID()
-	if err != nil {
-		return
+	if e.sessionID, err = e.getSessionID(); err != nil {
+		return errors.Wrap(err, "failed to fetch session ID")
 	}
 
 	return nil
@@ -91,12 +91,12 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	dashboards, err := e.getDashboardsList()
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch dashboard list")
 	}
 	for _, dashboard := range dashboards {
 		data, err := e.buildDashboard(strconv.Itoa(dashboard.ID), dashboard.Name)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to fetch dashboard data")
 		}
 		emit(models.NewRecord(data))
 	}
@@ -105,8 +105,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 func (e *Extractor) buildDashboard(id string, name string) (data *assets.Dashboard, err error) {
 	var dashboard Dashboard
-	err = e.makeRequest("GET", e.config.Host+"/api/dashboard/"+id, nil, &dashboard)
-	if err != nil {
+	if err = e.makeRequest("GET", e.config.Host+"/api/dashboard/"+id, nil, &dashboard); err != nil {
+		err = errors.Wrap(err, "failed to fetch dashboard")
 		return
 	}
 	var tempCards []*assets.Chart
@@ -161,12 +161,12 @@ func (e *Extractor) getSessionID() (sessionID string, err error) {
 func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to encode the payload JSON")
 	}
 	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to create request")
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -176,14 +176,15 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	}
 	res, err := e.client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return errors.Wrap(err, "failed to generate response")
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to read response body")
 	}
-	err = json.Unmarshal(b, &data)
+	if err = json.Unmarshal(b, &data); err != nil {
+		return errors.Wrapf(err, "failed to parse: %s", string(b))
+	}
 	return
 }
 

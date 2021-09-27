@@ -55,7 +55,9 @@ func (s *stream) broadcast() error {
 			batch := newBatch(l.batchSize)
 			// listen to channel and emit data to subscriber callback if batch is full
 			for d := range l.channel {
-				batch.add(d)
+			 	if err := batch.add(d); err != nil {
+					s.closeWithError(err)
+				}
 				if batch.isFull() {
 					if err := l.callback(batch.flush()); err != nil {
 						s.closeWithError(err)
@@ -78,7 +80,7 @@ func (s *stream) broadcast() error {
 }
 
 // push() will run the record through all the registered middleware
-// and emit the record to all registerd subscribers.
+// and emit the record to all registered subscribers.
 func (s *stream) push(data models.Record) {
 	data, err := s.runMiddlewares(data)
 	if err != nil {

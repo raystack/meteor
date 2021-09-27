@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -78,6 +79,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
 	err = utils.BuildConfig(configMap, &e.config)
@@ -88,7 +90,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	// create client
 	e.client, err = e.createClient(ctx)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to create client")
 	}
 
 	return
@@ -102,14 +104,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			break
 		}
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", bucket.Name)
 		}
 
 		var blobs []*assets.Blob
 		if e.config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "failed to extract blobs from %s", bucket.Name)
 			}
 		}
 

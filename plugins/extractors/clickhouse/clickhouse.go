@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
 	"github.com/odpf/meteor/models"
@@ -62,15 +63,16 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
+	if err = utils.BuildConfig(configMap, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	e.db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", e.config.Host, e.config.UserID, e.config.Password))
-	if err != nil {
-		return
+	if e.db, err = sql.Open("clickhouse",
+		fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", e.config.Host, e.config.UserID, e.config.Password));
+	err != nil {
+		return errors.Wrap(err, "failed to create a client")
 	}
 
 	return
@@ -82,16 +84,17 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	err = e.extractTables(emit)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to extract tables")
 	}
 
 	return
 }
 
+// extractTables extract tables from a given database
 func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 	res, err := e.db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to execute query")
 	}
 	for res.Next() {
 		var dbName, tableName string
@@ -123,7 +126,8 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*f
 
 	rows, err := e.db.Query(sqlStr)
 	if err != nil {
-		return
+		err = errors.Wrapf(err, "failed to execute query %s", sqlStr)
+		return 
 	}
 	for rows.Next() {
 		var colName, colDesc, dataType string

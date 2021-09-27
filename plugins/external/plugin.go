@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"errors"
+	"github.com/pkg/errors"
 	"os/exec"
 
 	"github.com/hashicorp/go-hclog"
@@ -48,11 +48,13 @@ func dispense(client *plugin.Client) (processor Processor, err error) {
 	// Connect via RPC
 	rpcClient, err := client.Client()
 	if err != nil {
+		err = errors.Wrap(err, "failed to connect client")
 		return
 	}
 	// Request the plugin
 	raw, err := rpcClient.Dispense(processorPluginKey)
 	if err != nil {
+		err = errors.Wrap(err, "failed to dispense a new instance of the plugin")
 		return
 	}
 

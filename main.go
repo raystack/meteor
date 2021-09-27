@@ -45,7 +45,7 @@ func main() {
 	command := cmd.New(lg, monitor, cfg)
 
 	if err := command.Execute(); err != nil {
-		if strings.HasPrefix(err.Error(), "unknown command ") {
+		if strings.HasPrefix(err.Error(), "unknown command") {
 			if !strings.HasSuffix(err.Error(), "\n") {
 				fmt.Println()
 			}

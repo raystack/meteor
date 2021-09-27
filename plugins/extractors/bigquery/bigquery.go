@@ -81,7 +81,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-// Extract checks if the table is valid and extracts the table schema
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
@@ -90,7 +90,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 	e.client, err = e.createClient(ctx)
 	if err != nil {
-		return errors.Wrap(err, "error creating client")
+		return errors.Wrap(err, "failed to create client")
 	}
 
 	return
@@ -106,7 +106,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			break
 		}
 		if err != nil {
-			return errors.Wrapf(err, "failed to fetch dataset")
+			return errors.Wrap(err, "failed to fetch dataset")
 		}
 		e.extractTable(ctx, ds, emit)
 	}
@@ -133,13 +133,13 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 			break
 		}
 		if err != nil {
-			e.logger.Error("failed to scan, skipping table", "err", err)
+			e.logger.Error("failed to get table, skipping table", "err", err)
 			continue
 		}
 		e.logger.Debug("extracting table", "table", table.FullyQualifiedName())
 		tmd, err := table.Metadata(ctx)
 		if err != nil {
-			e.logger.Error("failed to fetch table's metadata, skipping table", "err", err, "table", table.FullyQualifiedName())
+			e.logger.Error("failed to fetch table metadata", "err", err, "table", table.FullyQualifiedName())
 			continue
 		}
 
