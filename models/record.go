@@ -1,13 +1,13 @@
 package models
 
 type Record struct {
-	data interface{}
+	data Metadata
 }
 
-func NewRecord(data interface{}) Record {
+func NewRecord(data Metadata) Record {
 	return Record{data: data}
 }
 
-func (r Record) Data() interface{} {
+func (r Record) Data() Metadata {
 	return r.data
 }

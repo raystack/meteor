@@ -14,6 +14,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
+	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 )
 
@@ -44,10 +45,11 @@ type httpClient interface {
 type Sink struct {
 	client httpClient
 	config Config
+	logger log.Logger
 }
 
-func New(c httpClient) plugins.Syncer {
-	sink := &Sink{client: c}
+func New(c httpClient, logger log.Logger) plugins.Syncer {
+	sink := &Sink{client: c, logger: logger}
 	return sink
 }
 
@@ -74,12 +76,14 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
-		data := record.Data()
-		data, err = s.mapData(data)
+		metadata := record.Data()
+		s.logger.Debug("sinking data to columbus", "record", metadata.GetResource().Urn)
+		columbusPayload, err := s.buildColumbusPayload(metadata)
+
 		if err != nil {
 			return errors.Wrap(err, "error mapping data")
 		}
-		if err = s.send(data); err != nil {
+		if err = s.send(columbusPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 	}
@@ -87,16 +91,16 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return
 }
 
-func (s *Sink) mapData(data interface{}) (interface{}, error) {
+func (s *Sink) buildColumbusPayload(metadata models.Metadata) (interface{}, error) {
 	// skip if mapping is not defined
 	if s.config.Mapping == nil {
-		return data, nil
+		return metadata, nil
 	}
 
 	// parse data to map for easier mapping
-	result, err := s.parseToMap(data)
+	result, err := s.parseToMap(metadata)
 	if err != nil {
-		return data, err
+		return metadata, err
 	}
 
 	// map fields
@@ -112,7 +116,7 @@ func (s *Sink) mapData(data interface{}) (interface{}, error) {
 	return result, nil
 }
 
-func (s *Sink) parseToMap(data interface{}) (result map[string]interface{}, err error) {
+func (s *Sink) parseToMap(data models.Metadata) (result map[string]interface{}, err error) {
 	jsonBytes, err := json.Marshal(data)
 	if err != nil {
 		return
@@ -188,7 +192,7 @@ func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
 
 func init() {
 	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
-		return New(&http.Client{})
+		return New(&http.Client{}, plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
