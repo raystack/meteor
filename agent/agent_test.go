@@ -367,8 +367,9 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
+		monitor_run := agent.Run{Recipe: validRecipe, RecordCount: 1, Success: true}
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
+		monitor.On("RecordRun", monitor_run).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
@@ -386,7 +387,6 @@ func TestRunnerRunMultiple(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),
 		}
-
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil)
@@ -413,8 +413,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe},
-			{Recipe: validRecipe2},
+			{Recipe: validRecipe, RecordCount: len(data), Success: true},
+			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
 }
@@ -445,8 +445,8 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
-	m.Called(recipe, durationInMs, success)
+func (m *mockMonitor) RecordRun(run agent.Run) {
+	m.Called(run)
 }
 
 type panicExtractor struct {

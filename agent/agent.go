@@ -106,8 +106,8 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		ctx         = context.Background()
 		getDuration = r.startDuration()
 		stream      = newStream()
+		recordCount = 0
 	)
-
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
 		run.Error = err
@@ -127,6 +127,12 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 			return
 		}
 	}
+
+	// to gather total number of records extracted
+	stream.setMiddleware(func(src models.Record) (models.Record, error) {
+		recordCount++
+		return src, nil
+	})
 
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
@@ -152,13 +158,15 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
 	durationInMs := getDuration()
-	r.monitor.RecordRun(recipe, durationInMs, success)
+	run.RecordCount = recordCount
+	run.Success = success
+	r.monitor.RecordRun(run)
 	run.DurationInMs = durationInMs
 
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 
 	return

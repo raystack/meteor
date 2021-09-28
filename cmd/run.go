@@ -60,6 +60,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			report := [][]string{}
 			var success = 0
 			var failures = 0
+			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
 			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
@@ -69,10 +70,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe")
 					failures++
-					row = append(row, fmt.Sprintf("%s  %s", cs.FailureIcon(), run.Recipe.Name), cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)))
+					row = append(row, cs.FailureIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				} else {
 					success++
-					row = append(row, fmt.Sprintf("%s  %s", cs.SuccessIcon(), run.Recipe.Name), cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)))
+					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
 			}

@@ -2,19 +2,18 @@ package agent
 
 import (
 	"reflect"
-
-	"github.com/odpf/meteor/recipe"
 )
 
 // Monitor is the interface for monitoring the agent.
 type Monitor interface {
-	RecordRun(recipe recipe.Recipe, durationInMs int, success bool)
+	RecordRun(run Run)
 }
 
 // defaultMonitor is the default implementation of Monitor.
 type defaultMonitor struct{}
 
-func (m *defaultMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {}
+func (m *defaultMonitor) RecordRun(run Run) {
+}
 
 func isNilMonitor(monitor Monitor) bool {
 	v := reflect.ValueOf(monitor)
