@@ -4,13 +4,21 @@ source:
   type: {{$key}}
   config: {{$value}}
 {{- end }}
+{{- if ne (len .Sinks) 0 }}
 sinks:
 {{- range $key, $value := .Sinks }}
   - name: {{$key}}
+    {{- if  $value}}
     config: {{$value}}
+    {{- end }}    
 {{- end }}
+{{- end }}
+{{- if ne (len .Processors) 0 }}
 processors:
 {{- range $key, $value := .Processors }}
   - name: {{$key}}
+    {{- if  $value}}
     config: {{$value}}
+    {{- end }}
+{{- end }}
 {{- end }}

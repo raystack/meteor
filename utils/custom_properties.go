@@ -1,25 +1,15 @@
 package utils
 
 import (
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // GetCustomProperties returns custom properties of the given asset
-func GetCustomProperties(data interface{}) map[string]interface{} {
-	var customProps *facets.Properties
-	switch data := data.(type) {
-	case assets.Table:
-		customProps = data.Properties
-	case assets.Topic:
-		customProps = data.Properties
-	case assets.Dashboard:
-		customProps = data.Properties
-	default:
-		// skip process if data's type is not defined
-		return nil
-	}
+func GetCustomProperties(metadata models.Metadata) map[string]interface{} {
+	customProps := metadata.GetProperties()
 
 	// if data's custom facet is nil, return new empty custom properties
 	if customProps == nil {
@@ -31,40 +21,41 @@ func GetCustomProperties(data interface{}) map[string]interface{} {
 }
 
 // SetCustomProperties sets custom properties of the given asset
-func SetCustomProperties(data interface{}, customFields map[string]interface{}) (res interface{}, err error) {
-	protoStruct, err := parseMapToProto(customFields)
+func SetCustomProperties(metadata models.Metadata, customFields map[string]interface{}) (models.Metadata, error) {
+	properties, err := appendCustomFields(metadata, customFields)
 	if err != nil {
-		return
+		return metadata, err
 	}
 
-	switch data := data.(type) {
-	case assets.Table:
-		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Attributes = protoStruct
-		res = data
-	case assets.Topic:
-		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Attributes = protoStruct
-		res = data
-	case assets.Dashboard:
-		data.Properties = createOrGetCustomFacet(data.Properties)
-		data.Properties.Attributes = protoStruct
-		res = data
-	default:
-		res = data
+	switch metadata := metadata.(type) {
+	case *assets.Table:
+	case *assets.Topic:
+	case *assets.Dashboard:
+	case *assets.Bucket:
+	case *assets.Group:
+	case *assets.Job:
+	case *assets.User:
+		metadata.Properties = properties
 	}
 
-	return
+	return metadata, nil
 }
 
-func createOrGetCustomFacet(facet *facets.Properties) *facets.Properties {
-	if facet == nil {
-		return &facets.Properties{
+func appendCustomFields(metadata models.Metadata, customFields map[string]interface{}) (*facets.Properties, error) {
+	properties := metadata.GetProperties()
+	if properties == nil {
+		properties = &facets.Properties{
 			Attributes: &structpb.Struct{},
 		}
 	}
 
-	return facet
+	protoStruct, err := parseMapToProto(customFields)
+	if err != nil {
+		return properties, err
+	}
+	properties.Attributes = protoStruct
+
+	return properties, err
 }
 
 func parseToMap(src *structpb.Struct) map[string]interface{} {

@@ -57,9 +57,17 @@ func GenRecipeCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			sinkList := strings.Split(sinks, ",")
-			procList := strings.Split(processors, ",")
 
+			var sinkList []string
+			var procList []string
+
+			if sinks != "" {
+				sinkList = strings.Split(sinks, ",")
+			}
+
+			if processors != "" {
+				procList = strings.Split(processors, ",")
+			}
 			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+)
+
+const (
+	defaultBatchSize = 1
 )
 
 // Agent runs recipes for specified plugins.
@@ -132,11 +137,16 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				run.Error = fmt.Errorf("%s", r)
+			}
+			stream.Close()
+		}()
 		err = runExtractor()
 		if err != nil {
 			run.Error = err
 		}
-		stream.Close()
 	}()
 
 	// start listening.
@@ -232,7 +242,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		}
 
 		return
-	}, 0)
+	}, defaultBatchSize)
 
 	return
 }
