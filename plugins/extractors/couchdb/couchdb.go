@@ -43,6 +43,7 @@ var sampleConfig = `
 type Extractor struct {
 	client      *kivik.Client
 	db          *kivik.DB
+	ctx         context.Context
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
@@ -93,10 +94,11 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the CouchDB server
 // and collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.client.Close(context.TODO())
+	defer e.client.Close(ctx)
 	e.emit = emit
+	e.ctx = ctx
 
-	res, err := e.client.AllDBs(context.TODO())
+	res, err := e.client.AllDBs(e.ctx)
 	if err != nil {
 		return
 	}
@@ -115,10 +117,10 @@ func (e *Extractor) extractTables(dbName string) (err error) {
 	if e.isExcludedDB(dbName) {
 		return
 	}
-	e.db = e.client.DB(context.TODO(), dbName)
+	e.db = e.client.DB(e.ctx, dbName)
 
 	// extract documents
-	rows, err := e.db.AllDocs(context.TODO())
+	rows, err := e.db.AllDocs(e.ctx)
 	if err != nil {
 		return
 	}
@@ -158,11 +160,11 @@ func (e *Extractor) processTable(dbName string, docID string) (err error) {
 
 // Extract columns from a given table
 func (e *Extractor) extractColumns(docID string) (columns []*facets.Column, err error) {
-	size, rev, err := e.db.GetMeta(context.TODO(), docID)
+	size, rev, err := e.db.GetMeta(e.ctx, docID)
 	if err != nil {
 		return
 	}
-	row := e.db.Get(context.TODO(), docID)
+	row := e.db.Get(e.ctx, docID)
 	var fields map[string]interface{}
 	err = row.ScanDoc(&fields)
 	if err != nil {
