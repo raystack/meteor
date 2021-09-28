@@ -43,7 +43,6 @@ var sampleConfig = `
 type Extractor struct {
 	client      *kivik.Client
 	db          *kivik.DB
-	ctx         context.Context
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
@@ -96,15 +95,14 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.client.Close(ctx)
 	e.emit = emit
-	e.ctx = ctx
 
-	res, err := e.client.AllDBs(e.ctx)
+	res, err := e.client.AllDBs(ctx)
 	if err != nil {
 		return
 	}
 
 	for _, dbName := range res {
-		if err := e.extractTables(dbName); err != nil {
+		if err := e.extractTables(ctx, dbName); err != nil {
 			return err
 		}
 	}
@@ -112,15 +110,15 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(dbName string) (err error) {
+func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error) {
 	// skip if database is default
 	if e.isExcludedDB(dbName) {
 		return
 	}
-	e.db = e.client.DB(e.ctx, dbName)
+	e.db = e.client.DB(ctx, dbName)
 
 	// extract documents
-	rows, err := e.db.AllDocs(e.ctx)
+	rows, err := e.db.AllDocs(ctx)
 	if err != nil {
 		return
 	}
@@ -128,7 +126,7 @@ func (e *Extractor) extractTables(dbName string) (err error) {
 	// process each rows
 	for rows.Next() {
 		docID := rows.ID()
-		if err := e.processTable(dbName, docID); err != nil {
+		if err := e.processTable(ctx, dbName, docID); err != nil {
 			return err
 		}
 	}
@@ -137,9 +135,9 @@ func (e *Extractor) extractTables(dbName string) (err error) {
 }
 
 // Build and push document to output channel
-func (e *Extractor) processTable(dbName string, docID string) (err error) {
+func (e *Extractor) processTable(ctx context.Context, dbName string, docID string) (err error) {
 	var columns []*facets.Column
-	columns, err = e.extractColumns(docID)
+	columns, err = e.extractColumns(ctx, docID)
 	if err != nil {
 		return
 	}
@@ -159,12 +157,12 @@ func (e *Extractor) processTable(dbName string, docID string) (err error) {
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(docID string) (columns []*facets.Column, err error) {
-	size, rev, err := e.db.GetMeta(e.ctx, docID)
+func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []*facets.Column, err error) {
+	size, rev, err := e.db.GetMeta(ctx, docID)
 	if err != nil {
 		return
 	}
-	row := e.db.Get(e.ctx, docID)
+	row := e.db.Get(ctx, docID)
 	var fields map[string]interface{}
 	err = row.ScanDoc(&fields)
 	if err != nil {
