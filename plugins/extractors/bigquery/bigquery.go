@@ -36,6 +36,7 @@ type Config struct {
 	ServiceAccountJSON   string `mapstructure:"service_account_json"`
 	TablePattern         string `mapstructure:"table_pattern"`
 	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
+	DisablePreview       bool   `mapstructure:"disable_preview"`
 }
 
 var sampleConfig = `
@@ -235,6 +236,9 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
 	fields = []interface{}{}  // list of column names
 	preview = []interface{}{} // rows of column values
+	if e.config.DisablePreview {
+		return
+	}
 
 	rows := []interface{}{}
 	totalRows := 0

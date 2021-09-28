@@ -30,7 +30,8 @@ source:
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
 | `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
-| `profile_column` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
+| `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
+| `disable_preview` | `bool` | `true` | true if you want to skip fetching previews for tables | *optional* |
 
 ### *Notes*
 
