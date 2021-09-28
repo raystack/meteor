@@ -4,6 +4,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/bigquery"
 	_ "github.com/odpf/meteor/plugins/extractors/bigtable"
 	_ "github.com/odpf/meteor/plugins/extractors/cassandra"
+	_ "github.com/odpf/meteor/plugins/extractors/couchdb"
 	_ "github.com/odpf/meteor/plugins/extractors/clickhouse"
 	_ "github.com/odpf/meteor/plugins/extractors/csv"
 	_ "github.com/odpf/meteor/plugins/extractors/elastic"
