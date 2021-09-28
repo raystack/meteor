@@ -1,6 +1,7 @@
 package agent_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -195,6 +196,29 @@ func TestRunnerRun(t *testing.T) {
 		assert.Error(t, run.Error)
 	})
 
+	t.Run("should return error when extractor panicing", func(t *testing.T) {
+		extr := new(panicExtractor)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
 	t.Run("should return error when processing fails", func(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),
@@ -210,6 +234,35 @@ func TestRunnerRun(t *testing.T) {
 		proc := mocks.NewProcessor()
 		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
 		proc.On("Process", mockCtx, data[0]).Return(data[0], errors.New("some error")).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
+	t.Run("should return error when processing panics", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.Emit")).Return(nil).Once()
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := new(panicProcessor)
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
 		defer proc.AssertExpectations(t)
 		pf := registry.NewProcessorFactory()
 		pf.Register("test-processor", newProcessor(proc))
@@ -314,8 +367,9 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
+		monitor_run := agent.Run{Recipe: validRecipe, RecordCount: 1, Success: true}
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", validRecipe, mock.AnythingOfType("int"), true).Once()
+		monitor.On("RecordRun", monitor_run).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
@@ -333,7 +387,6 @@ func TestRunnerRunMultiple(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),
 		}
-
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil)
@@ -360,8 +413,8 @@ func TestRunnerRunMultiple(t *testing.T) {
 
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe},
-			{Recipe: validRecipe2},
+			{Recipe: validRecipe, RecordCount: len(data), Success: true},
+			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
 }
@@ -392,7 +445,22 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(recipe recipe.Recipe, durationInMs int, success bool) {
-	m.Called(recipe, durationInMs, success)
-	return
+func (m *mockMonitor) RecordRun(run agent.Run) {
+	m.Called(run)
+}
+
+type panicExtractor struct {
+	mocks.Extractor
+}
+
+func (e *panicExtractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	panic("panicing")
+}
+
+type panicProcessor struct {
+	mocks.Processor
+}
+
+func (p *panicProcessor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
+	panic("panicing")
 }

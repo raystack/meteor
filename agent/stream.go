@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/odpf/meteor/models"
@@ -44,6 +45,13 @@ func (s *stream) broadcast() error {
 	for _, l := range s.subscribers {
 		wg.Add(1)
 		go func(l *subscriber) {
+			defer func() {
+				if r := recover(); r != nil {
+					s.closeWithError(fmt.Errorf("%s", r))
+				}
+				wg.Done()
+			}()
+
 			batch := newBatch(l.batchSize)
 			// listen to channel and emit data to subscriber callback if batch is full
 			for d := range l.channel {
@@ -61,8 +69,6 @@ func (s *stream) broadcast() error {
 					s.closeWithError(err)
 				}
 			}
-
-			wg.Done()
 		}(l)
 	}
 
@@ -84,7 +90,6 @@ func (s *stream) push(data models.Record) {
 	for _, l := range s.subscribers {
 		l.channel <- data
 	}
-	return
 }
 
 // setMiddleware registers a middleware that will be used to

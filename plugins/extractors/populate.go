@@ -7,7 +7,6 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/couchdb"
 	_ "github.com/odpf/meteor/plugins/extractors/clickhouse"
 	_ "github.com/odpf/meteor/plugins/extractors/csv"
-	_ "github.com/odpf/meteor/plugins/extractors/date"
 	_ "github.com/odpf/meteor/plugins/extractors/elastic"
 	_ "github.com/odpf/meteor/plugins/extractors/gcs"
 	_ "github.com/odpf/meteor/plugins/extractors/github"
