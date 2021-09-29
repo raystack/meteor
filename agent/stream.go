@@ -55,7 +55,7 @@ func (s *stream) broadcast() error {
 			batch := newBatch(l.batchSize)
 			// listen to channel and emit data to subscriber callback if batch is full
 			for d := range l.channel {
-			 	if err := batch.add(d); err != nil {
+				if err := batch.add(d); err != nil {
 					s.closeWithError(err)
 				}
 				if batch.isFull() {
