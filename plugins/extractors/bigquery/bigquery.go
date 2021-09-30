@@ -33,7 +33,7 @@ type Config struct {
 	ServiceAccountJSON   string `mapstructure:"service_account_json"`
 	TablePattern         string `mapstructure:"table_pattern"`
 	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
-	TotalPreviewRows     int    `mapstructure:"total_preview_rows" default:"30"`
+	MaxPreviewRows       int    `mapstructure:"max_preview_rows" default:"30"`
 }
 
 var sampleConfig = `
@@ -233,15 +233,15 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
 	fields = []interface{}{}  // list of column names
 	preview = []interface{}{} // rows of column values
-	totalPreviewRows := e.config.TotalPreviewRows
-	if totalPreviewRows == 0 {
+	maxPreviewRows := e.config.MaxPreviewRows
+	if maxPreviewRows == 0 {
 		return
 	}
 
 	rows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
-	for totalRows < totalPreviewRows {
+	for totalRows < maxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
 		if err == iterator.Done {
