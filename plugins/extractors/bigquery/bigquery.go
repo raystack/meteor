@@ -233,15 +233,14 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
 	fields = []interface{}{}  // list of column names
 	preview = []interface{}{} // rows of column values
-	maxPreviewRows := e.config.MaxPreviewRows
-	if maxPreviewRows == 0 {
+	if e.config.MaxPreviewRows == 0 {
 		return
 	}
 
 	rows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
-	for totalRows < maxPreviewRows {
+	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
 		if err == iterator.Done {
