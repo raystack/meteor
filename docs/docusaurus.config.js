@@ -25,7 +25,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         blog: {
           showReadingTime: true,
           editUrl:
-            'https://github.com/odpf/optimus/edit/master/docs/blog/',
+            'https://github.com/odpf/meteor/edit/master/docs/blog/',
         },
         theme: {
           customCss: [

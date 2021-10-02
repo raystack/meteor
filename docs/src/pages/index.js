@@ -16,7 +16,7 @@ const Hero = () => {
           <div className={clsx('col col--5')}>
             <div className="homeTitle">{siteConfig.tagline}</div>
             <small className="homeSubTitle">Meteor is an open source plugin-driven metadata collection framework to extract data from different sources and sink to any data catalog or store.</small>
-            <a className="button" href="docs/intro">Documentation</a>
+            <a className="button" href="docs/introduction">Documentation</a>
           </div>
           <div className={clsx('col col--1')}></div>
           <div className={clsx('col col--6')}>
@@ -177,7 +177,7 @@ export default function Home() {
                     ),
                   },
                   {
-                    title: 'Processing',
+                    title: 'Processors',
                     content: (
                       <div>
                         Meteor has in-built processors inlcuding enrichment and others.
@@ -186,7 +186,7 @@ export default function Home() {
                     ),
                   },
                   {
-                    title: 'Sink',
+                    title: 'Sinks',
                     content: (
                       <div>
                         Meteor supports sink plugins to send metadata to a variety of
