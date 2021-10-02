@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/models"
@@ -443,6 +444,48 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Monitor:          monitor,
 			Logger:           test.Logger,
+		})
+		run := r.Run(validRecipe)
+		assert.NoError(t, run.Error)
+		assert.Equal(t, validRecipe, run.Recipe)
+	})
+
+	t.Run("should retry if sink returns retry error", func(t *testing.T) {
+		err := errors.New("some-error")
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.Emit")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Sink", mockCtx, data).Return(plugins.NewRetryError(err)).Once()
+		sink.On("Sink", mockCtx, data).Return(plugins.NewRetryError(err)).Once()
+		sink.On("Sink", mockCtx, data).Return(nil)
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+			RetryTimes:       2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
+			RetryInterval:    1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)

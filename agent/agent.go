@@ -25,6 +25,8 @@ type Agent struct {
 	sinkFactory      *registry.SinkFactory
 	monitor          Monitor
 	logger           log.Logger
+	retryTimes       int
+	retryInterval    time.Duration
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -33,12 +35,15 @@ func NewAgent(config Config) *Agent {
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
 	}
+
 	return &Agent{
 		extractorFactory: config.ExtractorFactory,
 		processorFactory: config.ProcessorFactory,
 		sinkFactory:      config.SinkFactory,
 		monitor:          mt,
 		logger:           config.Logger,
+		retryTimes:       config.RetryTimes,
+		retryInterval:    config.RetryInterval,
 	}
 }
 
@@ -236,10 +241,11 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 	}
 
 	stream.subscribe(func(records []models.Record) (err error) {
-		err = sink.Sink(ctx, records)
+		err = retryIfNeeded(func() error {
+			return sink.Sink(ctx, records)
+		}, r.retryTimes, r.retryInterval)
 		if err != nil {
-			err = errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
-			return
+			return errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
 		}
 
 		return
