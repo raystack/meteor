@@ -61,7 +61,9 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		}
 	}
 
-	tmpl, err := template.ParseFS(file, "*")
+	tmpl := template.Must(
+		template.New("recipe.yaml").Funcs(genericMap).ParseFS(file, "*"),
+	)
 
 	if err != nil {
 		return err

@@ -1,16 +1,15 @@
-# nindent
 name: {{.Name}}
 source:
 {{- range $key, $value := .Source }}
   type: {{$key}}
-  config: {{$value | nindent 4}}
+  config: {{$value | indent 4}}
 {{- end }}
 {{- if ne (len .Sinks) 0 }}
 sinks:
 {{- range $key, $value := .Sinks }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | nindent 6}}
+    config: {{$value | indent 6}}
     {{- end }}    
 {{- end }}
 {{- end }}
@@ -19,7 +18,7 @@ processors:
 {{- range $key, $value := .Processors }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | nindent 6}}
+    config: {{$value | indent 6}}
     {{- end }}
 {{- end }}
 {{- end }}
