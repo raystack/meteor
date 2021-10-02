@@ -8,11 +8,11 @@ import (
 )
 
 type Config struct {
-	ExtractorFactory *registry.ExtractorFactory
-	ProcessorFactory *registry.ProcessorFactory
-	SinkFactory      *registry.SinkFactory
-	Monitor          Monitor
-	Logger           log.Logger
-	RetryTimes       int
-	RetryInterval    time.Duration
+	ExtractorFactory     *registry.ExtractorFactory
+	ProcessorFactory     *registry.ProcessorFactory
+	SinkFactory          *registry.SinkFactory
+	Monitor              Monitor
+	Logger               log.Logger
+	RetryTimes           int
+	RetryInitialInterval time.Duration
 }

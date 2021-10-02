@@ -20,13 +20,13 @@ const (
 
 // Agent runs recipes for specified plugins.
 type Agent struct {
-	extractorFactory *registry.ExtractorFactory
-	processorFactory *registry.ProcessorFactory
-	sinkFactory      *registry.SinkFactory
-	monitor          Monitor
-	logger           log.Logger
-	retryTimes       int
-	retryInterval    time.Duration
+	extractorFactory     *registry.ExtractorFactory
+	processorFactory     *registry.ProcessorFactory
+	sinkFactory          *registry.SinkFactory
+	monitor              Monitor
+	logger               log.Logger
+	retryTimes           int
+	retryInitialInterval time.Duration
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -37,13 +37,13 @@ func NewAgent(config Config) *Agent {
 	}
 
 	return &Agent{
-		extractorFactory: config.ExtractorFactory,
-		processorFactory: config.ProcessorFactory,
-		sinkFactory:      config.SinkFactory,
-		monitor:          mt,
-		logger:           config.Logger,
-		retryTimes:       config.RetryTimes,
-		retryInterval:    config.RetryInterval,
+		extractorFactory:     config.ExtractorFactory,
+		processorFactory:     config.ProcessorFactory,
+		sinkFactory:          config.SinkFactory,
+		monitor:              mt,
+		logger:               config.Logger,
+		retryTimes:           config.RetryTimes,
+		retryInitialInterval: config.RetryInitialInterval,
 	}
 }
 
@@ -246,7 +246,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 				return sink.Sink(ctx, records)
 			},
 			r.retryTimes,
-			r.retryInterval,
+			r.retryInitialInterval,
 			func(e error, d time.Duration) {
 				r.logger.Info("retrying sink", "duration", d, "sink", sr.Name, "error", e.Error())
 			},

@@ -480,12 +480,12 @@ func TestRunnerRun(t *testing.T) {
 		sf.Register("test-sink", newSink(sink))
 
 		r := agent.NewAgent(agent.Config{
-			ExtractorFactory: ef,
-			ProcessorFactory: pf,
-			SinkFactory:      sf,
-			Logger:           test.Logger,
-			RetryTimes:       2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
-			RetryInterval:    1 * time.Millisecond, // this is to override default retry interval to reduce test time
+			ExtractorFactory:     ef,
+			ProcessorFactory:     pf,
+			SinkFactory:          sf,
+			Logger:               test.Logger,
+			RetryTimes:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
+			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
