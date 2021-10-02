@@ -20,6 +20,11 @@ type Template struct {
 	Processors map[string]string
 }
 
+var genericMap = map[string]interface{}{
+	"indent":  indent,
+	"nindent": nindent,
+}
+
 // Recipe checks if the recipe is valid and returns a Template
 func Recipe(name string, source string, sinks []string, processors []string) (err error) {
 	tem := Template{
