@@ -23,4 +23,14 @@ func TestInit(t *testing.T) {
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+	t.Run("should not return invalid config error if config is valid", func(t *testing.T) {
+		extr := bigquery.New(test.Logger)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err := extr.Init(ctx, map[string]interface{}{
+			"project_id": "sample-project",
+		})
+
+		assert.NotEqual(t, plugins.InvalidConfigError{}, err)
+	})
 }

@@ -27,15 +27,13 @@ import (
 //go:embed README.md
 var summary string
 
-// previewTotalRows is the number of rows to preview
-const previewTotalRows = 30
-
 // Config hold the set of configuration for the bigquery extractor
 type Config struct {
 	ProjectID            string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON   string `mapstructure:"service_account_json"`
 	TablePattern         string `mapstructure:"table_pattern"`
 	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
+	MaxPreviewRows       int    `mapstructure:"max_preview_rows" default:"30"`
 }
 
 var sampleConfig = `
@@ -92,7 +90,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 	e.client, err = e.createClient(ctx)
 	if err != nil {
-		return
+		return errors.Wrap(err, "error creating client")
 	}
 
 	return
@@ -235,11 +233,14 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
 	fields = []interface{}{}  // list of column names
 	preview = []interface{}{} // rows of column values
+	if e.config.MaxPreviewRows == 0 {
+		return
+	}
 
 	rows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
-	for totalRows < previewTotalRows {
+	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
 		if err == iterator.Done {

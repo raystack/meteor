@@ -14,12 +14,12 @@ func init() {
 
 // BuildConfig builds a config struct from a map
 func BuildConfig(configMap map[string]interface{}, c interface{}) (err error) {
+	defaults.SetDefaults(c)
+
 	err = mapstructure.Decode(configMap, c)
 	if err != nil {
 		return err
 	}
-
-	defaults.SetDefaults(c)
 
 	err = validate.Struct(c)
 	if err != nil {
