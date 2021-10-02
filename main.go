@@ -5,11 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/cmd"
+	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/salt/config"
 
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
@@ -23,10 +22,8 @@ const (
 )
 
 func main() {
-	var cfg agent.Config
-	l := config.NewLoader(config.WithPath("./"))
-
-	if err := l.Load(&cfg); err != nil {
+	cfg, err := config.Load()
+	if err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())
 		os.Exit(1)
 	}
