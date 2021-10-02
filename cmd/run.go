@@ -45,7 +45,13 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cs := term.NewColorScheme()
-			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt, lg)
+			runner := agent.NewAgent(agent.Config{
+				ExtractorFactory: registry.Extractors,
+				ProcessorFactory: registry.Processors,
+				SinkFactory:      registry.Sinks,
+				Monitor:          mt,
+				Logger:           lg,
+			})
 
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {

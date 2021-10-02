@@ -52,7 +52,12 @@ var finalData = []models.Record{
 
 func TestRunnerRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
-		r := agent.NewAgent(registry.NewExtractorFactory(), registry.NewProcessorFactory(), registry.NewSinkFactory(), nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: registry.NewExtractorFactory(),
+			ProcessorFactory: registry.NewProcessorFactory(),
+			SinkFactory:      registry.NewSinkFactory(),
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.IsType(t, agent.Run{}, run)
 		assert.Equal(t, validRecipe, run.Recipe)
@@ -67,7 +72,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(registry.NewExtractorFactory(), pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: registry.NewExtractorFactory(),
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -83,7 +93,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, registry.NewProcessorFactory(), sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: registry.NewProcessorFactory(),
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -101,7 +116,12 @@ func TestRunnerRun(t *testing.T) {
 		pf := registry.NewProcessorFactory()
 		pf.Register("test-processor", newProcessor(proc))
 
-		r := agent.NewAgent(ef, pf, registry.NewSinkFactory(), nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      registry.NewSinkFactory(),
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -121,7 +141,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -143,7 +168,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -167,7 +197,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -191,7 +226,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -214,7 +254,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -244,7 +289,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -273,7 +323,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -304,7 +359,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
 	})
@@ -335,7 +395,12 @@ func TestRunnerRun(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
@@ -372,7 +437,13 @@ func TestRunnerRun(t *testing.T) {
 		monitor.On("RecordRun", monitor_run).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(ef, pf, sf, monitor, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Monitor:          monitor,
+			Logger:           test.Logger,
+		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
@@ -408,7 +479,12 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sf := registry.NewSinkFactory()
 		sf.Register("test-sink", newSink(sink))
 
-		r := agent.NewAgent(ef, pf, sf, nil, test.Logger)
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+		})
 		runs := r.RunMultiple(recipeList)
 
 		assert.Len(t, runs, len(recipeList))

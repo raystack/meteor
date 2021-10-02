@@ -28,16 +28,17 @@ type Agent struct {
 }
 
 // NewAgent returns an Agent with plugin factories.
-func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor, logger log.Logger) *Agent {
+func NewAgent(config Config) *Agent {
+	mt := config.Monitor
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
 	}
 	return &Agent{
-		extractorFactory: ef,
-		processorFactory: pf,
-		sinkFactory:      sf,
+		extractorFactory: config.ExtractorFactory,
+		processorFactory: config.ProcessorFactory,
+		sinkFactory:      config.SinkFactory,
 		monitor:          mt,
-		logger:           logger,
+		logger:           config.Logger,
 	}
 }
 
