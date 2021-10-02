@@ -13,7 +13,7 @@ const (
 	defaultRetryInterval = 10 * time.Second
 )
 
-func retryIfNeeded(operation func() error, retryTimes int, retryInterval time.Duration) error {
+func retryIfNeeded(operation func() error, retryTimes int, retryInterval time.Duration, notify func(e error, d time.Duration)) error {
 	if retryTimes == 0 {
 		retryTimes = defaultRetryTimes
 	}
@@ -22,7 +22,7 @@ func retryIfNeeded(operation func() error, retryTimes int, retryInterval time.Du
 	}
 
 	bo := backoff.WithMaxRetries(backoff.NewConstantBackOff(retryInterval), uint64(retryTimes))
-	return backoff.Retry(func() error {
+	return backoff.RetryNotify(func() error {
 		err := operation()
 		if err == nil {
 			return err
@@ -33,5 +33,5 @@ func retryIfNeeded(operation func() error, retryTimes int, retryInterval time.Du
 		}
 		// if err is not RetryError, wraps error to prevent retrying
 		return backoff.Permanent(err)
-	}, bo)
+	}, bo, notify)
 }
