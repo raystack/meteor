@@ -42,7 +42,7 @@ func main() {
 		monitor = metrics.NewStatsdMonitor(client, cfg.StatsdPrefix)
 	}
 
-	command := cmd.New(lg, monitor)
+	command := cmd.New(lg, monitor, cfg)
 
 	if err := command.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "unknown command ") {

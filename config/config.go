@@ -6,10 +6,12 @@ import (
 
 // Config contains the configuration for meteor.
 type Config struct {
-	LogLevel      string `mapstructure:"LOG_LEVEL" default:"info"`
-	StatsdEnabled bool   `mapstructure:"STATSD_ENABLED" default:"false"`
-	StatsdHost    string `mapstructure:"STATSD_HOST" default:"localhost:8125"`
-	StatsdPrefix  string `mapstructure:"STATSD_PREFIX" default:"meteor"`
+	LogLevel                    string `mapstructure:"LOG_LEVEL" default:"info"`
+	StatsdEnabled               bool   `mapstructure:"STATSD_ENABLED" default:"false"`
+	StatsdHost                  string `mapstructure:"STATSD_HOST" default:"localhost:8125"`
+	StatsdPrefix                string `mapstructure:"STATSD_PREFIX" default:"meteor"`
+	RetryTimes                  int    `mapstructure:"RETRY_TIMES" default:"5"`
+	RetryInitialIntervalSeconds int    `mapstructure:"RETRY_INITIAL_INTERVAL_SECONDS" default:"5"`
 }
 
 func Load() (cfg Config, err error) {
