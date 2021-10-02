@@ -3,16 +3,14 @@ package generator
 import (
 	"embed"
 	"os"
+	"strings"
 	"text/template"
 
-	"github.com/muesli/reflow/indent"
 	"github.com/odpf/meteor/registry"
 )
 
 //go:embed recipe.yaml
 var file embed.FS
-
-var size uint = 2
 
 // Template represents the template for generating a recipe.
 type Template struct {
@@ -34,7 +32,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		if err != nil {
 			return err
 		}
-		tem.Source[source] = indent.String(sinfo.SampleConfig, size)
+		tem.Source[source] = sinfo.SampleConfig
 	}
 	if len(sinks) > 0 {
 		tem.Sinks = make(map[string]string)
@@ -43,7 +41,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 			if err != nil {
 				return err
 			}
-			tem.Sinks[sink] = indent.String(info.SampleConfig, size+3)
+			tem.Sinks[sink] = info.SampleConfig
 		}
 	}
 
@@ -54,7 +52,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 			if err != nil {
 				return err
 			}
-			tem.Processors[procc] = indent.String(info.SampleConfig, size+3)
+			tem.Processors[procc] = info.SampleConfig
 		}
 	}
 
@@ -69,4 +67,13 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		return err
 	}
 	return nil
+}
+
+func indent(spaces int, v string) string {
+	pad := strings.Repeat(" ", spaces)
+	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+
+func nindent(spaces int, v string) string {
+	return "\n" + indent(spaces, v)
 }
