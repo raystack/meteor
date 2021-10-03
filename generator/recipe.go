@@ -20,9 +20,8 @@ type Template struct {
 	Processors map[string]string
 }
 
-var genericMap = map[string]interface{}{
-	"indent":  indent,
-	"nindent": nindent,
+var templateFuncs = map[string]interface{}{
+	"indent": indent,
 }
 
 // Recipe checks if the recipe is valid and returns a Template
@@ -62,7 +61,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 	}
 
 	tmpl := template.Must(
-		template.New("recipe.yaml").Funcs(genericMap).ParseFS(file, "*"),
+		template.New("recipe.yaml").Funcs(templateFuncs).ParseFS(file, "*"),
 	)
 
 	if err != nil {
@@ -79,8 +78,4 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
-}
-
-func nindent(spaces int, v string) string {
-	return "\n" + indent(spaces, v)
 }
