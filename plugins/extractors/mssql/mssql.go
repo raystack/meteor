@@ -37,9 +37,9 @@ type Config struct {
 }
 
 var sampleConfig = `
- host: localhost:1433
- user_id: admin
- password: "1234"`
+host: localhost:1433
+user_id: admin
+password: "1234"`
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {

@@ -33,7 +33,7 @@ type Config struct {
 }
 
 var sampleConfig = `
- path: ./path-to-a-file-or-a-directory`
+path: ./path-to-a-file-or-a-directory`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {

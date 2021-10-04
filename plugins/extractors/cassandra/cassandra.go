@@ -38,10 +38,10 @@ type Config struct {
 }
 
 var sampleConfig = `
- user_id: admin
- password: "1234"
- host: localhost
- port: 9042
+user_id: admin
+password: "1234"
+host: localhost
+port: 9042
 `
 
 // Extractor manages the extraction of data from cassandra

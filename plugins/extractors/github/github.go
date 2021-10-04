@@ -25,8 +25,8 @@ type Config struct {
 }
 
 var sampleConfig = `
- org: odpf
- token: github_token`
+org: odpf
+token: github_token`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {

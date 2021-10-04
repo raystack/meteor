@@ -36,9 +36,9 @@ type Config struct {
 }
 
 var sampleConfig = `
- host: localhost:27017
- user_id: admin
- password: "1234"`
+host: localhost:27017
+user_id: admin
+password: "1234"`
 
 // Extractor manages the communication with the mongo server
 type Extractor struct {

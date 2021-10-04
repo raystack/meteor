@@ -3,16 +3,14 @@ package generator
 import (
 	"embed"
 	"os"
+	"strings"
 	"text/template"
 
-	"github.com/muesli/reflow/indent"
 	"github.com/odpf/meteor/registry"
 )
 
 //go:embed recipe.yaml
 var file embed.FS
-
-var size uint = 2
 
 // Template represents the template for generating a recipe.
 type Template struct {
@@ -20,6 +18,10 @@ type Template struct {
 	Source     map[string]string
 	Sinks      map[string]string
 	Processors map[string]string
+}
+
+var templateFuncs = map[string]interface{}{
+	"indent": indent,
 }
 
 // Recipe checks if the recipe is valid and returns a Template
@@ -34,7 +36,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		if err != nil {
 			return err
 		}
-		tem.Source[source] = indent.String(sinfo.SampleConfig, size)
+		tem.Source[source] = sinfo.SampleConfig
 	}
 	if len(sinks) > 0 {
 		tem.Sinks = make(map[string]string)
@@ -43,7 +45,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 			if err != nil {
 				return err
 			}
-			tem.Sinks[sink] = indent.String(info.SampleConfig, size+3)
+			tem.Sinks[sink] = info.SampleConfig
 		}
 	}
 
@@ -54,11 +56,13 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 			if err != nil {
 				return err
 			}
-			tem.Processors[procc] = indent.String(info.SampleConfig, size+3)
+			tem.Processors[procc] = info.SampleConfig
 		}
 	}
 
-	tmpl, err := template.ParseFS(file, "*")
+	tmpl := template.Must(
+		template.New("recipe.yaml").Funcs(templateFuncs).ParseFS(file, "*"),
+	)
 
 	if err != nil {
 		return err
@@ -69,4 +73,9 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		return err
 	}
 	return nil
+}
+
+func indent(spaces int, v string) string {
+	pad := strings.Repeat(" ", spaces)
+	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 }

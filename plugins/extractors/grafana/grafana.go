@@ -25,8 +25,8 @@ type Config struct {
 }
 
 var sampleConfig = `
- base_url: grafana_server
- api_key: your_api_key	  `
+base_url: grafana_server
+api_key: your_api_key`
 
 // Extractor manages the communication with the Grafana Server
 type Extractor struct {

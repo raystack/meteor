@@ -24,7 +24,7 @@ type Config struct {
 }
 
 var sampleConfig = `
- broker: "localhost:9092"`
+broker: "localhost:9092"`
 
 // Extractor manages the extraction of data
 // from a kafka broker

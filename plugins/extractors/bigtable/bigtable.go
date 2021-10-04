@@ -28,7 +28,7 @@ type Config struct {
 }
 
 var sampleConfig = `
- project_id: google-project-id`
+project_id: google-project-id`
 
 // InstancesFetcher is an interface for fetching instances
 type InstancesFetcher interface {
