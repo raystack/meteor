@@ -9,7 +9,7 @@
 Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to source metadata from a variety of data stores, services and message queues. 
 It also has sink plugins to send metadata to variety of third party APIs and catalog services.
 
-<p align="center"><img src="./docs/assets/overview_4.svg" /></p>
+<p align="center"><img src="./docs/static/assets/overview_4.svg" /></p>
 
 ## Key Features
 
