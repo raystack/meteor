@@ -20,13 +20,12 @@ const (
 
 // Agent runs recipes for specified plugins.
 type Agent struct {
-	extractorFactory     *registry.ExtractorFactory
-	processorFactory     *registry.ProcessorFactory
-	sinkFactory          *registry.SinkFactory
-	monitor              Monitor
-	logger               log.Logger
-	maxRetries           int
-	retryInitialInterval time.Duration
+	extractorFactory *registry.ExtractorFactory
+	processorFactory *registry.ProcessorFactory
+	sinkFactory      *registry.SinkFactory
+	monitor          Monitor
+	logger           log.Logger
+	retrier          *retrier
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -36,14 +35,14 @@ func NewAgent(config Config) *Agent {
 		mt = new(defaultMonitor)
 	}
 
+	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
 	return &Agent{
-		extractorFactory:     config.ExtractorFactory,
-		processorFactory:     config.ProcessorFactory,
-		sinkFactory:          config.SinkFactory,
-		monitor:              mt,
-		logger:               config.Logger,
-		maxRetries:           config.MaxRetries,
-		retryInitialInterval: config.RetryInitialInterval,
+		extractorFactory: config.ExtractorFactory,
+		processorFactory: config.ProcessorFactory,
+		sinkFactory:      config.SinkFactory,
+		monitor:          mt,
+		logger:           config.Logger,
+		retrier:          retrier,
 	}
 }
 
@@ -240,19 +239,18 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		return
 	}
 
+	retryNotification := func(e error, d time.Duration) {
+		r.logger.Info(
+			fmt.Sprintf("retrying sink in %d", d),
+			"sink", sr.Name,
+			"error", e.Error())
+	}
 	stream.subscribe(func(records []models.Record) error {
-		err := retryIfNeeded(
+		err := r.retrier.retry(
 			func() error {
 				return sink.Sink(ctx, records)
 			},
-			r.maxRetries,
-			r.retryInitialInterval,
-			func(e error, d time.Duration) {
-				r.logger.Info(
-					fmt.Sprintf("retrying sink in %d", d),
-					"sink", sr.Name,
-					"error", e.Error())
-			},
+			retryNotification,
 		)
 		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {

@@ -9,19 +9,32 @@ import (
 )
 
 const (
-	defaultRetryTimes      = 5
+	defaultMaxRetries      = 5
 	defaultInitialInterval = 5 * time.Second
 )
 
-func retryIfNeeded(operation func() error, retryTimes int, initialInterval time.Duration, notify func(e error, d time.Duration)) error {
-	if retryTimes == 0 {
-		retryTimes = defaultRetryTimes
+type retrier struct {
+	maxRetries      int
+	initialInterval time.Duration
+}
+
+func newRetrier(maxRetries int, initialInterval time.Duration) *retrier {
+	r := new(retrier)
+
+	r.maxRetries = maxRetries
+	if r.maxRetries == 0 {
+		r.maxRetries = defaultMaxRetries
 	}
-	if initialInterval == 0 {
-		initialInterval = defaultInitialInterval
+	r.initialInterval = initialInterval
+	if r.initialInterval == 0 {
+		r.initialInterval = defaultInitialInterval
 	}
 
-	bo := backoff.WithMaxRetries(createExponentialBackoff(initialInterval), uint64(retryTimes))
+	return r
+}
+
+func (r *retrier) retry(operation func() error, notify func(e error, d time.Duration)) error {
+	bo := backoff.WithMaxRetries(r.createExponentialBackoff(r.initialInterval), uint64(r.maxRetries))
 	return backoff.RetryNotify(func() error {
 		err := operation()
 		if err == nil {
@@ -36,7 +49,7 @@ func retryIfNeeded(operation func() error, retryTimes int, initialInterval time.
 	}, bo, notify)
 }
 
-func createExponentialBackoff(initialInterval time.Duration) backoff.BackOff {
+func (r *retrier) createExponentialBackoff(initialInterval time.Duration) backoff.BackOff {
 	ebo := backoff.NewExponentialBackOff()
 	ebo.InitialInterval = initialInterval // first interval duration to be used
 	ebo.RandomizationFactor = 0           // to make sure we get constant increment in interval instead of random
