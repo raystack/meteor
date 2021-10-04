@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
+	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/salt/cmdx"
 	"github.com/odpf/salt/log"
@@ -9,7 +10,7 @@ import (
 )
 
 // New adds all child commands to the root command and sets flags appropriately.
-func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
+func New(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "meteor <command> <subcommand> [flags]",
 		Short: "Metadata CLI",
@@ -45,7 +46,7 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	cmd.AddCommand(GenCmd(lg))
 	cmd.AddCommand(ListCmd(lg))
 	cmd.AddCommand(InfoCmd(lg))
-	cmd.AddCommand(RunCmd(lg, mt))
+	cmd.AddCommand(RunCmd(lg, mt, cfg))
 	cmd.AddCommand(LintCmd(lg, mt))
 
 	return cmd

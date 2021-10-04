@@ -1,9 +1,19 @@
 package agent
 
-// Config contains the configuration for the agent.
+import (
+	"time"
+
+	"github.com/odpf/meteor/registry"
+	"github.com/odpf/salt/log"
+)
+
 type Config struct {
-	LogLevel      string `mapstructure:"LOG_LEVEL" default:"info"`
-	StatsdEnabled bool   `mapstructure:"STATSD_ENABLED" default:"false"`
-	StatsdHost    string `mapstructure:"STATSD_HOST" default:"localhost:8125"`
-	StatsdPrefix  string `mapstructure:"STATSD_PREFIX" default:"meteor"`
+	ExtractorFactory     *registry.ExtractorFactory
+	ProcessorFactory     *registry.ProcessorFactory
+	SinkFactory          *registry.SinkFactory
+	Monitor              Monitor
+	Logger               log.Logger
+	MaxRetries           int
+	RetryInitialInterval time.Duration
+	StopOnSinkError      bool
 }

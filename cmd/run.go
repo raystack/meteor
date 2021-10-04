@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
+	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
@@ -17,7 +19,7 @@ import (
 )
 
 // RunCmd creates a command object for the "run" action.
-func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
+func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
@@ -45,7 +47,16 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			cs := term.NewColorScheme()
-			runner := agent.NewAgent(registry.Extractors, registry.Processors, registry.Sinks, mt, lg)
+			runner := agent.NewAgent(agent.Config{
+				ExtractorFactory:     registry.Extractors,
+				ProcessorFactory:     registry.Processors,
+				SinkFactory:          registry.Sinks,
+				Monitor:              mt,
+				Logger:               lg,
+				MaxRetries:           cfg.MaxRetries,
+				RetryInitialInterval: time.Duration(cfg.RetryInitialIntervalSeconds) * time.Second,
+				StopOnSinkError:      cfg.StopOnSinkError,
+			})
 
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {

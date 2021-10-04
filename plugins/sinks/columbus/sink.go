@@ -77,7 +77,7 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
-		s.logger.Debug("sinking data to columbus", "record", metadata.GetResource().Urn)
+		s.logger.Info("sinking record to columbus", "record", metadata.GetResource().Urn)
 		columbusPayload, err := s.buildColumbusPayload(metadata)
 
 		if err != nil {
@@ -86,6 +86,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		if err = s.send(columbusPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
+		s.logger.Info("successfully sinked record to columbus", "record", metadata.GetResource().Urn)
 	}
 
 	return
@@ -169,19 +170,23 @@ func (s *Sink) send(data interface{}) (err error) {
 	if err != nil {
 		return
 	}
-
-	// build error on non-200 response
-	if res.StatusCode != 200 {
-		var bodyBytes []byte
-		bodyBytes, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			return
-		}
-
-		err = fmt.Errorf("columbus returns %d: %v", res.StatusCode, string(bodyBytes))
+	if res.StatusCode == 200 {
+		return
 	}
 
-	return
+	var bodyBytes []byte
+	bodyBytes, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	err = fmt.Errorf("columbus returns %d: %v", res.StatusCode, string(bodyBytes))
+
+	switch code := res.StatusCode; {
+	case code >= 500:
+		return plugins.NewRetryError(err)
+	default:
+		return err
+	}
 }
 
 func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {

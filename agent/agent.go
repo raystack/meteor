@@ -25,19 +25,26 @@ type Agent struct {
 	sinkFactory      *registry.SinkFactory
 	monitor          Monitor
 	logger           log.Logger
+	retrier          *retrier
+	stopOnSinkError  bool
 }
 
 // NewAgent returns an Agent with plugin factories.
-func NewAgent(ef *registry.ExtractorFactory, pf *registry.ProcessorFactory, sf *registry.SinkFactory, mt Monitor, logger log.Logger) *Agent {
+func NewAgent(config Config) *Agent {
+	mt := config.Monitor
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
 	}
+
+	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
 	return &Agent{
-		extractorFactory: ef,
-		processorFactory: pf,
-		sinkFactory:      sf,
+		extractorFactory: config.ExtractorFactory,
+		processorFactory: config.ProcessorFactory,
+		sinkFactory:      config.SinkFactory,
+		stopOnSinkError:  config.StopOnSinkError,
 		monitor:          mt,
-		logger:           logger,
+		logger:           config.Logger,
+		retrier:          retrier,
 	}
 }
 
@@ -234,14 +241,29 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		return
 	}
 
-	stream.subscribe(func(records []models.Record) (err error) {
-		err = sink.Sink(ctx, records)
+	retryNotification := func(e error, d time.Duration) {
+		r.logger.Info(
+			fmt.Sprintf("retrying sink in %d", d),
+			"sink", sr.Name,
+			"error", e.Error())
+	}
+	stream.subscribe(func(records []models.Record) error {
+		err := r.retrier.retry(func() error {
+			err := sink.Sink(ctx, records)
+			return err
+		}, retryNotification)
+
+		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {
-			err = errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
-			return
+			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
+			if !r.stopOnSinkError {
+				err = nil
+			}
 		}
 
-		return
+		// TODO: create a new error to signal stopping stream.
+		// returning nil so stream wont stop.
+		return err
 	}, defaultBatchSize)
 
 	return

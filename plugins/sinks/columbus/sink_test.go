@@ -3,6 +3,7 @@ package columbus_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -105,6 +106,31 @@ func TestSink(t *testing.T) {
 		assert.Equal(t, errMessage, err.Error())
 
 		client.Assert(t)
+	})
+
+	t.Run("should return RetryError if columbus returns", func(t *testing.T) {
+		for _, code := range []int{500, 501, 502, 503, 504, 505} {
+			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
+				url := fmt.Sprintf("%s/v1/types/my-type/records", host)
+				client := newmockHTTPClient(http.MethodPut, url, requestPayload)
+				client.SetupResponse(code, `{"reason":"internal server error"}`)
+				ctx := context.TODO()
+
+				columbusSink := columbus.New(client, test.Logger)
+				err := columbusSink.Init(ctx, map[string]interface{}{
+					"host": host,
+					"type": "my-type",
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+				assert.True(t, errors.Is(err, plugins.RetryError{}))
+
+				client.Assert(t)
+			})
+		}
 	})
 
 	t.Run("should return no error if columbus returns 200", func(t *testing.T) {
