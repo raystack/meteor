@@ -169,19 +169,23 @@ func (s *Sink) send(data interface{}) (err error) {
 	if err != nil {
 		return
 	}
-
-	// build error on non-200 response
-	if res.StatusCode != 200 {
-		var bodyBytes []byte
-		bodyBytes, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			return
-		}
-
-		err = fmt.Errorf("columbus returns %d: %v", res.StatusCode, string(bodyBytes))
+	if res.StatusCode == 200 {
+		return
 	}
 
-	return
+	var bodyBytes []byte
+	bodyBytes, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	err = fmt.Errorf("columbus returns %d: %v", res.StatusCode, string(bodyBytes))
+
+	switch code := res.StatusCode; {
+	case code >= 500:
+		return plugins.NewRetryError(err)
+	default:
+		return err
+	}
 }
 
 func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
