@@ -28,10 +28,10 @@ type Config struct {
 }
 
 var sampleConfig = `
- # Elasticsearch configuration
- ueser: "elastic"
- password: "changeme"
- host: elastic_server`
+# Elasticsearch configuration
+user: "elastic"
+password: "changeme"
+host: elastic_server`
 
 type Extractor struct {
 	config Config

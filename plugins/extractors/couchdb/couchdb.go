@@ -35,9 +35,9 @@ type Config struct {
 }
 
 var sampleConfig = `
- host: localhost:5984
- user_id: admin
- password: couchdb`
+host: localhost:5984
+user_id: admin
+password: couchdb`
 
 // Extractor manages the extraction of data from CouchDB
 type Extractor struct {
