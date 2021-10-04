@@ -12,6 +12,7 @@ type Config struct {
 	StatsdPrefix                string `mapstructure:"STATSD_PREFIX" default:"meteor"`
 	MaxRetries                  int    `mapstructure:"MAX_RETRIES" default:"5"`
 	RetryInitialIntervalSeconds int    `mapstructure:"RETRY_INITIAL_INTERVAL_SECONDS" default:"5"`
+	StopOnSinkError             bool   `mapstructure:"STOP_ON_SINK_ERROR" default:"false"`
 }
 
 func Load() (cfg Config, err error) {

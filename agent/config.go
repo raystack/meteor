@@ -15,4 +15,5 @@ type Config struct {
 	Logger               log.Logger
 	MaxRetries           int
 	RetryInitialInterval time.Duration
+	StopOnSinkError      bool
 }

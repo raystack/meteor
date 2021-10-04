@@ -55,6 +55,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				Logger:               lg,
 				MaxRetries:           cfg.MaxRetries,
 				RetryInitialInterval: time.Duration(cfg.RetryInitialIntervalSeconds) * time.Second,
+				StopOnSinkError:      cfg.StopOnSinkError,
 			})
 
 			recipes, err := recipe.NewReader().Read(args[0])

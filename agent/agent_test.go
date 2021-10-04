@@ -370,6 +370,43 @@ func TestRunnerRun(t *testing.T) {
 		assert.NoError(t, run.Error)
 	})
 
+	t.Run("should return error when sink fails if StopOnSinkError is true", func(t *testing.T) {
+		data := []models.Record{
+			models.NewRecord(&assets.Table{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", mockCtx, validRecipe.Source.Config).Return(nil).Once()
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.Emit")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		ef.Register("test-extractor", newExtractor(extr))
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", mockCtx, validRecipe.Processors[0].Config).Return(nil).Once()
+		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		pf.Register("test-processor", newProcessor(proc))
+
+		sink := mocks.NewSink()
+		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Sink", mockCtx, data).Return(errors.New("some error"))
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		sf.Register("test-sink", newSink(sink))
+
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           test.Logger,
+			StopOnSinkError:  true,
+		})
+		run := r.Run(validRecipe)
+		assert.Error(t, run.Error)
+	})
+
 	t.Run("should return run on success", func(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),

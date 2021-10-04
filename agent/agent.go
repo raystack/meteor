@@ -26,6 +26,7 @@ type Agent struct {
 	monitor          Monitor
 	logger           log.Logger
 	retrier          *retrier
+	stopOnSinkError  bool
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -40,6 +41,7 @@ func NewAgent(config Config) *Agent {
 		extractorFactory: config.ExtractorFactory,
 		processorFactory: config.ProcessorFactory,
 		sinkFactory:      config.SinkFactory,
+		stopOnSinkError:  config.StopOnSinkError,
 		monitor:          mt,
 		logger:           config.Logger,
 		retrier:          retrier,
@@ -246,20 +248,22 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 			"error", e.Error())
 	}
 	stream.subscribe(func(records []models.Record) error {
-		err := r.retrier.retry(
-			func() error {
-				return sink.Sink(ctx, records)
-			},
-			retryNotification,
-		)
+		err := r.retrier.retry(func() error {
+			err := sink.Sink(ctx, records)
+			return err
+		}, retryNotification)
+
 		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
+			if !r.stopOnSinkError {
+				err = nil
+			}
 		}
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
-		return nil
+		return err
 	}, defaultBatchSize)
 
 	return
