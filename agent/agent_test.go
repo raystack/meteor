@@ -484,7 +484,7 @@ func TestRunnerRun(t *testing.T) {
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
 			Logger:               test.Logger,
-			RetryTimes:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
+			MaxRetries:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
 		run := r.Run(validRecipe)

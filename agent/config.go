@@ -13,6 +13,6 @@ type Config struct {
 	SinkFactory          *registry.SinkFactory
 	Monitor              Monitor
 	Logger               log.Logger
-	RetryTimes           int
+	MaxRetries           int
 	RetryInitialInterval time.Duration
 }

@@ -10,7 +10,7 @@ type Config struct {
 	StatsdEnabled               bool   `mapstructure:"STATSD_ENABLED" default:"false"`
 	StatsdHost                  string `mapstructure:"STATSD_HOST" default:"localhost:8125"`
 	StatsdPrefix                string `mapstructure:"STATSD_PREFIX" default:"meteor"`
-	RetryTimes                  int    `mapstructure:"RETRY_TIMES" default:"5"`
+	MaxRetries                  int    `mapstructure:"MAX_RETRIES" default:"5"`
 	RetryInitialIntervalSeconds int    `mapstructure:"RETRY_INITIAL_INTERVAL_SECONDS" default:"5"`
 }
 

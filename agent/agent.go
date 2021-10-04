@@ -25,7 +25,7 @@ type Agent struct {
 	sinkFactory          *registry.SinkFactory
 	monitor              Monitor
 	logger               log.Logger
-	retryTimes           int
+	maxRetries           int
 	retryInitialInterval time.Duration
 }
 
@@ -42,7 +42,7 @@ func NewAgent(config Config) *Agent {
 		sinkFactory:          config.SinkFactory,
 		monitor:              mt,
 		logger:               config.Logger,
-		retryTimes:           config.RetryTimes,
+		maxRetries:           config.MaxRetries,
 		retryInitialInterval: config.RetryInitialInterval,
 	}
 }
@@ -245,7 +245,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 			func() error {
 				return sink.Sink(ctx, records)
 			},
-			r.retryTimes,
+			r.maxRetries,
 			r.retryInitialInterval,
 			func(e error, d time.Duration) {
 				r.logger.Info(

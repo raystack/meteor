@@ -53,7 +53,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				SinkFactory:          registry.Sinks,
 				Monitor:              mt,
 				Logger:               lg,
-				RetryTimes:           cfg.RetryTimes,
+				MaxRetries:           cfg.MaxRetries,
 				RetryInitialInterval: time.Duration(cfg.RetryInitialIntervalSeconds) * time.Second,
 			})
 
