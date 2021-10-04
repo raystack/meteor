@@ -240,22 +240,28 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		return
 	}
 
-	stream.subscribe(func(records []models.Record) (err error) {
-		err = retryIfNeeded(
+	stream.subscribe(func(records []models.Record) error {
+		err := retryIfNeeded(
 			func() error {
 				return sink.Sink(ctx, records)
 			},
 			r.retryTimes,
 			r.retryInitialInterval,
 			func(e error, d time.Duration) {
-				r.logger.Info("retrying sink", "duration", d, "sink", sr.Name, "error", e.Error())
+				r.logger.Info(
+					fmt.Sprintf("retrying sink in %d", d),
+					"sink", sr.Name,
+					"error", e.Error())
 			},
 		)
+		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {
-			return errors.Wrapf(err, "error running sink \"%s\"", sr.Name)
+			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
 		}
 
-		return
+		// TODO: create a new error to signal stopping stream.
+		// returning nil so stream wont stop.
+		return nil
 	}, defaultBatchSize)
 
 	return

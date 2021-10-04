@@ -77,7 +77,7 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
-		s.logger.Debug("sinking data to columbus", "record", metadata.GetResource().Urn)
+		s.logger.Info("sinking record to columbus", "record", metadata.GetResource().Urn)
 		columbusPayload, err := s.buildColumbusPayload(metadata)
 
 		if err != nil {
@@ -86,6 +86,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		if err = s.send(columbusPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
+		s.logger.Info("successfully sinked record to columbus", "record", metadata.GetResource().Urn)
 	}
 
 	return

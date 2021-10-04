@@ -334,7 +334,7 @@ func TestRunnerRun(t *testing.T) {
 		assert.Error(t, run.Error)
 	})
 
-	t.Run("should return error when sink fails", func(t *testing.T) {
+	t.Run("should not return error when sink fails", func(t *testing.T) {
 		data := []models.Record{
 			models.NewRecord(&assets.Table{}),
 		}
@@ -367,7 +367,7 @@ func TestRunnerRun(t *testing.T) {
 			Logger:           test.Logger,
 		})
 		run := r.Run(validRecipe)
-		assert.Error(t, run.Error)
+		assert.NoError(t, run.Error)
 	})
 
 	t.Run("should return run on success", func(t *testing.T) {

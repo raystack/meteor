@@ -21,6 +21,7 @@ func (err NotFoundError) Error() string {
 	return fmt.Sprintf("could not find %s \"%s\"", err.Type, err.Name)
 }
 
+// RetryError is an error signalling that retry is needed for the operation.
 type RetryError struct {
 	Err error
 }
