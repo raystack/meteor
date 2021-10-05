@@ -69,7 +69,7 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			// Run linters and generate report
 			for _, recipe := range recipes {
 				errs := runner.Validate(recipe)
-				var row = []string{}
+				var row []string
 				if len(errs) > 0 {
 					for _, err := range errs {
 						lg.Error(err.Error())
