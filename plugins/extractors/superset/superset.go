@@ -80,12 +80,12 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	}
 	// get access token for further api calls in superset
 	if e.accessToken, err = e.getAccessToken(); err != nil {
-		return errors.Wrapf(err, "failed to get access token")
+		return errors.Wrap(err, "failed to get access token")
 	}
 
 	// get csrf token for secure api calls in superset
 	if e.csrfToken, err = e.getCsrfToken(); err != nil {
-		return errors.Wrapf(err, "failed to get csrf token")
+		return errors.Wrap(err, "failed to get csrf token")
 	}
 	return
 }
@@ -94,12 +94,12 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	dashboards, err := e.getDashboardsList()
 	if err != nil {
-		return errors.Wrapf(err, "failed to get dashboard list")
+		return errors.Wrap(err, "failed to get dashboard list")
 	}
 	for _, dashboard := range dashboards {
 		data, err := e.buildDashboard(dashboard.ID)
 		if err != nil {
-			return errors.Wrapf(err, "failed to build dashbaord")
+			return errors.Wrap(err, "failed to build dashbaord")
 		}
 		emit(models.NewRecord(data))
 	}
@@ -111,7 +111,8 @@ func (e *Extractor) buildDashboard(id int) (data *assets.Dashboard, err error) {
 	var dashboard Dashboard
 	chart, err := e.getChartsList(id)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get chart list")
+		err = errors.Wrap(err, "failed to get chart list")
+		return
 	}
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
@@ -132,7 +133,8 @@ func (e *Extractor) getDashboardsList() (dashboards []Dashboard, err error) {
 	}
 	var data response
 	if err = e.makeRequest("GET", e.config.Host+"/api/v1/dashboard", nil, &data); err != nil {
-		return nil, errors.Wrapf(err, "failed to get dashboard")
+		err = errors.Wrap(err, "failed to get dashboard")
+		return
 	}
 	return data.Result, nil
 }
@@ -145,7 +147,8 @@ func (e *Extractor) getChartsList(id int) (charts []*assets.Chart, err error) {
 	var data responseChart
 	if err = e.makeRequest("GET",
 		fmt.Sprintf("%s/api/v1/dashboard/%d/charts", e.config.Host, id), nil, &data); err != nil {
-		return nil, errors.Wrapf(err, "failed to get list of chart details")
+		err = errors.Wrap(err, "failed to get list of chart details")
+		return
 	}
 	var tempCharts []*assets.Chart
 	for _, res := range data.Result {
@@ -173,7 +176,7 @@ func (e *Extractor) getAccessToken() (accessToken string, err error) {
 	}
 	var data responseToken
 	if err = e.makeRequest("POST", e.config.Host+"/api/v1/security/login", payload, &data); err != nil {
-		return "", errors.Wrapf(err, "failed to fetch access token")
+		return "", errors.Wrap(err, "failed to fetch access token")
 	}
 	return data.Token, nil
 }
@@ -185,7 +188,7 @@ func (e *Extractor) getCsrfToken() (csrfToken string, err error) {
 	}
 	var data responseCsrfToken
 	if err = e.makeRequest("GET", e.config.Host+"/api/v1/security/csrf_token/", nil, &data); err != nil {
-		return "", errors.Wrapf(err, "failed to fetch csrf token")
+		return "", errors.Wrap(err, "failed to fetch csrf token")
 	}
 	return data.CsrfToken, nil
 }
@@ -194,12 +197,12 @@ func (e *Extractor) getCsrfToken() (csrfToken string, err error) {
 func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
-		return errors.Wrapf(err, "failed to encode the payload JSON")
+		return errors.Wrap(err, "failed to encode the payload JSON")
 	}
 	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create request")
+		return errors.Wrap(err, "failed to create request")
 	}
 	var bearer = "Bearer " + e.accessToken
 	req.Header.Set("Content-Type", "application/json")
@@ -209,14 +212,14 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 
 	res, err := e.client.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "failed to generate response")
+		return errors.Wrap(err, "failed to generate response")
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read response body")
+		return errors.Wrap(err, "failed to read response body")
 	}
 	if err = json.Unmarshal(b, &data); err != nil {
 		return errors.Wrapf(err, "failed to parse: %s", string(b))

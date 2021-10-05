@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/odpf/salt/log"
 
@@ -72,6 +73,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
@@ -82,9 +84,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	e.db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host))
-	if err != nil {
-		return
+	if e.db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+		return errors.Wrap(err, "failed to create client")
 	}
 
 	return
@@ -98,23 +99,23 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	res, err := e.db.Query("SELECT name FROM sys.databases;")
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch databases")
 	}
 	for res.Next() {
 		var database string
 		if err := res.Scan(&database); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", database)
 		}
 
 		if err := e.extractTables(database); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to extract tables from %s", database)
 		}
 	}
 
 	return
 }
 
-// Extract tables from a given database
+// extractTables extract tables from a given database
 func (e *Extractor) extractTables(database string) (err error) {
 	// skip if database is excluded
 	if e.isExcludedDB(database) {
@@ -132,21 +133,22 @@ func (e *Extractor) extractTables(database string) (err error) {
 	for rows.Next() {
 		var tableName string
 		if err := rows.Scan(&tableName); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", tableName)
 		}
 
 		if err := e.processTable(database, tableName); err != nil {
-			return err
+			return errors.Wrap(err, "failed to process Table")
 		}
 	}
 
 	return
 }
 
+// processTable builds and push table to emitter
 func (e *Extractor) processTable(database string, tableName string) (err error) {
 	columns, err := e.getColumns(database, tableName)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to get columns")
 	}
 
 	// push table to channel
@@ -163,6 +165,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	return
 }
 
+// getColumns extract columns from the given table
 func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Column, err error) {
 	query := fmt.Sprintf(
 		`SELECT COLUMN_NAME, DATA_TYPE, 
@@ -172,15 +175,16 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Co
 		ORDER BY COLUMN_NAME ASC`, database)
 	rows, err := e.db.Query(query, tableName)
 	if err != nil {
+		err = errors.Wrap(err, "failed to execute query")
 		return
 	}
 
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &dataType, &isNullableString, &length)
-		if err != nil {
-			return
+		if err = rows.Scan(&fieldName, &dataType, &isNullableString, &length); err != nil {
+			e.logger.Error("failed to scan fields", "error", err)
+			continue
 		}
 		columns = append(columns, &facets.Column{
 			Name:       fieldName,
@@ -192,7 +196,7 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Co
 
 	return
 }
-
+// isExcludedDB checks if the given db is in the list of excluded databases
 func (e *Extractor) buildExcludedDBs() {
 	excludedMap := make(map[string]bool)
 	for _, db := range defaultDBList {
@@ -202,15 +206,18 @@ func (e *Extractor) buildExcludedDBs() {
 	e.excludedDbs = excludedMap
 }
 
+// isExcludedDB checks if the given db is in the list of excluded databases
 func (e *Extractor) isExcludedDB(database string) bool {
 	_, ok := e.excludedDbs[database]
 	return ok
 }
 
+// isNullable checks if the given string is null or not
 func (e *Extractor) isNullable(value string) bool {
 	return value == "YES"
 }
 
+// init register the extractor to the catalog
 func init() {
 	if err := registry.Extractors.Register("mssql", func() plugins.Extractor {
 		return New(plugins.GetLog())

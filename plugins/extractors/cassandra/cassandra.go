@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/gocql/gocql"
 	"github.com/odpf/meteor/models"
@@ -94,10 +95,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	cluster.Consistency = gocql.Quorum
 	cluster.ProtoVersion = 4
 	cluster.Port = e.config.Port
-	e.session, err = cluster.CreateSession()
-	if err != nil {
-		fmt.Printf("show the error %s\n", err)
-		return err
+	if e.session, err = cluster.CreateSession(); err != nil {
+		return errors.Wrap(err, "failed to create session")
 	}
 
 	return
@@ -118,7 +117,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	for scanner.Next() {
 		var keyspace string
 		if err = scanner.Scan(&keyspace); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", keyspace)
 		}
 
 		// skip if database is default
@@ -126,7 +125,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 		if err = e.extractTables(keyspace); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to extract tables from %s", keyspace)
 		}
 	}
 
@@ -143,10 +142,10 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 	for scanner.Next() {
 		var tableName string
 		if err = scanner.Scan(&tableName); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", tableName)
 		}
 		if err = e.processTable(keyspace, tableName); err != nil {
-			return err
+			return errors.Wrap(err, "failed to process table")
 		}
 	}
 
@@ -158,7 +157,7 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 	var columns []*facets.Column
 	columns, err = e.extractColumns(keyspace, tableName)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to extract columns")
 	}
 
 	// push table to channel
@@ -188,9 +187,9 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 
 	for scanner.Next() {
 		var fieldName, dataType string
-		err = scanner.Scan(&fieldName, &dataType)
-		if err != nil {
-			return
+		if err = scanner.Scan(&fieldName, &dataType); err != nil {
+			e.logger.Error("failed to get fields", "error", err)
+			continue
 		}
 
 		columns = append(columns, &facets.Column{

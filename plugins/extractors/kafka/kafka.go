@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -30,7 +31,6 @@ broker: "localhost:9092"`
 // from a kafka broker
 type Extractor struct {
 	// internal states
-	out    chan<- models.Record
 	conn   *kafka.Conn
 	logger log.Logger
 	config Config
@@ -58,16 +58,17 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	err = utils.BuildConfig(configMap, &e.config)
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	// create conn
+	// create connection
 	e.conn, err = kafka.Dial("tcp", e.config.Broker)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create connection")
 	}
 
 	return
@@ -80,7 +81,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	partitions, err := e.conn.ReadPartitions()
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch partitions")
 	}
 
 	// collect topic list from partition list

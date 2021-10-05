@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 
 	"github.com/elastic/go-elasticsearch/v8"
@@ -28,23 +29,25 @@ type Config struct {
 }
 
 var sampleConfig = `
-# Elasticsearch configuration
-user: "elastic"
-password: "changeme"
-host: elastic_server`
+ user: "elastic"
+ password: "changeme"
+ host: elastic_server`
 
+// Extractor manages the extraction of data from elastic
 type Extractor struct {
 	config Config
 	logger log.Logger
 	client *elasticsearch.Client
 }
 
+// New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
 	return &Extractor{
 		logger: logger,
 	}
 }
 
+// Info returns the brief information about the extractor
 func (e *Extractor) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Search engine based on the Lucene library.",
@@ -54,10 +57,12 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
 func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	//build config
 	err = utils.BuildConfig(configMap, &e.config)
@@ -73,20 +78,21 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 		Username: e.config.User,
 		Password: e.config.Password,
 	}
-	e.client, err = elasticsearch.NewClient(cfg)
-	if err != nil {
-		return
+	if e.client, err = elasticsearch.NewClient(cfg); err != nil {
+		return errors.Wrap(err, "failed to create client")
 	}
 
 	return
 }
 
+// Extract extracts the data from the elastic server
+// and collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	res, err := e.client.Cluster.Health(
 		e.client.Cluster.Health.WithLevel("indices"),
 	)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch cluster information")
 	}
 	var r map[string]interface{}
 	err = json.NewDecoder(res.Body).Decode(&r)
@@ -139,12 +145,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
+// listIndexInfo returns the properties of the index
 func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, err error) {
 	var r map[string]interface{}
 	res, err := e.client.Indices.GetMapping(
 		e.client.Indices.GetMapping.WithIndex(index),
 	)
 	if err != nil {
+		err = errors.Wrap(err, "failed to retrieve index")
 		return
 	}
 	err = json.NewDecoder(res.Body).Decode(&r)
@@ -157,7 +165,7 @@ func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, 
 	return
 }
 
-// Register the extractor to catalog
+// init registers the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
 		return New(plugins.GetLog())

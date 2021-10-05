@@ -2,7 +2,7 @@ package agent
 
 import "github.com/odpf/meteor/recipe"
 
-// TaskType is the type of a task
+// TaskType is the type of task
 type TaskType string
 
 const (

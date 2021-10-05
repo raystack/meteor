@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/models"
@@ -70,9 +71,9 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
+	if err = utils.BuildConfig(configMap, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
@@ -80,32 +81,33 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host))
-	if err != nil {
-		return
+	if e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+		return errors.Wrap(err, "failed to create client")
 	}
 
 	return
 }
 
 // Extract extracts the data from the MySQL server
-// and collected through the out channel
+// and collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
 	e.emit = emit
 
 	res, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch databases")
 	}
 	for res.Next() {
 		var database string
 		if err := res.Scan(&database); err != nil {
-			return err
+			e.logger.Error("failed to connect, skipping database", "error", err)
+			continue
 		}
 
 		if err := e.extractTables(database); err != nil {
-			return err
+			e.logger.Error("failed to get tables, skipping database", "error", err)
+			continue
 		}
 	}
 
@@ -122,34 +124,33 @@ func (e *Extractor) extractTables(database string) (err error) {
 	// extract tables
 	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return
+		return errors.Wrapf(err, "failed to iterate over %s", database)
 	}
 	rows, err := e.db.Query("SHOW TABLES;")
 	if err != nil {
-		return
+		return errors.Wrapf(err, "failed to show tables of %s", database)
 	}
 
 	// process each rows
 	for rows.Next() {
 		var tableName string
 		if err := rows.Scan(&tableName); err != nil {
-			return err
+			return errors.Wrapf(err, "failed to iterate over %s", tableName)
 		}
 
 		if err := e.processTable(database, tableName); err != nil {
-			return err
+			return errors.Wrap(err, "failed to process table")
 		}
 	}
 
 	return
 }
 
-// Build and push table to out channel
+// processTable builds and push table to emitter
 func (e *Extractor) processTable(database string, tableName string) (err error) {
 	var columns []*facets.Column
-	columns, err = e.extractColumns(tableName)
-	if err != nil {
-		return
+	if columns, err = e.extractColumns(tableName); err != nil {
+		return errors.Wrap(err, "failed to extract columns")
 	}
 
 	// push table to channel
@@ -175,15 +176,16 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, 
 				ORDER BY COLUMN_NAME ASC`
 	rows, err := e.db.Query(query, tableName)
 	if err != nil {
+		err = errors.Wrap(err, "failed to execute query")
 		return
 	}
 
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
-		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
-		if err != nil {
-			return
+		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
+			e.logger.Error("failed to get fields", "error", err)
+			continue
 		}
 
 		columns = append(columns, &facets.Column{
@@ -198,6 +200,7 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, 
 	return
 }
 
+// buildExcludedDBs builds the list of excluded databases
 func (e *Extractor) buildExcludedDBs() {
 	excludedMap := make(map[string]bool)
 	for _, db := range defaultDBList {
@@ -207,16 +210,18 @@ func (e *Extractor) buildExcludedDBs() {
 	e.excludedDbs = excludedMap
 }
 
+// isExcludedDB checks if the given db is in the list of excluded databases
 func (e *Extractor) isExcludedDB(database string) bool {
 	_, ok := e.excludedDbs[database]
 	return ok
 }
 
+// isNullable checks if the given string is null or not
 func (e *Extractor) isNullable(value string) bool {
 	return value == "YES"
 }
 
-// Register the extractor to catalog
+// init register the extractor to the catalog
 func init() {
 	if err := registry.Extractors.Register("mysql", func() plugins.Extractor {
 		return New(plugins.GetLog())

@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 
 	"github.com/odpf/meteor/models"
@@ -57,6 +58,7 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
+// Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
 	// build config
 	err = utils.BuildConfig(configMap, &e.config)
@@ -75,11 +77,11 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	uids, err := e.client.SearchAllDashboardUIDs()
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch dashboards")
 	}
 	dashboardDetails, err := e.client.GetAllDashboardDetails(uids)
 	if err != nil {
-		return
+		return errors.Wrap(err, "failed to fetch dashboard details")
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
@@ -90,6 +92,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
+// grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
 func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) *assets.Dashboard {
 	charts := make([]*assets.Chart, len(dashboard.Dashboard.Panels))
 	for i, panel := range dashboard.Dashboard.Panels {
@@ -108,6 +111,7 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 	}
 }
 
+// grafanaPanelToMeteorChart converts a grafana panel to a meteor chart
 func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) assets.Chart {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
@@ -127,7 +131,7 @@ func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, 
 	}
 }
 
-// Register the extractor to catalog
+// init registers the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("grafana", func() plugins.Extractor {
 		return New(plugins.GetLog())

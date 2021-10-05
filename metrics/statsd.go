@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"net"
 	"strconv"
 
@@ -16,7 +17,7 @@ var (
 	runMetricName            = "run"
 )
 
-// StatsdMonitor reprsents the statsd monitor.
+// StatsdMonitor represents the statsd monitor.
 type StatsdMonitor struct {
 	client statsdClient
 	prefix string
@@ -72,10 +73,12 @@ type statsdClient interface {
 func NewStatsdClient(statsdAddress string) (c *statsd.StatsdClient, err error) {
 	statsdHost, statsdPortStr, err := net.SplitHostPort(statsdAddress)
 	if err != nil {
+		err =  errors.Wrap(err, "failed to split the network address")
 		return
 	}
 	statsdPort, err := strconv.Atoi(statsdPortStr)
 	if err != nil {
+		err = errors.Wrap(err, "failed to convert port type")
 		return
 	}
 	c = statsd.New(statsdHost, statsdPort)

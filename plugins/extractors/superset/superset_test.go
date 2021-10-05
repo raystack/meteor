@@ -226,12 +226,12 @@ func addChart(id int) (err error) {
 func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
-		return errors.Wrapf(err, "failed to encode the payload JSON")
+		return errors.Wrap(err, "failed to encode the payload JSON")
 	}
 	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create request")
+		return errors.Wrap(err, "failed to create request")
 	}
 	var bearer = "Bearer " + accessToken
 	req.Header.Set("Content-Type", "application/json")
@@ -241,14 +241,14 @@ func makeRequest(method, url string, payload interface{}, data interface{}) (err
 
 	res, err := client.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "failed to generate response")
+		return errors.Wrap(err, "failed to generate response")
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
+		return errors.Wrap(err, "response failed with status code: %d", res.StatusCode)
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errors.Wrapf(err, "failed to read response body")
+		return errors.Wrap(err, "failed to read response body")
 	}
 	if err = json.Unmarshal(b, &data); err != nil {
 		return errors.Wrapf(err, "failed to parse: %s", string(b))

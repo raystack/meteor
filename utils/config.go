@@ -16,13 +16,10 @@ func init() {
 func BuildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	defaults.SetDefaults(c)
 
-	err = mapstructure.Decode(configMap, c)
-	if err != nil {
+	if err = mapstructure.Decode(configMap, c); err != nil {
 		return err
 	}
-
-	err = validate.Struct(c)
-	if err != nil {
+	if err = validate.Struct(c); err != nil {
 		return err
 	}
 

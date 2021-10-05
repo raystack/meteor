@@ -4,6 +4,7 @@ import (
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -24,7 +25,7 @@ func GetCustomProperties(metadata models.Metadata) map[string]interface{} {
 func SetCustomProperties(metadata models.Metadata, customFields map[string]interface{}) (models.Metadata, error) {
 	properties, err := appendCustomFields(metadata, customFields)
 	if err != nil {
-		return metadata, err
+		return metadata, errors.Wrap(err, "failed to append custom fields in metadata")
 	}
 
 	switch metadata := metadata.(type) {
@@ -51,7 +52,7 @@ func appendCustomFields(metadata models.Metadata, customFields map[string]interf
 
 	protoStruct, err := parseMapToProto(customFields)
 	if err != nil {
-		return properties, err
+		return properties, errors.Wrap(err, "failed to parse map to proto")
 	}
 	properties.Attributes = protoStruct
 
