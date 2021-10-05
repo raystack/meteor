@@ -3,7 +3,7 @@ package agent_test
 import (
 	"context"
 	"errors"
-	"github.com/odpf/meteor/test"
+	"github.com/odpf/meteor/test/utils"
 	"testing"
 	"time"
 
@@ -43,7 +43,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      registry.NewSinkFactory(),
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.IsType(t, agent.Run{}, run)
@@ -67,7 +67,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -92,7 +92,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -119,7 +119,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      registry.NewSinkFactory(),
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -150,7 +150,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -183,7 +183,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -218,7 +218,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -253,7 +253,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -287,7 +287,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -328,7 +328,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -368,7 +368,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.Error(t, run.Error)
@@ -410,7 +410,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
@@ -452,7 +452,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 			StopOnSinkError:  true,
 		})
 		run := r.Run(validRecipe)
@@ -495,7 +495,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
@@ -544,7 +544,7 @@ func TestRunnerRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Monitor:          monitor,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
@@ -589,7 +589,7 @@ func TestRunnerRun(t *testing.T) {
 			ExtractorFactory:     ef,
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
-			Logger:               test.Logger,
+			Logger:               utils.Logger,
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
@@ -638,7 +638,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Logger:           test.Logger,
+			Logger:           utils.Logger,
 		})
 		runs := r.RunMultiple(recipeList)
 

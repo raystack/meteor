@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"net"
 	"os"
@@ -22,7 +23,6 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
-	"github.com/odpf/meteor/test"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
@@ -115,7 +115,7 @@ func kafkaDockerSetup() (purge func() error, err error) {
 		}
 		return
 	}
-	purgeContainer, err := test.CreateContainer(kafkaOpts, kafkaRetryFn)
+	purgeContainer, err := utils.CreateContainer(kafkaOpts, kafkaRetryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func mysqlDockerSetup() (purge func() error, err error) {
 		}
 		return db.Ping()
 	}
-	purgeContainer, err := test.CreateContainer(mysqlOpts, mysqlRetryFn)
+	purgeContainer, err := utils.CreateContainer(mysqlOpts, mysqlRetryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestRecipe(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	command := cmd.New(test.Logger, nil, cfg)
+	command := cmd.New(utils.Logger, nil, cfg)
 	command.SetArgs([]string{"run", "mysql_kafka.yml"})
 	if err := command.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "unknown command ") {

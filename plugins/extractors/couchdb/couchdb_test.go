@@ -5,6 +5,7 @@ package couchdb_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"github.com/go-kivik/kivik"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/couchdb"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 		_, err = client.Ping(context.TODO())
 		return
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
-		err := couchdb.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := couchdb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
 		})
@@ -93,7 +93,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := couchdb.New(test.Logger)
+		extr := couchdb.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"user_id":  user,

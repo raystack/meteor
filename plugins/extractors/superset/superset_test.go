@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,7 +19,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/superset"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -83,7 +83,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestMain(m *testing.M) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := superset.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := superset.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"user_id": "user",
 			"host":    host,
 		})
@@ -116,7 +116,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := superset.New(test.Logger)
+		extr := superset.New(utils.Logger)
 		err := extr.Init(ctx, map[string]interface{}{
 			"username": user,
 			"password": pass,

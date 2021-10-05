@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -15,7 +16,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
-	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +55,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload), test.Logger)
+				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload), utils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -70,7 +70,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(200, "")
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, test.Logger)
+		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": columbusType,
@@ -95,7 +95,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, test.Logger)
+		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": "my-type",
@@ -118,7 +118,7 @@ func TestSink(t *testing.T) {
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
-				columbusSink := columbus.New(client, test.Logger)
+				columbusSink := columbus.New(client, utils.Logger)
 				err := columbusSink.Init(ctx, map[string]interface{}{
 					"host": host,
 					"type": "my-type",
@@ -141,7 +141,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(200, `{"success": true}`)
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, test.Logger)
+		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": "my-type",
@@ -174,7 +174,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(200, "")
 
 		ctx := context.TODO()
-		columbusSink := columbus.New(client, test.Logger)
+		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host":    host,
 			"type":    columbusType,

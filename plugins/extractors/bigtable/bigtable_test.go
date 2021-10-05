@@ -4,6 +4,7 @@ package bigtable_test
 
 import (
 	"context"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
@@ -11,8 +12,6 @@ import (
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"
 	bt "github.com/odpf/meteor/plugins/extractors/bigtable"
-	"github.com/odpf/meteor/test"
-
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +37,7 @@ func TestMain(m *testing.M) {
 		_, err = bigtable.NewAdminClient(context.Background(), "dev", "dev")
 		return
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal("", err)
 	}
@@ -54,7 +53,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		err := bt.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := bt.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"wrong-config": "sample-project",
 		})
 
@@ -62,7 +61,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("should return error if project_id is empty", func(t *testing.T) {
-		err := bt.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := bt.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"project_id": "",
 		})
 

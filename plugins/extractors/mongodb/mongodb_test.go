@@ -5,6 +5,7 @@ package mongodb_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
@@ -14,7 +15,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -68,7 +68,7 @@ func TestMain(m *testing.M) {
 
 		return client.Ping(ctx, nil)
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid", func(t *testing.T) {
-		err := mongodb.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := mongodb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": pass,
 			"host":     host,
 		})
@@ -104,7 +104,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := mongodb.New(test.Logger)
+		extr := mongodb.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"user_id":  user,
