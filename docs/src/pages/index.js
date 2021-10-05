@@ -199,7 +199,7 @@ export default function Home() {
               />
             </div>
             <div className="col col--8">
-              <img src={useBaseUrl('assets/overview_4.svg')} />
+              <img src={useBaseUrl('assets/overview.svg')} />
             </div>
           </div>
         </Container>

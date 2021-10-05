@@ -12,15 +12,9 @@ import (
 // New adds all child commands to the root command and sets flags appropriately.
 func New(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "meteor <command> <subcommand> [flags]",
-		Short: "Metadata CLI",
-		Long: heredoc.Doc(`
-			Metadata collection tool.
-
-			Meteor is a plugin driven agent for collecting metadata. 
-			Meteor has plugins to source metadata from a variety of data stores, 
-			services and message queues. It also has sink plugins to send metadata 
-			to variety of third party APIs and catalog services.`),
+		Use:           "meteor <command> <subcommand> [flags]",
+		Short:         "Metadata CLI",
+		Long:          "Metadata collection tool.",
 		SilenceErrors: true,
 		SilenceUsage:  false,
 		Example: heredoc.Doc(`
@@ -32,7 +26,7 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Com
 			"group:core": "true",
 			"help:learn": heredoc.Doc(`
 				Use 'meteor <command> <subcommand> --help' for more information about a command.
-				Read the manual at https://odpf.gitbook.io/meteor/
+				Read the manual at https://odpf.github.io/meteor/
 			`),
 			"help:feedback": heredoc.Doc(`
 				Open an issue here https://github.com/odpf/meteor/issues
