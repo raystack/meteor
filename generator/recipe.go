@@ -2,10 +2,11 @@ package generator
 
 import (
 	"embed"
-	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/registry"
 )
@@ -37,7 +38,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		if err != nil {
 			return errors.Wrap(err, "failed to provide extractor information")
 		}
-		tem.Sinks[source] = sourceInfo.SampleConfig
+		tem.Source[source] = sourceInfo.SampleConfig
 	}
 	if len(sinks) > 0 {
 		tem.Sinks = make(map[string]string)
@@ -60,10 +61,9 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 		}
 	}
 
-	tmpl, err := template.ParseFS(file, "*")
-	if err != nil {
-		return errors.Wrap(err, "failed to parse file")
-	}
+	tmpl := template.Must(
+		template.New("recipe.yaml").Funcs(templateFuncs).ParseFS(file, "*"),
+	)
 	if err = tmpl.Execute(os.Stdout, tem); err != nil {
 		return errors.Wrap(err, "failed to execute template")
 	}
