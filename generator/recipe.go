@@ -2,13 +2,11 @@ package generator
 
 import (
 	"embed"
+	"github.com/odpf/meteor/registry"
+	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"text/template"
-
-	"github.com/pkg/errors"
-
-	"github.com/odpf/meteor/registry"
 )
 
 //go:embed recipe.yaml
