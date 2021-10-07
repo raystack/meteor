@@ -76,6 +76,11 @@ func (m *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	return args.Error(0)
 }
 
+func (m *Sink) Close() error {
+	args := m.Called()
+	return args.Error(0)
+}
+
 type Emitter struct {
 	data []models.Record
 }

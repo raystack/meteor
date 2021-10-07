@@ -92,6 +92,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return
 }
 
+func (s *Sink) Close() (err error) { return }
+
 func (s *Sink) buildColumbusPayload(metadata models.Metadata) (interface{}, error) {
 	// skip if mapping is not defined
 	if s.config.Mapping == nil {

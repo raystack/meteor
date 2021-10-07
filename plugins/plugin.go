@@ -55,6 +55,9 @@ type Processor interface {
 type Syncer interface {
 	Plugin
 	Sink(ctx context.Context, batch []models.Record) (err error)
+
+	// Close will be called once after everything is done
+	Close() error
 }
 
 // ParseInfo parses the plugin's meta.yaml file and returns an plugin Info struct.

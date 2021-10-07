@@ -208,6 +208,7 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(errors.New("some error")).Once()
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -243,6 +244,7 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -277,6 +279,7 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -318,6 +321,7 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -358,6 +362,7 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -400,6 +405,7 @@ func TestRunnerRun(t *testing.T) {
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
 		sink.On("Sink", mockCtx, data).Return(errors.New("some error"))
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -442,6 +448,7 @@ func TestRunnerRun(t *testing.T) {
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
 		sink.On("Sink", mockCtx, data).Return(errors.New("some error"))
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -485,6 +492,7 @@ func TestRunnerRun(t *testing.T) {
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
 		sink.On("Sink", mockCtx, data).Return(nil)
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {

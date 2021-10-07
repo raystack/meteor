@@ -72,8 +72,6 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	defer s.writer.Close()
-
 	for _, record := range batch {
 		if err := s.push(ctx, record.Data()); err != nil {
 			return err
@@ -81,6 +79,10 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	}
 
 	return
+}
+
+func (s *Sink) Close() (err error) {
+	return s.writer.Close()
 }
 
 func (s *Sink) push(ctx context.Context, payload interface{}) error {
