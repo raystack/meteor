@@ -79,7 +79,9 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		assert.NoError(t, err)
+		
 		client.Assert(t)
 	})
 
