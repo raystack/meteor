@@ -1,4 +1,4 @@
-// +build integration
+//+build integration
 
 package e2e_test
 
@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/odpf/meteor/test/utils"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"log"
 	"net"
 	"os"
@@ -23,8 +25,6 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
@@ -86,6 +86,145 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(code)
+}
+
+// TestMySqlToKafka tests the recipe from source to sink completely
+func TestMySqlToKafka(t *testing.T) {
+	err := setupKafka()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var sinkData []*assets.Table
+	ctx, cancel := context.WithCancel(context.TODO())
+	go func() {
+		err = listenToTopic(ctx, testTopic, &sinkData)
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	// run mysql_kafka.yml file
+	cfg, err := config.Load()
+	if err != nil {
+		t.Error(err)
+	}
+	command := cmd.New(utils.Logger, nil, cfg)
+	command.SetArgs([]string{"run", "mysql_kafka.yml"})
+	if err := command.Execute(); err != nil {
+		if strings.HasPrefix(err.Error(), "unknown command ") {
+			if !strings.HasSuffix(err.Error(), "\n") {
+				t.Fatal(err)
+			}
+			t.Fatal(err)
+		} else {
+			t.Fatal(err)
+		}
+	}
+
+	time.Sleep(2 * time.Second)        // this is to wait consumer to finish adding data to sinkData
+	cancel()                           // cancel will cancel context, hinting the consumer to end
+	time.Sleep(100 * time.Millisecond) // this is to give time for the consumer to closing all its connections
+
+	expected := getExpectedTables()
+	assert.Equal(t, len(getExpectedTables()), len(sinkData))
+	for tableNum := 0; tableNum < len(getExpectedTables()); tableNum++ {
+		assert.Equal(t, expected[tableNum].Resource.Urn, sinkData[tableNum].Resource.Urn)
+		assert.Equal(t, expected[tableNum].Resource.Name, sinkData[tableNum].Resource.Name)
+		assert.Equal(t, len(expected[tableNum].Schema.Columns), len(sinkData[tableNum].Schema.Columns))
+	}
+}
+
+// listenToTopic listens to a topic and stores the data in sinkData
+func listenToTopic(ctx context.Context, topic string, data *[]*assets.Table) error {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{brokerHost},
+		Topic:   topic,
+	})
+	defer func(reader *kafka.Reader) {
+		if err := reader.Close(); err != nil {
+			return
+		}
+	}(reader)
+
+	for {
+		msg, err := reader.ReadMessage(ctx)
+		if err != nil {
+			break
+
+		}
+		var convertMsg assets.Table
+		if err := proto.Unmarshal(msg.Value, &convertMsg); err != nil {
+			return errors.Wrap(err, "failed to parse kafka message")
+		}
+		*data = append(*data, &convertMsg)
+	}
+
+	return nil
+}
+
+// setupKafka initializes kafka broker with topic and partition
+func setupKafka() error {
+	conn, err := kafka.DialLeader(context.TODO(), "tcp", net.JoinHostPort(broker.Host, strconv.Itoa(broker.Port)), testTopic, partition)
+	if err != nil {
+		return errors.Wrap(err, "failed to setup kafka connection")
+	}
+	defer func(conn *kafka.Conn) {
+		if err := conn.Close(); err != nil {
+			return
+		}
+	}(conn)
+
+	if err := conn.DeleteTopics(testTopic); err != nil {
+		return errors.Wrap(err, "failed to delete topic")
+	}
+	if err := conn.CreateTopics(kafka.TopicConfig{
+		Topic:             testTopic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+	}); err != nil {
+		return errors.Wrap(err, "failed to create topic")
+	}
+
+	return nil
+}
+
+// setupMySQL initializes mysql database
+func setupMySQL() (err error) {
+	// create database, user and grant access
+	if err = execute(db, []string{
+		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
+		fmt.Sprintf("CREATE DATABASE %s", testDB),
+		fmt.Sprintf("USE %s;", testDB),
+		fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass),
+		fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user),
+	}); err != nil {
+		return errors.Wrap(err, "failed to create database")
+	}
+
+	// create and populate tables
+	if err = execute(db, []string{
+		"CREATE TABLE applicant (applicant_id int, last_name varchar(255), first_name varchar(255));",
+		"INSERT INTO applicant VALUES (1, 'test1', 'test11');",
+		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",
+		"INSERT INTO jobs VALUES (2, 'test2', 'test22');",
+	}); err != nil {
+		return errors.Wrap(err, "failed to populate database")
+	}
+
+	return
+}
+
+// execute executes a list of sql statements
+func execute(db *sql.DB, queries []string) (err error) {
+	for _, query := range queries {
+		_, err = db.Exec(query)
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 // kafkaDockerSetup sets up a kafka docker container
@@ -153,144 +292,6 @@ func mysqlDockerSetup() (purge func() error, err error) {
 	}
 
 	return purgeContainer, nil
-}
-
-// TestRecipe tests the recipe from source to sink completely
-func TestRecipe(t *testing.T) {
-	err := setupKafka()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var sinkData []*assets.Table
-	ctx, cancel := context.WithCancel(context.TODO())
-	go func() {
-		err = listenToTopic(ctx, testTopic, &sinkData)
-		if err != nil {
-			t.Error(err)
-		}
-	}()
-
-	// run mysql_kafka.yml file
-	cfg, err := config.Load()
-	if err != nil {
-		t.Error(err)
-	}
-	command := cmd.New(utils.Logger, nil, cfg)
-	command.SetArgs([]string{"run", "mysql_kafka.yml"})
-	if err := command.Execute(); err != nil {
-		if strings.HasPrefix(err.Error(), "unknown command ") {
-			if !strings.HasSuffix(err.Error(), "\n") {
-				t.Fatal(err)
-			}
-			t.Fatal(err)
-		} else {
-			t.Fatal(err)
-		}
-	}
-
-	time.Sleep(2 * time.Second)        // this is to wait consumer to finish adding data to sinkData
-	cancel()                           // cancel will cancel context, hinting the consumer to end
-	time.Sleep(100 * time.Millisecond) // this is to give time for the consumer to closing all its connections
-
-	expected := getExpectedTables()
-	assert.Equal(t, len(getExpectedTables()), len(sinkData))
-	for tableNum := 0; tableNum < len(getExpectedTables()); tableNum++ {
-		assert.Equal(t, expected[tableNum].Resource.Urn, sinkData[tableNum].Resource.Urn)
-		assert.Equal(t, expected[tableNum].Resource.Name, sinkData[tableNum].Resource.Name)
-		assert.Equal(t, len(expected[tableNum].Schema.Columns), len(sinkData[tableNum].Schema.Columns))
-	}
-}
-
-// listenToTopic listens to a topic and stores the data in sinkData
-func listenToTopic(ctx context.Context, topic string, data *[]*assets.Table) error {
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{brokerHost},
-		Topic:   topic,
-	})
-	defer func(reader *kafka.Reader) {
-		if err := reader.Close(); err != nil {
-			return
-		}
-	}(reader)
-
-	for {
-		msg, err := reader.ReadMessage(ctx)
-		if err != nil {
-			break
-		}
-		var convertMsg assets.Table
-		if err := proto.Unmarshal(msg.Value, &convertMsg); err != nil {
-			return errors.Wrap(err, "failed to parse kafka message")
-		}
-		*data = append(*data, &convertMsg)
-	}
-
-	return nil
-}
-
-// setupKafka intializes kafka broker with topic and partition
-func setupKafka() error {
-	conn, err := kafka.DialLeader(context.TODO(), "tcp", net.JoinHostPort(broker.Host, strconv.Itoa(broker.Port)), testTopic, partition)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup kafka connection")
-	}
-	defer func(conn *kafka.Conn) {
-		if err := conn.Close(); err != nil {
-			return
-		}
-	}(conn)
-
-	if err := conn.DeleteTopics(testTopic); err != nil {
-		return errors.Wrap(err, "failed to delete topic")
-	}
-	if err := conn.CreateTopics(kafka.TopicConfig{
-		Topic:             testTopic,
-		NumPartitions:     1,
-		ReplicationFactor: 1,
-	}); err != nil {
-		return errors.Wrap(err, "failed to create topic")
-	}
-
-	return nil
-}
-
-// setupMySQL initializes mysql database
-func setupMySQL() (err error) {
-	// create database, user and grant access
-	if err = execute(db, []string{
-		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
-		fmt.Sprintf("CREATE DATABASE %s", testDB),
-		fmt.Sprintf("USE %s;", testDB),
-		fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass),
-		fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user),
-	}); err != nil {
-		return errors.Wrap(err, "failed to create database")
-	}
-
-	// create and populate tables
-	if err = execute(db, []string{
-		"CREATE TABLE applicant (applicant_id int, last_name varchar(255), first_name varchar(255));",
-		"INSERT INTO applicant VALUES (1, 'test1', 'test11');",
-		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",
-		"INSERT INTO jobs VALUES (2, 'test2', 'test22');",
-	}); err != nil {
-		return errors.Wrap(err, "failed to populate database")
-	}
-
-	return
-}
-
-// execute executes a list of sql statements
-func execute(db *sql.DB, queries []string) (err error) {
-	for _, query := range queries {
-		_, err = db.Exec(query)
-		if err != nil {
-			return
-		}
-	}
-
-	return
 }
 
 // getExpectedTables returns the expected tables

@@ -3,10 +3,6 @@ package agent_test
 import (
 	"context"
 	"errors"
-	"github.com/odpf/meteor/test/utils"
-	"testing"
-	"time"
-
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -14,8 +10,11 @@ import (
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/test/mocks"
+	"github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"testing"
+	"time"
 )
 
 var mockCtx = mock.AnythingOfType("*context.emptyCtx")
@@ -208,7 +207,6 @@ func TestRunnerRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(errors.New("some error")).Once()
-		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -536,6 +534,7 @@ func TestRunnerRun(t *testing.T) {
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
 		sink.On("Sink", mockCtx, data).Return(nil)
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -587,6 +586,7 @@ func TestRunnerRun(t *testing.T) {
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil).Once()
 		sink.On("Sink", mockCtx, data).Return(plugins.NewRetryError(err)).Once()
 		sink.On("Sink", mockCtx, data).Return(nil)
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
@@ -636,6 +636,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, validRecipe.Sinks[0].Config).Return(nil)
 		sink.On("Sink", mockCtx, data).Return(nil)
+		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
