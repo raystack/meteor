@@ -1,4 +1,4 @@
-//+build e2e_test
+//+build integration
 
 package e2e_test
 
