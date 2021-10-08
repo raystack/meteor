@@ -254,6 +254,12 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 		return err
 	}, defaultBatchSize)
 
+	stream.onClose(func() {
+		if err = sink.Close(); err != nil {
+			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
+		}
+	})
+
 	return
 }
 

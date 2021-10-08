@@ -49,6 +49,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return nil
 }
 
+func (s *Sink) Close() (err error) { return }
+
 func (s *Sink) process(value interface{}) error {
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {

@@ -18,6 +18,9 @@ test:
 test-coverage: test
 	go tool cover -html=coverage.out
 
+test-e2e:
+	go test ./test/e2e -tags=integration -count=1
+
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
 	@echo " > generating protobuf"

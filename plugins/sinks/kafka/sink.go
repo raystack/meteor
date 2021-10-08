@@ -72,8 +72,6 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	defer s.writer.Close()
-
 	for _, record := range batch {
 		if err := s.push(ctx, record.Data()); err != nil {
 			return err
@@ -83,10 +81,11 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return
 }
 
-func (s *Sink) push(ctx context.Context, payload interface{}) error {
-	// struct needs to be cast to pointer to implement proto methods
-	payload = castModelToPointer(payload)
+func (s *Sink) Close() (err error) {
+	return s.writer.Close()
+}
 
+func (s *Sink) push(ctx context.Context, payload interface{}) error {
 	kafkaValue, err := s.buildValue(payload)
 	if err != nil {
 		return err
@@ -186,13 +185,6 @@ func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 		return "", errors.New("invalid path, doesn't support nested field names yet")
 	}
 	return keyPaths[1], nil
-}
-
-func castModelToPointer(value interface{}) interface{} {
-	vp := reflect.New(reflect.TypeOf(value))
-	vp.Elem().Set(reflect.ValueOf(value))
-
-	return vp.Interface()
 }
 
 func createWriter(config Config) *kafka.Writer {

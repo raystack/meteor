@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Exponential backoff-retry for container to be resy to accept connections
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := metabase.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := metabase.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"user_id": "user",
 			"host":    host,
 		})
@@ -114,7 +114,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := metabase.New(test.Logger)
+		extr := metabase.New(utils.Logger)
 		err := extr.Init(ctx, map[string]interface{}{
 			"user_id":    email,
 			"password":   pass,

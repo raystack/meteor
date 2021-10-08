@@ -4,17 +4,17 @@ package gcs_test
 
 import (
 	"context"
+	"github.com/odpf/meteor/test/utils"
 	"testing"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/gcs"
-	"github.com/odpf/meteor/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
-		err := gcs.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := gcs.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"wrong-config": "sample-project",
 		})
 

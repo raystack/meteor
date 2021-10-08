@@ -4,6 +4,7 @@ package csv_test
 
 import (
 	"context"
+	"github.com/odpf/meteor/test/utils"
 	"testing"
 
 	"github.com/odpf/meteor/models"
@@ -12,7 +13,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +20,7 @@ import (
 func TestInit(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
 		config := map[string]interface{}{}
-		err := csv.New(test.Logger).Init(
+		err := csv.New(utils.Logger).Init(
 			context.TODO(),
 			config)
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -30,7 +30,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should extract data if path is a file", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := csv.New(test.Logger)
+		extr := csv.New(utils.Logger)
 		err := extr.Init(ctx, map[string]interface{}{
 			"path": "./testdata/test.csv",
 		})
@@ -64,7 +64,7 @@ func TestExtract(t *testing.T) {
 
 	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := csv.New(test.Logger)
+		extr := csv.New(utils.Logger)
 		err := extr.Init(ctx, map[string]interface{}{
 			"path": "./testdata",
 		})

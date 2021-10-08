@@ -18,6 +18,7 @@ type subscriber struct {
 type stream struct {
 	middlewares []streamMiddleware
 	subscribers []*subscriber
+	onCloses    []func()
 	closed      bool
 	err         error
 }
@@ -34,6 +35,13 @@ func (s *stream) subscribe(callback func(batchedData []models.Record) error, bat
 		batchSize: batchSize,
 		channel:   make(chan models.Record),
 	})
+
+	return s
+}
+
+// onClose() is used to register callback for after stream is closed.
+func (s *stream) onClose(callback func()) *stream {
+	s.onCloses = append(s.onCloses, callback)
 
 	return s
 }
@@ -55,7 +63,7 @@ func (s *stream) broadcast() error {
 			batch := newBatch(l.batchSize)
 			// listen to channel and emit data to subscriber callback if batch is full
 			for d := range l.channel {
-			 	if err := batch.add(d); err != nil {
+				if err := batch.add(d); err != nil {
 					s.closeWithError(err)
 				}
 				if batch.isFull() {
@@ -116,6 +124,10 @@ func (s *stream) Close() {
 		close(l.channel)
 	}
 	s.closed = true
+
+	for _, onClose := range s.onCloses {
+		onClose()
+	}
 }
 
 func (s *stream) runMiddlewares(d models.Record) (res models.Record, err error) {

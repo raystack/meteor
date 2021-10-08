@@ -5,6 +5,7 @@ package cassandra_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
@@ -16,7 +17,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/cassandra"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -70,7 +70,7 @@ func TestMain(m *testing.M) {
 		}
 		return nil
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestEmptyHosts(t *testing.T) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
-		err := cassandra.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := cassandra.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": pass,
 			"host":     host,
 		})
@@ -116,7 +116,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := cassandra.New(test.Logger)
+		extr := cassandra.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"user_id":  user,
@@ -175,7 +175,7 @@ func execute(queries []string) (err error) {
 
 // newExtractor returns a new extractor
 func newExtractor() *cassandra.Extractor {
-	return cassandra.New(test.Logger)
+	return cassandra.New(utils.Logger)
 }
 
 // getExpected returns the expected result

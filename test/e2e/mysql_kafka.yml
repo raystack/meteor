@@ -1,0 +1,15 @@
+name: sample
+source:
+  type: mysql
+  config:
+    user_id: root
+    password: admin
+    host: 127.0.0.1:3306
+sinks:
+  - name: kafka
+    config:
+      brokers: "localhost:9093"
+      topic: "topic-a"
+processors:
+  - name: enrich
+    config:

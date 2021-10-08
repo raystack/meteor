@@ -5,6 +5,7 @@ package clickhouse_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
@@ -18,7 +19,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/clickhouse"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -206,5 +206,5 @@ func execute(db *sql.DB, queries []string) (err error) {
 }
 
 func newExtractor() *clickhouse.Extractor {
-	return clickhouse.New(test.Logger)
+	return clickhouse.New(utils.Logger)
 }

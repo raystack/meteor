@@ -5,6 +5,7 @@ package grafana_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
-		err := grafana.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := grafana.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"base_url": "",
 			"api_key":  "qwerty123",
 		})
@@ -43,7 +43,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
-		err := grafana.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := grafana.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "",
 		})
@@ -117,7 +117,7 @@ func TestExtract(t *testing.T) {
 		}
 
 		ctx := context.TODO()
-		extractor := grafana.New(test.Logger)
+		extractor := grafana.New(utils.Logger)
 		err := extractor.Init(ctx, map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "qwerty123",

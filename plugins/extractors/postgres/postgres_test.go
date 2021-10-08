@@ -5,6 +5,7 @@ package postgres_test
 import (
 	"context"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
@@ -15,7 +16,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := postgres.New(test.Logger).Init(context.TODO(), map[string]interface{}{
+		err := postgres.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
 			"password": "pass",
 			"host":     host,
 		})
@@ -85,7 +85,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with postgres", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := postgres.New(test.Logger)
+		extr := postgres.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"user_id":       user,

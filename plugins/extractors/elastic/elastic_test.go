@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/odpf/meteor/test/utils"
 	"log"
 	"net/http"
 	"os"
@@ -20,7 +21,6 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/elastic"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -83,7 +83,7 @@ func TestMain(m *testing.M) {
 		}
 		return
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func jsonStruct(doc MeteorMockElasticDocs) string {
 }
 
 func newExtractor() *elastic.Extractor {
-	return elastic.New(test.Logger)
+	return elastic.New(utils.Logger)
 }
 
 func getExpectedVal() []models.Record {
