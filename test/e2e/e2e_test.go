@@ -1,4 +1,4 @@
-//+build integration
+//+build e2e_test
 
 package e2e_test
 
@@ -40,7 +40,7 @@ var (
 const (
 	testDB     = "test_db"
 	user       = "test_user"
-	pass       = "pass"
+	pass       = "admin"
 	mysqlHost  = "localhost:3306"
 	brokerHost = "localhost:9093"
 	testTopic  = "topic-a"
