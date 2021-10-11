@@ -3,6 +3,9 @@ package agent_test
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -13,8 +16,6 @@ import (
 	"github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
 var mockCtx = mock.AnythingOfType("*context.emptyCtx")
@@ -541,7 +542,13 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		monitorRun := agent.Run{Recipe: validRecipe, RecordCount: 1, Success: true}
+		monitorRun := agent.Run{
+			Recipe:      validRecipe,
+			RecordCount: 1,
+			Success:     true,
+			// DurationInMs is 0 because of the process took below a millisecond, in production scenario it takes longer than that
+			DurationInMs: 0,
+		}
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", monitorRun).Once()
 		defer monitor.AssertExpectations(t)
