@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -154,9 +155,13 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		partitionField = md.TimePartitioning.Field
 	}
 
-	previewFields, previewRows, err := e.buildPreview(ctx, t)
-	if err != nil {
-		e.logger.Warn("error building preview", "err", err, "table", t.FullyQualifiedName())
+	var preview *facets.Preview
+	if md.Type == bigquery.RegularTable {
+		var err error
+		preview, err = e.buildPreview(ctx, t)
+		if err != nil {
+			e.logger.Warn("error building preview", "err", err, "table", t.FullyQualifiedName())
+		}
 	}
 
 	return &assets.Table{
@@ -168,14 +173,13 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		Schema: &facets.Columns{
 			Columns: e.buildColumns(ctx, md),
 		},
+		Preview: preview,
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"dataset":         t.DatasetID,
 				"project":         t.ProjectID,
 				"type":            string(md.Type),
 				"partition_field": partitionField,
-				"preview":         previewRows,
-				"preview_fields":  previewFields,
 			}),
 			Labels: md.Labels,
 		},
@@ -230,9 +234,10 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	return
 }
 
-func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []interface{}, preview []interface{}, err error) {
-	fields = []interface{}{}  // list of column names
-	preview = []interface{}{} // rows of column values
+func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (preview *facets.Preview, err error) {
+	preview = &facets.Preview{
+		Fields: []string{},
+	}
 	if e.config.MaxPreviewRows == 0 {
 		return
 	}
@@ -251,25 +256,33 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 		}
 
 		// populate row fields once
-		if len(fields) < 1 {
+		if len(preview.Fields) < 1 {
 			for _, schema := range ri.Schema {
-				fields = append(fields, schema.Name)
+				preview.Fields = append(preview.Fields, schema.Name)
 			}
 		}
 
-		rows = append(rows, row)
+		var temp []interface{}
+		var jsonBytes []byte
+		jsonBytes, err = json.Marshal(row)
+		if err != nil {
+			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())
+			return
+		}
+		err = json.Unmarshal(jsonBytes, &temp)
+		if err != nil {
+			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())
+			return
+		}
+
+		rows = append(rows, temp)
+
 		totalRows++
 	}
 
-	// this preview will be stored on Properties.Attributes which is a proto struct
-	// we need to totally change []bigquery.Value to []interface{}
-	// to prevent error when mapping this preview to Properties facets
-	jsonBytes, err := json.Marshal(rows)
+	preview.Rows, err = structpb.NewList(rows)
 	if err != nil {
-		return
-	}
-	err = json.Unmarshal(jsonBytes, &preview)
-	if err != nil {
+		err = errors.Wrap(err, "error creating preview list")
 		return
 	}
 
