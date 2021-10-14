@@ -20,6 +20,12 @@ import (
 //go:embed README.md
 var summary string
 
+// default topics map to skip
+var defaultTopics = map[string]byte{
+	"__consumer_offsets": 0,
+	"_schemas":           0,
+}
+
 // Config hold the set of configuration for the kafka extractor
 type Config struct {
 	Broker    string `mapstructure:"broker" validate:"required"`
@@ -99,6 +105,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	// build and push topics
 	for topic, numOfPartitions := range topics {
+		// skip if topic is a default topic
+		_, isDefaultTopic := defaultTopics[topic]
+		if isDefaultTopic {
+			continue
+		}
+
 		record := models.NewRecord(e.buildTopic(topic, numOfPartitions))
 		emit(record)
 	}
