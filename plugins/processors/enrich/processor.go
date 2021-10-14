@@ -67,9 +67,6 @@ func (p *Processor) process(record models.Record) (models.Metadata, error) {
 	data := record.Data()
 	p.logger.Debug("enriching record", "record", data.GetResource().Urn)
 	customProps := utils.GetCustomProperties(data)
-	if customProps == nil {
-		return data, nil
-	}
 
 	// update custom properties using value from config
 	for key, value := range p.config {

@@ -30,11 +30,17 @@ func SetCustomProperties(metadata models.Metadata, customFields map[string]inter
 
 	switch metadata := metadata.(type) {
 	case *assets.Table:
+		metadata.Properties = properties
 	case *assets.Topic:
+		metadata.Properties = properties
 	case *assets.Dashboard:
+		metadata.Properties = properties
 	case *assets.Bucket:
+		metadata.Properties = properties
 	case *assets.Group:
+		metadata.Properties = properties
 	case *assets.Job:
+		metadata.Properties = properties
 	case *assets.User:
 		metadata.Properties = properties
 	}
