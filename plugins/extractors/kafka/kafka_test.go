@@ -4,9 +4,10 @@ package kafka_test
 
 import (
 	"context"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"net"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"os"
 	"strconv"
@@ -93,7 +94,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should return list of topic metadata", func(t *testing.T) {
+	t.Run("should emit list of topic metadata", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()
 		err := extr.Init(ctx, map[string]interface{}{
@@ -115,6 +116,9 @@ func TestExtract(t *testing.T) {
 					Name:    "meteor-test-topic-1",
 					Service: "kafka",
 				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
+				},
 			}),
 			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
@@ -122,12 +126,71 @@ func TestExtract(t *testing.T) {
 					Name:    "meteor-test-topic-2",
 					Service: "kafka",
 				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
+				},
 			}),
 			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
 					Urn:     "meteor-test-topic-3",
 					Name:    "meteor-test-topic-3",
 					Service: "kafka",
+				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
+				},
+			}),
+		}
+		// We need this function because the extractor cannot guarantee order
+		// so comparing expected slice and result slice will not be consistent
+		assertResults(t, expected, emitter.Get())
+	})
+
+	t.Run("should add prefix to urn if urn_prefix is defined", func(t *testing.T) {
+		ctx := context.TODO()
+		extr := newExtractor()
+		err := extr.Init(ctx, map[string]interface{}{
+			"broker":     brokerHost,
+			"urn_prefix": "samplePrefix-",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+
+		// assert results with expected data
+		expected := []models.Record{
+			models.NewRecord(&assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "samplePrefix-meteor-test-topic-1",
+					Name:    "meteor-test-topic-1",
+					Service: "kafka",
+				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
+				},
+			}),
+			models.NewRecord(&assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "samplePrefix-meteor-test-topic-2",
+					Name:    "meteor-test-topic-2",
+					Service: "kafka",
+				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
+				},
+			}),
+			models.NewRecord(&assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "samplePrefix-meteor-test-topic-3",
+					Name:    "meteor-test-topic-3",
+					Service: "kafka",
+				},
+				Profile: &assets.TopicProfile{
+					NumberOfPartitions: 1,
 				},
 			}),
 		}
