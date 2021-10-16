@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+
 	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
@@ -19,9 +20,16 @@ import (
 //go:embed README.md
 var summary string
 
+// default topics map to skip
+var defaultTopics = map[string]byte{
+	"__consumer_offsets": 0,
+	"_schemas":           0,
+}
+
 // Config hold the set of configuration for the kafka extractor
 type Config struct {
-	Broker string `mapstructure:"broker" validate:"required"`
+	Broker    string `mapstructure:"broker" validate:"required"`
+	UrnPrefix string `mapstructure:"urn_prefix"`
 }
 
 var sampleConfig = `
@@ -85,28 +93,52 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	// collect topic list from partition list
-	topics := map[string]bool{}
+	topics := map[string]int{}
 	for _, p := range partitions {
-		topics[p.Topic] = true
+		_, ok := topics[p.Topic]
+		if !ok {
+			topics[p.Topic] = 0
+		}
+
+		topics[p.Topic]++
 	}
 
-	// process topics
-	for topicName := range topics {
-		emit(models.NewRecord(e.buildTopic(topicName)))
+	// build and push topics
+	for topic, numOfPartitions := range topics {
+		// skip if topic is a default topic
+		_, isDefaultTopic := defaultTopics[topic]
+		if isDefaultTopic {
+			continue
+		}
+
+		record := models.NewRecord(e.buildTopic(topic, numOfPartitions))
+		emit(record)
 	}
 
 	return
 }
 
-// Build topic metadata model using a topic name
-func (e *Extractor) buildTopic(topicName string) *assets.Topic {
+// Build topic metadata model using a topic and number of partitions
+func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assets.Topic {
 	return &assets.Topic{
 		Resource: &common.Resource{
-			Urn:     topicName,
-			Name:    topicName,
+			Urn:     e.buildUrn(topic),
+			Name:    topic,
 			Service: "kafka",
 		},
+		Profile: &assets.TopicProfile{
+			NumberOfPartitions: int64(numOfPartitions),
+		},
 	}
+}
+
+// Build urn using prefixes from config
+func (e *Extractor) buildUrn(topic string) string {
+	if e.config.UrnPrefix != "" {
+		topic = e.config.UrnPrefix + topic
+	}
+
+	return topic
 }
 
 func init() {

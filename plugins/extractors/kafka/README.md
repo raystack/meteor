@@ -14,6 +14,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `broker` | `string` | `localhost:9092` | Kafka broker's host | *required* |
+| `urn_prefix` | `string` | `samplePrefix-` | Prefix to be prepended to urn field | *optional* |
 
 ## Outputs
 
