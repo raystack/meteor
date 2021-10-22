@@ -10,10 +10,7 @@ sinks:
   config:
     host: https://columbus.com
 	type: sample-columbus-type
-	mapping:
-	  new_fieldname: "json_field_name"
-	  id: "resource.urn"
-	  displayName: "resource.name"
+	service: kafka
 ```
 
 ## Contributing

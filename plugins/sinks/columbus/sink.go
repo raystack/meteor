@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
@@ -22,9 +21,9 @@ import (
 var summary string
 
 type Config struct {
-	Host    string            `mapstructure:"host" validate:"required"`
-	Type    string            `mapstructure:"type" validate:"required"`
-	Mapping map[string]string `mapstructure:"mapping"`
+	Host    string `mapstructure:"host" validate:"required"`
+	Type    string `mapstructure:"type" validate:"required"`
+	Service string `mapstructure:"service" validate:"required"`
 }
 
 var sampleConfig = `
@@ -32,11 +31,9 @@ var sampleConfig = `
   host: https://columbus.com
   # The type of the data to send
   type: sample-columbus-type
-  # Create a mapping from the fields in the data to the fields in the columbus
-  # mapping:
-  #   new_fieldname: "json_field_name"
-  #   id: "resource.urn"
-  #   displayName: "resource.name"`
+  # The service to be added to Columbus' Record payload.
+  # Columbus uses this field to store the source of the metadata e.g. bigquery, grafana.
+  service: kafka`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -78,11 +75,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
 		s.logger.Info("sinking record to columbus", "record", metadata.GetResource().Urn)
-		columbusPayload, err := s.buildColumbusPayload(metadata)
 
-		if err != nil {
-			return errors.Wrap(err, "error mapping data")
-		}
+		columbusPayload := s.buildColumbusPayload(metadata)
 		if err = s.send(columbusPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
@@ -94,77 +88,15 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) buildColumbusPayload(metadata models.Metadata) (interface{}, error) {
-	// skip if mapping is not defined
-	if s.config.Mapping == nil {
-		return metadata, nil
-	}
-
-	// parse data to map for easier mapping
-	result, err := s.parseToMap(metadata)
-	if err != nil {
-		return metadata, err
-	}
-
-	// map fields
-	for newField, currField := range s.config.Mapping {
-		val, err := s.getValueFromField(result, currField)
-		if err != nil {
-			return result, errors.Wrap(err, "error getting value from field")
-		}
-
-		result[newField] = val
-	}
-
-	return result, nil
-}
-
-func (s *Sink) parseToMap(data models.Metadata) (result map[string]interface{}, err error) {
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(jsonBytes, &result)
-	if err != nil {
-		return
-	}
-
-	return result, nil
-}
-
-func (s *Sink) getValueFromField(data map[string]interface{}, fieldName string) (interface{}, error) {
-	var value interface{}
-	nestedFields := strings.Split(fieldName, ".") // "resource.urn" -> ["resource", "urn"]
-	totalNestedLevel := len(nestedFields)         // total nested level
-
-	temp := data
-	for i := 0; i < totalNestedLevel; i++ {
-		var ok bool
-		field := nestedFields[i]
-		value, ok = temp[field]
-		if !ok {
-			return value, fmt.Errorf("could not find field \"%s\"", field)
-		}
-		if i < totalNestedLevel-1 {
-			temp, ok = value.(map[string]interface{})
-			if !ok {
-				return value, fmt.Errorf("field \"%s\" is not a map", field)
-			}
-		}
-	}
-
-	return value, nil
-}
-
-func (s *Sink) send(data interface{}) (err error) {
-	payload, err := s.buildPayload(data)
+func (s *Sink) send(record Record) (err error) {
+	payloadBytes, err := json.Marshal([]Record{record})
 	if err != nil {
 		return
 	}
 
 	// send request
 	url := fmt.Sprintf("%s/v1/types/%s/records", s.config.Host, s.config.Type)
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
 	}
@@ -191,10 +123,15 @@ func (s *Sink) send(data interface{}) (err error) {
 	}
 }
 
-func (s *Sink) buildPayload(data interface{}) (payload []byte, err error) {
-	// wrap metadata in an array
-	columbusPayload := []interface{}{data}
-	return json.Marshal(columbusPayload)
+func (s *Sink) buildColumbusPayload(metadata models.Metadata) Record {
+	record := Record{
+		Urn:     metadata.GetResource().Urn,
+		Name:    metadata.GetResource().Name,
+		Service: s.config.Service,
+		Data:    metadata,
+	}
+
+	return record
 }
 
 func init() {
