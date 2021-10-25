@@ -1,110 +1,37 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package metabase_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"os"
-	"strconv"
 	"testing"
-	"time"
+
+	"github.com/odpf/meteor/models"
+	testutils "github.com/odpf/meteor/test/utils"
+	"github.com/odpf/meteor/utils"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/odpf/meteor/models/odpf/assets"
+	"github.com/odpf/meteor/models/odpf/assets/common"
+	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/test/mocks"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	fname                  = "meteor"
-	lname                  = "metabase"
-	collectionName         = "temp_collection_meteor"
-	collection_color       = "#ffffb3"
-	collection_description = "Temp Collection for Meteor Metabase Extractor"
-	dashboard_name         = "random_dashboard"
-	dashboard_description  = "some description"
-	email                  = "meteorextractortestuser@gmail.com"
-	pass                   = "meteor_pass_1234"
-	port                   = "4002"
+	instanceLabel = "my-meta"
 )
-
-var (
-	client = &http.Client{
-		Timeout: 4 * time.Second,
-	}
-	session_id    = ""
-	collection_id = 1
-	card_id       = 0
-	dashboard_id  = 0
-	host          = "http://localhost:" + port
-)
-
-type responseID struct {
-	ID int `json:"id"`
-}
-
-type sessionID struct {
-	ID string `json:"id"`
-}
-
-func TestMain(m *testing.M) {
-	// setup test
-	opts := dockertest.RunOptions{
-		Repository:   "metabase/metabase",
-		Tag:          "latest",
-		ExposedPorts: []string{port, "3000"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"3000": {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
-		},
-	}
-
-	retryFn := func(resource *dockertest.Resource) (err error) {
-		res, err := http.Get(host + "/api/health")
-		if err != nil {
-			return
-		}
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("received %d status code", res.StatusCode)
-		}
-		return
-	}
-
-	// Exponential backoff-retry for container to be resy to accept connections
-	purgeFn, err := utils.CreateContainer(opts, retryFn)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := setup(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Run tests
-	code := m.Run()
-
-	// Clean tests
-	if err := purgeFn(); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(code)
-}
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := metabase.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
-			"user_id": "user",
-			"host":    host,
+		err := metabase.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
+			"username": "user",
+			"host":     host,
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -114,11 +41,12 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		ctx := context.TODO()
-		extr := metabase.New(utils.Logger)
+		extr := metabase.New(testutils.Logger)
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":    email,
-			"password":   pass,
 			"host":       host,
+			"username":   email,
+			"password":   pass,
+			"label":      instanceLabel,
 			"session_id": session_id,
 		})
 		if err != nil {
@@ -127,166 +55,84 @@ func TestExtract(t *testing.T) {
 
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
-
 		assert.NoError(t, err)
 
-		var urns []string
-		for _, record := range emitter.Get() {
-			dashboard := record.Data().(*assets.Dashboard)
-			urns = append(urns, dashboard.Resource.Urn)
+		expected := expectedData()
+		records := emitter.Get()
+		var actuals []models.Metadata
+		for _, r := range records {
+			actuals = append(actuals, r.Data())
 		}
-		assert.Equal(t, []string{"metabase.random_dashboard"}, urns)
+
+		assert.Len(t, actuals, len(expected))
+		assertJSON(t, expected, actuals)
 	})
 }
 
-func setup() (err error) {
-	type responseToken struct {
-		Token string `json:"setup-token"`
+func expectedData() (records []*assets.Dashboard) {
+	for _, d := range populatedDashboards {
+		createdAt, _ := d.CreatedAt()
+		updatedAt, _ := d.UpdatedAt()
+		cards := dashboardCards[d.ID]
+
+		dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", instanceLabel, d.ID)
+		var charts []*assets.Chart
+		for _, card := range cards {
+			charts = append(charts, &assets.Chart{
+				Urn:          fmt.Sprintf("metabase::%s/card/%d", instanceLabel, card.ID),
+				DashboardUrn: dashboardUrn,
+				Source:       "metabase",
+				Name:         card.Name,
+				Description:  card.Description,
+				Properties: &facets.Properties{
+					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+						"id":                     card.ID,
+						"collection_id":          card.CollectionID,
+						"creator_id":             card.CreatorID,
+						"database_id":            card.DatabaseID,
+						"table_id":               card.TableID,
+						"query_average_duration": card.QueryAverageDuration,
+						"display":                card.Display,
+						"archived":               card.Archived,
+					}),
+				},
+			})
+		}
+
+		records = append(records, &assets.Dashboard{
+			Resource: &common.Resource{
+				Urn:     dashboardUrn,
+				Name:    d.Name,
+				Service: "metabase",
+			},
+			Description: d.Description,
+			Properties: &facets.Properties{
+				Attributes: utils.TryParseMapToProto(map[string]interface{}{
+					"id":            d.ID,
+					"collection_id": d.CollectionID,
+					"creator_id":    d.CreatorID,
+				}),
+			},
+			Charts: charts,
+			Timestamps: &common.Timestamp{
+				CreateTime: timestamppb.New(createdAt),
+				UpdateTime: timestamppb.New(updatedAt),
+			},
+		})
 	}
-	var data responseToken
-	err = makeRequest("GET", host+"/api/session/properties", nil, &data)
-	if err != nil {
-		return
-	}
-	setup_token := data.Token
-	err = setUser(setup_token)
-	if err != nil {
-		return
-	}
-	err = addMockData(session_id)
-	if err != nil {
-		return
-	}
+
 	return
 }
 
-func setUser(setup_token string) (err error) {
-	payload := map[string]interface{}{
-		"user": map[string]interface{}{
-			"first_name": fname,
-			"last_name":  lname,
-			"email":      email,
-			"password":   pass,
-			"site_name":  "Unaffiliated",
-		},
-		"token": setup_token,
-		"prefs": map[string]interface{}{
-			"site_name":      "Unaffiliated",
-			"allow_tracking": "true",
-		},
-	}
-	var data sessionID
-	err = makeRequest("POST", host+"/api/setup", payload, &data)
+func assertJSON(t *testing.T, expected interface{}, actual interface{}) {
+	actualBytes, err := json.Marshal(actual)
 	if err != nil {
-		return
+		t.Fatal(err)
 	}
-	session_id = data.ID
-	err = getSessionID()
-	return
-}
-
-func getSessionID() (err error) {
-	payload := map[string]interface{}{
-		"username": email,
-		"password": pass,
-	}
-	var data sessionID
-	err = makeRequest("POST", host+"/api/session", payload, &data)
+	expectedBytes, err := json.Marshal(expected)
 	if err != nil {
-		return
-	}
-	session_id = data.ID
-	return
-}
-
-func addMockData(session_id string) (err error) {
-	err = addCollection()
-	if err != nil {
-		return
-	}
-	err = addDashboard()
-	if err != nil {
-		return
-	}
-	return
-}
-
-func addCollection() (err error) {
-	payload := map[string]interface{}{
-		"name":        collectionName,
-		"color":       collection_color,
-		"description": collection_description,
-	}
-	var data responseID
-	err = makeRequest("POST", host+"/api/collection", payload, &data)
-	if err != nil {
-		return
-	}
-	collection_id = data.ID
-	return
-}
-
-func addDashboard() (err error) {
-	payload := map[string]interface{}{
-		"name":          dashboard_name,
-		"description":   dashboard_description,
-		"collection_id": collection_id,
+		t.Fatal(err)
 	}
 
-	var data responseID
-	err = makeRequest("POST", host+"/api/dashboard", payload, &data)
-	if err != nil {
-		return
-	}
-	dashboard_id = data.ID
-	err = addCard(dashboard_id)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func addCard(id int) (err error) {
-	values := map[string]interface{}{
-		"id": id,
-	}
-	x := strconv.Itoa(id)
-	type response struct {
-		ID int `json:"id"`
-	}
-	var data response
-	err = makeRequest("POST", host+"/api/dashboard/"+x+"/cards", values, &data)
-	if err != nil {
-		return
-	}
-	card_id = data.ID
-	return
-}
-
-func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
-	jsonifyPayload, err := json.Marshal(payload)
-	if err != nil {
-		return
-	}
-	body := bytes.NewBuffer(jsonifyPayload)
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return
-	}
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if session_id != "" {
-		req.Header.Set("X-Metabase-Session", session_id)
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &data)
-	return
+	assert.Equal(t, string(expectedBytes), string(actualBytes))
 }
