@@ -10,7 +10,6 @@ sinks:
   config:
     host: https://columbus.com
 	type: sample-columbus-type
-	service: kafka
 ```
 
 ## Contributing
