@@ -28,7 +28,6 @@ var (
 // sample metadata
 var (
 	columbusType = "my-type"
-	service      = "kafka"
 	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
 	topic        = &assets.Topic{
 		Resource: &common.Resource{
@@ -43,10 +42,9 @@ var (
 	}
 	requestPayload = []columbus.Record{
 		{
-			Urn:     topic.Resource.Urn,
-			Name:    topic.Resource.Name,
-			Service: service,
-			Data:    topic,
+			Urn:  topic.Resource.Urn,
+			Name: topic.Resource.Name,
+			Data: topic,
 		},
 	}
 )
@@ -60,11 +58,6 @@ func TestInit(t *testing.T) {
 			{
 				"host": host,
 				"type": "",
-			},
-			{
-				"host":    host,
-				"type":    "columbus-type",
-				"service": "",
 			},
 		}
 		for i, config := range invalidConfigs {
@@ -86,9 +79,8 @@ func TestSink(t *testing.T) {
 
 		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host":    host,
-			"type":    columbusType,
-			"service": service,
+			"host": host,
+			"type": columbusType,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -112,9 +104,8 @@ func TestSink(t *testing.T) {
 
 		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host":    host,
-			"type":    "my-type",
-			"service": service,
+			"host": host,
+			"type": "my-type",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -136,9 +127,8 @@ func TestSink(t *testing.T) {
 
 				columbusSink := columbus.New(client, utils.Logger)
 				err := columbusSink.Init(ctx, map[string]interface{}{
-					"host":    host,
-					"type":    "my-type",
-					"service": service,
+					"host": host,
+					"type": "my-type",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -160,9 +150,8 @@ func TestSink(t *testing.T) {
 
 		columbusSink := columbus.New(client, utils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host":    host,
-			"type":    "my-type",
-			"service": service,
+			"host": host,
+			"type": "my-type",
 		})
 		if err != nil {
 			t.Fatal(err)

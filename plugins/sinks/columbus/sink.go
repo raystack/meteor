@@ -21,19 +21,15 @@ import (
 var summary string
 
 type Config struct {
-	Host    string `mapstructure:"host" validate:"required"`
-	Type    string `mapstructure:"type" validate:"required"`
-	Service string `mapstructure:"service" validate:"required"`
+	Host string `mapstructure:"host" validate:"required"`
+	Type string `mapstructure:"type" validate:"required"`
 }
 
 var sampleConfig = `
-  # The hostnmame of the columbus service
-  host: https://columbus.com
-  # The type of the data to send
-  type: sample-columbus-type
-  # The service to be added to Columbus' Record payload.
-  # Columbus uses this field to store the source of the metadata e.g. bigquery, grafana.
-  service: kafka`
+# The hostnmame of the columbus service
+host: https://columbus.com
+# The type of the data to send
+type: sample-columbus-type`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -125,10 +121,9 @@ func (s *Sink) send(record Record) (err error) {
 
 func (s *Sink) buildColumbusPayload(metadata models.Metadata) Record {
 	record := Record{
-		Urn:     metadata.GetResource().Urn,
-		Name:    metadata.GetResource().Name,
-		Service: s.config.Service,
-		Data:    metadata,
+		Urn:  metadata.GetResource().Urn,
+		Name: metadata.GetResource().Name,
+		Data: metadata,
 	}
 
 	return record
