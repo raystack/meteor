@@ -166,7 +166,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 
 	return &assets.Table{
 		Resource: &common.Resource{
-			Urn:     fmt.Sprintf("%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+			Urn:     fmt.Sprintf("bigquery::%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
 			Name:    t.TableID,
 			Service: "bigquery",
 		},

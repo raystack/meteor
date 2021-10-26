@@ -1,4 +1,5 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package kafka_test
 
@@ -99,6 +100,7 @@ func TestExtract(t *testing.T) {
 		extr := newExtractor()
 		err := extr.Init(ctx, map[string]interface{}{
 			"broker": brokerHost,
+			"label":  "my-kafka-cluster",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -112,7 +114,7 @@ func TestExtract(t *testing.T) {
 		expected := []models.Record{
 			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
-					Urn:     "meteor-test-topic-1",
+					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-1",
 					Name:    "meteor-test-topic-1",
 					Service: "kafka",
 				},
@@ -122,7 +124,7 @@ func TestExtract(t *testing.T) {
 			}),
 			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
-					Urn:     "meteor-test-topic-2",
+					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-2",
 					Name:    "meteor-test-topic-2",
 					Service: "kafka",
 				},
@@ -132,60 +134,7 @@ func TestExtract(t *testing.T) {
 			}),
 			models.NewRecord(&assets.Topic{
 				Resource: &common.Resource{
-					Urn:     "meteor-test-topic-3",
-					Name:    "meteor-test-topic-3",
-					Service: "kafka",
-				},
-				Profile: &assets.TopicProfile{
-					NumberOfPartitions: 1,
-				},
-			}),
-		}
-		// We need this function because the extractor cannot guarantee order
-		// so comparing expected slice and result slice will not be consistent
-		assertResults(t, expected, emitter.Get())
-	})
-
-	t.Run("should add prefix to urn if urn_prefix is defined", func(t *testing.T) {
-		ctx := context.TODO()
-		extr := newExtractor()
-		err := extr.Init(ctx, map[string]interface{}{
-			"broker":     brokerHost,
-			"urn_prefix": "samplePrefix-",
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter.Push)
-		assert.NoError(t, err)
-
-		// assert results with expected data
-		expected := []models.Record{
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
-					Urn:     "samplePrefix-meteor-test-topic-1",
-					Name:    "meteor-test-topic-1",
-					Service: "kafka",
-				},
-				Profile: &assets.TopicProfile{
-					NumberOfPartitions: 1,
-				},
-			}),
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
-					Urn:     "samplePrefix-meteor-test-topic-2",
-					Name:    "meteor-test-topic-2",
-					Service: "kafka",
-				},
-				Profile: &assets.TopicProfile{
-					NumberOfPartitions: 1,
-				},
-			}),
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
-					Urn:     "samplePrefix-meteor-test-topic-3",
+					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-3",
 					Name:    "meteor-test-topic-3",
 					Service: "kafka",
 				},

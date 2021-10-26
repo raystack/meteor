@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -28,12 +29,13 @@ var defaultTopics = map[string]byte{
 
 // Config hold the set of configuration for the kafka extractor
 type Config struct {
-	Broker    string `mapstructure:"broker" validate:"required"`
-	UrnPrefix string `mapstructure:"urn_prefix"`
+	Broker string `mapstructure:"broker" validate:"required"`
+	Label  string `mapstructure:"label" validate:"required"`
 }
 
 var sampleConfig = `
-broker: "localhost:9092"`
+broker: "localhost:9092"
+label: "my-kafka"`
 
 // Extractor manages the extraction of data
 // from a kafka broker
@@ -122,7 +124,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assets.Topic {
 	return &assets.Topic{
 		Resource: &common.Resource{
-			Urn:     e.buildUrn(topic),
+			Urn:     fmt.Sprintf("kafka::%s/%s", e.config.Label, topic),
 			Name:    topic,
 			Service: "kafka",
 		},
@@ -130,15 +132,6 @@ func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assets.Topic 
 			NumberOfPartitions: int64(numOfPartitions),
 		},
 	}
-}
-
-// Build urn using prefixes from config
-func (e *Extractor) buildUrn(topic string) string {
-	if e.config.UrnPrefix != "" {
-		topic = e.config.UrnPrefix + topic
-	}
-
-	return topic
 }
 
 func init() {
