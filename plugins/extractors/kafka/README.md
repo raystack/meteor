@@ -7,6 +7,7 @@ source:
   type: kafka
   config:
     broker: "localhost:9092"
+    label: "my-kafka-cluster"
 ```
 
 ## Inputs
@@ -14,7 +15,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `broker` | `string` | `localhost:9092` | Kafka broker's host | *required* |
-| `urn_prefix` | `string` | `samplePrefix-` | Prefix to be prepended to urn field | *optional* |
+| `label` | `string` | `samplePrefix` | Label will be used as a part in Urn components | *required* |
 
 ## Outputs
 
