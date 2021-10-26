@@ -121,8 +121,8 @@ func (s *Sink) send(record Record) (err error) {
 
 func (s *Sink) buildColumbusPayload(metadata models.Metadata) Record {
 	record := Record{
-		Urn:  metadata.GetResource().Urn,
-		Name: metadata.GetResource().Name,
+		Urn:  metadata.GetResource().GetUrn(),
+		Name: metadata.GetResource().GetName(),
 		Data: metadata,
 	}
 
