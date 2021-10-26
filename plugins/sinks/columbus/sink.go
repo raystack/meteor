@@ -147,9 +147,11 @@ func (s *Sink) buildLabels(metadata models.Metadata) (labels map[string]string, 
 
 	labels = map[string]string{}
 	for key, template := range s.config.Labels {
-		value, err := s.buildLabelValue(template, metadata)
+		var value string
+		value, err = s.buildLabelValue(template, metadata)
 		if err != nil {
 			err = errors.Wrapf(err, "could not find \"%s\"", template)
+			return
 		}
 
 		labels[key] = value
@@ -204,7 +206,13 @@ func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, metadat
 			err = errors.New("could not find labels field")
 			return
 		}
-		value, _ = labels[field2]
+		var ok bool
+		value, ok = labels[field2]
+		if !ok {
+			err = fmt.Errorf("could not find \"%s\" from labels", field2)
+			return
+		}
+
 		return
 	}
 
