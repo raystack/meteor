@@ -3,12 +3,14 @@ package columbus_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -25,7 +27,9 @@ var (
 
 // sample metadata
 var (
-	topic = &assets.Topic{
+	columbusType = "my-type"
+	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
+	topic        = &assets.Topic{
 		Resource: &common.Resource{
 			Urn:  "my-topic-urn",
 			Name: "my-topic",
@@ -36,9 +40,13 @@ var (
 			},
 		},
 	}
-	requestPayload = `[{"resource":{"urn":"my-topic-urn","name":"my-topic"},"ownership":{"owners":[{"name":"admin-A"}]}}]`
-	columbusType   = "my-type"
-	url            = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
+	requestPayload = []columbus.Record{
+		{
+			Urn:  topic.Resource.Urn,
+			Name: topic.Resource.Name,
+			Data: topic,
+		},
+	}
 )
 
 func TestInit(t *testing.T) {
@@ -46,7 +54,6 @@ func TestInit(t *testing.T) {
 		invalidConfigs := []map[string]interface{}{
 			{
 				"host": "",
-				"type": "columbus-type",
 			},
 			{
 				"host": host,
@@ -55,7 +62,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newmockHTTPClient(http.MethodGet, url, requestPayload), utils.Logger)
+				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, requestPayload), utils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -66,7 +73,7 @@ func TestInit(t *testing.T) {
 
 func TestSink(t *testing.T) {
 	t.Run("should create the right request to columbus", func(t *testing.T) {
-		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
+		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, "")
 		ctx := context.TODO()
 
@@ -81,7 +88,7 @@ func TestSink(t *testing.T) {
 
 		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
 		assert.NoError(t, err)
-		
+
 		client.Assert(t)
 	})
 
@@ -91,7 +98,7 @@ func TestSink(t *testing.T) {
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
-		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
+		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
@@ -114,7 +121,7 @@ func TestSink(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
 				url := fmt.Sprintf("%s/v1/types/my-type/records", host)
-				client := newmockHTTPClient(http.MethodPut, url, requestPayload)
+				client := newMockHTTPClient(http.MethodPut, url, requestPayload)
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
@@ -137,7 +144,7 @@ func TestSink(t *testing.T) {
 
 	t.Run("should return no error if columbus returns 200", func(t *testing.T) {
 		// setup mock client
-		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
+		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
 		client.SetupResponse(200, `{"success": true}`)
 		ctx := context.TODO()
 
@@ -154,56 +161,22 @@ func TestSink(t *testing.T) {
 		assert.NoError(t, err)
 		client.Assert(t)
 	})
-
-	t.Run("should map fields using mapper from config", func(t *testing.T) {
-		metadata := &assets.Topic{
-			Resource: &common.Resource{
-				Urn:  "test-urn",
-				Name: "test-name",
-			},
-			Description: "test-desc",
-		}
-		mapping := map[string]string{
-			"fieldA": "resource.urn",
-			"fieldB": "resource.name",
-			"fieldC": "description",
-		}
-		requestPayload := `[{"description":"test-desc","fieldA":"test-urn","fieldB":"test-name","fieldC":"test-desc","resource":{"name":"test-name","urn":"test-urn"}}]`
-
-		client := newmockHTTPClient(http.MethodPut, url, requestPayload)
-		client.SetupResponse(200, "")
-
-		ctx := context.TODO()
-		columbusSink := columbus.New(client, utils.Logger)
-		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host":    host,
-			"type":    columbusType,
-			"mapping": mapping,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(metadata)})
-		assert.NoError(t, err)
-		client.Assert(t)
-	})
 }
 
 type mockHTTPClient struct {
-	URL                string
-	Method             string
-	RequestPayloadJSON string
-	ResponseJSON       string
-	ResponseStatus     int
-	req                *http.Request
+	URL            string
+	Method         string
+	RequestPayload []columbus.Record
+	ResponseJSON   string
+	ResponseStatus int
+	req            *http.Request
 }
 
-func newmockHTTPClient(method, url string, payloadJSON string) *mockHTTPClient {
+func newMockHTTPClient(method, url string, payload []columbus.Record) *mockHTTPClient {
 	return &mockHTTPClient{
-		Method:             method,
-		URL:                url,
-		RequestPayloadJSON: payloadJSON,
+		Method:         method,
+		URL:            url,
+		RequestPayload: payload,
 	}
 }
 
@@ -249,5 +222,10 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 		}
 	}
 
-	assert.Equal(t, string(m.RequestPayloadJSON), string(bodyBytes))
+	expectedBytes, err := json.Marshal(m.RequestPayload)
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, string(expectedBytes), string(bodyBytes))
 }

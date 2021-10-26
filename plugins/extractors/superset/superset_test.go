@@ -1,4 +1,5 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package superset_test
 
@@ -7,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,6 +15,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
@@ -73,7 +75,7 @@ func TestMain(m *testing.M) {
 			return
 		}
 		body, err := io.ReadAll(res.Body)
-	 	if err := res.Body.Close(); err != nil {
+		if err := res.Body.Close(); err != nil {
 			return err
 		}
 		if res.StatusCode != http.StatusOK {
@@ -244,7 +246,7 @@ func makeRequest(method, url string, payload interface{}, data interface{}) (err
 		return errors.Wrap(err, "failed to generate response")
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return errors.Wrap(err, "response failed with status code: %d", res.StatusCode)
+		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
