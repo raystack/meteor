@@ -9,7 +9,10 @@ sinks:
   name: columbus
   config:
     host: https://columbus.com
-	type: sample-columbus-type
+	  type: sample-columbus-type
+    labels:
+      myCustom: $properties.attributes.myCustomField
+      sampleLabel: $properties.labels.sampleLabelField
 ```
 
 ## Contributing

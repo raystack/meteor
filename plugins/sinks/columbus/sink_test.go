@@ -10,7 +10,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	testUtils "github.com/odpf/meteor/test/utils"
+	"github.com/odpf/meteor/utils"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -39,6 +40,16 @@ var (
 				{Name: "admin-A"},
 			},
 		},
+		Properties: &facets.Properties{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				"attrA": "valueAttrA",
+				"attrB": "valueAttrB",
+			}),
+			Labels: map[string]string{
+				"labelA": "valueLabelA",
+				"labelB": "valueLabelB",
+			},
+		},
 	}
 	requestPayload = []columbus.Record{
 		{
@@ -62,7 +73,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, requestPayload), utils.Logger)
+				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, requestPayload), testUtils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -77,7 +88,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(200, "")
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, utils.Logger)
+		columbusSink := columbus.New(client, testUtils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": columbusType,
@@ -102,7 +113,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, utils.Logger)
+		columbusSink := columbus.New(client, testUtils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": "my-type",
@@ -125,7 +136,7 @@ func TestSink(t *testing.T) {
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
-				columbusSink := columbus.New(client, utils.Logger)
+				columbusSink := columbus.New(client, testUtils.Logger)
 				err := columbusSink.Init(ctx, map[string]interface{}{
 					"host": host,
 					"type": "my-type",
@@ -148,10 +159,46 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(200, `{"success": true}`)
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, utils.Logger)
+		columbusSink := columbus.New(client, testUtils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
 			"type": "my-type",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		assert.NoError(t, err)
+		client.Assert(t)
+	})
+
+	t.Run("should build columbus labels if labels is defined in config", func(t *testing.T) {
+		expectedPayload := []columbus.Record{
+			{
+				Urn:  topic.Resource.Urn,
+				Name: topic.Resource.Name,
+				Data: topic,
+				Labels: map[string]string{
+					"foo": "valueAttrB",
+					"bar": "valueLabelA",
+				},
+			},
+		}
+
+		// setup mock client
+		client := newMockHTTPClient(http.MethodPut, url, expectedPayload)
+		client.SetupResponse(200, `{"success": true}`)
+		ctx := context.TODO()
+
+		columbusSink := columbus.New(client, testUtils.Logger)
+		err := columbusSink.Init(ctx, map[string]interface{}{
+			"host": host,
+			"type": "my-type",
+			"labels": map[string]string{
+				"foo": "$properties.attributes.attrB",
+				"bar": "$properties.labels.labelA",
+			},
 		})
 		if err != nil {
 			t.Fatal(err)
