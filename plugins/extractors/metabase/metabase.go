@@ -78,15 +78,16 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
-
 	e.client = &http.Client{
-		Timeout: 4 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	// get session id for further api calls in metabase
-	if e.sessionID, err = e.getSessionID(); err != nil {
+	sessionID, err := e.getSessionID()
+	if err != nil {
 		return errors.Wrap(err, "failed to fetch session ID")
 	}
+	e.sessionID = sessionID
 
 	return nil
 }
@@ -224,6 +225,7 @@ func (e *Extractor) getSessionID() (sessionID string, err error) {
 	if err != nil {
 		return
 	}
+
 	return data.ID, nil
 }
 
@@ -239,7 +241,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 		return errors.Wrap(err, "failed to create request")
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Metabase-Session", e.config.SessionID)
+	req.Header.Set("X-Metabase-Session", e.sessionID)
 
 	res, err := e.client.Do(req)
 	if err != nil {

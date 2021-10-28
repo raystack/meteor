@@ -3,7 +3,7 @@ package metabase
 import "time"
 
 const (
-	timestampFormat = "2006-01-02T15:04:05.999999"
+	timestampFormat = "2006-01-02T15:04:05.999999Z"
 )
 
 type Dashboard struct {
