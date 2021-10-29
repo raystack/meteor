@@ -130,11 +130,13 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 		return Record{}, errors.Wrap(err, "failed to build labels")
 	}
 
+	resource := metadata.GetResource()
 	record := Record{
-		Urn:    metadata.GetResource().GetUrn(),
-		Name:   metadata.GetResource().GetName(),
-		Data:   metadata,
-		Labels: labels,
+		Urn:     resource.GetUrn(),
+		Name:    resource.GetName(),
+		Service: resource.GetService(),
+		Data:    metadata,
+		Labels:  labels,
 	}
 
 	return record, nil

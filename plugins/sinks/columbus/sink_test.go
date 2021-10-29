@@ -32,8 +32,9 @@ var (
 	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
 	topic        = &assets.Topic{
 		Resource: &common.Resource{
-			Urn:  "my-topic-urn",
-			Name: "my-topic",
+			Urn:     "my-topic-urn",
+			Name:    "my-topic",
+			Service: "kafka",
 		},
 		Ownership: &facets.Ownership{
 			Owners: []*facets.Owner{
@@ -53,9 +54,10 @@ var (
 	}
 	requestPayload = []columbus.Record{
 		{
-			Urn:  topic.Resource.Urn,
-			Name: topic.Resource.Name,
-			Data: topic,
+			Urn:     topic.Resource.Urn,
+			Name:    topic.Resource.Name,
+			Service: "kafka",
+			Data:    topic,
 		},
 	}
 )
@@ -176,9 +178,10 @@ func TestSink(t *testing.T) {
 	t.Run("should build columbus labels if labels is defined in config", func(t *testing.T) {
 		expectedPayload := []columbus.Record{
 			{
-				Urn:  topic.Resource.Urn,
-				Name: topic.Resource.Name,
-				Data: topic,
+				Urn:     topic.Resource.Urn,
+				Name:    topic.Resource.Name,
+				Service: topic.Resource.Service,
+				Data:    topic,
 				Labels: map[string]string{
 					"foo": "valueAttrB",
 					"bar": "valueLabelA",
