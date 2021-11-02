@@ -125,12 +125,6 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 		return
 	}
 
-	createdAt, updatedAt, err := e.buildTimestamps(dashboard.BaseModel)
-	if err != nil {
-		err = errors.Wrapf(err, "error building dashboard timestamps")
-		return
-	}
-
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
 			Urn:     dashboardUrn,
@@ -147,8 +141,8 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 			}),
 		},
 		Timestamps: &common.Timestamp{
-			CreateTime: timestamppb.New(createdAt),
-			UpdateTime: timestamppb.New(updatedAt),
+			CreateTime: timestamppb.New(time.Time(dashboard.CreatedAt)),
+			UpdateTime: timestamppb.New(time.Time(dashboard.UpdatedAt)),
 		},
 	}
 	return
@@ -174,21 +168,6 @@ func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (chart
 				}),
 			},
 		})
-	}
-
-	return
-}
-
-func (e *Extractor) buildTimestamps(model BaseModel) (createdAt time.Time, updatedAt time.Time, err error) {
-	createdAt, err = model.CreatedAt()
-	if err != nil {
-		err = errors.Wrap(err, "failed parsing created_at")
-		return
-	}
-	updatedAt, err = model.UpdatedAt()
-	if err != nil {
-		err = errors.Wrap(err, "failed parsing updated_at")
-		return
 	}
 
 	return

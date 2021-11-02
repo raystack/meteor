@@ -1,0 +1,12 @@
+[
+    {
+        "name": "random_dashboard",
+        "description": "some description",
+        "collection_id": 1,
+        "ordered_cards": [
+            {
+                "card_id": 1 
+            }
+        ]
+    }
+]

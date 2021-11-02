@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/odpf/meteor/models"
 	testutils "github.com/odpf/meteor/test/utils"
@@ -71,13 +72,10 @@ func TestExtract(t *testing.T) {
 
 func expectedData() (records []*assets.Dashboard) {
 	for _, d := range populatedDashboards {
-		createdAt, _ := d.CreatedAt()
-		updatedAt, _ := d.UpdatedAt()
-		cards := dashboardCards[d.ID]
-
 		dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", instanceLabel, d.ID)
 		var charts []*assets.Chart
-		for _, card := range cards {
+		for _, oc := range d.OrderedCards {
+			card := populatedCards[oc.CardID]
 			charts = append(charts, &assets.Chart{
 				Urn:          fmt.Sprintf("metabase::%s/card/%d", instanceLabel, card.ID),
 				DashboardUrn: dashboardUrn,
@@ -115,8 +113,8 @@ func expectedData() (records []*assets.Dashboard) {
 			},
 			Charts: charts,
 			Timestamps: &common.Timestamp{
-				CreateTime: timestamppb.New(createdAt),
-				UpdateTime: timestamppb.New(updatedAt),
+				CreateTime: timestamppb.New(time.Time(d.CreatedAt)),
+				UpdateTime: timestamppb.New(time.Time(d.UpdatedAt)),
 			},
 		})
 	}

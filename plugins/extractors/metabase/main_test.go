@@ -15,6 +15,7 @@ import (
 	"github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/pkg/errors"
 )
 
 var session_id string
@@ -24,7 +25,7 @@ var (
 	email               = "user@example.com"
 	pass                = "meteor_pass_1234"
 	populatedDashboards = []metabase.Dashboard{}
-	dashboardCards      = map[int][]metabase.Card{}
+	populatedCards      = map[int]metabase.Card{}
 )
 
 func TestMain(m *testing.M) {
@@ -77,109 +78,114 @@ func setup() (err error) {
 	var data responseToken
 	err = makeRequest("GET", host+"/api/session/properties", nil, &data)
 	if err != nil {
-		return
+		return errors.Wrap(err, "error getting setup token")
 	}
 	err = setSessionID(data.Token)
 	if err != nil {
-		return
+		return errors.Wrap(err, "error setting session_id")
 	}
-	err = addMockData()
+	err = populateData()
 	if err != nil {
-		return
+		return errors.Wrap(err, "error populating data")
 	}
 	return
 }
 
-func addMockData() (err error) {
-	collection_id, err := addCollection()
+func populateData() (err error) {
+	err = populateCollections()
 	if err != nil {
-		return
+		return errors.Wrap(err, "error populating collections")
 	}
-	err = addDashboard(collection_id)
+	err = populateCards()
 	if err != nil {
-		return
+		return errors.Wrap(err, "error populating cards")
+	}
+	err = populateDashboards()
+	if err != nil {
+		return errors.Wrap(err, "error populating dashboards")
 	}
 	return
 }
 
-func addCollection() (collection_id int, err error) {
-	payload := map[string]interface{}{
-		"name":        "temp_collection_meteor",
-		"color":       "#ffffb3",
-		"description": "Temp Collection for Meteor Metabase Extractor",
-	}
-
-	type response struct {
-		ID int `json:"id"`
-	}
-	var resp response
-	err = makeRequest("POST", host+"/api/collection", payload, &resp)
+func populateCollections() (err error) {
+	var collections []metabase.Collection
+	err = readFromFiles("./testdata/collections.json", &collections)
 	if err != nil {
-		return
+		return errors.Wrap(err, "error reading collections")
 	}
 
-	collection_id = resp.ID
-	return
-}
-
-func addDashboard(collection_id int) (err error) {
-	payload := map[string]interface{}{
-		"name":          "random_dashboard",
-		"description":   "some description",
-		"collection_id": collection_id,
+	for _, c := range collections {
+		var res metabase.Collection
+		err = makeRequest("POST", host+"/api/collection", c, &res)
+		if err != nil {
+			return errors.Wrapf(err, "error creating collection \"%s\"", c.Name)
+		}
 	}
-
-	var dashboard metabase.Dashboard
-	err = makeRequest("POST", host+"/api/dashboard", payload, &dashboard)
-	if err != nil {
-		return
-	}
-	err = addCards(dashboard)
-	if err != nil {
-		return
-	}
-
-	populatedDashboards = append(populatedDashboards, dashboard)
 
 	return
 }
 
-func addCards(dashboard metabase.Dashboard) (err error) {
-	// create card
-	cardPayload := map[string]interface{}{
-		"name":                   "Orders, Filtered by Quantity",
-		"table_id":               1,
-		"database_id":            1,
-		"collection_id":          dashboard.CollectionID,
-		"creator_id":             1,
-		"description":            "HELPFUL CHART DESC",
-		"query_type":             "query",
-		"display":                "table",
-		"query_average_duration": 114,
-		"archived":               false,
-	}
-	cardUrl := fmt.Sprintf("%s/api/card", host)
-	var card metabase.Card
-	err = makeRequest("POST", cardUrl, cardPayload, &card)
-	if err != nil {
-		return
-	}
-
-	// set card to dashboard
-	cardToDashboardUrl := fmt.Sprintf("%s/api/dashboard/%d/cards", host, dashboard.ID)
-	err = makeRequest("POST", cardToDashboardUrl, map[string]interface{}{
-		"card_id": card.ID,
-	}, nil)
-	if err != nil {
-		return
-	}
-
-	// save card to memory for asserting
+func populateCards() (err error) {
 	var cards []metabase.Card
-	cards = append(cards, card)
-	dashboardCards[dashboard.ID] = cards
+	err = readFromFiles("./testdata/cards.json", &cards)
+	if err != nil {
+		return errors.Wrap(err, "error reading cards")
+	}
+
+	for _, c := range cards {
+		var res metabase.Card
+		err = makeRequest("POST", host+"/api/card", c, &res)
+		if err != nil {
+			return errors.Wrapf(err, "error creating card \"%s\"", c.Name)
+		}
+
+		populatedCards[res.ID] = res
+	}
 
 	return
+}
+
+func populateDashboards() (err error) {
+	var dashboards []metabase.Dashboard
+	err = readFromFiles("./testdata/dashboards.json", &dashboards)
+	if err != nil {
+		return errors.Wrap(err, "error reading dashboards")
+	}
+
+	for i, d := range dashboards {
+		var res metabase.Dashboard
+		err = makeRequest("POST", host+"/api/dashboard", d, &res)
+		if err != nil {
+			return errors.Wrapf(err, "error creating dashboard \"%s\"", d.Name)
+		}
+
+		for _, oc := range d.OrderedCards {
+			err = makeRequest("POST", fmt.Sprintf("%s/api/dashboard/%d/cards", host, res.ID), oc, nil)
+			if err != nil {
+				return errors.Wrapf(err, "error assigning card_id \"%d\" to dashboard \"%s\"", oc.CardID, d.Name)
+			}
+		}
+
+		res.OrderedCards = d.OrderedCards
+		dashboards[i] = res
+
+		populatedDashboards = append(populatedDashboards, dashboards[i])
+	}
+
+	return
+}
+
+func readFromFiles(path string, data interface{}) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return errors.Wrapf(err, "error opening \"%s\"", path)
+	}
+	err = json.NewDecoder(file).Decode(&data)
+	if err != nil {
+		return errors.Wrapf(err, "error decoding \"%s\"", path)
+	}
+
+	return nil
 }
 
 func setSessionID(setup_token string) (err error) {
