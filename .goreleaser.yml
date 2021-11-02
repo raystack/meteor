@@ -54,7 +54,7 @@ dockers:
     goarch: amd64
     ids:
       - meteor
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.production
     image_templates:
       - 'docker.io/odpf/{{.ProjectName}}:latest'
       - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'

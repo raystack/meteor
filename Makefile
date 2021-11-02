@@ -9,6 +9,9 @@ all: build
 build:
 	go build -ldflags "-X cmd.Version=${VERSION}" ${NAME}
 
+build-dev:
+	CGO_ENABLED=0 go build -ldflags "-X cmd.Version=dev" ${NAME}
+
 clean:
 	rm -rf dist/
 
