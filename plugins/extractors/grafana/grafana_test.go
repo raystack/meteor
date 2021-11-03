@@ -1,15 +1,17 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package grafana_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -58,12 +60,12 @@ func TestExtract(t *testing.T) {
 		expectedData := []models.Record{
 			models.NewRecord(&assets.Dashboard{
 				Resource: &common.Resource{
-					Urn:     "grafana.HzK8qNW7z",
-					Name:    "new-dashboard-copy",
-					Service: "grafana",
-					Url:     fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+					Urn:         "grafana.HzK8qNW7z",
+					Name:        "new-dashboard-copy",
+					Service:     "grafana",
+					Url:         fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+					Description: "",
 				},
-				Description: "",
 				Charts: []*assets.Chart{
 					{
 						Urn:             "HzK8qNW7z.2",
@@ -81,12 +83,12 @@ func TestExtract(t *testing.T) {
 			}),
 			models.NewRecord(&assets.Dashboard{
 				Resource: &common.Resource{
-					Urn:     "grafana.5WsKOvW7z",
-					Name:    "test-dashboard-updated",
-					Service: "grafana",
-					Url:     fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
+					Urn:         "grafana.5WsKOvW7z",
+					Name:        "test-dashboard-updated",
+					Service:     "grafana",
+					Url:         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
+					Description: "this is description for testing",
 				},
-				Description: "this is description for testing",
 				Charts: []*assets.Chart{
 					{
 						Urn:             "5WsKOvW7z.4",
