@@ -59,10 +59,14 @@ func TestExtract(t *testing.T) {
 		client.On("Authenticate", host, "test-user", "test-pass", "").Return(nil)
 		client.On("GetDashboards").Return(dashboards, nil)
 		client.On("GetDashboard", 1).Return(dashboard_1, nil)
+		client.On("GetTable", 2).Return(getTable(t, 2), nil).Once()
+		client.On("GetDatabase", 2).Return(getDatabase(t, 2), nil).Once()
+		client.On("GetTable", 5).Return(getTable(t, 5), nil).Once()
+		client.On("GetDatabase", 3).Return(getDatabase(t, 3), nil).Once()
 		defer client.AssertExpectations(t)
 
 		emitter := mocks.NewEmitter()
-		extr := metabase.New(client, testutils.Logger)
+		extr := metabase.New(client, plugins.GetLog())
 		err := extr.Init(context.TODO(), map[string]interface{}{
 			"host":     host,
 			"username": "test-user",
@@ -104,6 +108,28 @@ func getDashboard(t *testing.T, id int) metabase.Dashboard {
 	}
 
 	return dashboard
+}
+
+func getDatabase(t *testing.T, id int) metabase.Database {
+	var database metabase.Database
+	filePath := fmt.Sprintf("./testdata/database_%d.json", id)
+	err := readFromFiles(filePath, &database)
+	if err != nil {
+		t.Fatalf("error reading %s: %s", filePath, err.Error())
+	}
+
+	return database
+}
+
+func getTable(t *testing.T, id int) metabase.Table {
+	var table metabase.Table
+	filePath := fmt.Sprintf("./testdata/table_%d.json", id)
+	err := readFromFiles(filePath, &table)
+	if err != nil {
+		t.Fatalf("error reading %s: %s", filePath, err.Error())
+	}
+
+	return table
 }
 
 func readFromFiles(path string, data interface{}) error {
@@ -151,11 +177,6 @@ func (m *mockClient) Authenticate(host, username, password, sessionID string) er
 	return args.Error(0)
 }
 
-func (m *mockClient) GetCards() ([]metabase.Card, error) {
-	args := m.Called()
-	return args.Get(0).([]metabase.Card), args.Error(1)
-}
-
 func (m *mockClient) GetDashboards() ([]metabase.Dashboard, error) {
 	args := m.Called()
 	return args.Get(0).([]metabase.Dashboard), args.Error(1)
@@ -164,4 +185,14 @@ func (m *mockClient) GetDashboards() ([]metabase.Dashboard, error) {
 func (m *mockClient) GetDashboard(id int) (metabase.Dashboard, error) {
 	args := m.Called(id)
 	return args.Get(0).(metabase.Dashboard), args.Error(1)
+}
+
+func (m *mockClient) GetDatabase(id int) (metabase.Database, error) {
+	args := m.Called(id)
+	return args.Get(0).(metabase.Database), args.Error(1)
+}
+
+func (m *mockClient) GetTable(id int) (metabase.Table, error) {
+	args := m.Called(id)
+	return args.Get(0).(metabase.Table), args.Error(1)
 }

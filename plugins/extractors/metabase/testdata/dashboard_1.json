@@ -264,7 +264,7 @@
                 "name": "Orders, Filtered by Quantity",
                 "query_average_duration": 114,
                 "creator_id": 1,
-                "updated_at": "2021-11-02T10:31:38.906",
+                "updated_at": "2021-11-02T10:31:38.906Z",
                 "made_public_by_id": null,
                 "embedding_params": null,
                 "cache_ttl": null,
@@ -290,17 +290,17 @@
                     "table.pivot_column": "DISCOUNT",
                     "table.cell_column": "SUBTOTAL"
                 },
-                "created_at": "2021-10-25T16:12:04.454",
+                "created_at": "2021-10-25T16:12:04.454Z",
                 "public_uuid": null
             },
-            "updated_at": "2021-11-02T10:32:58.716",
+            "updated_at": "2021-11-02T10:32:58.716Z",
             "col": 0,
             "id": 1,
             "parameter_mappings": [],
             "card_id": 1,
             "visualization_settings": {},
             "dashboard_id": 1,
-            "created_at": "2021-10-25T16:12:47.46",
+            "created_at": "2021-10-25T16:12:47.46Z",
             "sizeY": 5,
             "row": 0
         },
@@ -433,15 +433,28 @@
                 "name": "Exceptional Users",
                 "query_average_duration": 25,
                 "creator_id": 1,
-                "updated_at": "2021-11-02T10:31:38.804",
+                "updated_at": "2021-11-02T10:31:38.804Z",
                 "made_public_by_id": null,
                 "embedding_params": null,
                 "cache_ttl": null,
                 "dataset_query": {
                     "type": "native",
                     "native": {
-                        "query": "SELECT name,total_followers,total_likes,created_at\nFROM public.user\nWHERE total_followers > 200;",
-                        "template-tags": {}
+                        "query": "SELECT name,total_followers,total_likes,created_at\nFROM public.user\nWHERE total_followers > {{followers}} AND created_at > {{start-time}} AND name = {{name}} AND {{dims}};",
+                        "template-tags": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "followers": {
+                                "type": "number"
+                            },
+                            "start-time": {
+                                "type": "date"
+                            },
+                            "dims": {
+                                "type": "dimension"
+                            }
+                        }
                     },
                     "database": 2
                 },
@@ -451,17 +464,17 @@
                     "table.pivot_column": "name",
                     "table.cell_column": "total_followers"
                 },
-                "created_at": "2021-11-02T09:07:25.569",
+                "created_at": "2021-11-02T09:07:25.569Z",
                 "public_uuid": null
             },
-            "updated_at": "2021-11-02T10:32:58.719",
+            "updated_at": "2021-11-02T10:32:58.719Z",
             "col": 10,
             "id": 2,
             "parameter_mappings": [],
             "card_id": 2,
             "visualization_settings": {},
             "dashboard_id": 1,
-            "created_at": "2021-11-02T09:12:44.179",
+            "created_at": "2021-11-02T09:12:44.179Z",
             "sizeY": 5,
             "row": 0
         },
@@ -535,7 +548,7 @@
                 "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
                 "query_average_duration": 30,
                 "creator_id": 1,
-                "updated_at": "2021-11-02T10:31:39.318",
+                "updated_at": "2021-11-02T10:31:39.318Z",
                 "made_public_by_id": null,
                 "embedding_params": null,
                 "cache_ttl": null,
@@ -578,17 +591,182 @@
                 "visualization_settings": {
                     "table.cell_column": "avg"
                 },
-                "created_at": "2021-11-02T10:31:35.726",
+                "created_at": "2021-11-02T10:31:35.726Z",
                 "public_uuid": null
             },
-            "updated_at": "2021-11-02T10:32:58.721",
+            "updated_at": "2021-11-02T10:32:58.721Z",
             "col": 0,
             "id": 3,
             "parameter_mappings": [],
             "card_id": 3,
             "visualization_settings": {},
             "dashboard_id": 1,
-            "created_at": "2021-11-02T10:32:58.616",
+            "created_at": "2021-11-02T10:32:58.616Z",
+            "sizeY": 5,
+            "row": 5
+        },
+        {
+            "sizeX": 6,
+            "series": [],
+            "collection_authority_level": null,
+            "card": {
+                "description": null,
+                "archived": false,
+                "collection_position": null,
+                "table_id": null,
+                "result_metadata": [
+                    {
+                        "base_type": "type/Date",
+                        "display_name": "day_id",
+                        "name": "day_id",
+                        "special_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 22,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/DateTime": {
+                                    "earliest": "2021-09-22T07:00:00+07:00",
+                                    "latest": "2021-10-13T07:00:00+07:00"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "base_type": "type/Text",
+                        "display_name": "class",
+                        "name": "class",
+                        "special_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 4,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Text": {
+                                    "percent-json": 0.0,
+                                    "percent-url": 0.0,
+                                    "percent-email": 0.0,
+                                    "percent-state": 0.0,
+                                    "average-length": 13.0
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "base_type": "type/Integer",
+                        "display_name": "trx",
+                        "name": "trx",
+                        "special_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 88,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 228056.0,
+                                    "q1": 383189.89871547767,
+                                    "q3": 619048.5,
+                                    "max": 834497.0,
+                                    "sd": 159905.2062211174,
+                                    "avg": 492525.5909090909
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "base_type": "type/Integer",
+                        "display_name": "trx_compl",
+                        "name": "trx_compl",
+                        "special_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 88,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 196671.0,
+                                    "q1": 337336.97845814435,
+                                    "q3": 559372.5,
+                                    "max": 724647.0,
+                                    "sd": 148744.15224351035,
+                                    "avg": 438860.2840909091
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "base_type": "type/Float",
+                        "display_name": "bcr",
+                        "name": "bcr",
+                        "special_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 88,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 0.6170940687653886,
+                                    "q1": 0.870108219721764,
+                                    "q3": 0.9255213067448413,
+                                    "max": 0.9391057007234513,
+                                    "sd": 0.059479870765927575,
+                                    "avg": 0.8873180751956314
+                                }
+                            }
+                        }
+                    }
+                ],
+                "can_write": true,
+                "database_id": 2,
+                "enable_embedding": false,
+                "collection_id": 1,
+                "query_type": "native",
+                "name": "BCR",
+                "dashboard_count": 1,
+                "creator_id": 1,
+                "updated_at": "2021-10-14T10:40:01.264483Z",
+                "made_public_by_id": null,
+                "embedding_params": null,
+                "cache_ttl": null,
+                "dataset_query": {
+                    "database": 3,
+                    "type": "native",
+                    "native": {
+                        "query": "select _date day_id\r\n    , case when sa_id = 1 and st in ('TEST') then 'Paris' when sa_id = 1 and st in ('EXAMPLE') then 'Paris' \r\n    when st in ('SAMPLE') then 'Milan' when st in ('TEST') then 'Milan' end class\r\n, count(a.orno) trx, count(case when status = 'Done' then a.orno end) tc, count(case when status = 'Done' then a.orno end)/count(a.orno) bcr\r\nfrom dataset_a.invoice a left join `project_a.dataset_b.user` b on a.sa_id = b.id\r\nwhere _date >= date_sub(Current_date, INTERVAL 22 DAY) [[and   st in ('EXAMPLE','TEST')]]\r\n--  and sa_id in (1, 3, 22 , 2 , 5 , 14 , 11 , 7 , 17 , 6 , 20 , 10 , 12 , 4 , 9 )\r\ngroup by 1,2 order by 1,2",
+                        "template-tags": {}
+                    }
+                },
+                "id": 4,
+                "display": "line",
+                "visualization_settings": {
+                    "graph.metrics": [
+                        "bcr"
+                    ],
+                    "graph.dimensions": [
+                        "day_id",
+                        "class"
+                    ],
+                    "line.marker_enabled": true,
+                    "graph.show_goal": false,
+                    "graph.y_axis.labels_enabled": true,
+                    "line.interpolate": "linear"
+                },
+                "created_at": "2018-11-13T04:16:40.262Z",
+                "public_uuid": null
+            },
+            "updated_at": "2021-11-02T10:32:58.721Z",
+            "col": 0,
+            "id": 4,
+            "parameter_mappings": [],
+            "card_id": 4,
+            "visualization_settings": {},
+            "dashboard_id": 1,
+            "created_at": "2021-11-02T10:32:58.616Z",
             "sizeY": 5,
             "row": 5
         }
@@ -602,7 +780,7 @@
     "caveats": null,
     "collection_authority_level": null,
     "creator_id": 1,
-    "updated_at": "2021-11-02T10:32:58.786",
+    "updated_at": "2021-11-02T10:32:58.786Z",
     "made_public_by_id": null,
     "embedding_params": null,
     "id": 1,
@@ -613,10 +791,10 @@
         "email": "john@example.com",
         "first_name": "John",
         "last_name": "Doe",
-        "timestamp": "2021-11-02T10:32:58.827"
+        "timestamp": "2021-11-02T10:32:58.827Z"
     },
     "parameters": [],
-    "created_at": "2021-10-25T16:10:40.371",
+    "created_at": "2021-10-25T16:10:40.371Z",
     "public_uuid": null,
     "points_of_interest": null
 }

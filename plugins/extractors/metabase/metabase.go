@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -25,8 +26,7 @@ var summary string
 var sampleConfig = `
 host: http://localhost:3000
 user_id: meteor_tester
-password: meteor_pass_1234
-label: my-metabase`
+password: meteor_pass_1234`
 
 // Config hold the set of configuration for the metabase extractor
 type Config struct {
@@ -93,9 +93,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		// "ordered_cards" field
 		dashboard, err := e.buildDashboard(d)
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch dashboard data")
+			e.logger.Error("failed to build dashboard with", "dashboard_id", d.ID, "err", err.Error())
+		} else {
+			emit(models.NewRecord(dashboard))
 		}
-		emit(models.NewRecord(dashboard))
 	}
 	return nil
 }
@@ -107,13 +108,10 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 		err = errors.Wrapf(err, "error fetching dashboard")
 		return
 	}
-	dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", e.config.Host, dashboard.ID)
 
-	charts, err := e.buildCharts(dashboardUrn, dashboard)
-	if err != nil {
-		err = errors.Wrapf(err, "error building charts")
-		return
-	}
+	dashboardUrn := models.DashboardUrn("metabase", e.config.Host, fmt.Sprintf("dashboard/%d", dashboard.ID))
+	charts := e.buildCharts(dashboardUrn, dashboard)
+	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
@@ -134,35 +132,197 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 			CreateTime: timestamppb.New(time.Time(dashboard.CreatedAt)),
 			UpdateTime: timestamppb.New(time.Time(dashboard.UpdatedAt)),
 		},
+		Lineage: &facets.Lineage{
+			Upstreams: dashboardUpstreams,
+		},
 	}
 	return
 }
 
-func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assets.Chart, err error) {
+func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assets.Chart) {
 	for _, oc := range dashboard.OrderedCards {
-		card := oc.Card
-		charts = append(charts, &assets.Chart{
-			Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
-			DashboardUrn: dashboardUrn,
-			Source:       "metabase",
-			Name:         card.Name,
-			Description:  card.Description,
-			Properties: &facets.Properties{
-				Attributes: utils.TryParseMapToProto(map[string]interface{}{
-					"id":                     card.ID,
-					"collection_id":          card.CollectionID,
-					"creator_id":             card.CreatorID,
-					"database_id":            card.DatabaseID,
-					"table_id":               card.TableID,
-					"query_average_duration": card.QueryAverageDuration,
-					"display":                card.Display,
-					"archived":               card.Archived,
-				}),
-			},
+		chart, err := e.buildChart(oc.Card, dashboardUrn)
+		if err != nil {
+			e.logger.Error("error building upstreams for a card", "card_id", oc.Card.ID, "err", err)
+		} else {
+			charts = append(charts, chart)
+		}
+	}
+
+	return
+}
+
+func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assets.Chart, err error) {
+	var upstreams []*common.Resource
+	upstreams, err = e.buildUpstreams(card)
+	if err != nil {
+		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
+	}
+
+	return &assets.Chart{
+		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
+		DashboardUrn: dashboardUrn,
+		Source:       "metabase",
+		Name:         card.Name,
+		Description:  card.Description,
+		Properties: &facets.Properties{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				"id":                     card.ID,
+				"collection_id":          card.CollectionID,
+				"creator_id":             card.CreatorID,
+				"database_id":            card.DatabaseID,
+				"table_id":               card.TableID,
+				"query_average_duration": card.QueryAverageDuration,
+				"display":                card.Display,
+				"archived":               card.Archived,
+			}),
+		},
+		Lineage: &facets.Lineage{
+			Upstreams: upstreams,
+		},
+	}, nil
+}
+
+func (e *Extractor) buildUpstreams(card Card) (upstreams []*common.Resource, err error) {
+	switch card.DatasetQuery.Type {
+	case datasetQueryTypeQuery:
+		upstreams, err = e.buildUpstreamsFromQuery(card)
+		if err != nil {
+			err = errors.Wrap(err, "error building upstreams from query")
+		}
+		return
+	case datasetQueryTypeNative:
+		upstreams, err = e.buildUpstreamsFromNative(card)
+		if err != nil {
+			err = errors.Wrap(err, "error building upstreams from native")
+		}
+		return
+	default:
+		return
+	}
+}
+
+func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*common.Resource, err error) {
+	table, err := e.client.GetTable(card.DatasetQuery.Query.SourceTable)
+	if err != nil {
+		err = errors.Wrap(err, "error getting table")
+		return
+	}
+
+	service, cluster, dbName := e.extractDbComponent(table.Db)
+	upstreams = append(upstreams, &common.Resource{
+		Urn:     e.buildURN(service, cluster, dbName, table.Name),
+		Service: service,
+		Type:    "table",
+	})
+
+	return
+}
+
+func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*common.Resource, err error) {
+	database, err := e.client.GetDatabase(card.DatasetQuery.Database)
+	if err != nil {
+		err = errors.Wrap(err, "error getting database")
+		return
+	}
+
+	tableNames, err := e.getTableNamesFromSQL(card.DatasetQuery.Native)
+	if err != nil {
+		err = errors.Wrap(err, "error getting table names from SQL")
+		return
+	}
+
+	service, cluster, dbName := e.extractDbComponent(database)
+	for _, tableName := range tableNames {
+		upstreams = append(upstreams, &common.Resource{
+			Urn:     e.buildURN(service, cluster, dbName, tableName),
+			Service: service,
+			Type:    "table",
 		})
 	}
 
 	return
+}
+
+func (e *Extractor) buildDashboardUpstreams(charts []*assets.Chart) (upstreams []*common.Resource) {
+	existing := map[string]bool{}
+	for _, chart := range charts {
+		if chart.Lineage == nil {
+			continue
+		}
+
+		for _, upstream := range chart.Lineage.Upstreams {
+			if _, duplicate := existing[upstream.Urn]; duplicate {
+				continue
+			}
+
+			upstreams = append(upstreams, upstream)
+			existing[upstream.Urn] = true
+		}
+	}
+
+	return
+}
+
+func (e *Extractor) extractDbComponent(database Database) (service, cluster, dbName string) {
+	service = database.Engine
+
+	switch service {
+	case "h2":
+		comps := strings.Split(database.Details.Db, ";")
+		dbUrlComps := strings.Split(comps[0], "/")
+
+		cluster = strings.Join(dbUrlComps[:len(dbUrlComps)-1], "/")
+		dbName = dbUrlComps[len(dbUrlComps)-1]
+	case "postgres":
+		fallthrough
+	case "mysql":
+		cluster = fmt.Sprintf("%s:%d", database.Details.Host, database.Details.Port)
+		dbName = database.Details.Dbname
+	case "bigquery":
+		cluster = database.Details.ProjectID
+		dbName = database.Details.DatasetID
+	default:
+		e.logger.Warn(fmt.Sprintf("unsupported database engine \"%s\"", service))
+	}
+
+	return
+}
+
+func (e *Extractor) getTableNamesFromSQL(datasetQuery NativeDatasetQuery) (tableNames []string, err error) {
+	query, err := evaluateQueryTemplate(datasetQuery)
+	if err != nil {
+		err = errors.Wrap(err, "error adding default value to template in query")
+		return
+	}
+	tableNames, err = extractTableNamesFromSQL(query)
+	if err != nil {
+		err = errors.Wrap(err, "error when parsing SQL")
+	}
+
+	return
+}
+
+func (e *Extractor) buildURN(service, cluster, dbName, tableName string) string {
+	tableComps := strings.Split(tableName, ".")
+	compLength := len(tableComps)
+	tableName = tableComps[len(tableComps)-1]
+
+	switch service {
+	case "postgres":
+		if compLength > 1 && tableComps[0] != "public" {
+			cluster = tableComps[0]
+		}
+	case "bigquery":
+		if compLength > 2 {
+			cluster = tableComps[0]
+			dbName = tableComps[1]
+		} else if compLength > 1 {
+			dbName = tableComps[0]
+		}
+	}
+
+	return models.TableUrn(service, cluster, dbName, tableName)
 }
 
 // Register the extractor to catalog

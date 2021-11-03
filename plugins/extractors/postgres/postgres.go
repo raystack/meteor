@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	_ "embed" // // used to print the embedded assets
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	_ "github.com/lib/pq" // used to register the postgres driver
 	"github.com/odpf/meteor/models"
@@ -174,23 +175,24 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 
 // Prepares the list of tables and the attached metadata
 func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *assets.Table, err error) {
-	result = &assets.Table{
-		Resource: &common.Resource{
-			Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
-			Name: tableName,
-		},
-	}
-
 	var columns []*facets.Column
 	columns, err = e.getColumnMetadata(db, dbName, tableName)
 	if err != nil {
 		return result, nil
 	}
-	result.Schema = &facets.Columns{
-		Columns: columns,
+
+	result = &assets.Table{
+		Resource: &common.Resource{
+			Urn:     models.TableUrn("postgres", e.config.Host, dbName, tableName),
+			Name:    tableName,
+			Service: "postgres",
+		},
+		Schema: &facets.Columns{
+			Columns: columns,
+		},
 	}
 
-	return result, nil
+	return
 }
 
 // Prepares the list of columns and the attached metadata

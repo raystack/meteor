@@ -12,22 +12,27 @@ import (
 
 type Client interface {
 	Authenticate(host, username, password, sessionID string) error
-	GetCards() ([]Card, error)
+	GetDatabase(int) (Database, error)
+	GetTable(int) (Table, error)
 	GetDashboard(int) (Dashboard, error)
 	GetDashboards() ([]Dashboard, error)
 }
 
 type client struct {
-	httpClient *http.Client
-	host       string
-	username   string
-	password   string
-	sessionID  string
+	httpClient    *http.Client
+	host          string
+	username      string
+	password      string
+	sessionID     string
+	databaseCache map[int]Database
+	tableCache    map[int]Table
 }
 
 func newClient() *client {
 	return &client{
-		httpClient: &http.Client{},
+		httpClient:    &http.Client{},
+		databaseCache: map[int]Database{},
+		tableCache:    map[int]Table{},
 	}
 }
 
@@ -49,28 +54,47 @@ func (c *client) Authenticate(host, username, password, sessionID string) (err e
 	return
 }
 
-func (c *client) GetCards() (databases []Card, err error) {
+func (c *client) GetTable(id int) (table Table, err error) {
+	table, ok := c.tableCache[id]
+	if ok {
+		return
+	}
+
+	url := fmt.Sprintf("%s/api/table/%d", c.host, id)
+	err = c.makeRequest("GET", url, nil, &table)
+	if err != nil {
+		return
+	}
+
+	c.tableCache[id] = table
 	return
 }
 
-func (c *client) GetDashboard(id int) (database Dashboard, err error) {
+func (c *client) GetDatabase(id int) (database Database, err error) {
+	database, ok := c.databaseCache[id]
+	if ok {
+		return
+	}
+
+	url := fmt.Sprintf("%s/api/database/%d", c.host, id)
+	err = c.makeRequest("GET", url, nil, &database)
+	if err != nil {
+		return
+	}
+
+	c.databaseCache[id] = database
 	return
 }
 
-func (c *client) GetDashboards() (databases []Dashboard, err error) {
-	return
-}
-
-func (c *client) fetchDashboard(dashboard_id int) (dashboard Dashboard, err error) {
-	url := fmt.Sprintf("%s/api/dashboard/%d", c.host, dashboard_id)
+func (c *client) GetDashboard(id int) (dashboard Dashboard, err error) {
+	url := fmt.Sprintf("%s/api/dashboard/%d", c.host, id)
 	err = c.makeRequest("GET", url, nil, &dashboard)
-
 	return
 }
 
-func (c *client) fetchDashboards() (data []Dashboard, err error) {
+func (c *client) GetDashboards() (dashboards []Dashboard, err error) {
 	url := fmt.Sprintf("%s/api/dashboard", c.host)
-	err = c.makeRequest("GET", url, nil, &data)
+	err = c.makeRequest("GET", url, nil, &dashboards)
 
 	return
 }

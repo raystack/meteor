@@ -12,6 +12,30 @@
             "creator_id": 1
         }
     },
+    "lineage": {
+        "upstreams": [
+            {
+                "urn": "h2::zip:/app/metabase.jar!/sample-dataset.db/ORDERS",
+                "type": "table",
+                "service": "h2"
+            },
+            {
+                "urn": "postgres::postgres:5432/postgres/user",
+                "type": "table",
+                "service": "postgres"
+            },
+            {
+                "service": "bigquery",
+                "type": "table",
+                "urn": "bigquery::sample-project/dataset_a/invoice"
+            },
+            {
+                "service": "bigquery",
+                "type": "table",
+                "urn": "bigquery::project_a/dataset_b/user"
+            }
+        ]
+    },
     "charts": [
         {
             "urn": "metabase::https://my-metabase.com/card/1",
@@ -30,6 +54,15 @@
                     "display": "table",
                     "archived": false
                 }
+            },
+            "lineage": {
+                "upstreams": [
+                    {
+                        "urn": "h2::zip:/app/metabase.jar!/sample-dataset.db/ORDERS",
+                        "type": "table",
+                        "service": "h2"
+                    }
+                ]
             }
         },
         {
@@ -49,6 +82,15 @@
                     "display": "table",
                     "archived": false
                 }
+            },
+            "lineage": {
+                "upstreams": [
+                    {
+                        "urn": "postgres::postgres:5432/postgres/user",
+                        "type": "table",
+                        "service": "postgres"
+                    }
+                ]
             }
         },
         {
@@ -68,7 +110,48 @@
                     "display": "table",
                     "archived": false
                 }
+            },
+            "lineage": {
+                "upstreams": [
+                    {
+                        "urn": "postgres::postgres:5432/postgres/user",
+                        "type": "table",
+                        "service": "postgres"
+                    }
+                ]
             }
+        },
+        {
+            "dashboard_urn": "metabase::https://my-metabase.com/dashboard/1",
+            "lineage": {
+                "upstreams": [
+                    {
+                        "service": "bigquery",
+                        "type": "table",
+                        "urn": "bigquery::sample-project/dataset_a/invoice"
+                    },
+                    {
+                        "service": "bigquery",
+                        "type": "table",
+                        "urn": "bigquery::project_a/dataset_b/user"
+                    }
+                ]
+            },
+            "name": "BCR",
+            "properties": {
+                "attributes": {
+                    "archived": false,
+                    "collection_id": 1,
+                    "creator_id": 1,
+                    "database_id": 2,
+                    "display": "line",
+                    "id": 4,
+                    "query_average_duration": 0,
+                    "table_id": 0
+                }
+            },
+            "source": "metabase",
+            "urn": "metabase::https://my-metabase.com/card/4"
         }
     ],
     "timestamps": {
