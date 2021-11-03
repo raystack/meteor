@@ -1,0 +1,622 @@
+{
+    "description": "HELPFUL DESCRIPTION",
+    "archived": false,
+    "collection_position": null,
+    "ordered_cards": [
+        {
+            "sizeX": 10,
+            "series": [],
+            "collection_authority_level": null,
+            "card": {
+                "description": "HELPFUL CHART DESC",
+                "archived": false,
+                "collection_position": null,
+                "table_id": 2,
+                "result_metadata": [
+                    {
+                        "description": "This is a unique ID for the product. It is also called the “Invoice number” or “Confirmation number” in customer facing emails and screens.",
+                        "semantic_type": "type/PK",
+                        "coercion_strategy": null,
+                        "name": "ID",
+                        "field_ref": [
+                            "field",
+                            17,
+                            null
+                        ],
+                        "effective_type": "type/BigInteger",
+                        "id": 17,
+                        "display_name": "ID",
+                        "fingerprint": null,
+                        "base_type": "type/BigInteger"
+                    },
+                    {
+                        "description": "The id of the user who made this order. Note that in some cases where an order was created on behalf of a customer who phoned the order in, this might be the employee who handled the request.",
+                        "semantic_type": "type/FK",
+                        "coercion_strategy": null,
+                        "name": "USER_ID",
+                        "field_ref": [
+                            "field",
+                            11,
+                            null
+                        ],
+                        "effective_type": "type/Integer",
+                        "id": 11,
+                        "display_name": "User ID",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 929,
+                                "nil%": 0.0
+                            }
+                        },
+                        "base_type": "type/Integer"
+                    },
+                    {
+                        "description": "The product ID. This is an internal identifier for the product, NOT the SKU.",
+                        "semantic_type": "type/FK",
+                        "coercion_strategy": null,
+                        "name": "PRODUCT_ID",
+                        "field_ref": [
+                            "field",
+                            13,
+                            null
+                        ],
+                        "effective_type": "type/Integer",
+                        "id": 13,
+                        "display_name": "Product ID",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 200,
+                                "nil%": 0.0
+                            }
+                        },
+                        "base_type": "type/Integer"
+                    },
+                    {
+                        "description": "The raw, pre-tax cost of the order. Note that this might be different in the future from the product price due to promotions, credits, etc.",
+                        "semantic_type": null,
+                        "coercion_strategy": null,
+                        "name": "SUBTOTAL",
+                        "field_ref": [
+                            "field",
+                            14,
+                            null
+                        ],
+                        "effective_type": "type/Float",
+                        "id": 14,
+                        "display_name": "Subtotal",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 340,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 15.691943673970439,
+                                    "q1": 49.74894519060184,
+                                    "q3": 105.42965746993103,
+                                    "max": 148.22900526552291,
+                                    "sd": 32.53705013056317,
+                                    "avg": 77.01295465356547
+                                }
+                            }
+                        },
+                        "base_type": "type/Float"
+                    },
+                    {
+                        "description": "This is the amount of local and federal taxes that are collected on the purchase. Note that other governmental fees on some products are not included here, but instead are accounted for in the subtotal.",
+                        "semantic_type": null,
+                        "coercion_strategy": null,
+                        "name": "TAX",
+                        "field_ref": [
+                            "field",
+                            16,
+                            null
+                        ],
+                        "effective_type": "type/Float",
+                        "id": 16,
+                        "display_name": "Tax",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 797,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 0.0,
+                                    "q1": 2.273340386603857,
+                                    "q3": 5.337275338216307,
+                                    "max": 11.12,
+                                    "sd": 2.3206651358900316,
+                                    "avg": 3.8722100000000004
+                                }
+                            }
+                        },
+                        "base_type": "type/Float"
+                    },
+                    {
+                        "description": "The total billed amount.",
+                        "semantic_type": null,
+                        "coercion_strategy": null,
+                        "name": "TOTAL",
+                        "field_ref": [
+                            "field",
+                            15,
+                            null
+                        ],
+                        "effective_type": "type/Float",
+                        "id": 15,
+                        "display_name": "Total",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 4426,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 8.93914247937167,
+                                    "q1": 51.34535490743823,
+                                    "q3": 110.29428389265787,
+                                    "max": 159.34900526552292,
+                                    "sd": 34.26469575709948,
+                                    "avg": 80.35871658771228
+                                }
+                            }
+                        },
+                        "base_type": "type/Float"
+                    },
+                    {
+                        "description": "Discount amount.",
+                        "semantic_type": "type/Discount",
+                        "coercion_strategy": null,
+                        "name": "DISCOUNT",
+                        "field_ref": [
+                            "field",
+                            9,
+                            null
+                        ],
+                        "effective_type": "type/Float",
+                        "id": 9,
+                        "display_name": "Discount",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 701,
+                                "nil%": 0.898
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 0.17088996672584322,
+                                    "q1": 2.9786226681458743,
+                                    "q3": 7.338187788658235,
+                                    "max": 61.69684269960571,
+                                    "sd": 3.053663125001991,
+                                    "avg": 5.161255547580326
+                                }
+                            }
+                        },
+                        "base_type": "type/Float"
+                    },
+                    {
+                        "description": "The date and time an order was submitted.",
+                        "semantic_type": "type/CreationTimestamp",
+                        "coercion_strategy": null,
+                        "unit": "default",
+                        "name": "CREATED_AT",
+                        "field_ref": [
+                            "field",
+                            12,
+                            {
+                                "temporal-unit": "default"
+                            }
+                        ],
+                        "effective_type": "type/DateTime",
+                        "id": 12,
+                        "display_name": "Created At",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 9998,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/DateTime": {
+                                    "earliest": "2016-04-30T18:56:13.352Z",
+                                    "latest": "2020-04-19T14:07:15.657Z"
+                                }
+                            }
+                        },
+                        "base_type": "type/DateTime"
+                    },
+                    {
+                        "description": "Number of products bought.",
+                        "semantic_type": "type/Quantity",
+                        "coercion_strategy": null,
+                        "name": "QUANTITY",
+                        "field_ref": [
+                            "field",
+                            10,
+                            null
+                        ],
+                        "effective_type": "type/Integer",
+                        "id": 10,
+                        "display_name": "Quantity",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 62,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 0.0,
+                                    "q1": 1.755882607764982,
+                                    "q3": 4.882654507928044,
+                                    "max": 100.0,
+                                    "sd": 4.214258386403798,
+                                    "avg": 3.7015
+                                }
+                            }
+                        },
+                        "base_type": "type/Integer"
+                    }
+                ],
+                "database_id": 1,
+                "enable_embedding": false,
+                "collection_id": 1,
+                "query_type": "query",
+                "name": "Orders, Filtered by Quantity",
+                "query_average_duration": 114,
+                "creator_id": 1,
+                "updated_at": "2021-11-02T10:31:38.906",
+                "made_public_by_id": null,
+                "embedding_params": null,
+                "cache_ttl": null,
+                "dataset_query": {
+                    "database": 1,
+                    "query": {
+                        "source-table": 2,
+                        "filter": [
+                            ">",
+                            [
+                                "field",
+                                10,
+                                null
+                            ],
+                            30
+                        ]
+                    },
+                    "type": "query"
+                },
+                "id": 1,
+                "display": "table",
+                "visualization_settings": {
+                    "table.pivot_column": "DISCOUNT",
+                    "table.cell_column": "SUBTOTAL"
+                },
+                "created_at": "2021-10-25T16:12:04.454",
+                "public_uuid": null
+            },
+            "updated_at": "2021-11-02T10:32:58.716",
+            "col": 0,
+            "id": 1,
+            "parameter_mappings": [],
+            "card_id": 1,
+            "visualization_settings": {},
+            "dashboard_id": 1,
+            "created_at": "2021-10-25T16:12:47.46",
+            "sizeY": 5,
+            "row": 0
+        },
+        {
+            "sizeX": 8,
+            "series": [],
+            "collection_authority_level": null,
+            "card": {
+                "description": "This shows only exceptional users.",
+                "archived": false,
+                "collection_position": null,
+                "table_id": null,
+                "result_metadata": [
+                    {
+                        "name": "name",
+                        "display_name": "name",
+                        "base_type": "type/Text",
+                        "field_ref": [
+                            "field",
+                            "name",
+                            {
+                                "base-type": "type/Text"
+                            }
+                        ],
+                        "semantic_type": "type/Name",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 2,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Text": {
+                                    "percent-json": 0.0,
+                                    "percent-url": 0.0,
+                                    "percent-email": 0.0,
+                                    "percent-state": 0.0,
+                                    "average-length": 11.5
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "total_followers",
+                        "display_name": "total_followers",
+                        "base_type": "type/Integer",
+                        "field_ref": [
+                            "field",
+                            "total_followers",
+                            {
+                                "base-type": "type/Integer"
+                            }
+                        ],
+                        "semantic_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 2,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 211.0,
+                                    "q1": 211.0,
+                                    "q3": 5120.0,
+                                    "max": 5120.0,
+                                    "sd": 3471.1871888447617,
+                                    "avg": 2665.5
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "total_likes",
+                        "display_name": "total_likes",
+                        "base_type": "type/Integer",
+                        "field_ref": [
+                            "field",
+                            "total_likes",
+                            {
+                                "base-type": "type/Integer"
+                            }
+                        ],
+                        "semantic_type": null,
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 2,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 30.0,
+                                    "q1": 30.0,
+                                    "q3": 233.0,
+                                    "max": 233.0,
+                                    "sd": 143.54267658086914,
+                                    "avg": 131.5
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "created_at",
+                        "display_name": "created_at",
+                        "base_type": "type/DateTime",
+                        "field_ref": [
+                            "field",
+                            "created_at",
+                            {
+                                "base-type": "type/DateTime"
+                            }
+                        ],
+                        "semantic_type": "type/CreationTimestamp",
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 2,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/DateTime": {
+                                    "earliest": "2021-11-02T08:59:06.444486Z",
+                                    "latest": "2021-11-02T08:59:44.064372Z"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "database_id": 2,
+                "enable_embedding": false,
+                "collection_id": null,
+                "query_type": "native",
+                "name": "Exceptional Users",
+                "query_average_duration": 25,
+                "creator_id": 1,
+                "updated_at": "2021-11-02T10:31:38.804",
+                "made_public_by_id": null,
+                "embedding_params": null,
+                "cache_ttl": null,
+                "dataset_query": {
+                    "type": "native",
+                    "native": {
+                        "query": "SELECT name,total_followers,total_likes,created_at\nFROM public.user\nWHERE total_followers > 200;",
+                        "template-tags": {}
+                    },
+                    "database": 2
+                },
+                "id": 2,
+                "display": "table",
+                "visualization_settings": {
+                    "table.pivot_column": "name",
+                    "table.cell_column": "total_followers"
+                },
+                "created_at": "2021-11-02T09:07:25.569",
+                "public_uuid": null
+            },
+            "updated_at": "2021-11-02T10:32:58.719",
+            "col": 10,
+            "id": 2,
+            "parameter_mappings": [],
+            "card_id": 2,
+            "visualization_settings": {},
+            "dashboard_id": 1,
+            "created_at": "2021-11-02T09:12:44.179",
+            "sizeY": 5,
+            "row": 0
+        },
+        {
+            "sizeX": 6,
+            "series": [],
+            "collection_authority_level": null,
+            "card": {
+                "description": "Users, Average of Total Followers",
+                "archived": false,
+                "collection_position": null,
+                "table_id": 5,
+                "result_metadata": [
+                    {
+                        "name": "avg",
+                        "display_name": "Average of Total Followers",
+                        "base_type": "type/Decimal",
+                        "semantic_type": "type/Category",
+                        "field_ref": [
+                            "aggregation",
+                            0
+                        ],
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 1,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 2665.5,
+                                    "q1": 2665.5,
+                                    "q3": 2665.5,
+                                    "max": 2665.5,
+                                    "sd": null,
+                                    "avg": 2665.5
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "sum",
+                        "display_name": "Sum of Total Likes",
+                        "base_type": "type/BigInteger",
+                        "semantic_type": "type/Category",
+                        "field_ref": [
+                            "aggregation",
+                            1
+                        ],
+                        "fingerprint": {
+                            "global": {
+                                "distinct-count": 1,
+                                "nil%": 0.0
+                            },
+                            "type": {
+                                "type/Number": {
+                                    "min": 263.0,
+                                    "q1": 263.0,
+                                    "q3": 263.0,
+                                    "max": 263.0,
+                                    "sd": null,
+                                    "avg": 263.0
+                                }
+                            }
+                        }
+                    }
+                ],
+                "database_id": 2,
+                "enable_embedding": false,
+                "collection_id": 1,
+                "query_type": "query",
+                "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
+                "query_average_duration": 30,
+                "creator_id": 1,
+                "updated_at": "2021-11-02T10:31:39.318",
+                "made_public_by_id": null,
+                "embedding_params": null,
+                "cache_ttl": null,
+                "dataset_query": {
+                    "type": "query",
+                    "query": {
+                        "source-table": 5,
+                        "filter": [
+                            ">",
+                            [
+                                "field",
+                                37,
+                                null
+                            ],
+                            200
+                        ],
+                        "aggregation": [
+                            [
+                                "avg",
+                                [
+                                    "field",
+                                    37,
+                                    null
+                                ]
+                            ],
+                            [
+                                "cum-sum",
+                                [
+                                    "field",
+                                    43,
+                                    null
+                                ]
+                            ]
+                        ]
+                    },
+                    "database": 2
+                },
+                "id": 3,
+                "display": "table",
+                "visualization_settings": {
+                    "table.cell_column": "avg"
+                },
+                "created_at": "2021-11-02T10:31:35.726",
+                "public_uuid": null
+            },
+            "updated_at": "2021-11-02T10:32:58.721",
+            "col": 0,
+            "id": 3,
+            "parameter_mappings": [],
+            "card_id": 3,
+            "visualization_settings": {},
+            "dashboard_id": 1,
+            "created_at": "2021-11-02T10:32:58.616",
+            "sizeY": 5,
+            "row": 5
+        }
+    ],
+    "param_values": null,
+    "can_write": true,
+    "enable_embedding": false,
+    "collection_id": 1,
+    "show_in_getting_started": false,
+    "name": "Main",
+    "caveats": null,
+    "collection_authority_level": null,
+    "creator_id": 1,
+    "updated_at": "2021-11-02T10:32:58.786",
+    "made_public_by_id": null,
+    "embedding_params": null,
+    "id": 1,
+    "position": null,
+    "param_fields": null,
+    "last-edit-info": {
+        "id": 1,
+        "email": "john@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "timestamp": "2021-11-02T10:32:58.827"
+    },
+    "parameters": [],
+    "created_at": "2021-10-25T16:10:40.371",
+    "public_uuid": null,
+    "points_of_interest": null
+}

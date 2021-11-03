@@ -1,13 +1,9 @@
 package metabase
 
 import (
-	"bytes"
 	"context"
 	_ "embed" // used to print the embedded assets
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,22 +33,21 @@ type Config struct {
 	Host      string `mapstructure:"host" validate:"required"`
 	Username  string `mapstructure:"username" validate:"required"`
 	Password  string `mapstructure:"password" validate:"required"`
-	Label     string `mapstructure:"label" validate:"required"`
 	SessionID string `mapstructure:"session_id"`
 }
 
 // Extractor manages the extraction of data
 // from the metabase server
 type Extractor struct {
-	config    Config
-	sessionID string
-	logger    log.Logger
-	client    *http.Client
+	config Config
+	logger log.Logger
+	client Client
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
+func New(client Client, logger log.Logger) *Extractor {
 	return &Extractor{
+		client: client,
 		logger: logger,
 	}
 }
@@ -78,23 +73,18 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
-	e.client = &http.Client{
-		Timeout: 30 * time.Second,
-	}
 
-	// get session id for further api calls in metabase
-	sessionID, err := e.getSessionID()
+	err = e.client.Authenticate(e.config.Host, e.config.Username, e.config.Password, e.config.SessionID)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch session ID")
+		return errors.Wrap(err, "error initiating client")
 	}
-	e.sessionID = sessionID
 
 	return nil
 }
 
 // Extract collects the metadata from the source. The metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	dashboards, err := e.fetchDashboards()
+	dashboards, err := e.client.GetDashboards()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch dashboard list")
 	}
@@ -112,12 +102,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err error) {
 	// we fetch dashboard again individually to get more fields
-	dashboard, err := e.fetchDashboard(d.ID)
+	dashboard, err := e.client.GetDashboard(d.ID)
 	if err != nil {
 		err = errors.Wrapf(err, "error fetching dashboard")
 		return
 	}
-	dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", e.config.Label, dashboard.ID)
+	dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", e.config.Host, dashboard.ID)
 
 	charts, err := e.buildCharts(dashboardUrn, dashboard)
 	if err != nil {
@@ -127,12 +117,12 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
-			Urn:     dashboardUrn,
-			Name:    dashboard.Name,
-			Service: "metabase",
+			Urn:         dashboardUrn,
+			Name:        dashboard.Name,
+			Service:     "metabase",
+			Description: dashboard.Description,
 		},
-		Description: dashboard.Description,
-		Charts:      charts,
+		Charts: charts,
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"id":            dashboard.ID,
@@ -152,9 +142,11 @@ func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (chart
 	for _, oc := range dashboard.OrderedCards {
 		card := oc.Card
 		charts = append(charts, &assets.Chart{
-			Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Label, card.ID),
+			Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
 			DashboardUrn: dashboardUrn,
 			Source:       "metabase",
+			Name:         card.Name,
+			Description:  card.Description,
 			Properties: &facets.Properties{
 				Attributes: utils.TryParseMapToProto(map[string]interface{}{
 					"id":                     card.ID,
@@ -173,78 +165,10 @@ func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (chart
 	return
 }
 
-func (e *Extractor) fetchDashboard(dashboard_id int) (dashboard Dashboard, err error) {
-	url := fmt.Sprintf("%s/api/dashboard/%d", e.config.Host, dashboard_id)
-	err = e.makeRequest("GET", url, nil, &dashboard)
-
-	return
-}
-
-func (e *Extractor) fetchDashboards() (data []Dashboard, err error) {
-	url := fmt.Sprintf("%s/api/dashboard", e.config.Host)
-	err = e.makeRequest("GET", url, nil, &data)
-
-	return
-}
-
-func (e *Extractor) getSessionID() (sessionID string, err error) {
-	if e.config.SessionID != "" {
-		return e.config.SessionID, nil
-	}
-
-	payload := map[string]interface{}{
-		"username": e.config.Username,
-		"password": e.config.Password,
-	}
-	type responseID struct {
-		ID string `json:"id"`
-	}
-	var data responseID
-	err = e.makeRequest("POST", e.config.Host+"/api/session", payload, &data)
-	if err != nil {
-		return
-	}
-
-	return data.ID, nil
-}
-
-// helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		return errors.Wrap(err, "failed to encode the payload JSON")
-	}
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		return errors.Wrap(err, "failed to create request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Metabase-Session", e.sessionID)
-
-	res, err := e.client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate response")
-	}
-	if res.StatusCode >= 300 {
-		return fmt.Errorf("getting %d status code", res.StatusCode)
-	}
-
-	bytes, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
-	}
-	if err = json.Unmarshal(bytes, &data); err != nil {
-		return errors.Wrapf(err, "failed to parse: %s", string(bytes))
-	}
-
-	return
-}
-
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("metabase", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(newClient(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
