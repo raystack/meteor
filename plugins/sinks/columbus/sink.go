@@ -145,15 +145,6 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 	return record, nil
 }
 
-func (s *Sink) buildUpstreams(metadata models.Metadata) (upstreams []LineageRecord, err error) {
-	lineage := metadata.GetLineage()
-	if lineage == nil || lineage.Upstreams == nil {
-		return
-	}
-
-	return
-}
-
 func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []LineageRecord) {
 	lineage := metadata.GetLineage()
 	if lineage == nil {
