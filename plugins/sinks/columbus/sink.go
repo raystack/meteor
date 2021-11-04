@@ -130,16 +130,50 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 		return Record{}, errors.Wrap(err, "failed to build labels")
 	}
 
+	upstreams, downstreams := s.buildLineage(metadata)
 	resource := metadata.GetResource()
 	record := Record{
-		Urn:     resource.GetUrn(),
-		Name:    resource.GetName(),
-		Service: resource.GetService(),
-		Data:    metadata,
-		Labels:  labels,
+		Urn:         resource.GetUrn(),
+		Name:        resource.GetName(),
+		Service:     resource.GetService(),
+		Data:        metadata,
+		Labels:      labels,
+		Upstreams:   upstreams,
+		Downstreams: downstreams,
 	}
 
 	return record, nil
+}
+
+func (s *Sink) buildUpstreams(metadata models.Metadata) (upstreams []LineageRecord, err error) {
+	lineage := metadata.GetLineage()
+	if lineage == nil || lineage.Upstreams == nil {
+		return
+	}
+
+	return
+}
+
+func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []LineageRecord) {
+	lineage := metadata.GetLineage()
+	if lineage == nil {
+		return
+	}
+
+	for _, upstream := range lineage.Upstreams {
+		upstreams = append(upstreams, LineageRecord{
+			Urn:  upstream.Urn,
+			Type: upstream.Type,
+		})
+	}
+	for _, downstream := range lineage.Downstreams {
+		downstreams = append(downstreams, LineageRecord{
+			Urn:  downstream.Urn,
+			Type: downstream.Type,
+		})
+	}
+
+	return
 }
 
 func (s *Sink) buildLabels(metadata models.Metadata) (labels map[string]string, err error) {
