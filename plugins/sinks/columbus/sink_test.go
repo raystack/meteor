@@ -30,34 +30,6 @@ var (
 var (
 	columbusType = "my-type"
 	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
-	topic        = &assets.Topic{
-		Resource: &common.Resource{
-			Urn:  "my-topic-urn",
-			Name: "my-topic",
-		},
-		Ownership: &facets.Ownership{
-			Owners: []*facets.Owner{
-				{Name: "admin-A"},
-			},
-		},
-		Properties: &facets.Properties{
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"attrA": "valueAttrA",
-				"attrB": "valueAttrB",
-			}),
-			Labels: map[string]string{
-				"labelA": "valueLabelA",
-				"labelB": "valueLabelB",
-			},
-		},
-	}
-	requestPayload = []columbus.Record{
-		{
-			Urn:  topic.Resource.Urn,
-			Name: topic.Resource.Name,
-			Data: topic,
-		},
-	}
 )
 
 func TestInit(t *testing.T) {
@@ -73,7 +45,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, requestPayload), testUtils.Logger)
+				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, []columbus.Record{}), testUtils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -83,33 +55,13 @@ func TestInit(t *testing.T) {
 }
 
 func TestSink(t *testing.T) {
-	t.Run("should create the right request to columbus", func(t *testing.T) {
-		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
-		client.SetupResponse(200, "")
-		ctx := context.TODO()
-
-		columbusSink := columbus.New(client, testUtils.Logger)
-		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host": host,
-			"type": columbusType,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
-		assert.NoError(t, err)
-
-		client.Assert(t)
-	})
-
 	t.Run("should return error if columbus host returns error", func(t *testing.T) {
 		columbusError := `{"reason":"no such type: \"my-type\""}`
 		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}"
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
-		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
+		client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
@@ -122,17 +74,16 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+		data := &assets.Topic{Resource: &common.Resource{}}
+		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
-
-		client.Assert(t)
 	})
 
-	t.Run("should return RetryError if columbus returns", func(t *testing.T) {
+	t.Run("should return RetryError if columbus returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
 				url := fmt.Sprintf("%s/v1/types/my-type/records", host)
-				client := newMockHTTPClient(http.MethodPut, url, requestPayload)
+				client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
@@ -145,69 +96,180 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
+				data := &assets.Topic{Resource: &common.Resource{}}
+				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
-
-				client.Assert(t)
 			})
 		}
 	})
 
-	t.Run("should return no error if columbus returns 200", func(t *testing.T) {
-		// setup mock client
-		client := newMockHTTPClient(http.MethodPut, url, requestPayload)
-		client.SetupResponse(200, `{"success": true}`)
-		ctx := context.TODO()
-
-		columbusSink := columbus.New(client, testUtils.Logger)
-		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host": host,
-			"type": "my-type",
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
-		assert.NoError(t, err)
-		client.Assert(t)
-	})
-
-	t.Run("should build columbus labels if labels is defined in config", func(t *testing.T) {
-		expectedPayload := []columbus.Record{
-			{
-				Urn:  topic.Resource.Urn,
-				Name: topic.Resource.Name,
-				Data: topic,
+	successTestCases := []struct {
+		description string
+		data        models.Metadata
+		config      map[string]interface{}
+		expected    columbus.Record
+	}{
+		{
+			description: "should create the right request to columbus",
+			data: &assets.User{
+				Resource: &common.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+			},
+		},
+		{
+			description: "should build columbus labels if labels is defined in config",
+			data: &assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+				Properties: &facets.Properties{
+					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+						"attrA": "valueAttrA",
+						"attrB": "valueAttrB",
+					}),
+					Labels: map[string]string{
+						"labelA": "valueLabelA",
+						"labelB": "valueLabelB",
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+				"labels": map[string]string{
+					"foo": "$properties.attributes.attrB",
+					"bar": "$properties.labels.labelA",
+				},
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
 				Labels: map[string]string{
 					"foo": "valueAttrB",
 					"bar": "valueLabelA",
 				},
 			},
-		}
-
-		// setup mock client
-		client := newMockHTTPClient(http.MethodPut, url, expectedPayload)
-		client.SetupResponse(200, `{"success": true}`)
-		ctx := context.TODO()
-
-		columbusSink := columbus.New(client, testUtils.Logger)
-		err := columbusSink.Init(ctx, map[string]interface{}{
-			"host": host,
-			"type": "my-type",
-			"labels": map[string]string{
-				"foo": "$properties.attributes.attrB",
-				"bar": "$properties.labels.labelA",
+		},
+		{
+			description: "should send upstreams if data has upstreams",
+			data: &assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+				Lineage: &facets.Lineage{
+					Upstreams: []*common.Resource{
+						{
+							Urn:  "urn-1",
+							Type: "type-a",
+						},
+						{
+							Urn:  "urn-2",
+							Type: "type-b",
+						},
+					},
+				},
 			},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+				Upstreams: []columbus.LineageRecord{
+					{
+						Urn:  "urn-1",
+						Type: "type-a",
+					},
+					{
+						Urn:  "urn-2",
+						Type: "type-b",
+					},
+				},
+			},
+		},
+		{
+			description: "should send downstreams if data has downstreams",
+			data: &assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+				Lineage: &facets.Lineage{
+					Downstreams: []*common.Resource{
+						{
+							Urn:  "urn-1",
+							Type: "type-a",
+						},
+						{
+							Urn:  "urn-2",
+							Type: "type-b",
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+				Downstreams: []columbus.LineageRecord{
+					{
+						Urn:  "urn-1",
+						Type: "type-a",
+					},
+					{
+						Urn:  "urn-2",
+						Type: "type-b",
+					},
+				},
+			},
+		},
+	}
 
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(topic)})
-		assert.NoError(t, err)
-		client.Assert(t)
-	})
+	for _, tc := range successTestCases {
+		t.Run(tc.description, func(t *testing.T) {
+			tc.expected.Data = tc.data
+			payload := []columbus.Record{tc.expected}
+
+			client := newMockHTTPClient(http.MethodPut, url, payload)
+			client.SetupResponse(200, "")
+			ctx := context.TODO()
+
+			columbusSink := columbus.New(client, testUtils.Logger)
+			err := columbusSink.Init(ctx, tc.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
+			assert.NoError(t, err)
+
+			client.Assert(t)
+		})
+	}
 }
 
 type mockHTTPClient struct {

@@ -133,12 +133,12 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
-			Urn:     dashboardUrn,
-			Name:    dashboard.Name,
-			Service: "metabase",
+			Urn:         dashboardUrn,
+			Name:        dashboard.Name,
+			Service:     "metabase",
+			Description: dashboard.Description,
 		},
-		Description: dashboard.Description,
-		Charts:      charts,
+		Charts: charts,
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"id":            dashboard.ID,

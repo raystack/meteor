@@ -101,11 +101,11 @@ func expectedData() (records []*assets.Dashboard) {
 
 		records = append(records, &assets.Dashboard{
 			Resource: &common.Resource{
-				Urn:     dashboardUrn,
-				Name:    d.Name,
-				Service: "metabase",
+				Urn:         dashboardUrn,
+				Name:        d.Name,
+				Service:     "metabase",
+				Description: d.Description,
 			},
-			Description: d.Description,
 			Properties: &facets.Properties{
 				Attributes: utils.TryParseMapToProto(map[string]interface{}{
 					"id":            d.ID,
