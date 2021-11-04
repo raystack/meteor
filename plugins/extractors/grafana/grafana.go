@@ -4,8 +4,9 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/models/odpf/assets"
@@ -101,13 +102,13 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 	}
 	return &assets.Dashboard{
 		Resource: &common.Resource{
-			Urn:     fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
-			Name:    dashboard.Meta.Slug,
-			Service: "grafana",
-			Url:     dashboard.Meta.URL,
+			Urn:         fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
+			Name:        dashboard.Meta.Slug,
+			Service:     "grafana",
+			Url:         dashboard.Meta.URL,
+			Description: dashboard.Dashboard.Description,
 		},
-		Description: dashboard.Dashboard.Description,
-		Charts:      charts,
+		Charts: charts,
 	}
 }
 

@@ -9,4 +9,5 @@ import (
 type Metadata interface {
 	GetResource() *common.Resource
 	GetProperties() *facets.Properties
+	GetLineage() *facets.Lineage
 }
