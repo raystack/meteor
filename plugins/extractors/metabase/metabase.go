@@ -109,7 +109,7 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 		return
 	}
 
-	dashboardUrn := models.DashboardUrn("metabase", e.config.Host, fmt.Sprintf("dashboard/%d", dashboard.ID))
+	dashboardUrn := models.DashboardURN("metabase", e.config.Host, fmt.Sprintf("dashboard/%d", dashboard.ID))
 	charts := e.buildCharts(dashboardUrn, dashboard)
 	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
@@ -322,7 +322,7 @@ func (e *Extractor) buildURN(service, cluster, dbName, tableName string) string 
 		}
 	}
 
-	return models.TableUrn(service, cluster, dbName, tableName)
+	return models.TableURN(service, cluster, dbName, tableName)
 }
 
 // Register the extractor to catalog

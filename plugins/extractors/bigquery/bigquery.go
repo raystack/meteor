@@ -167,7 +167,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 
 	return &assets.Table{
 		Resource: &common.Resource{
-			Urn:     models.TableUrn("bigquery", t.ProjectID, t.DatasetID, t.TableID),
+			Urn:     models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID),
 			Name:    t.TableID,
 			Service: "bigquery",
 		},

@@ -183,7 +183,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 
 	result = &assets.Table{
 		Resource: &common.Resource{
-			Urn:     models.TableUrn("postgres", e.config.Host, dbName, tableName),
+			Urn:     models.TableURN("postgres", e.config.Host, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
 		},
