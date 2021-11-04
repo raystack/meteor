@@ -111,7 +111,7 @@ func TestSink(t *testing.T) {
 	}{
 		{
 			description: "should create the right request to columbus",
-			data: &assets.Topic{
+			data: &assets.User{
 				Resource: &common.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",

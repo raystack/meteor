@@ -146,7 +146,12 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 }
 
 func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []LineageRecord) {
-	lineage := metadata.GetLineage()
+	lm, modelHasLineage := metadata.(models.LineageMetadata)
+	if !modelHasLineage {
+		return
+	}
+
+	lineage := lm.GetLineage()
 	if lineage == nil {
 		return
 	}
