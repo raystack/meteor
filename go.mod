@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/bigquery v1.8.0
 	cloud.google.com/go/bigtable v1.10.1
 	cloud.google.com/go/storage v1.15.0
+	github.com/AlecAivazis/survey/v2 v2.3.2
 	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect

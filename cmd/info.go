@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -39,12 +40,26 @@ func InfoSinkCmd() *cobra.Command {
 			$ meteor info sink console
 			$ meteor info sink columbus
 		`),
-		Args: cobra.ExactArgs(1),
+		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var sinks []string
+			for n, _ := range registry.Sinks.List() {
+				sinks = append(sinks, n)
+			}
+			var name string
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				if err := survey.AskOne(&survey.Select{
+					Message: "Select the name of sink",
+					Options: sinks,
+				}, &name); err != nil {
+					return err
+				}
+			}
 			info, err := registry.Sinks.Info(name)
 
 			if err := inform("sinks", info.Summary, err); err != nil {
@@ -70,12 +85,26 @@ func InfoExtCmd() *cobra.Command {
 			$ meteor info extractor postgres
 			$ meteor info extractor bigquery
 		`),
-		Args: cobra.ExactArgs(1),
+		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var extrs []string
+			for n, _ := range registry.Extractors.List() {
+				extrs = append(extrs, n)
+			}
+			var name string
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				if err := survey.AskOne(&survey.Select{
+					Message: "Select the name of the extractor",
+					Options: extrs,
+				}, &name); err != nil {
+					return err
+				}
+			}
 			info, err := registry.Extractors.Info(name)
 			if err := inform("extractors", info.Summary, err); err != nil {
 				return err
@@ -99,12 +128,26 @@ func InfoProccCmd() *cobra.Command {
 		Example: heredoc.Doc(`
 			$ meteor info processor enrich
 		`),
-		Args: cobra.ExactArgs(1),
+		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var processors []string
+			for n, _ := range registry.Processors.List() {
+				processors = append(processors, n)
+			}
+			var name string
+			if len(args) > 0 {
+				name = args[0]
+			} else {
+				if err := survey.AskOne(&survey.Select{
+					Message: "Select the name of the Processor",
+					Options: processors,
+				}, &name); err != nil {
+					return err
+				}
+			}
 			info, err := registry.Processors.Info(name)
 
 			if err := inform("processors", info.Summary, err); err != nil {
