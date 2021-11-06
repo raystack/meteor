@@ -40,13 +40,12 @@ func InfoSinkCmd() *cobra.Command {
 			$ meteor info sink console
 			$ meteor info sink columbus
 		`),
-		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sinks []string
-			for n, _ := range registry.Sinks.List() {
+			for n := range registry.Sinks.List() {
 				sinks = append(sinks, n)
 			}
 			var name string
@@ -85,13 +84,12 @@ func InfoExtCmd() *cobra.Command {
 			$ meteor info extractor postgres
 			$ meteor info extractor bigquery
 		`),
-		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var extrs []string
-			for n, _ := range registry.Extractors.List() {
+			for n := range registry.Extractors.List() {
 				extrs = append(extrs, n)
 			}
 			var name string
@@ -128,13 +126,12 @@ func InfoProccCmd() *cobra.Command {
 		Example: heredoc.Doc(`
 			$ meteor info processor enrich
 		`),
-		// Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var processors []string
-			for n, _ := range registry.Processors.List() {
+			for n := range registry.Processors.List() {
 				processors = append(processors, n)
 			}
 			var name string
