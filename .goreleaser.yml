@@ -19,7 +19,7 @@ builds:
       - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
       - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
     goos: [darwin, linux, windows]
-    goarch: [amd64, 386, arm, arm64]
+    goarch: [amd64, arm, arm64] # skip goarch 386 due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
       - CGO_ENABLED=0
 
