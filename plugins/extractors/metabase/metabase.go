@@ -1,13 +1,10 @@
 package metabase
 
 import (
-	"bytes"
 	"context"
 	_ "embed" // used to print the embedded assets
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,30 +26,28 @@ var summary string
 var sampleConfig = `
 host: http://localhost:3000
 user_id: meteor_tester
-password: meteor_pass_1234
-label: my-metabase`
+password: meteor_pass_1234`
 
 // Config hold the set of configuration for the metabase extractor
 type Config struct {
 	Host      string `mapstructure:"host" validate:"required"`
 	Username  string `mapstructure:"username" validate:"required"`
 	Password  string `mapstructure:"password" validate:"required"`
-	Label     string `mapstructure:"label" validate:"required"`
 	SessionID string `mapstructure:"session_id"`
 }
 
 // Extractor manages the extraction of data
 // from the metabase server
 type Extractor struct {
-	config    Config
-	sessionID string
-	logger    log.Logger
-	client    *http.Client
+	config Config
+	logger log.Logger
+	client Client
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
+func New(client Client, logger log.Logger) *Extractor {
 	return &Extractor{
+		client: client,
 		logger: logger,
 	}
 }
@@ -78,33 +73,28 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	if err != nil {
 		return plugins.InvalidConfigError{}
 	}
-	e.client = &http.Client{
-		Timeout: 30 * time.Second,
-	}
 
-	// get session id for further api calls in metabase
-	sessionID, err := e.getSessionID()
+	err = e.client.Authenticate(e.config.Host, e.config.Username, e.config.Password, e.config.SessionID)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch session ID")
+		return errors.Wrap(err, "error initiating client")
 	}
-	e.sessionID = sessionID
 
 	return nil
 }
 
 // Extract collects the metadata from the source. The metadata is collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	dashboards, err := e.fetchDashboards()
+	dashboards, err := e.client.GetDashboards()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch dashboard list")
 	}
 	for _, d := range dashboards {
-		// we do not use "d" as the dashboard because it does not have
-		// "ordered_cards" field
 		dashboard, err := e.buildDashboard(d)
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch dashboard data")
+			e.logger.Error("failed to build dashboard with", "dashboard_id", d.ID, "err", err.Error())
+			continue
 		}
+
 		emit(models.NewRecord(dashboard))
 	}
 	return nil
@@ -112,24 +102,15 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err error) {
 	// we fetch dashboard again individually to get more fields
-	dashboard, err := e.fetchDashboard(d.ID)
+	dashboard, err := e.client.GetDashboard(d.ID)
 	if err != nil {
 		err = errors.Wrapf(err, "error fetching dashboard")
 		return
 	}
-	dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", e.config.Label, dashboard.ID)
 
-	charts, err := e.buildCharts(dashboardUrn, dashboard)
-	if err != nil {
-		err = errors.Wrapf(err, "error building charts")
-		return
-	}
-
-	createdAt, updatedAt, err := e.buildTimestamps(dashboard.BaseModel)
-	if err != nil {
-		err = errors.Wrapf(err, "error building dashboard timestamps")
-		return
-	}
+	dashboardUrn := models.DashboardURN("metabase", e.config.Host, fmt.Sprintf("dashboard/%d", dashboard.ID))
+	charts := e.buildCharts(dashboardUrn, dashboard)
+	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
 	data = &assets.Dashboard{
 		Resource: &common.Resource{
@@ -147,125 +128,206 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 			}),
 		},
 		Timestamps: &common.Timestamp{
-			CreateTime: timestamppb.New(createdAt),
-			UpdateTime: timestamppb.New(updatedAt),
+			CreateTime: timestamppb.New(time.Time(dashboard.CreatedAt)),
+			UpdateTime: timestamppb.New(time.Time(dashboard.UpdatedAt)),
+		},
+		Lineage: &facets.Lineage{
+			Upstreams: dashboardUpstreams,
 		},
 	}
 	return
 }
 
-func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assets.Chart, err error) {
+func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assets.Chart) {
 	for _, oc := range dashboard.OrderedCards {
-		card := oc.Card
-		charts = append(charts, &assets.Chart{
-			Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Label, card.ID),
-			DashboardUrn: dashboardUrn,
-			Source:       "metabase",
-			Properties: &facets.Properties{
-				Attributes: utils.TryParseMapToProto(map[string]interface{}{
-					"id":                     card.ID,
-					"collection_id":          card.CollectionID,
-					"creator_id":             card.CreatorID,
-					"database_id":            card.DatabaseID,
-					"table_id":               card.TableID,
-					"query_average_duration": card.QueryAverageDuration,
-					"display":                card.Display,
-					"archived":               card.Archived,
-				}),
-			},
+		chart, err := e.buildChart(oc.Card, dashboardUrn)
+		if err != nil {
+			e.logger.Error("error building upstreams for a card", "card_id", oc.Card.ID, "err", err)
+		} else {
+			charts = append(charts, chart)
+		}
+	}
+
+	return
+}
+
+func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assets.Chart, err error) {
+	var upstreams []*common.Resource
+	upstreams, err = e.buildUpstreams(card)
+	if err != nil {
+		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
+	}
+
+	return &assets.Chart{
+		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
+		DashboardUrn: dashboardUrn,
+		Source:       "metabase",
+		Name:         card.Name,
+		Description:  card.Description,
+		Properties: &facets.Properties{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				"id":                     card.ID,
+				"collection_id":          card.CollectionID,
+				"creator_id":             card.CreatorID,
+				"database_id":            card.DatabaseID,
+				"table_id":               card.TableID,
+				"query_average_duration": card.QueryAverageDuration,
+				"display":                card.Display,
+				"archived":               card.Archived,
+			}),
+		},
+		Lineage: &facets.Lineage{
+			Upstreams: upstreams,
+		},
+	}, nil
+}
+
+func (e *Extractor) buildUpstreams(card Card) (upstreams []*common.Resource, err error) {
+	switch card.DatasetQuery.Type {
+	case datasetQueryTypeQuery:
+		upstreams, err = e.buildUpstreamsFromQuery(card)
+		if err != nil {
+			err = errors.Wrap(err, "error building upstreams from query")
+		}
+		return
+	case datasetQueryTypeNative:
+		upstreams, err = e.buildUpstreamsFromNative(card)
+		if err != nil {
+			err = errors.Wrap(err, "error building upstreams from native")
+		}
+		return
+	default:
+		return
+	}
+}
+
+func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*common.Resource, err error) {
+	table, err := e.client.GetTable(card.DatasetQuery.Query.SourceTable)
+	if err != nil {
+		err = errors.Wrap(err, "error getting table")
+		return
+	}
+
+	service, cluster, dbName := e.extractDbComponent(table.Db)
+	upstreams = append(upstreams, &common.Resource{
+		Urn:     e.buildURN(service, cluster, dbName, table.Name),
+		Service: service,
+		Type:    "table",
+	})
+
+	return
+}
+
+func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*common.Resource, err error) {
+	database, err := e.client.GetDatabase(card.DatasetQuery.Database)
+	if err != nil {
+		err = errors.Wrap(err, "error getting database")
+		return
+	}
+
+	tableNames, err := e.getTableNamesFromSQL(card.DatasetQuery.Native)
+	if err != nil {
+		err = errors.Wrap(err, "error getting table names from SQL")
+		return
+	}
+
+	service, cluster, dbName := e.extractDbComponent(database)
+	for _, tableName := range tableNames {
+		upstreams = append(upstreams, &common.Resource{
+			Urn:     e.buildURN(service, cluster, dbName, tableName),
+			Service: service,
+			Type:    "table",
 		})
 	}
 
 	return
 }
 
-func (e *Extractor) buildTimestamps(model BaseModel) (createdAt time.Time, updatedAt time.Time, err error) {
-	createdAt, err = model.CreatedAt()
+func (e *Extractor) buildDashboardUpstreams(charts []*assets.Chart) (upstreams []*common.Resource) {
+	existing := map[string]bool{}
+	for _, chart := range charts {
+		if chart.Lineage == nil {
+			continue
+		}
+
+		for _, upstream := range chart.Lineage.Upstreams {
+			if _, duplicate := existing[upstream.Urn]; duplicate {
+				continue
+			}
+
+			upstreams = append(upstreams, upstream)
+			existing[upstream.Urn] = true
+		}
+	}
+
+	return
+}
+
+func (e *Extractor) extractDbComponent(database Database) (service, cluster, dbName string) {
+	service = database.Engine
+
+	switch service {
+	case "h2":
+		comps := strings.Split(database.Details.Db, ";")
+		dbUrlComps := strings.Split(comps[0], "/")
+
+		cluster = strings.Join(dbUrlComps[:len(dbUrlComps)-1], "/")
+		dbName = dbUrlComps[len(dbUrlComps)-1]
+	case "postgres":
+		fallthrough
+	case "mysql":
+		cluster = fmt.Sprintf("%s:%d", database.Details.Host, database.Details.Port)
+		dbName = database.Details.Dbname
+	case "bigquery":
+		cluster = database.Details.ProjectID
+		dbName = database.Details.DatasetID
+	default:
+		e.logger.Warn(fmt.Sprintf("unsupported database engine \"%s\"", service))
+	}
+
+	return
+}
+
+func (e *Extractor) getTableNamesFromSQL(datasetQuery NativeDatasetQuery) (tableNames []string, err error) {
+	query, err := evaluateQueryTemplate(datasetQuery)
 	if err != nil {
-		err = errors.Wrap(err, "failed parsing created_at")
+		err = errors.Wrap(err, "error adding default value to template in query")
 		return
 	}
-	updatedAt, err = model.UpdatedAt()
+	tableNames, err = extractTableNamesFromSQL(query)
 	if err != nil {
-		err = errors.Wrap(err, "failed parsing updated_at")
-		return
+		err = errors.Wrap(err, "error when parsing SQL")
 	}
 
 	return
 }
 
-func (e *Extractor) fetchDashboard(dashboard_id int) (dashboard Dashboard, err error) {
-	url := fmt.Sprintf("%s/api/dashboard/%d", e.config.Host, dashboard_id)
-	err = e.makeRequest("GET", url, nil, &dashboard)
+func (e *Extractor) buildURN(service, cluster, dbName, tableName string) string {
+	tableComps := strings.Split(tableName, ".")
+	compLength := len(tableComps)
+	tableName = tableComps[len(tableComps)-1]
 
-	return
-}
-
-func (e *Extractor) fetchDashboards() (data []Dashboard, err error) {
-	url := fmt.Sprintf("%s/api/dashboard", e.config.Host)
-	err = e.makeRequest("GET", url, nil, &data)
-
-	return
-}
-
-func (e *Extractor) getSessionID() (sessionID string, err error) {
-	if e.config.SessionID != "" {
-		return e.config.SessionID, nil
+	switch service {
+	case "postgres":
+		if compLength > 1 && tableComps[0] != "public" {
+			cluster = tableComps[0]
+		}
+	case "bigquery":
+		if compLength > 2 {
+			cluster = tableComps[0]
+			dbName = tableComps[1]
+		} else if compLength > 1 {
+			dbName = tableComps[0]
+		}
 	}
 
-	payload := map[string]interface{}{
-		"username": e.config.Username,
-		"password": e.config.Password,
-	}
-	type responseID struct {
-		ID string `json:"id"`
-	}
-	var data responseID
-	err = e.makeRequest("POST", e.config.Host+"/api/session", payload, &data)
-	if err != nil {
-		return
-	}
-
-	return data.ID, nil
-}
-
-// helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
-	jsonBytes, err := json.Marshal(payload)
-	if err != nil {
-		return errors.Wrap(err, "failed to encode the payload JSON")
-	}
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
-	if err != nil {
-		return errors.Wrap(err, "failed to create request")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Metabase-Session", e.sessionID)
-
-	res, err := e.client.Do(req)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate response")
-	}
-	if res.StatusCode >= 300 {
-		return fmt.Errorf("getting %d status code", res.StatusCode)
-	}
-
-	bytes, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
-	}
-	if err = json.Unmarshal(bytes, &data); err != nil {
-		return errors.Wrapf(err, "failed to parse: %s", string(bytes))
-	}
-
-	return
+	return models.TableURN(service, cluster, dbName, tableName)
 }
 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("metabase", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(newClient(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

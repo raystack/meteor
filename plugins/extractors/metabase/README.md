@@ -9,7 +9,6 @@ source:
     host: http://localhost:3000
     username: meteor_tester
     password: meteor_pass_1234
-    label: my-metabase
 ```
 
 ## Inputs
@@ -19,7 +18,6 @@ source:
 | `host` | `string` | `http://localhost:4002` | The host at which metabase is running | *required* |
 | `username` | `string` | `meteor_tester` | Username/email to access the metabase| *required* |
 | `password` | `string` | `meteor_pass_1234` | Password for the metabase | *required* |
-| `label` | `string` | `meteor_pass_1234` | Label for your Metabase instance, this will be used as part of dashboard's URN | *required* |
 
 ## Outputs
 

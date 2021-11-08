@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -150,6 +149,8 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 
 // Build the bigquery table metadata
 func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assets.Table {
+	tableFQN := t.FullyQualifiedName()
+
 	var partitionField string
 	if md.TimePartitioning != nil {
 		partitionField = md.TimePartitioning.Field
@@ -160,13 +161,13 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		var err error
 		preview, err = e.buildPreview(ctx, t)
 		if err != nil {
-			e.logger.Warn("error building preview", "err", err, "table", t.FullyQualifiedName())
+			e.logger.Warn("error building preview", "err", err, "table", tableFQN)
 		}
 	}
 
 	return &assets.Table{
 		Resource: &common.Resource{
-			Urn:     fmt.Sprintf("bigquery::%s:%s.%s", t.ProjectID, t.DatasetID, t.TableID),
+			Urn:     models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID),
 			Name:    t.TableID,
 			Service: "bigquery",
 		},
@@ -176,10 +177,11 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		Preview: preview,
 		Properties: &facets.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"dataset":         t.DatasetID,
-				"project":         t.ProjectID,
-				"type":            string(md.Type),
-				"partition_field": partitionField,
+				"full_qualified_name": tableFQN,
+				"dataset":             t.DatasetID,
+				"project":             t.ProjectID,
+				"type":                string(md.Type),
+				"partition_field":     partitionField,
 			}),
 			Labels: md.Labels,
 		},
