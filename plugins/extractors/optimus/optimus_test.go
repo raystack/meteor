@@ -31,7 +31,10 @@ func TestInit(t *testing.T) {
 	t.Run("should hit optimus /ping to check connection if config is valid", func(t *testing.T) {
 		r, err := recorder.New("fixtures/ping")
 		require.NoError(t, err)
-		defer r.Stop()
+		defer func(r *recorder.Recorder) {
+			err := r.Stop()
+			require.NoError(t, err)
+		}(r)
 
 		client := &http.Client{Transport: r}
 		extr := optimus.New(testutils.Logger, client)
@@ -44,7 +47,10 @@ func TestExtract(t *testing.T) {
 	t.Run("should build Job models from Optimus", func(t *testing.T) {
 		r, err := recorder.New("fixtures/extract")
 		require.NoError(t, err)
-		defer r.Stop()
+		defer func(r *recorder.Recorder) {
+			err := r.Stop()
+			require.NoError(t, err)
+		}(r)
 
 		client := &http.Client{Transport: r}
 		extr := optimus.New(testutils.Logger, client)
