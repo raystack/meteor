@@ -7,11 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
 	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/pkg/errors"
 
-	"github.com/nsf/jsondiff"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/test/mocks"
@@ -79,13 +77,8 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
 
-		records := emitter.Get()
-		var actuals []models.Metadata
-		for _, r := range records {
-			actuals = append(actuals, r.Data())
-		}
-
-		assertWithFile(t, "./testdata/expected.json", actuals)
+		actuals := emitter.GetAllData()
+		testutils.AssertWithJSONFile(t, "./testdata/expected.json", actuals)
 	})
 }
 
@@ -143,29 +136,6 @@ func readFromFiles(path string, data interface{}) error {
 	}
 
 	return nil
-}
-
-func assertWithFile(t *testing.T, filePath string, actual interface{}) {
-	var expected interface{}
-	err := readFromFiles(filePath, &expected)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	actualBytes, err := json.Marshal(actual)
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedBytes, err := json.Marshal(expected)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	options := jsondiff.DefaultConsoleOptions()
-	diff, report := jsondiff.Compare(expectedBytes, actualBytes, &options)
-	if diff != jsondiff.FullMatch {
-		t.Errorf("values do not match:\n %s", report)
-	}
 }
 
 type mockClient struct {
