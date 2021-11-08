@@ -1,130 +1,157 @@
-//go:build integration
-// +build integration
-
 package metabase_test
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/odpf/meteor/models"
 	testutils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/pkg/errors"
 
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	"github.com/nsf/jsondiff"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/metabase"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
-	instanceLabel = "my-meta"
+	host = "https://my-metabase.com"
 )
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := metabase.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
+		client := new(mockClient)
+		config := map[string]interface{}{
 			"username": "user",
-			"host":     host,
-		})
+			"host":     "",
+		}
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
+	})
+	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
+		config := map[string]interface{}{
+			"username":   "user",
+			"host":       "sample-host",
+			"password":   "sample-password",
+			"session_id": "sample-session",
+		}
+
+		client := new(mockClient)
+		client.On("Authenticate", "sample-host", "user", "sample-password", "sample-session").Return(nil)
+
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
+		assert.NoError(t, err)
 	})
 }
 
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
-		ctx := context.TODO()
-		extr := metabase.New(testutils.Logger)
-		err := extr.Init(ctx, map[string]interface{}{
-			"host":       host,
-			"username":   email,
-			"password":   pass,
-			"label":      instanceLabel,
-			"session_id": session_id,
+		dashboards := getDashboardList(t)
+		dashboard_1 := getDashboard(t, 1)
+
+		client := new(mockClient)
+		client.On("Authenticate", host, "test-user", "test-pass", "").Return(nil)
+		client.On("GetDashboards").Return(dashboards, nil)
+		client.On("GetDashboard", 1).Return(dashboard_1, nil)
+		client.On("GetTable", 2).Return(getTable(t, 2), nil).Once()
+		client.On("GetDatabase", 2).Return(getDatabase(t, 2), nil).Once()
+		client.On("GetTable", 5).Return(getTable(t, 5), nil).Once()
+		client.On("GetDatabase", 3).Return(getDatabase(t, 3), nil).Once()
+		defer client.AssertExpectations(t)
+
+		emitter := mocks.NewEmitter()
+		extr := metabase.New(client, plugins.GetLog())
+		err := extr.Init(context.TODO(), map[string]interface{}{
+			"host":     host,
+			"username": "test-user",
+			"password": "test-pass",
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter.Push)
+		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
 
-		expected := expectedData()
 		records := emitter.Get()
 		var actuals []models.Metadata
 		for _, r := range records {
 			actuals = append(actuals, r.Data())
 		}
 
-		assert.Len(t, actuals, len(expected))
-		assertJSON(t, expected, actuals)
+		assertWithFile(t, "./testdata/expected.json", actuals)
 	})
 }
 
-func expectedData() (records []*assets.Dashboard) {
-	for _, d := range populatedDashboards {
-		createdAt, _ := d.CreatedAt()
-		updatedAt, _ := d.UpdatedAt()
-		cards := dashboardCards[d.ID]
-
-		dashboardUrn := fmt.Sprintf("metabase::%s/dashboard/%d", instanceLabel, d.ID)
-		var charts []*assets.Chart
-		for _, card := range cards {
-			charts = append(charts, &assets.Chart{
-				Urn:          fmt.Sprintf("metabase::%s/card/%d", instanceLabel, card.ID),
-				DashboardUrn: dashboardUrn,
-				Source:       "metabase",
-				Name:         card.Name,
-				Description:  card.Description,
-				Properties: &facets.Properties{
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
-						"id":                     card.ID,
-						"collection_id":          card.CollectionID,
-						"creator_id":             card.CreatorID,
-						"database_id":            card.DatabaseID,
-						"table_id":               card.TableID,
-						"query_average_duration": card.QueryAverageDuration,
-						"display":                card.Display,
-						"archived":               card.Archived,
-					}),
-				},
-			})
-		}
-
-		records = append(records, &assets.Dashboard{
-			Resource: &common.Resource{
-				Urn:         dashboardUrn,
-				Name:        d.Name,
-				Service:     "metabase",
-				Description: d.Description,
-			},
-			Properties: &facets.Properties{
-				Attributes: utils.TryParseMapToProto(map[string]interface{}{
-					"id":            d.ID,
-					"collection_id": d.CollectionID,
-					"creator_id":    d.CreatorID,
-				}),
-			},
-			Charts: charts,
-			Timestamps: &common.Timestamp{
-				CreateTime: timestamppb.New(createdAt),
-				UpdateTime: timestamppb.New(updatedAt),
-			},
-		})
+func getDashboardList(t *testing.T) []metabase.Dashboard {
+	var dashboards []metabase.Dashboard
+	err := readFromFiles("./testdata/dashboards.json", &dashboards)
+	if err != nil {
+		t.Fatalf("error reading dashboards: %s", err.Error())
 	}
 
-	return
+	return dashboards
 }
 
-func assertJSON(t *testing.T, expected interface{}, actual interface{}) {
+func getDashboard(t *testing.T, id int) metabase.Dashboard {
+	var dashboard metabase.Dashboard
+	filePath := fmt.Sprintf("./testdata/dashboard_%d.json", id)
+	err := readFromFiles(filePath, &dashboard)
+	if err != nil {
+		t.Fatalf("error reading %s: %s", filePath, err.Error())
+	}
+
+	return dashboard
+}
+
+func getDatabase(t *testing.T, id int) metabase.Database {
+	var database metabase.Database
+	filePath := fmt.Sprintf("./testdata/database_%d.json", id)
+	err := readFromFiles(filePath, &database)
+	if err != nil {
+		t.Fatalf("error reading %s: %s", filePath, err.Error())
+	}
+
+	return database
+}
+
+func getTable(t *testing.T, id int) metabase.Table {
+	var table metabase.Table
+	filePath := fmt.Sprintf("./testdata/table_%d.json", id)
+	err := readFromFiles(filePath, &table)
+	if err != nil {
+		t.Fatalf("error reading %s: %s", filePath, err.Error())
+	}
+
+	return table
+}
+
+func readFromFiles(path string, data interface{}) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return errors.Wrapf(err, "error opening \"%s\"", path)
+	}
+	err = json.NewDecoder(file).Decode(&data)
+	if err != nil {
+		return errors.Wrapf(err, "error decoding \"%s\"", path)
+	}
+
+	return nil
+}
+
+func assertWithFile(t *testing.T, filePath string, actual interface{}) {
+	var expected interface{}
+	err := readFromFiles(filePath, &expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	actualBytes, err := json.Marshal(actual)
 	if err != nil {
 		t.Fatal(err)
@@ -134,5 +161,38 @@ func assertJSON(t *testing.T, expected interface{}, actual interface{}) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, string(expectedBytes), string(actualBytes))
+	options := jsondiff.DefaultConsoleOptions()
+	diff, report := jsondiff.Compare(expectedBytes, actualBytes, &options)
+	if diff != jsondiff.FullMatch {
+		t.Errorf("values do not match:\n %s", report)
+	}
+}
+
+type mockClient struct {
+	mock.Mock
+}
+
+func (m *mockClient) Authenticate(host, username, password, sessionID string) error {
+	args := m.Called(host, username, password, sessionID)
+	return args.Error(0)
+}
+
+func (m *mockClient) GetDashboards() ([]metabase.Dashboard, error) {
+	args := m.Called()
+	return args.Get(0).([]metabase.Dashboard), args.Error(1)
+}
+
+func (m *mockClient) GetDashboard(id int) (metabase.Dashboard, error) {
+	args := m.Called(id)
+	return args.Get(0).(metabase.Dashboard), args.Error(1)
+}
+
+func (m *mockClient) GetDatabase(id int) (metabase.Database, error) {
+	args := m.Called(id)
+	return args.Get(0).(metabase.Database), args.Error(1)
+}
+
+func (m *mockClient) GetTable(id int) (metabase.Table, error) {
+	args := m.Called(id)
+	return args.Get(0).(metabase.Table), args.Error(1)
 }

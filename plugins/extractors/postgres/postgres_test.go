@@ -1,14 +1,16 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package postgres_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
@@ -107,7 +109,7 @@ func TestExtract(t *testing.T) {
 			urns = append(urns, table.Resource.Urn)
 
 		}
-		assert.Equal(t, []string{"test_db.article", "test_db.post"}, urns)
+		assert.Equal(t, []string{"postgres::localhost:5438/test_db/article", "postgres::localhost:5438/test_db/post"}, urns)
 	})
 }
 
