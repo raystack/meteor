@@ -89,14 +89,13 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		return errors.Wrap(err, "failed to fetch dashboard list")
 	}
 	for _, d := range dashboards {
-		// we do not use "d" as the dashboard because it does not have
-		// "ordered_cards" field
 		dashboard, err := e.buildDashboard(d)
 		if err != nil {
 			e.logger.Error("failed to build dashboard with", "dashboard_id", d.ID, "err", err.Error())
-		} else {
-			emit(models.NewRecord(dashboard))
+			continue
 		}
+
+		emit(models.NewRecord(dashboard))
 	}
 	return nil
 }
