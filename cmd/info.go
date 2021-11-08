@@ -5,6 +5,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
@@ -12,148 +13,107 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var validArgs = []string{"extractor", "sink", "processor"}
+
 // InfoCmd creates a command object for get info about a plugin
 func InfoCmd(lg log.Logger) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "info <command>",
-		Short: "Display plugin information",
-		Annotations: map[string]string{
-			"group:core": "true",
-		},
-	}
-	cmd.AddCommand(InfoSinkCmd())
-	cmd.AddCommand(InfoExtCmd())
-	cmd.AddCommand(InfoProccCmd())
-	return cmd
-}
+	validArgs = append(validArgs, listKeys(registry.Sinks.List())...)
+	validArgs = append(validArgs, listKeys(registry.Processors.List())...)
+	validArgs = append(validArgs, listKeys(registry.Extractors.List())...)
 
-// InfoSinkCmd creates a command object for listing sinks
-func InfoSinkCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sink <name>",
-		Short: "Display sink information",
+		Use:   "info",
+		Short: "Display plugin information",
 		Long: heredoc.Doc(`
-			Display sink information.
+			Display information for various plugins sink, extractor or processor.
 			
-			The list of supported sinks is available via the 'meteor list sinks' command.`),
+			The list of supported plugins is available via the 'meteor list <plugin_type>' command.`),
 		Example: heredoc.Doc(`
 			$ meteor info sink console
-			$ meteor info sink columbus
-		`),
-		Annotations: map[string]string{
-			"group:core": "true",
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var sinks []string
-			for n := range registry.Sinks.List() {
-				sinks = append(sinks, n)
-			}
-			var name string
-			if len(args) > 0 {
-				name = args[0]
-			} else {
-				if err := survey.AskOne(&survey.Select{
-					Message: "Select the name of sink",
-					Options: sinks,
-				}, &name); err != nil {
-					return err
-				}
-			}
-			info, err := registry.Sinks.Info(name)
-
-			if err := inform("sinks", info.Summary, err); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-	return cmd
-}
-
-// InfoExtCmd creates a command object for listing extractors
-func InfoExtCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "extractor <name>",
-		Short: "Display extractor information",
-		Long: heredoc.Doc(`
-			Display sink information.
-			
-			The list of supported extractors is available via the 'meteor list extractors' command.
-		`),
-		Example: heredoc.Doc(`
 			$ meteor info extractor postgres
-			$ meteor info extractor bigquery
-		`),
-		Annotations: map[string]string{
-			"group:core": "true",
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			var extrs []string
-			for n := range registry.Extractors.List() {
-				extrs = append(extrs, n)
-			}
-			var name string
-			if len(args) > 0 {
-				name = args[0]
-			} else {
-				if err := survey.AskOne(&survey.Select{
-					Message: "Select the name of the extractor",
-					Options: extrs,
-				}, &name); err != nil {
-					return err
-				}
-			}
-			info, err := registry.Extractors.Info(name)
-			if err := inform("extractors", info.Summary, err); err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-	return cmd
-}
-
-// InfoProccCmd creates a command object for listing processors
-func InfoProccCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "processor <name>",
-		Short: "Display processor information",
-		Long: heredoc.Doc(`
-			Display processor information.
-			
-			The list of supported processors is available via the 'meteor list processors' command.
-		`),
-		Example: heredoc.Doc(`
 			$ meteor info processor enrich
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
+		ValidArgs: validArgs,
+		Args:      matchAll(cobra.MaximumNArgs(2), cobra.OnlyValidArgs),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var processors []string
-			for n := range registry.Processors.List() {
-				processors = append(processors, n)
-			}
-			var name string
+			var plugType string
 			if len(args) > 0 {
-				name = args[0]
+				plugType = args[0]
 			} else {
 				if err := survey.AskOne(&survey.Select{
-					Message: "Select the name of the Processor",
-					Options: processors,
-				}, &name); err != nil {
+					Message: "Select the type of plugin",
+					Options: []string{"extractor", "sink", "processor"},
+				}, &plugType); err != nil {
 					return err
 				}
+				args = append(args, plugType)
 			}
-			info, err := registry.Processors.Info(name)
-
-			if err := inform("processors", info.Summary, err); err != nil {
-				return err
+			switch plugType {
+			case "sink":
+				return sinkInfo(args)
+			case "extractor":
+				return extInfo(args)
+			case "processor":
+				return proccInfo(args)
 			}
 			return nil
 		},
 	}
 	return cmd
+}
+
+// listing sinks
+func sinkInfo(args []string) error {
+	sinks := listKeys(registry.Sinks.List())
+	name, err := getPluginName(args, sinks)
+
+	if err != nil {
+		return err
+	}
+
+	info, err := registry.Sinks.Info(name)
+
+	if err := inform("sinks", info.Summary, err); err != nil {
+		return err
+	}
+	return nil
+}
+
+// listing extractors
+func extInfo(args []string) error {
+	extrs := listKeys(registry.Extractors.List())
+	name, err := getPluginName(args, extrs)
+
+	if err != nil {
+		return err
+	}
+
+	info, err := registry.Extractors.Info(name)
+
+	if err := inform("extractors", info.Summary, err); err != nil {
+		return err
+	}
+	return nil
+}
+
+// listing processors
+func proccInfo(args []string) error {
+	procs := listKeys(registry.Processors.List())
+	name, err := getPluginName(args, procs)
+
+	if err != nil {
+		return err
+	}
+
+	info, err := registry.Processors.Info(name)
+
+	if err := inform("processors", info.Summary, err); err != nil {
+		return err
+	}
+	return nil
 }
 
 func inform(typ string, summary string, err error) error {
@@ -172,4 +132,40 @@ func inform(typ string, summary string, err error) error {
 	}
 	fmt.Print(out)
 	return nil
+}
+
+func getPluginName(args, plugins []string) (string, error) {
+	var name string
+
+	if len(args) > 1 {
+		name = args[1]
+	} else {
+		if err := survey.AskOne(&survey.Select{
+			Message: "Select the name of the " + args[0],
+			Options: plugins,
+		}, &name); err != nil {
+			return name, err
+		}
+	}
+	return name, nil
+}
+
+func listKeys(pluginMap map[string]plugins.Info) []string {
+	var pluginList []string
+
+	for key := range pluginMap {
+		pluginList = append(pluginList, key)
+	}
+	return pluginList
+}
+
+func matchAll(checks ...cobra.PositionalArgs) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		for _, check := range checks {
+			if err := check(cmd, args); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
