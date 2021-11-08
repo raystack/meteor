@@ -9,3 +9,7 @@ func TableURN(service, host, database, name string) string {
 func DashboardURN(service, host, id string) string {
 	return fmt.Sprintf("%s::%s/%s", service, host, id)
 }
+
+func JobURN(service, host, id string) string {
+	return fmt.Sprintf("%s::%s/%s", service, host, id)
+}

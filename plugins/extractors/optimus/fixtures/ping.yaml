@@ -1,0 +1,15 @@
+---
+version: 1
+interactions:
+# check connection with /ping
+- request:
+    url: http://127.0.0.1:2379/ping
+    method: GET
+  response:
+    body: "pong"
+    headers:
+      Content-Type:
+      - text/plain
+      - charset=utf-8
+    status: 200 OK
+    code: 200
