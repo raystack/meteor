@@ -6,14 +6,14 @@
 source:
   type: optimus
   config:
-    host: https://optimus-host.com
+    host: optimus.com:80
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `https://optimus-host.com` | Optimus' host | *required* |
+| `host` | `string` | `optimus.com:80` | Optimus' GRPC host | *required* |
 
 ## Outputs
 

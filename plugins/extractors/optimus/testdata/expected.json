@@ -1,7 +1,7 @@
 [
     {
         "resource": {
-            "urn": "optimus::http://127.0.0.1:2379/project-A.namespace-A.job-A",
+            "urn": "optimus::optimus:80/project-A.namespace-A.job-A",
             "name": "job-A",
             "service": "optimus",
             "description": "sample description for job-A"
@@ -56,7 +56,7 @@
     },
     {
         "resource": {
-            "urn": "optimus::http://127.0.0.1:2379/project-A.namespace-A.job-B",
+            "urn": "optimus::optimus:80/project-A.namespace-A.job-B",
             "name": "job-B",
             "service": "optimus",
             "description": "sample description for job-B"
