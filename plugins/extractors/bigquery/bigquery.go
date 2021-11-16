@@ -14,6 +14,7 @@ import (
 	"github.com/odpf/meteor/models/odpf/assets/common"
 	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -34,6 +35,8 @@ type Config struct {
 	TablePattern         string `mapstructure:"table_pattern"`
 	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
 	MaxPreviewRows       int    `mapstructure:"max_preview_rows" default:"30"`
+	IsCollectTableUsage  bool   `mapstructure:"collect_table_usage" default:"false"`
+	UsagePeriodInDay     int64  `mapstructure:"usage_period_in_day" default:"7"`
 }
 
 var sampleConfig = `
@@ -51,18 +54,24 @@ service_account_json: |-
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "xxxxxxx",
     "client_x509_cert_url": "xxxxxxx"
-  }`
+  }
+collect_table_usage: false
+usage_period_in_day: 7`
 
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
-	logger log.Logger
-	client *bigquery.Client
-	config Config
+	logger     log.Logger
+	client     *bigquery.Client
+	config     Config
+	galClient  *auditlog.AuditLog
+	tableStats *auditlog.TableStats
 }
 
 func New(logger log.Logger) *Extractor {
+	galc := auditlog.New(logger)
 	return &Extractor{
-		logger: logger,
+		logger:    logger,
+		galClient: galc,
 	}
 }
 
@@ -93,11 +102,27 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 		return errors.Wrap(err, "failed to create client")
 	}
 
+	if e.config.IsCollectTableUsage {
+		errL := e.galClient.Init(ctx, configMap)
+		if errL != nil {
+			e.logger.Error("failed to create google audit log client", "err", errL)
+		}
+	}
+
 	return
 }
 
 // Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+	if e.config.IsCollectTableUsage {
+		// Fetch and extract logs first to build a map
+		ts, errL := e.galClient.Collect(ctx)
+		e.tableStats = ts
+		if errL != nil {
+			e.logger.Error("error populating table stats usage", errL)
+		}
+	}
+
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	for {
@@ -150,6 +175,9 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 // Build the bigquery table metadata
 func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assets.Table {
 	tableFQN := t.FullyQualifiedName()
+	tableURN := models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID)
+
+	tableProfile := e.buildTableProfile(tableURN)
 
 	var partitionField string
 	if md.TimePartitioning != nil {
@@ -167,7 +195,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 
 	return &assets.Table{
 		Resource: &common.Resource{
-			Urn:     models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID),
+			Urn:     tableURN,
 			Name:    t.TableID,
 			Service: "bigquery",
 		},
@@ -185,6 +213,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 			}),
 			Labels: md.Labels,
 		},
+		Profile: tableProfile,
 		Timestamps: &common.Timestamp{
 			CreateTime: timestamppb.New(md.CreationTime),
 			UpdateTime: timestamppb.New(md.LastModifiedTime),
