@@ -5,10 +5,13 @@ go 1.16
 require (
 	cloud.google.com/go/bigquery v1.8.0
 	cloud.google.com/go/bigtable v1.10.1
-	cloud.google.com/go/storage v1.16.1
+	cloud.google.com/go/logging v1.4.2
+	cloud.google.com/go/storage v1.15.0
 	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
+	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
+	github.com/aws/aws-sdk-go v1.38.35 // indirect
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/containerd/continuity v0.1.0 // indirect
@@ -54,8 +57,8 @@ require (
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect
-	google.golang.org/api v0.56.0
-	google.golang.org/grpc v1.40.0
+	google.golang.org/api v0.47.0
+	google.golang.org/genproto v0.0.0-20211115160612-a5da7257a6f7
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
