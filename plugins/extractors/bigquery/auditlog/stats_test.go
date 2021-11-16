@@ -11,32 +11,50 @@ func TestCreatingTableStats(t *testing.T) {
 	ts := NewTableStats()
 
 	assert.EqualValues(t, ts.TableUsage, map[string]int64{})
-	assert.EqualValues(t, ts.JoinUsage, map[string]map[string]int64{})
+	assert.EqualValues(t, ts.JoinDetail, map[string]map[string]JoinDetail{})
 }
 
-func TestPopulate(t *testing.T) {
+func TestPopulateIndividually(t *testing.T) {
 	t.Run("populate table usage by counting every table in referenced tables", func(t *testing.T) {
 		ts := NewTableStats()
 
-		ts.populateTableUsage(testDataRefTables1)
-		ts.populateTableUsage(testDataRefTables2)
-		ts.populateTableUsage(testDataRefTables3)
-		ts.populateTableUsage(testDataRefTables4)
+		for _, td := range testDataRefTables1 {
+			ts.populateTableUsage(td)
+		}
+		for _, td := range testDataRefTables2 {
+			ts.populateTableUsage(td)
+		}
+		for _, td := range testDataRefTables3 {
+			ts.populateTableUsage(td)
+		}
+		for _, td := range testDataRefTables4 {
+			ts.populateTableUsage(td)
+		}
 
 		assert.EqualValues(t, testDataTableUsage1234, ts.TableUsage)
 	})
 
-	t.Run("populate join usage by counting every table occurences in referenced tables", func(t *testing.T) {
+	t.Run("populate join usage by counting every joined table in referenced tables", func(t *testing.T) {
 		ts := NewTableStats()
 
-		ts.populateJoinUsage(testDataRefTables1)
-		ts.populateJoinUsage(testDataRefTables2)
-		ts.populateJoinUsage(testDataRefTables3)
-		ts.populateJoinUsage(testDataRefTables4)
+		for _, td := range testDataRefTables1 {
+			ts.populateJoinDetail(td, testDataRefTables1, nil)
+		}
+		for _, td := range testDataRefTables2 {
+			ts.populateJoinDetail(td, testDataRefTables2, nil)
+		}
+		for _, td := range testDataRefTables3 {
+			ts.populateJoinDetail(td, testDataRefTables3, nil)
+		}
+		for _, td := range testDataRefTables4 {
+			ts.populateJoinDetail(td, testDataRefTables4, nil)
+		}
 
-		assert.EqualValues(t, testDataJoinUsage1234, ts.JoinUsage)
+		assert.EqualValues(t, testDataJoinUsage1234, ts.JoinDetail)
 	})
+}
 
+func TestPopulateAll(t *testing.T) {
 	t.Run("populate all usage data from log data", func(t *testing.T) {
 		ts := NewTableStats()
 
@@ -46,7 +64,8 @@ func TestPopulate(t *testing.T) {
 		ts.Populate(testDataLogData4)
 
 		assert.EqualValues(t, testDataTableUsage1234, ts.TableUsage)
-		assert.EqualValues(t, testDataJoinUsage1234, ts.JoinUsage)
+		assert.EqualValues(t, testDataJoinDetail1234, ts.JoinDetail)
+		assert.EqualValues(t, testDataFilterCondition1234, ts.FilterConditions)
 	})
 
 	t.Run("not populating table stats if no referenced tables found in log data", func(t *testing.T) {
@@ -68,6 +87,7 @@ func TestPopulate(t *testing.T) {
 		ts.Populate(ld)
 
 		assert.Empty(t, ts.TableUsage)
-		assert.Empty(t, ts.JoinUsage)
+		assert.Empty(t, ts.JoinDetail)
+		assert.Empty(t, ts.FilterConditions)
 	})
 }

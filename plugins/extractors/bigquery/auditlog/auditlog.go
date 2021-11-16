@@ -64,9 +64,6 @@ func (l *AuditLog) createClient(ctx context.Context) (client *logadmin.Client, e
 	}
 
 	client, err = logadmin.NewClient(ctx, l.config.ProjectID, option.WithCredentialsJSON([]byte(l.config.ServiceAccountJSON)))
-	if client == nil {
-		err = errors.New("client is nil, failed initiating client")
-	}
 	return
 }
 

@@ -11,14 +11,20 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 		tableUsage = e.tableStats.TableUsage[tableURN]
 
 		// common join
-		if cjList, exist := e.tableStats.JoinUsage[tableURN]; exist {
-			for cjURN, cjCount := range cjList {
+		if jdMapping, exist := e.tableStats.JoinDetail[tableURN]; exist {
+			for joinedTableURN, jd := range jdMapping {
+				var joinConditions []string
+				for jc := range jd.Conditions {
+					joinConditions = append(joinConditions, jc)
+				}
 				commonJoins = append(commonJoins, &assets.TableCommonJoin{
-					Urn:   cjURN,
-					Count: cjCount,
+					Urn:        joinedTableURN,
+					Count:      jd.Usage,
+					Conditions: joinConditions,
 				})
 			}
 		}
+
 	}
 
 	tp = &assets.TableProfile{

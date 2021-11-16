@@ -49,11 +49,17 @@ func TestBuildTableProfile(t *testing.T) {
 					models.TableURN("bigquery", "project2", "dataset1", "table1"): 3,
 					models.TableURN("bigquery", "project3", "dataset1", "table1"): 1,
 				},
-				JoinUsage: map[string]map[string]int64{
+				JoinDetail: map[string]map[string]auditlog.JoinDetail{
 					models.TableURN("bigquery", "project1", "dataset1", "table1"): {
-						models.TableURN("bigquery", "project2", "dataset1", "table1"): 1,
-						models.TableURN("bigquery", "project3", "dataset1", "table1"): 3,
-						models.TableURN("bigquery", "project4", "dataset1", "table1"): 1,
+						models.TableURN("bigquery", "project2", "dataset1", "table1"): auditlog.JoinDetail{
+							Usage: 1,
+						},
+						models.TableURN("bigquery", "project3", "dataset1", "table1"): auditlog.JoinDetail{
+							Usage: 3,
+						},
+						models.TableURN("bigquery", "project4", "dataset1", "table1"): auditlog.JoinDetail{
+							Usage: 1,
+						},
 					},
 				},
 			},

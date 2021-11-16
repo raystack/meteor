@@ -12,6 +12,36 @@ type LogData struct {
 	*loggingpb.AuditData
 }
 
+func (ld *LogData) GetReferencedTablesURN() (refTablesURN []string) {
+	refTablesURN = []string{}
+	var stats *loggingpb.JobStatistics
+	if stats = ld.GetJobCompletedEvent().GetJob().GetJobStatistics(); stats == nil {
+		return
+	}
+	for _, rt := range stats.ReferencedTables {
+		tableURN := models.TableURN(serviceName, rt.ProjectId, rt.DatasetId, rt.TableId)
+		refTablesURN = append(refTablesURN, tableURN)
+	}
+	return
+}
+
+func (ld *LogData) GetQuery() (sqlQuery string, err error) {
+
+	if jobConfig := ld.GetJobCompletedEvent().GetJob().GetJobConfiguration(); jobConfig == nil {
+		err = errors.New("jobConfiguration is nil")
+		return
+	}
+	if jobConfigQuery := ld.GetJobCompletedEvent().GetJob().GetJobConfiguration().GetQuery(); jobConfigQuery == nil {
+		err = errors.New("jobConfiguration_Query_ is nil")
+		return
+	}
+	sqlQuery = ld.GetJobCompletedEvent().GetJob().GetJobConfiguration().GetQuery().GetQuery()
+	if sqlQuery == "" {
+		err = errors.New("sql query is empty")
+	}
+	return
+}
+
 func (ld *LogData) validateAuditData() (err error) {
 	if ld.GetJobCompletedEvent() == nil {
 		err = errors.New("can't found jobCompletedEvent field")
@@ -51,18 +81,5 @@ func (ld *LogData) validateAuditData() (err error) {
 		return
 	}
 
-	return
-}
-
-func (ld *LogData) GetReferencedTablesURN() (refTablesURN []string) {
-	refTablesURN = []string{}
-	var stats *loggingpb.JobStatistics
-	if stats = ld.GetJobCompletedEvent().GetJob().GetJobStatistics(); stats == nil {
-		return
-	}
-	for _, rt := range stats.ReferencedTables {
-		tableURN := models.TableURN(serviceName, rt.ProjectId, rt.DatasetId, rt.TableId)
-		refTablesURN = append(refTablesURN, tableURN)
-	}
 	return
 }

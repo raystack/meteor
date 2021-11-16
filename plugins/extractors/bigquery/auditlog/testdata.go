@@ -31,6 +31,21 @@ var testDataLogData1 = &LogData{
 		JobCompletedEvent: &loggingpb.JobCompletedEvent{
 			EventName: "",
 			Job: &loggingpb.Job{
+				JobConfiguration: &loggingpb.JobConfiguration{
+					Configuration: &loggingpb.JobConfiguration_Query_{
+						Query: &loggingpb.JobConfiguration_Query{
+							Query: `
+							SELECT
+							t1.field1 AS field1,
+							t2.field2 AS field2,
+							t1.field3 AS field3,
+							t3.field4 AS field4` +
+								"FROM `project1.dataset1.table1` t1" +
+								"JOIN `project2.dataset1.table1` t2 ON t1.somefield = t2.anotherfield " +
+								"JOIN `project3.dataset1.table1` t3 ON t1.somefield = t3.yetanotherfield",
+						},
+					},
+				},
 				JobStatistics: &loggingpb.JobStatistics{
 					ReferencedTables: []*loggingpb.TableName{
 						{
@@ -58,6 +73,23 @@ var testDataLogData2 = &LogData{
 		JobCompletedEvent: &loggingpb.JobCompletedEvent{
 			EventName: "",
 			Job: &loggingpb.Job{
+				JobConfiguration: &loggingpb.JobConfiguration{
+					Configuration: &loggingpb.JobConfiguration_Query_{
+						Query: &loggingpb.JobConfiguration_Query{
+							Query: `
+							WITH temp_table as 
+							(SELECT
+							t1.field1 AS field1,
+							t2.field2 AS field2,
+							t1.field3 AS field3,
+							t3.field4 AS field4` +
+								"FROM `project1.dataset1.table1` t1" +
+								"JOIN `project3.dataset1.table1` t2 ON t1.somefield = t2.anotherfield " +
+								"JOIN `project4.dataset1.table1` t3 ON t1.somefield = t3.yetanotherfield)" +
+								`SELECT * FROM temp_table WHERE t1.field2 = 'valid';`,
+						},
+					},
+				},
 				JobStatistics: &loggingpb.JobStatistics{
 					ReferencedTables: []*loggingpb.TableName{
 						{
@@ -85,6 +117,17 @@ var testDataLogData3 = &LogData{
 		JobCompletedEvent: &loggingpb.JobCompletedEvent{
 			EventName: "",
 			Job: &loggingpb.Job{
+				JobConfiguration: &loggingpb.JobConfiguration{
+					Configuration: &loggingpb.JobConfiguration_Query_{
+						Query: &loggingpb.JobConfiguration_Query{
+							Query: `
+							SELECT 
+							*
+							(SELECT order_id FROM FROM project1.dataset1.table1 WHERE column_1 IS TRUE)
+							JOIN project3.dataset1.table1
+							USING (somefield,anotherfield)`},
+					},
+				},
 				JobStatistics: &loggingpb.JobStatistics{
 					ReferencedTables: []*loggingpb.TableName{
 						{
@@ -108,6 +151,13 @@ var testDataLogData4 = &LogData{
 		JobCompletedEvent: &loggingpb.JobCompletedEvent{
 			EventName: "",
 			Job: &loggingpb.Job{
+				JobConfiguration: &loggingpb.JobConfiguration{
+					Configuration: &loggingpb.JobConfiguration_Query_{
+						Query: &loggingpb.JobConfiguration_Query{
+							Query: "SELECT start_time FROM `project1`.dataset1.table1 where job_type=\"query\" and statement_type=\"insert\" order by start_time desc limit 1",
+						},
+					},
+				},
 				JobStatistics: &loggingpb.JobStatistics{
 					ReferencedTables: []*loggingpb.TableName{
 						{
@@ -122,24 +172,129 @@ var testDataLogData4 = &LogData{
 	},
 }
 
-var testDataJoinUsage1234 = map[string]map[string]int64{
+var testDataJoinDetail1234 = map[string]map[string]JoinDetail{
 	models.TableURN("bigquery", "project1", "dataset1", "table1"): {
-		models.TableURN("bigquery", "project2", "dataset1", "table1"): 1,
-		models.TableURN("bigquery", "project3", "dataset1", "table1"): 3,
-		models.TableURN("bigquery", "project4", "dataset1", "table1"): 1,
+		models.TableURN("bigquery", "project2", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 3,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+				"USING (somefield,anotherfield)":       true,
+			},
+		},
+
+		models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
 	},
 	models.TableURN("bigquery", "project2", "dataset1", "table1"): {
-		models.TableURN("bigquery", "project1", "dataset1", "table1"): 1,
-		models.TableURN("bigquery", "project3", "dataset1", "table1"): 1,
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
 	},
 	models.TableURN("bigquery", "project3", "dataset1", "table1"): {
-		models.TableURN("bigquery", "project1", "dataset1", "table1"): 3,
-		models.TableURN("bigquery", "project2", "dataset1", "table1"): 1,
-		models.TableURN("bigquery", "project4", "dataset1", "table1"): 1,
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 3,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+				"USING (somefield,anotherfield)":       true,
+			},
+		},
+		models.TableURN("bigquery", "project2", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
+		models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
 	},
 	models.TableURN("bigquery", "project4", "dataset1", "table1"): {
-		models.TableURN("bigquery", "project1", "dataset1", "table1"): 1,
-		models.TableURN("bigquery", "project3", "dataset1", "table1"): 1,
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 1,
+			Conditions: map[string]bool{
+				"ON t1.somefield = t2.anotherfield":    true,
+				"ON t1.somefield = t3.yetanotherfield": true,
+			},
+		},
+	},
+}
+
+var testDataJoinUsage1234 = map[string]map[string]JoinDetail{
+	models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+		models.TableURN("bigquery", "project2", "dataset1", "table1"): {
+			Usage: 1,
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 3,
+		},
+
+		models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+			Usage: 1,
+		},
+	},
+	models.TableURN("bigquery", "project2", "dataset1", "table1"): {
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 1,
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 1,
+		},
+	},
+	models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 3,
+		},
+		models.TableURN("bigquery", "project2", "dataset1", "table1"): {
+			Usage: 1,
+		},
+		models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+			Usage: 1,
+		},
+	},
+	models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+		models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+			Usage: 1,
+		},
+		models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+			Usage: 1,
+		},
 	},
 }
 
@@ -148,4 +303,19 @@ var testDataTableUsage1234 = map[string]int64{
 	models.TableURN("bigquery", "project2", "dataset1", "table1"): 1,
 	models.TableURN("bigquery", "project3", "dataset1", "table1"): 3,
 	models.TableURN("bigquery", "project4", "dataset1", "table1"): 1,
+}
+
+var testDataFilterCondition1234 = map[string]map[string]bool{
+	models.TableURN("bigquery", "project1", "dataset1", "table1"): {
+		"WHERE column_1 IS TRUE":                                 true,
+		"WHERE t1.field2 = 'valid'":                              true,
+		"where job_type=\"query\" and statement_type=\"insert\"": true,
+	},
+	models.TableURN("bigquery", "project3", "dataset1", "table1"): {
+		"WHERE column_1 IS TRUE":    true,
+		"WHERE t1.field2 = 'valid'": true,
+	},
+	models.TableURN("bigquery", "project4", "dataset1", "table1"): {
+		"WHERE t1.field2 = 'valid'": true,
+	},
 }
