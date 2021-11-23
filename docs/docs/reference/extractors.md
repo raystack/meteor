@@ -20,9 +20,10 @@ Meteor currently support metadata extraction on these data sources. To perform e
 
 | Type | Url | Chart | Lineage | Tags | Custom |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| [`grafana`](https://github.com/odpf/meteor/tree/main/plugins/extractors/grafana/README.md) | ✅  | ✅  | ✗ | ✗ | ✗ |
-| [`metabase`](https://github.com/odpf/meteor/tree/main/plugins/extractors/metabase/README.md) | ✅  | ✅  | ✗ | ✗ | ✗ |
-| [`superset`](https://github.com/odpf/meteor/tree/main/plugins/extractors/superset/README.md) | ✅  | ✅  | ✅ | ✗ | ✗ |
+| [`grafana`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/grafana/README.md) | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`metabase`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/metabase/README.md) | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`superset`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/superset/README.md) | ✅  | ✅  | ✅ | ✗ | ✗ |
+| [`tableau`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/tableau/README.md) | ✅  | ✅  | ✅ | ✗ | ✗ |
 
 ### Topic
 
