@@ -8,13 +8,13 @@ Meteor currently support metadata extraction on these data sources. To perform e
 
 | Type | Attributes | Profile | Schema | Lineage | Ownership | Custom |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [`clickhouse`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/clickhouse/README.md) | ✅  | ✅  | ✅  |  ✗ | ✗ | ✗ |
-| [`couchdb`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/couchdb/README.md) | ✅  | ✅  | ✅  |  ✗ | ✗ | ✗ |
-| [`mongodb`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/mongodb/README.md) | ✅  | ✅  |  ✗ | ✗ | ✗ | ✗ |
-| [`mssql`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/mssql/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
-| [`mysql`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/mysql/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
-| [`postgres`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/postgres/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
-| [`cassandra`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/cassandra/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`clickhouse`](https://github.com/odpf/meteor/tree/main/plugins/extractors/clickhouse/README.md) | ✅  | ✅  | ✅  |  ✗ | ✗ | ✗ |
+| [`couchdb`](https://github.com/odpf/meteor/tree/main/plugins/extractors/couchdb/README.md) | ✅  | ✅  | ✅  |  ✗ | ✗ | ✗ |
+| [`mongodb`](https://github.com/odpf/meteor/tree/main/plugins/extractors/mongodb/README.md) | ✅  | ✅  |  ✗ | ✗ | ✗ | ✗ |
+| [`mssql`](https://github.com/odpf/meteor/tree/main/plugins/extractors/mssql/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`mysql`](https://github.com/odpf/meteor/tree/main/plugins/extractors/mysql/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`postgres`](https://github.com/odpf/meteor/tree/main/plugins/extractors/postgres/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
+| [`cassandra`](https://github.com/odpf/meteor/tree/main/plugins/extractors/cassandra/README.md) | ✅  | ✅  | ✅  | ✗ | ✗ | ✗ |
 
 ### Dashboard
 
@@ -29,17 +29,23 @@ Meteor currently support metadata extraction on these data sources. To perform e
 
 | Type | Profile | Schema | Ownership | Lineage | Tags | Custom |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [`kafka`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/kafka/README.md) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [`kafka`](https://github.com/odpf/meteor/tree/main/plugins/extractors/kafka/README.md) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 ### User
 
 | Type | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [`github`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/github/README.md) | ✅  | ✅  | ✅  | ☐ | ✅  | ☐ | ☐ | ☐ | ☐ | ☐ |
+| [`github`](https://github.com/odpf/meteor/tree/main/plugins/extractors/github/README.md) | ✅  | ✅  | ✅  | ☐ | ✅  | ☐ | ☐ | ☐ | ☐ | ☐ |
 
 ### Bucket
 
 | type | Location | StorageType | Blobs | Ownership | Tags | Custom | Timestamps |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [`gcs`](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/plugins/extractors/gcs/README.md) | ✅  | ✅  | ✗ | ✅  | ✅  | ✗ | ✅  |
+| [`gcs`](https://github.com/odpf/meteor/tree/main/plugins/extractors/gcs/README.md) | ✅  | ✅  | ✗ | ✅  | ✅  | ✗ | ✅  |
+
+### Job
+
+| Type | Ownership | Upstreams | Downstreams | Custom |
+| :--- | :-------- | :-------- | :---------- | :----- |
+| [`optimus`](https://github.com/odpf/meteor/tree/main/plugins/extractors/optimus/README.md) | ✅ | ✅ | ✅ | ✅ | ✅ |
 
