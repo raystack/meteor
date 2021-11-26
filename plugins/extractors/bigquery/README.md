@@ -52,6 +52,7 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `profile.total_rows` | `2100` |
 | `profile.usage_count` | `15` |
 | `profile.common_join` | [][CommonJoin](#CommonJoin)  |
+| `profile.filter_conditions` |  [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
 | `schema` | [][Column](#column) |
 
 ### Column
@@ -71,6 +72,7 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | :---- | :---- |
 | `urn` | `project_id.dataset_name.table_name` |
 | `count` | `3` |
+| `conditions` | [`"ON target.column_1 = source.column_1 and target.param_name = source.param_name"`,`"ON DATE(target.event_timestamp) = DATE(source.event_timestamp)"`] |
 
 
 ## Contributing
