@@ -95,7 +95,10 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 			continue
 		}
 
-		tableStats.Populate(logData)
+		if errF := tableStats.Populate(logData); errF != nil {
+			l.logger.Warn("error populating logdata", "err", errF)
+			continue
+		}
 	}
 	return
 }

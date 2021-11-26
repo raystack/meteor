@@ -58,17 +58,24 @@ func TestPopulateAll(t *testing.T) {
 	t.Run("populate all usage data from log data", func(t *testing.T) {
 		ts := NewTableStats()
 
-		ts.Populate(testDataLogData1)
-		ts.Populate(testDataLogData2)
-		ts.Populate(testDataLogData3)
-		ts.Populate(testDataLogData4)
+		err := ts.Populate(testDataLogData1)
+		assert.Nil(t, err)
+
+		err = ts.Populate(testDataLogData2)
+		assert.Nil(t, err)
+
+		err = ts.Populate(testDataLogData3)
+		assert.Nil(t, err)
+
+		err = ts.Populate(testDataLogData4)
+		assert.Nil(t, err)
 
 		assert.EqualValues(t, testDataTableUsage1234, ts.TableUsage)
 		assert.EqualValues(t, testDataJoinDetail1234, ts.JoinDetail)
 		assert.EqualValues(t, testDataFilterCondition1234, ts.FilterConditions)
 	})
 
-	t.Run("not populating table stats if no referenced tables found in log data", func(t *testing.T) {
+	t.Run("error populating table stats if no referenced tables found in log data", func(t *testing.T) {
 		ld := &LogData{
 			&loggingpb.AuditData{
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
@@ -84,8 +91,9 @@ func TestPopulateAll(t *testing.T) {
 
 		ts := NewTableStats()
 
-		ts.Populate(ld)
+		err := ts.Populate(ld)
 
+		assert.EqualError(t, err, "got empty referenced tables")
 		assert.Empty(t, ts.TableUsage)
 		assert.Empty(t, ts.JoinDetail)
 		assert.Empty(t, ts.FilterConditions)

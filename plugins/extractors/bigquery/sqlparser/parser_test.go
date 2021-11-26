@@ -78,11 +78,6 @@ func TestParseSimpleJoin(t *testing.T) {
 				"JOIN `project3.dataset1.table1` t3 ON t1.somefield = t3.yetanotherfield",
 			JoinInfo: newSet("ON t1.somefield = t2.anotherfield", "ON t1.somefield = t3.yetanotherfield"),
 		},
-		{
-			Name:     "complex test data sql 2",
-			Query:    testDataSQL2,
-			JoinInfo: newSet("ON target.column_1 = source.column_1 and target.variant_name = source.variant_name and DATE(target.event_timestamp) = DATE(source.event_timestamp)"),
-		},
 	}
 
 	for _, test := range testCases {
@@ -158,11 +153,6 @@ func TestParseSimpleFilter(t *testing.T) {
 					AND ` + "`" + "_TABLE_SUFFIX" + "`" + ` BETWEEN '1' AND '2';`,
 			FilterCondition: newSet("WHERE event_name IN ('in_app_purchase', 'purchase') AND _TABLE_SUFFIX BETWEEN '20180501' AND '20240131' AND `_TABLE_SUFFIX` BETWEEN '1' AND '2'"),
 		},
-		{
-			Name:            "complex test data sql 2",
-			Query:           testDataSQL2,
-			FilterCondition: newSet("WHERE t.column_type = 'tester' AND t.param_id = \"280481a2-2384-4b81-aa3e-214ac60b31db\" AND event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"),
-		},
 	}
 
 	for _, test := range testCases {
@@ -194,15 +184,15 @@ func TestComplexQueries(t *testing.T) {
 			JoinInfo:        newSet(),
 			FilterCondition: newSet("WHERE event_name IN ('in_app_purchase', 'purchase') AND _TABLE_SUFFIX BETWEEN '20180501' AND '20240131' AND `_TABLE_SUFFIX` BETWEEN '1' AND '2'"),
 		},
-		// { // function unix_micros not supported yet
-		// 	Name:            "complex query 2",
-		// 	Query:           testDataSQL2,
-		// 	JoinInfo:        newSet(),
-		// 	FilterCondition: newSet("event_params.key = 'engagement_time_msec' AND event_params.value.int_value > 0 AND event_timestamp > UNIX_MICROS"),
-		// },
 		{
-			Name:            "complex query 6",
-			Query:           testDataSQL6,
+			Name:            "complex query 2",
+			Query:           testDataSQL2,
+			JoinInfo:        newSet("ON target.column_1 = source.column_1 and target.variant_name = source.variant_name and DATE(target.event_timestamp) = DATE(source.event_timestamp)"),
+			FilterCondition: newSet("WHERE t.column_type = 'tester' AND t.param_id = \"280481a2-2384-4b81-aa3e-214ac60b31db\" AND event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"),
+		},
+		{
+			Name:            "complex query 3",
+			Query:           testDataSQL3,
 			JoinInfo:        newSet(),
 			FilterCondition: newSet("WHERE traffic_source.source = 'google' AND traffic_source.medium = 'cpc' AND traffic_source.name = 'VTA-Test-Android' AND _TABLE_SUFFIX BETWEEN '20180521' AND '20240131'"),
 		},
