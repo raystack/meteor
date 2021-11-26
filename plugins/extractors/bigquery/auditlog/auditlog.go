@@ -64,6 +64,9 @@ func (l *AuditLog) createClient(ctx context.Context) (client *logadmin.Client, e
 	}
 
 	client, err = logadmin.NewClient(ctx, l.config.ProjectID, option.WithCredentialsJSON([]byte(l.config.ServiceAccountJSON)))
+	if err != nil {
+		err = errors.New("client is nil, failed initiating client")
+	}
 	return
 }
 
@@ -88,7 +91,7 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 		}
 		logData, errF := parsePayload(entry.Payload)
 		if errF != nil {
-			l.logger.Warn("error parsing LogEntry payload", "payload", entry.Payload)
+			l.logger.Warn("error parsing LogEntry payload", "err", errF, "payload", entry.Payload)
 			continue
 		}
 

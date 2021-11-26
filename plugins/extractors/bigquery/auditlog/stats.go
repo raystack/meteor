@@ -62,6 +62,7 @@ func (b *TableStats) Populate(ld *LogData) (err error) {
 
 		b.populateFilterConditions(rt, fcs)
 	}
+
 	return
 }
 

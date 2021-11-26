@@ -33,12 +33,50 @@ func TestValidateAuditData(t *testing.T) {
 		assert.EqualError(t, err, "can't found jobCompletedEvent.job field")
 	})
 
-	t.Run("return error if JobCompletedEvent.Job does not have JobStatus info", func(t *testing.T) {
+	t.Run("return error if JobCompletedEvent.Job.JobStatistics is nil", func(t *testing.T) {
 		ld := &LogData{
 			&loggingpb.AuditData{
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
 					EventName: "",
 					Job:       &loggingpb.Job{},
+				},
+			},
+		}
+		err := ld.validateAuditData()
+
+		assert.EqualError(t, err, "job statistics is nil")
+	})
+
+	t.Run("return error if referencedTables is empty", func(t *testing.T) {
+		ld := &LogData{
+			&loggingpb.AuditData{
+				JobCompletedEvent: &loggingpb.JobCompletedEvent{
+					EventName: "",
+					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{},
+					},
+				},
+			},
+		}
+		err := ld.validateAuditData()
+
+		assert.EqualError(t, err, "no referenced tables found")
+	})
+
+	t.Run("return error if JobCompletedEvent.Job does not have JobStatus info", func(t *testing.T) {
+		ld := &LogData{
+			&loggingpb.AuditData{
+				JobCompletedEvent: &loggingpb.JobCompletedEvent{
+					EventName: "",
+					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{
+							ReferencedTables: []*loggingpb.TableName{
+								{
+									ProjectId: "project_id",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -53,6 +91,13 @@ func TestValidateAuditData(t *testing.T) {
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
 					EventName: "",
 					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{
+							ReferencedTables: []*loggingpb.TableName{
+								{
+									ProjectId: "project_id",
+								},
+							},
+						},
 						JobStatus: &loggingpb.JobStatus{},
 					},
 				},
@@ -69,6 +114,13 @@ func TestValidateAuditData(t *testing.T) {
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
 					EventName: "",
 					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{
+							ReferencedTables: []*loggingpb.TableName{
+								{
+									ProjectId: "project_id",
+								},
+							},
+						},
 						JobStatus: &loggingpb.JobStatus{
 							State: "WORKING",
 						},
@@ -81,31 +133,19 @@ func TestValidateAuditData(t *testing.T) {
 		assert.EqualError(t, err, "job status state is not DONE")
 	})
 
-	t.Run("return error if JobCompletedEvent.Job.JobStatus error is not nil but empty", func(t *testing.T) {
-		ld := &LogData{
-			&loggingpb.AuditData{
-				JobCompletedEvent: &loggingpb.JobCompletedEvent{
-					EventName: "",
-					Job: &loggingpb.Job{
-						JobStatus: &loggingpb.JobStatus{
-							State: "DONE",
-							Error: &statuspb.Status{},
-						},
-					},
-				},
-			},
-		}
-		err := ld.validateAuditData()
-
-		assert.EqualError(t, err, "job status error is not nil but cannot get the message")
-	})
-
 	t.Run("return error if JobCompletedEvent.Job.JobStatus error is not nil and has an error message", func(t *testing.T) {
 		ld := &LogData{
 			&loggingpb.AuditData{
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
 					EventName: "",
 					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{
+							ReferencedTables: []*loggingpb.TableName{
+								{
+									ProjectId: "project_id",
+								},
+							},
+						},
 						JobStatus: &loggingpb.JobStatus{
 							State: "DONE",
 							Error: &statuspb.Status{
@@ -127,6 +167,13 @@ func TestValidateAuditData(t *testing.T) {
 				JobCompletedEvent: &loggingpb.JobCompletedEvent{
 					EventName: "",
 					Job: &loggingpb.Job{
+						JobStatistics: &loggingpb.JobStatistics{
+							ReferencedTables: []*loggingpb.TableName{
+								{
+									ProjectId: "project_id",
+								},
+							},
+						},
 						JobStatus: &loggingpb.JobStatus{
 							State: "DONE",
 						},

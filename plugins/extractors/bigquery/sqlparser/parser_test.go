@@ -78,6 +78,11 @@ func TestParseSimpleJoin(t *testing.T) {
 				"JOIN `project3.dataset1.table1` t3 ON t1.somefield = t3.yetanotherfield",
 			JoinInfo: newSet("ON t1.somefield = t2.anotherfield", "ON t1.somefield = t3.yetanotherfield"),
 		},
+		{
+			Name:     "complex test data sql 2",
+			Query:    testDataSQL2,
+			JoinInfo: newSet("ON target.column_1 = source.column_1 and target.variant_name = source.variant_name and DATE(target.event_timestamp) = DATE(source.event_timestamp)"),
+		},
 	}
 
 	for _, test := range testCases {
@@ -135,6 +140,11 @@ func TestParseSimpleFilter(t *testing.T) {
 			FilterCondition: newSet("where job_type=\"query\" and statement_type=\"insert\""),
 		},
 		{
+			Name:            "simple select with where timestamp function",
+			Query:           "SELECT * FROM `dataset-1-name.bq-dataset-all` WHERE event_timestamp between TIMESTAMP('2021-11-20')  AND TIMESTAMP('2021-11-21')",
+			FilterCondition: newSet("WHERE event_timestamp between TIMESTAMP('2021-11-20') AND TIMESTAMP('2021-11-21')"),
+		},
+		{
 			Name: "complex query with comment",
 			Query: `SELECT
 					COUNT(DISTINCT user_id) AS purchasers_count
@@ -147,6 +157,11 @@ func TestParseSimpleFilter(t *testing.T) {
 					AND _TABLE_SUFFIX BETWEEN '20180501' AND '20240131'
 					AND ` + "`" + "_TABLE_SUFFIX" + "`" + ` BETWEEN '1' AND '2';`,
 			FilterCondition: newSet("WHERE event_name IN ('in_app_purchase', 'purchase') AND _TABLE_SUFFIX BETWEEN '20180501' AND '20240131' AND `_TABLE_SUFFIX` BETWEEN '1' AND '2'"),
+		},
+		{
+			Name:            "complex test data sql 2",
+			Query:           testDataSQL2,
+			FilterCondition: newSet("WHERE t.column_type = 'tester' AND t.param_id = \"280481a2-2384-4b81-aa3e-214ac60b31db\" AND event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"),
 		},
 	}
 

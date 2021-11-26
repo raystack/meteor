@@ -54,6 +54,18 @@ func (ld *LogData) validateAuditData() (err error) {
 		return
 	}
 
+	// if referenced tables is empty, we don't count it
+	stats := job.GetJobStatistics()
+	if stats == nil {
+		err = errors.Errorf("job statistics is nil")
+		return
+	}
+
+	if len(stats.ReferencedTables) == 0 {
+		err = errors.Errorf("no referenced tables found")
+		return
+	}
+
 	jobStatus := job.GetJobStatus()
 	if jobStatus == nil {
 		err = errors.New("can't found jobCompletedEvent.job.jobStatus field")
@@ -77,7 +89,6 @@ func (ld *LogData) validateAuditData() (err error) {
 			err = errors.Errorf("job status has error: %s", jobErrMsg)
 			return
 		}
-		err = errors.Errorf("job status error is not nil but cannot get the message")
 		return
 	}
 

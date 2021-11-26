@@ -5,6 +5,7 @@ import "github.com/odpf/meteor/models/odpf/assets"
 func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile) {
 	var tableUsage int64
 	var commonJoins []*assets.TableCommonJoin
+	var filterConditions []string
 
 	if e.config.IsCollectTableUsage && e.tableStats != nil {
 		// table usage
@@ -25,11 +26,18 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 			}
 		}
 
+		// filter conditions
+		if filterMapping, exist := e.tableStats.FilterConditions[tableURN]; exist {
+			for filterExpression := range filterMapping {
+				filterConditions = append(filterConditions, filterExpression)
+			}
+		}
 	}
 
 	tp = &assets.TableProfile{
-		UsageCount: tableUsage,
-		CommonJoin: commonJoins,
+		UsageCount:       tableUsage,
+		CommonJoin:       commonJoins,
+		FilterConditions: filterConditions,
 	}
 
 	return
