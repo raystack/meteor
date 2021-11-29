@@ -32,6 +32,7 @@ require (
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/knadh/koanf v1.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
@@ -39,7 +40,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249
-	github.com/odpf/optimus v0.0.3
+	github.com/odpf/optimus v0.0.4-0.20211125235320-9d1751152006
 	github.com/odpf/salt v0.0.0-20210919015538-3fd8ab22acea
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
@@ -51,6 +52,7 @@ require (
 	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.mongodb.org/mongo-driver v1.5.3
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.25.0
+	go.opentelemetry.io/otel/sdk/metric v0.24.0 // indirect
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect

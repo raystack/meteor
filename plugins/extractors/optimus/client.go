@@ -23,8 +23,7 @@ const (
 type Client interface {
 	pb.RuntimeServiceClient
 	Connect(ctx context.Context, host string) error
-	// TODO: Remove GetJobTask function and use Optimus' when it is already available.
-	GetJobTask(ctx context.Context, in *GetJobTaskRequest, opts ...grpc.CallOption) (*GetJobTaskResponse, error)
+	Close() error
 }
 
 func newClient() Client {
@@ -33,25 +32,25 @@ func newClient() Client {
 
 type client struct {
 	pb.RuntimeServiceClient
+	conn *grpc.ClientConn
 }
 
 func (c *client) Connect(ctx context.Context, host string) (err error) {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	var conn *grpc.ClientConn
-	if conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
-		return errors.Wrap(err, "error creating connection")
+	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
+		err = errors.Wrap(err, "error creating connection")
+		return
 	}
-	defer conn.Close()
 
-	c.RuntimeServiceClient = pb.NewRuntimeServiceClient(conn)
+	c.RuntimeServiceClient = pb.NewRuntimeServiceClient(c.conn)
 
 	return
 }
 
-func (c *client) GetJobTask(ctx context.Context, in *GetJobTaskRequest, opts ...grpc.CallOption) (*GetJobTaskResponse, error) {
-	return nil, nil
+func (c *client) Close() error {
+	return c.conn.Close()
 }
 
 func (c *client) createConnection(ctx context.Context, host string) (*grpc.ClientConn, error) {

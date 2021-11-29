@@ -73,6 +73,8 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	defer e.client.Close()
+
 	projResp, err := e.client.ListProjects(ctx, &pb.ListProjectsRequest{})
 	if err != nil {
 		return errors.Wrap(err, "error fetching projects")
@@ -118,7 +120,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (job *assets.Job, err error) {
-	jobResp, err := e.client.GetJobTask(ctx, &GetJobTaskRequest{
+	jobResp, err := e.client.GetJobTask(ctx, &pb.GetJobTaskRequest{
 		ProjectName: project,
 		Namespace:   namespace,
 		JobName:     jobSpec.Name,
@@ -184,7 +186,7 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 	return
 }
 
-func (e *Extractor) buildLineage(task *JobTask) (upstreams, downstreams []*common.Resource, err error) {
+func (e *Extractor) buildLineage(task *pb.JobTask) (upstreams, downstreams []*common.Resource, err error) {
 	upstreams, err = e.buildUpstreams(task)
 	if err != nil {
 		err = errors.Wrap(err, "error building upstreams")
@@ -199,7 +201,7 @@ func (e *Extractor) buildLineage(task *JobTask) (upstreams, downstreams []*commo
 	return
 }
 
-func (e *Extractor) buildUpstreams(task *JobTask) (upstreams []*common.Resource, err error) {
+func (e *Extractor) buildUpstreams(task *pb.JobTask) (upstreams []*common.Resource, err error) {
 	for _, dependency := range task.Dependencies {
 		var urn string
 		urn, err = e.mapURN(dependency.Dependency)
@@ -217,7 +219,11 @@ func (e *Extractor) buildUpstreams(task *JobTask) (upstreams []*common.Resource,
 	return
 }
 
-func (e *Extractor) buildDownstreams(task *JobTask) (downstreams []*common.Resource, err error) {
+func (e *Extractor) buildDownstreams(task *pb.JobTask) (downstreams []*common.Resource, err error) {
+	if task.Destination == nil {
+		return
+	}
+
 	var urn string
 	urn, err = e.mapURN(task.Destination.Destination)
 	if err != nil {
