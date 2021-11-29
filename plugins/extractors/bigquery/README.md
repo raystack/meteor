@@ -39,7 +39,8 @@ source:
 
 ### *Notes*
 
-Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+- Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+- Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs
 
 ## Outputs
 
