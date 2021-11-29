@@ -1,0 +1,121 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"credentials":{"name":"meteor_user","password":"xxxxxxxxxx","site":{"contentUrl":"testdev550928"}}}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      X-Tableau-Auth:
+      - ""
+    url: https://server.tableau.com/api/3.12/auth/signin
+    method: POST
+  response:
+    body: '{"credentials":{"site":{"id":"529d2cc3-0b46-4360-aa69-688785ce1497","contentUrl":"testdev550928"},"user":{"id":"2aed1e7b-975b-430f-ab9d-a574bb88f245"},"token":"uuViBd0LS3KAEJ14ZDONiw|GQy7zWEdiOcDK5alKNMESQqxNaNXrIsW"}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Wed, 17 Nov 2021 09:32:41 GMT
+      P3p:
+      - CP="NON"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - Tableau
+      Set-Cookie:
+      - hid=10axpd-hap01; domain=.server.tableau.com; path=/; HttpOnly; Secure;
+        SameSite=None
+      - AWSELB=3DAB357D1283FCCC77AA83D08989B29DE92E63276A35E4A6497FDFF23627AAC36FDB3A158CCF9D62C729E4D0823E37E3D9C3C213906F5041BDA6C709962BC0D55630C584DD31AD9AA74EA892D878DD28603CF437C4;PATH=/;DOMAIN=.server.tableau.com;SECURE;HTTPONLY;SAMESITE=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Content-Type-Options:
+      - nosniff
+      X-Tableau:
+      - Tableau Server
+      X-Ua-Compatible:
+      - IE=Edge
+      X-Xss-Protection:
+      - 1; mode=block
+    status: '200 '
+    code: 200
+    duration: 2.166400306s
+- request:
+    body: '{"query":"\n\t\t{ \n\t\t\tworkbooks(filter: { projectName: \"Samples\"
+      }) {\n                id\n\t\t    \tname\n\t\t\t\turi\n\t\t    \tprojectName\n\t\t\t\tdescription\n\t\t    \tcreatedAt\n\t\t    \tupdatedAt\n\t\t\t\towner
+      {\n\t\t\t\t\tid\n\t\t\t\t\tname\n\t\t\t\t\temail\n\t\t\t\t}\n\t\t    \tsheets
+      {\n\t\t\t \t\tid\n\t\t\t \t\tname\n\t\t\t \t\tcreatedAt\n\t\t\t \t\tupdatedAt\n\t\t    \t}\n\t\t    \tupstreamTables
+      {\n\t\t\t    \tname\n\t\t\t    \tschema\n\t\t\t\t\tfullName\n\t\t\t    \tdatabase
+      {\n\t\t\t\t\t    id\n\t\t\t\t\t    name\n\t\t\t\t\t    connectionType\n\t\t\t\t    \tdescription\n\t\t\t\t    \t...
+      on DatabaseServer {\n\t\t\t\t\t    \thostName\n\t\t\t\t\t    \tport\n\t\t\t\t\t    \tservice\n\t\t\t\t     \t}\n\t\t\t\t     \t...
+      on CloudFile {\n\t\t\t\t\t \t\tprovider\n\t\t\t\t\t \t    fileExtension\n\t\t\t\t\t
+      \t    mimeType\n\t\t\t\t\t \t    requestUrl\n\t\t\t\t     \t}\n\t\t\t\t     \t...
+      on File {\n\t\t\t\t\t \t    filePath\n\t\t\t\t     \t}\n\t\t\t\t     \t... on
+      WebDataConnector {\n\t\t\t\t\t \t    connectorUrl\n\t\t\t\t     \t}\n\t\t\t    \t}\n\t\t    \t}\n\t    \t}\n    \t}\n"}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      X-Tableau-Auth:
+      - uuViBd0LS3KAEJ14ZDONiw|GQy7zWEdiOcDK5alKNMESQqxNaNXrIsW
+    url: https://server.tableau.com/api/metadata/graphql
+    method: POST
+  response:
+    body: '{"data":{"workbooks":[{"id":"d74564cf-931c-2df2-fd8f-8b974fbc0b14","name":"Regional","uri":"sites/15038/workbooks/88352","projectName":"Samples","description":"","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z","owner":{"id":"f1594618-29db-5ea3-484d-9b19d3b34f94","name":"Meteor
+      User","email":"meteor_user"},"sheets":[{"id":"2f97fce2-e291-e229-842d-b7af508aebfc","name":"Obesity
+      Map","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"4bef53d7-8b22-87f4-0077-c9c7bd090c08","name":"S&P
+      Forward Returns","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"68cf24ed-f83c-b6f5-0f0c-a884895d9016","name":"Heat
+      Map","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"8616fd42-285c-4179-dea6-9f36e9f666e1","name":"Scatter","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"924ac46b-b979-72d5-27c8-e96251c4a982","name":"College","createdAt":"2021-11-01T11:32:31Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"99c11133-00b6-dc1f-8e89-88e224f96210","name":"Flight
+      Delays","createdAt":"2021-11-01T11:32:31Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"a0f461b6-6236-8c90-aaeb-be8218441ada","name":"Stocks","createdAt":"2021-11-01T11:32:31Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"b8b4b90b-783d-663d-2988-72781d4609cb","name":"S&P
+      Returns Vs Conditions","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"c997983b-144f-ec1b-6a0f-1dfdeef63a97","name":"Obesity
+      Scatter Plot","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"},{"id":"d19fe52f-76db-a243-3381-56c40536dd18","name":"S&P
+      Returns by Decade","createdAt":"2021-11-01T11:32:30Z","updatedAt":"2021-11-01T11:32:31Z"}],"upstreamTables":[{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"2cd8a6a2-d55a-6f50-d184-9dbdc83a26ff","name":"6025bab5-2ce4-491b-90fd-891f1f33316c","connectionType":"hyper","description":"","filePath":"6025bab5-2ce4-491b-90fd-891f1f33316c"}},{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"326c99b5-6309-6e57-b263-b9880b03c794","name":"554717ae-4225-4652-97cc-cb6021a3de22","connectionType":"hyper","description":"","filePath":"554717ae-4225-4652-97cc-cb6021a3de22"}},{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"4fa3226d-7cb9-d00a-a7cc-a8771f55a785","name":"f6538ebb-b95f-48da-af7b-12059ae4093f","connectionType":"hyper","description":"","filePath":"f6538ebb-b95f-48da-af7b-12059ae4093f"}},{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"7c7317ac-b7b6-47df-678e-2e463398e013","name":"e7fc51cb-2a4a-4910-a429-2708e9c0c1b6","connectionType":"hyper","description":"","filePath":"e7fc51cb-2a4a-4910-a429-2708e9c0c1b6"}},{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"91223b03-2988-7939-dfc5-c9a1b7eb3a61","name":"8058bef9-5422-4e13-991b-fd233e5bace9","connectionType":"hyper","description":"","filePath":"8058bef9-5422-4e13-991b-fd233e5bace9"}},{"name":"Extract","schema":"Extract","fullName":"[Extract].[Extract]","database":{"id":"c50d4b6b-c41e-0cca-f340-127113a54d6c","name":"50344e6b-add1-4dd1-b73f-42b772cfa2c0","connectionType":"hyper","description":"","filePath":"50344e6b-add1-4dd1-b73f-42b772cfa2c0"}}]},{"id":"e1f0aab7-e3ff-8727-8461-4d4294e220f0","name":"Superstore","uri":"sites/15038/workbooks/88353","projectName":"Samples","description":"A
+      sample superstore","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z","owner":{"id":"f1594618-29db-5ea3-484d-9b19d3b34f94","name":"Meteor
+      User","email":"meteor_user"},"sheets":[{"id":"0421101f-cd87-a6b9-e502-eca8f8e96a3a","name":"CustomerOverview","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"109afef4-0607-b6d2-6219-7a7009a62a4c","name":"QuotaAttainment","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"18a57261-20d9-ad1f-50f7-8ce832517257","name":"What
+      If Forecast","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-01T11:32:35Z"},{"id":"1cf1a77e-1aa7-82e4-d56f-4df6ef5804f0","name":"Product
+      Detail Sheet","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"2481cc92-cf3b-4547-45c3-62bf55c84193","name":"CustomerScatter","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"363b1423-b446-28d1-d18a-f28676f5154b","name":"Total
+      Sales","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"3d04aec6-e611-f775-de41-ab642f800a8a","name":"Sale
+      Map","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"4d72181d-88d6-3fae-9824-67789cc0cbca","name":"CommissionProjection","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"52a3e355-d6c6-d4e3-f5b3-9f5ff7f432b3","name":"ShipSummary","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"64984186-af48-7b33-3c8b-e34950d0f8ac","name":"Sales
+      by Product","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"74096ebd-7253-292a-b0a7-d8f4c9a617ca","name":"Performance","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-01T11:32:35Z"},{"id":"805d5e5e-1129-792c-0581-7f315c43829a","name":"ProductDetails","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"8c7702e7-3bce-1865-38b2-887ec3d1026a","name":"Tooltip:
+      Profit Ratio by City","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"90f2fd1c-0ff2-1184-f37d-ebb6a2ac0ac8","name":"Forecast","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-01T11:32:35Z"},{"id":"960d1086-d0af-e4fb-1678-e70fb7b373c5","name":"ShippingTrend","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"a0073bd9-753c-be7c-d14c-4fdc70383e85","name":"OTE","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"ae2f7cbc-c788-1f4f-12d5-810f9c8be43a","name":"CustomerRank","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"c00babfb-1189-fe5c-b1bd-e8313f807b5c","name":"Sales","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"cae8a658-437f-af6e-5725-4c8a355bc2c3","name":"DaystoShip","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"e2b10503-01ce-aa3c-1dc0-a4200eedd98b","name":"Sales
+      by Segment","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"},{"id":"f5981591-d5c1-8842-5edf-845d121c0afa","name":"ProductView","createdAt":"2021-11-01T11:32:35Z","updatedAt":"2021-11-02T06:07:18Z"}],"upstreamTables":[{"name":"Sales
+      Commission.csv","schema":"","fullName":"[Sales Commission.csv]","database":{"id":"fa8444bb-ddee-0a00-b1a1-2d955c666ae6","name":"Sales
+      Commission.csv","connectionType":"textscan","description":"","filePath":"Sales
+      Commission.csv"}},{"name":"Orders","schema":"","fullName":"[Orders$]","database":{"id":"49b6c7f2-f6e1-d637-cf2b-512a2cd18f09","name":"Sample
+      - Superstore.xls","connectionType":"excel-direct","description":"","filePath":"Sample
+      - Superstore.xls"}},{"name":"Sheet1","schema":"","fullName":"[Sheet1$]","database":{"id":"bf2d31c9-8f64-336a-0c3d-89f655a41d9c","name":"Sales
+      Target (US).xlsx","connectionType":"excel-direct","description":"","filePath":"Sales
+      Target (US).xlsx"}}]}]}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Wed, 17 Nov 2021 09:32:42 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - TableauMicroservicesContainer
+      Set-Cookie:
+      - hid=10axpd-hap01; domain=.server.tableau.com; path=/; HttpOnly; Secure;
+        SameSite=None
+      - AWSELB=3DAB357D1283FCCC77AA83D08989B29DE92E63276A35E4A6497FDFF23627AAC36FDB3A158CCF9D62C729E4D0823E37E3D9C3C213906F5041BDA6C709962BC0D55630C584DD31AD9AA74EA892D878DD28603CF437C4;PATH=/;DOMAIN=.server.tableau.com;SECURE;HTTPONLY;SAMESITE=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Vary:
+      - accept-encoding
+      X-Xss-Protection:
+      - 1; mode=block
+    status: '200 '
+    code: 200
+    duration: 329.087831ms

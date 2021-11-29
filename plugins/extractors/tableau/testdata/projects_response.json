@@ -1,0 +1,44 @@
+{
+    "pagination": {
+        "pageNumber": "1",
+        "pageSize": "100",
+        "totalAvailable": "3"
+    },
+    "projects": {
+        "project": [{
+                "owner": {
+                    "id": "781984c3-c3f3-4e0d-8b56-52fc451a5cc1"
+                },
+                "id": "945de5fd-9e2b-494a-a683-186b420fa644",
+                "name": "default",
+                "description": "The default project that was automatically created by Tableau.",
+                "createdAt": "2021-11-01T11:32:24Z",
+                "updatedAt": "2021-11-01T11:32:24Z",
+                "contentPermissions": "ManagedByOwner"
+            },
+            {
+                "owner": {
+                    "id": "2aed1e7b-975b-430f-ab9d-a574bb88f245"
+                },
+                "id": "46b2914d-6d2c-4cc5-ba2a-643840c036c6",
+                "name": "Samples",
+                "description": "This project includes automatically uploaded samples.",
+                "createdAt": "2021-11-01T11:32:28Z",
+                "updatedAt": "2021-11-01T11:32:28Z",
+                "contentPermissions": "ManagedByOwner"
+            },
+            {
+                "owner": {
+                    "id": "2aed1e7b-975b-430f-ab9d-a574bb88f245"
+                },
+                "id": "c95e1f64-1c3c-4ddf-8999-047a54e2af44",
+                "name": "test-meteor",
+                "description": "This is test meteor",
+                "parentProjectId": "46b2914d-6d2c-4cc5-ba2a-643840c036c6",
+                "createdAt": "2021-11-02T11:57:07Z",
+                "updatedAt": "2021-11-04T08:33:43Z",
+                "contentPermissions": "ManagedByOwner"
+            }
+        ]
+    }
+}

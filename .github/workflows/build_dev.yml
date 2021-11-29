@@ -18,6 +18,6 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        file: "{context}/Dockerfile.dev"
+        file: "./Dockerfile.dev"
         tags: |
             odpf/meteor:dev
