@@ -4,7 +4,7 @@ import "github.com/odpf/meteor/models/odpf/assets"
 
 func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile) {
 	var tableUsage int64
-	var commonJoins []*assets.TableCommonJoin
+	var commonJoins []*assets.Join
 	var filterConditions []string
 
 	if e.config.IsCollectTableUsage && e.tableStats != nil {
@@ -18,7 +18,7 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 				for jc := range jd.Conditions {
 					joinConditions = append(joinConditions, jc)
 				}
-				commonJoins = append(commonJoins, &assets.TableCommonJoin{
+				commonJoins = append(commonJoins, &assets.Join{
 					Urn:        joinedTableURN,
 					Count:      jd.Usage,
 					Conditions: joinConditions,
@@ -35,9 +35,9 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 	}
 
 	tp = &assets.TableProfile{
-		UsageCount:       tableUsage,
-		CommonJoin:       commonJoins,
-		FilterConditions: filterConditions,
+		UsageCount: tableUsage,
+		Joins:      commonJoins,
+		Filters:    filterConditions,
 	}
 
 	return

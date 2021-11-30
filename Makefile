@@ -27,5 +27,5 @@ test-e2e:
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
 	@echo " > generating protobuf"
-	@buf generate --template buf.gen.yaml https://github.com/odpf/proton/archive/52353ad461321cb601b6c963c26f0ee50e0d398b.zip#strip_components=1 --path odpf/assets
+	@buf generate --template buf.gen.yaml https://github.com/odpf/proton/archive/135a03875fc82b501e686924457a44730fd04268.zip#strip_components=1 --path odpf/assets
 	@echo " > protobuf compilation finished"
