@@ -51,6 +51,7 @@ func TestExtract(t *testing.T) {
 
 		client := new(mockClient)
 		setupExtractExpectation(ctx, client)
+		client.On("Close").Return(nil, nil).Once()
 		defer client.AssertExpectations(t)
 
 		extr := optimus.New(testutils.Logger, client)
@@ -77,6 +78,11 @@ func (c *mockClient) Connect(ctx context.Context, host string) (err error) {
 	return args.Error(0)
 }
 
+func (c *mockClient) Close() error {
+	args := c.Called()
+	return args.Error(0)
+}
+
 func (c *mockClient) ListProjects(ctx context.Context, in *pb.ListProjectsRequest, opts ...grpc.CallOption) (*pb.ListProjectsResponse, error) {
 	args := c.Called(ctx, in, opts)
 
@@ -97,12 +103,12 @@ func (c *mockClient) ListJobSpecification(ctx context.Context, in *pb.ListJobSpe
 
 func (c *mockClient) GetJobTask(
 	ctx context.Context,
-	in *optimus.GetJobTaskRequest,
+	in *pb.GetJobTaskRequest,
 	opts ...grpc.CallOption,
-) (*optimus.GetJobTaskResponse, error) {
+) (*pb.GetJobTaskResponse, error) {
 	args := c.Called(ctx, in, opts)
 
-	return args.Get(0).(*optimus.GetJobTaskResponse), args.Error(1)
+	return args.Get(0).(*pb.GetJobTaskResponse), args.Error(1)
 }
 
 func setupExtractExpectation(ctx context.Context, client *mockClient) {
@@ -238,20 +244,20 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		},
 	}, nil).Once()
 
-	client.On("GetJobTask", ctx, &optimus.GetJobTaskRequest{
+	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
 		ProjectName: "project-A",
 		Namespace:   "namespace-A",
 		JobName:     "job-A",
-	}, mock.Anything).Return(&optimus.GetJobTaskResponse{
-		Task: &optimus.JobTask{
+	}, mock.Anything).Return(&pb.GetJobTaskResponse{
+		Task: &pb.JobTask{
 			Name:        "task-A",
 			Description: "task's description",
 			Image:       "task's image",
-			Destination: &optimus.JobTaskDestination{
+			Destination: &pb.JobTask_Destination{
 				Destination: "bigquery://dst-project:dst-dataset.dst-table",
 				Type:        "bigquery",
 			},
-			Dependencies: []*optimus.JobTaskDependency{
+			Dependencies: []*pb.JobTask_Dependency{
 				{
 					Dependency: "bigquery://src-project:src-dataset.src-table",
 				},
@@ -259,20 +265,20 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		},
 	}, nil).Once()
 
-	client.On("GetJobTask", ctx, &optimus.GetJobTaskRequest{
+	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
 		ProjectName: "project-A",
 		Namespace:   "namespace-A",
 		JobName:     "job-B",
-	}, mock.Anything).Return(&optimus.GetJobTaskResponse{
-		Task: &optimus.JobTask{
+	}, mock.Anything).Return(&pb.GetJobTaskResponse{
+		Task: &pb.JobTask{
 			Name:        "task-B",
 			Description: "task's description B",
 			Image:       "task's image B",
-			Destination: &optimus.JobTaskDestination{
+			Destination: &pb.JobTask_Destination{
 				Destination: "bigquery://dst-b-project:dst-b-dataset.dst-b-table",
 				Type:        "bigquery",
 			},
-			Dependencies: []*optimus.JobTaskDependency{
+			Dependencies: []*pb.JobTask_Dependency{
 				{Dependency: "bigquery://src-b1-project:src-b1-dataset.src-b1-table"},
 				{Dependency: "bigquery://src-b2-project:src-b2-dataset.src-b2-table"},
 			},
