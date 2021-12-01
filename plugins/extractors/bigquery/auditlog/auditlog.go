@@ -132,21 +132,20 @@ func getAuditData(pl *auditpb.AuditLog, ad *loggingpb.AuditData) (err error) {
 	// ServiceData is deprecated and suggested to be replaced with Metadata
 	// But in some logs, ServiceData is still being used
 	//nolint:staticcheck
-	if pl.GetServiceData() == nil {
-		// perhaps with metadata
-		if errPB := getAuditDataFromMetadata(pl, ad); errPB != nil {
-			err = errors.Wrap(err, "failed to get audit data from metadata")
+	if pl.GetServiceData() != nil {
+		// if ServiceData is not nil, the log is still using the old one
+		if errPB := getAuditDataFromServiceData(pl, ad); errPB != nil {
+			err = errors.Wrap(err, "failed to get audit data from service data")
 			return
 		}
-		err = errors.New("serviceData not found")
-		return
 	}
 
-	// if ServiceData is not nil, the log is still using the old one
-	if errPB := getAuditDataFromServiceData(pl, ad); errPB != nil {
-		err = errors.Wrap(err, "failed to get audit data from service data")
+	// perhaps with metadata
+	if errPB := getAuditDataFromMetadata(pl, ad); errPB != nil {
+		err = errors.Wrap(err, "failed to get audit data from metadata")
 		return
 	}
+	err = errors.New("AuditData not found")
 	return
 }
 

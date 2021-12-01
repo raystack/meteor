@@ -89,7 +89,6 @@ func (ld *LogData) validateAuditData() (err error) {
 			err = errors.Errorf("job status has error: %s", jobErrMsg)
 			return
 		}
-		return
 	}
 
 	return

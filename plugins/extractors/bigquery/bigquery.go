@@ -200,9 +200,10 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 
 	return &assets.Table{
 		Resource: &common.Resource{
-			Urn:     tableURN,
-			Name:    t.TableID,
-			Service: "bigquery",
+			Urn:         tableURN,
+			Name:        t.TableID,
+			Description: md.Description,
+			Service:     "bigquery",
 		},
 		Schema: &facets.Columns{
 			Columns: e.buildColumns(ctx, md),
