@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
@@ -41,12 +39,8 @@ func New(logger log.Logger) *AuditLog {
 	}
 }
 
-func (l *AuditLog) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	err = utils.BuildConfig(configMap, &l.config)
-	if err != nil {
-		return plugins.InvalidConfigError{}
-	}
-
+func (l *AuditLog) Init(ctx context.Context, cfg Config) (err error) {
+	l.config = cfg
 	l.client, err = l.createClient(ctx)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create logadmin client")
