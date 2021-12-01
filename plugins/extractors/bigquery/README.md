@@ -21,6 +21,8 @@ source:
         "auth_provider_x509_cert_url": "xxxxxxx",
         "client_x509_cert_url": "xxxxxxx"
       }
+    collect_table_usage: false
+    usage_period_in_day: 7
 ```
 
 ## Inputs
@@ -32,10 +34,13 @@ source:
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 | `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
+| `collect_table_usage` | `bools` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
+| `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
 
 ### *Notes*
 
-Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+- Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+- Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs
 
 ## Outputs
 
@@ -46,6 +51,9 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `resource.service` | `bigquery` |
 | `description` | `table description` |
 | `profile.total_rows` | `2100` |
+| `profile.usage_count` | `15` |
+| `profile.common_join` | [][CommonJoin](#CommonJoin)  |
+| `profile.filter_conditions` |  [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
 | `schema` | [][Column](#column) |
 
 ### Column
@@ -58,6 +66,15 @@ Leaving `credentials_json` blank will default to [Google's default authenticatio
 | `is_nullable` | `true` |
 | `length` | `12,2` |
 | `profile` | `{"min":...,"max": ...,"unique": ...}` |
+
+### CommonJoin
+
+| Field | Sample Value |
+| :---- | :---- |
+| `urn` | `project_id.dataset_name.table_name` |
+| `count` | `3` |
+| `conditions` | [`"ON target.column_1 = source.column_1 and target.param_name = source.param_name"`,`"ON DATE(target.event_timestamp) = DATE(source.event_timestamp)"`] |
+
 
 ## Contributing
 
