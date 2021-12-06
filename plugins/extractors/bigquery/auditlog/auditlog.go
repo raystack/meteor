@@ -83,6 +83,7 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 			err = errors.Wrap(errF, "error iterating logEntries")
 			break
 		}
+
 		logData, errF := parsePayload(entry.Payload)
 		if errF != nil {
 			l.logger.Warn("error parsing LogEntry payload", "err", errF, "payload", entry.Payload)
@@ -128,46 +129,41 @@ func parsePayload(payload interface{}) (ld *LogData, err error) {
 	return
 }
 
-func getAuditData(pl *auditpb.AuditLog, ad *loggingpb.AuditData) (err error) {
+func getAuditData(pl *auditpb.AuditLog, ad *loggingpb.AuditData) error {
 	// ServiceData is deprecated and suggested to be replaced with Metadata
 	// But in some logs, ServiceData is still being used
 	//nolint:staticcheck
 	if pl.GetServiceData() != nil {
 		// if ServiceData is not nil, the log is still using the old one
-		if errPB := getAuditDataFromServiceData(pl, ad); errPB != nil {
-			err = errors.Wrap(err, "failed to get audit data from service data")
-			return
-		}
+		return getAuditDataFromServiceData(pl, ad)
 	}
 
 	// perhaps with metadata
-	if errPB := getAuditDataFromMetadata(pl, ad); errPB != nil {
-		err = errors.Wrap(err, "failed to get audit data from metadata")
-		return
-	}
-	err = errors.New("AuditData not found")
-	return
+	return getAuditDataFromMetadata(pl, ad)
 }
 
-func getAuditDataFromServiceData(pl *auditpb.AuditLog, ad *loggingpb.AuditData) (err error) {
+func getAuditDataFromServiceData(pl *auditpb.AuditLog, ad *loggingpb.AuditData) error {
 	//nolint:staticcheck
-	if errPB := pl.GetServiceData().UnmarshalTo(ad); errPB != nil {
-		err = errors.New("failed to marshal service data to audit data")
-		return
+	if err := pl.GetServiceData().UnmarshalTo(ad); err != nil {
+		return errors.Wrap(err, "failed to marshal service data to audit data")
 	}
-	return
+	return nil
 }
 
-func getAuditDataFromMetadata(pl *auditpb.AuditLog, ad *loggingpb.AuditData) (err error) {
+func getAuditDataFromMetadata(pl *auditpb.AuditLog, ad *loggingpb.AuditData) error {
+
+	if pl.GetMetadata() == nil {
+		return errors.New("metadata field is nil")
+	}
+
 	mdJSON, err := pl.GetMetadata().MarshalJSON()
 	if err != nil {
-		err = errors.New("cannot marshal payload metadata")
-		return
+		return errors.Wrap(err, "cannot marshal payload metadata")
 	}
 
-	if errPB := protojson.Unmarshal(mdJSON, ad); errPB != nil {
-		err = errors.New("cannot parse service data to Audit")
-		return
+	if err := protojson.Unmarshal(mdJSON, ad); err != nil {
+		return errors.Wrap(err, "cannot parse service data to Audit")
 	}
-	return
+
+	return nil
 }
