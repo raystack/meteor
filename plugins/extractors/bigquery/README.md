@@ -23,6 +23,9 @@ source:
       }
     collect_table_usage: false
     usage_period_in_day: 7
+    usage_project_ids:
+      - google-project-id 
+      - other-google-project-id
 ```
 
 ## Inputs
@@ -34,8 +37,9 @@ source:
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 | `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
-| `collect_table_usage` | `bools` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
+| `collect_table_usage` | `boolean` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
 | `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
+| `usage_project_ids` | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID. | *optional* |
 
 ### *Notes*
 
@@ -52,8 +56,8 @@ source:
 | `description` | `table description` |
 | `profile.total_rows` | `2100` |
 | `profile.usage_count` | `15` |
-| `profile.common_join` | [][CommonJoin](#CommonJoin)  |
-| `profile.filter_conditions` |  [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
+| `profile.joins` | [][Join](#Join)  |
+| `profile.filters` |  [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
 | `schema` | [][Column](#column) |
 
 ### Column
@@ -67,7 +71,7 @@ source:
 | `length` | `12,2` |
 | `profile` | `{"min":...,"max": ...,"unique": ...}` |
 
-### CommonJoin
+### Join
 
 | Field | Sample Value |
 | :---- | :---- |
