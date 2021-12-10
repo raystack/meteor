@@ -30,13 +30,14 @@ var summary string
 
 // Config hold the set of configuration for the bigquery extractor
 type Config struct {
-	ProjectID            string `mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON   string `mapstructure:"service_account_json"`
-	TablePattern         string `mapstructure:"table_pattern"`
-	IncludeColumnProfile bool   `mapstructure:"include_column_profile"`
-	MaxPreviewRows       int    `mapstructure:"max_preview_rows" default:"30"`
-	IsCollectTableUsage  bool   `mapstructure:"collect_table_usage" default:"false"`
-	UsagePeriodInDay     int64  `mapstructure:"usage_period_in_day" default:"7"`
+	ProjectID            string   `mapstructure:"project_id" validate:"required"`
+	ServiceAccountJSON   string   `mapstructure:"service_account_json"`
+	TablePattern         string   `mapstructure:"table_pattern"`
+	IncludeColumnProfile bool     `mapstructure:"include_column_profile"`
+	MaxPreviewRows       int      `mapstructure:"max_preview_rows" default:"30"`
+	IsCollectTableUsage  bool     `mapstructure:"collect_table_usage" default:"false"`
+	UsagePeriodInDay     int64    `mapstructure:"usage_period_in_day" default:"7"`
+	UsageProjectIDs      []string `mapstructure:"usage_project_ids"`
 }
 
 var sampleConfig = `
@@ -108,6 +109,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 			ServiceAccountJSON:  e.config.ServiceAccountJSON,
 			IsCollectTableUsage: e.config.IsCollectTableUsage,
 			UsagePeriodInDay:    e.config.UsagePeriodInDay,
+			UsageProjectIDs:     e.config.UsageProjectIDs,
 		})
 		if errL != nil {
 			e.logger.Error("failed to create google audit log client", "err", errL)
@@ -124,7 +126,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		ts, errL := e.galClient.Collect(ctx)
 		e.tableStats = ts
 		if errL != nil {
-			e.logger.Error("error populating table stats usage", errL)
+			e.logger.Warn("error populating table stats usage", "error", errL)
 		}
 	}
 

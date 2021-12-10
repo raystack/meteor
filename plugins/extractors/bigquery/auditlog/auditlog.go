@@ -16,10 +16,11 @@ import (
 )
 
 type Config struct {
-	ProjectID           string `mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON  string `mapstructure:"service_account_json"`
-	IsCollectTableUsage bool   `mapstructure:"collect_table_usage" default:"false"`
-	UsagePeriodInDay    int64  `mapstructure:"usage_period_in_day" default:"7"`
+	ProjectID           string
+	ServiceAccountJSON  string
+	IsCollectTableUsage bool
+	UsagePeriodInDay    int64
+	UsageProjectIDs     []string
 }
 
 const advancedFilterTemplate = `protoPayload.methodName="jobservice.jobcompleted" AND ` +
@@ -40,6 +41,9 @@ func New(logger log.Logger) *AuditLog {
 }
 
 func (l *AuditLog) Init(ctx context.Context, cfg Config) (err error) {
+	if len(cfg.UsageProjectIDs) == 0 {
+		cfg.UsageProjectIDs = []string{cfg.ProjectID}
+	}
 	l.config = cfg
 	l.client, err = l.createClient(ctx)
 	if err != nil {
@@ -69,9 +73,10 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 
 	filter := l.buildFilter()
 	it := l.client.Entries(ctx,
-		logadmin.ProjectIDs([]string{l.config.ProjectID}),
+		logadmin.ProjectIDs(l.config.UsageProjectIDs),
 		logadmin.Filter(filter))
 
+	l.logger.Info("getting logs in these projects", "projects", l.config.UsageProjectIDs)
 	l.logger.Info("getting logs with the filter", "filter", filter)
 
 	for {
