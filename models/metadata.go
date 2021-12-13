@@ -14,3 +14,7 @@ type Metadata interface {
 type LineageMetadata interface {
 	GetLineage() *facets.Lineage
 }
+
+type OwnershipMetadata interface {
+	GetOwnership() *facets.Ownership
+}
