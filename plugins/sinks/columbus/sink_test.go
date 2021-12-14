@@ -247,6 +247,61 @@ func TestSink(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "should send owners if data has ownership",
+			data: &assets.Topic{
+				Resource: &common.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+				Ownership: &facets.Ownership{
+					Owners: []*facets.Owner{
+						{
+							Urn:  "urn-1",
+							Name: "owner-a",
+							Role: "role-a",
+						},
+						{
+							Urn:  "urn-2",
+							Name: "owner-b",
+							Role: "role-b",
+						},
+						{
+							Urn:  "urn-3",
+							Name: "owner-c",
+							Role: "role-c",
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+				Owners: []columbus.Owner{
+					{
+						URN:  "urn-1",
+						Name: "owner-a",
+						Role: "role-a",
+					},
+					{
+						URN:  "urn-2",
+						Name: "owner-b",
+						Role: "role-b",
+					},
+					{
+						URN:  "urn-3",
+						Name: "owner-c",
+						Role: "role-c",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range successTestCases {
