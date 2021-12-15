@@ -1,4 +1,5 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package e2e_test
 
@@ -6,9 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"log"
 	"net"
 	"os"
@@ -17,11 +15,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/odpf/meteor/test/utils"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
+
 	"github.com/odpf/meteor/cmd"
 	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
@@ -95,7 +97,7 @@ func TestMySqlToKafka(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var sinkData []*assets.Table
+	var sinkData []*assetsv1beta1.Table
 	ctx, cancel := context.WithCancel(context.TODO())
 	go func() {
 		err = listenToTopic(ctx, testTopic, &sinkData)
@@ -136,7 +138,7 @@ func TestMySqlToKafka(t *testing.T) {
 }
 
 // listenToTopic listens to a topic and stores the data in sinkData
-func listenToTopic(ctx context.Context, topic string, data *[]*assets.Table) error {
+func listenToTopic(ctx context.Context, topic string, data *[]*assetsv1beta1.Table) error {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{brokerHost},
 		Topic:   topic,
@@ -295,15 +297,15 @@ func mysqlDockerSetup() (purge func() error, err error) {
 }
 
 // getExpectedTables returns the expected tables
-func getExpectedTables() []*assets.Table {
-	return []*assets.Table{
+func getExpectedTables() []*assetsv1beta1.Table {
+	return []*assetsv1beta1.Table{
 		{
-			Resource: &common.Resource{
+			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".applicant",
 				Name: "applicant",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:       "applicant_id",
 						DataType:   "int",
@@ -326,12 +328,12 @@ func getExpectedTables() []*assets.Table {
 			},
 		},
 		{
-			Resource: &common.Resource{
+			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".jobs",
 				Name: "jobs",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:       "department",
 						DataType:   "varchar",

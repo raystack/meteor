@@ -14,9 +14,9 @@ import (
 	"github.com/odpf/meteor/utils"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
 	"github.com/stretchr/testify/assert"
@@ -74,7 +74,7 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		data := &assets.Topic{Resource: &common.Resource{}}
+		data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
 		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
 	})
@@ -96,7 +96,7 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				data := &assets.Topic{Resource: &common.Resource{}}
+				data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
 				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
@@ -111,8 +111,8 @@ func TestSink(t *testing.T) {
 	}{
 		{
 			description: "should create the right request to columbus",
-			data: &assets.User{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.User{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
@@ -130,13 +130,13 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should build columbus labels if labels is defined in config",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Properties: &facets.Properties{
+				Properties: &facetsv1beta1.Properties{
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{
 						"attrA": "valueAttrA",
 						"attrB": "valueAttrB",
@@ -167,14 +167,14 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should send upstreams if data has upstreams",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Lineage: &facets.Lineage{
-					Upstreams: []*common.Resource{
+				Lineage: &facetsv1beta1.Lineage{
+					Upstreams: []*commonv1beta1.Resource{
 						{
 							Urn:  "urn-1",
 							Type: "type-a",
@@ -208,14 +208,14 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should send downstreams if data has downstreams",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Lineage: &facets.Lineage{
-					Downstreams: []*common.Resource{
+				Lineage: &facetsv1beta1.Lineage{
+					Downstreams: []*commonv1beta1.Resource{
 						{
 							Urn:  "urn-1",
 							Type: "type-a",
@@ -249,14 +249,14 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should send owners if data has ownership",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Ownership: &facets.Ownership{
-					Owners: []*facets.Owner{
+				Ownership: &facetsv1beta1.Ownership{
+					Owners: []*facetsv1beta1.Owner{
 						{
 							Urn:  "urn-1",
 							Name: "owner-a",

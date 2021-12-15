@@ -1,15 +1,17 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package couchdb_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"

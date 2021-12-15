@@ -11,9 +11,9 @@ import (
 
 	_ "github.com/lib/pq" // used to register the postgres driver
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -174,20 +174,20 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *assets.Table, err error) {
-	var columns []*facets.Column
+func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string) (result *assetsv1beta1.Table, err error) {
+	var columns []*facetsv1beta1.Column
 	columns, err = e.getColumnMetadata(db, dbName, tableName)
 	if err != nil {
 		return result, nil
 	}
 
-	result = &assets.Table{
-		Resource: &common.Resource{
+	result = &assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:     models.TableURN("postgres", e.config.Host, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
 		},
 	}
@@ -196,7 +196,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName string) (result []*facets.Column, err error) {
+func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName string) (result []*facetsv1beta1.Column, err error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -213,7 +213,7 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 			e.logger.Error("failed to get fields", "error", err)
 			continue
 		}
-		result = append(result, &facets.Column{
+		result = append(result, &facetsv1beta1.Column{
 			Name:       fieldName,
 			DataType:   dataType,
 			IsNullable: isNullable(isNullableString),

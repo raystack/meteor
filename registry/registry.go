@@ -8,7 +8,7 @@ var (
 	// Extractors is a factory for extractors
 	Extractors = NewExtractorFactory()
 	// Sinks is a factory for sinks
-	Sinks      = NewSinkFactory()
+	Sinks = NewSinkFactory()
 	// Processors is a factory for processors
 	Processors = NewProcessorFactory()
 )

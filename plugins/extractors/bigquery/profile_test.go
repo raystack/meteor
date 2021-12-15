@@ -5,7 +5,7 @@ import (
 
 	"github.com/alecthomas/assert"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
 )
 
@@ -68,15 +68,15 @@ func TestBuildTableProfile(t *testing.T) {
 		tp := extr.buildTableProfile(tableURN)
 
 		assert.EqualValues(t, 5, tp.UsageCount)
-		assert.Contains(t, tp.Joins, &assets.Join{
+		assert.Contains(t, tp.Joins, &assetsv1beta1.Join{
 			Urn:   models.TableURN("bigquery", "project2", "dataset1", "table1"),
 			Count: 1,
 		})
-		assert.Contains(t, tp.Joins, &assets.Join{
+		assert.Contains(t, tp.Joins, &assetsv1beta1.Join{
 			Urn:   models.TableURN("bigquery", "project3", "dataset1", "table1"),
 			Count: 3,
 		})
-		assert.Contains(t, tp.Joins, &assets.Join{
+		assert.Contains(t, tp.Joins, &assetsv1beta1.Join{
 			Urn:   models.TableURN("bigquery", "project4", "dataset1", "table1"),
 			Count: 1,
 		})

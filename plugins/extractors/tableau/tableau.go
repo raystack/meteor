@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -127,18 +127,18 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
-func (e *Extractor) buildDashboard(wb *Workbook) (data *assets.Dashboard, err error) {
+func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard, err error) {
 	lineages := e.buildLineage(wb.UpstreamTables)
 	dashboardURN := models.DashboardURN("tableau", e.config.Host, fmt.Sprintf("workbook/%s", wb.ID))
-	data = &assets.Dashboard{
-		Resource: &common.Resource{
+	data = &assetsv1beta1.Dashboard{
+		Resource: &commonv1beta1.Resource{
 			Urn:         dashboardURN,
 			Name:        wb.Name,
 			Service:     "tableau",
 			Description: wb.Description,
 		},
 		Charts: e.buildCharts(dashboardURN, wb, lineages),
-		Properties: &facets.Properties{
+		Properties: &facetsv1beta1.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"id":           wb.ID,
 				"name":         wb.Name,
@@ -159,7 +159,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assets.Dashboard, err er
 			},
 		},
 		Lineage: lineages,
-		Timestamps: &common.Timestamp{
+		Timestamps: &commonv1beta1.Timestamp{
 			CreateTime: timestamppb.New(wb.CreatedAt),
 			UpdateTime: timestamppb.New(wb.UpdatedAt),
 		},
@@ -167,21 +167,21 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assets.Dashboard, err er
 	return
 }
 
-func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *facets.Lineage) (charts []*assets.Chart) {
+func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *facetsv1beta1.Lineage) (charts []*assetsv1beta1.Chart) {
 	for _, sh := range wb.Sheets {
 		chartURN := models.DashboardURN("tableau", e.config.Host, fmt.Sprintf("sheet/%s", sh.ID))
-		charts = append(charts, &assets.Chart{
+		charts = append(charts, &assetsv1beta1.Chart{
 			Urn:          chartURN,
 			Name:         sh.Name,
 			DashboardUrn: dashboardURN,
 			Source:       "tableau",
-			Properties: &facets.Properties{
+			Properties: &facetsv1beta1.Properties{
 				Attributes: utils.TryParseMapToProto(map[string]interface{}{
 					"id":   sh.ID,
 					"name": sh.Name,
 				}),
 			},
-			Timestamps: &common.Timestamp{
+			Timestamps: &commonv1beta1.Timestamp{
 				CreateTime: timestamppb.New(sh.CreatedAt),
 				UpdateTime: timestamppb.New(sh.UpdatedAt),
 			},

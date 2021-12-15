@@ -1,13 +1,15 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package bigtable_test
 
 import (
 	"context"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"

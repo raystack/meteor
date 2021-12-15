@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -94,14 +94,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 // grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
-func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) *assets.Dashboard {
-	charts := make([]*assets.Chart, len(dashboard.Dashboard.Panels))
+func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) *assetsv1beta1.Dashboard {
+	charts := make([]*assetsv1beta1.Chart, len(dashboard.Dashboard.Panels))
 	for i, panel := range dashboard.Dashboard.Panels {
 		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
 		charts[i] = &c
 	}
-	return &assets.Dashboard{
-		Resource: &common.Resource{
+	return &assetsv1beta1.Dashboard{
+		Resource: &commonv1beta1.Resource{
 			Urn:         fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
 			Name:        dashboard.Meta.Slug,
 			Service:     "grafana",
@@ -113,12 +113,12 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 }
 
 // grafanaPanelToMeteorChart converts a grafana panel to a meteor chart
-func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) assets.Chart {
+func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) assetsv1beta1.Chart {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL
 	}
-	return assets.Chart{
+	return assetsv1beta1.Chart{
 		Urn:             fmt.Sprintf("%s.%d", dashboardUID, panel.ID),
 		Name:            panel.Title,
 		Type:            panel.Type,

@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -100,7 +100,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return nil
 }
 
-func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err error) {
+func (e *Extractor) buildDashboard(d Dashboard) (data *assetsv1beta1.Dashboard, err error) {
 	// we fetch dashboard again individually to get more fields
 	dashboard, err := e.client.GetDashboard(d.ID)
 	if err != nil {
@@ -112,33 +112,33 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assets.Dashboard, err err
 	charts := e.buildCharts(dashboardUrn, dashboard)
 	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
-	data = &assets.Dashboard{
-		Resource: &common.Resource{
+	data = &assetsv1beta1.Dashboard{
+		Resource: &commonv1beta1.Resource{
 			Urn:         dashboardUrn,
 			Name:        dashboard.Name,
 			Service:     "metabase",
 			Description: dashboard.Description,
 		},
 		Charts: charts,
-		Properties: &facets.Properties{
+		Properties: &facetsv1beta1.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"id":            dashboard.ID,
 				"collection_id": dashboard.CollectionID,
 				"creator_id":    dashboard.CreatorID,
 			}),
 		},
-		Timestamps: &common.Timestamp{
+		Timestamps: &commonv1beta1.Timestamp{
 			CreateTime: timestamppb.New(time.Time(dashboard.CreatedAt)),
 			UpdateTime: timestamppb.New(time.Time(dashboard.UpdatedAt)),
 		},
-		Lineage: &facets.Lineage{
+		Lineage: &facetsv1beta1.Lineage{
 			Upstreams: dashboardUpstreams,
 		},
 	}
 	return
 }
 
-func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assets.Chart) {
+func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (charts []*assetsv1beta1.Chart) {
 	for _, oc := range dashboard.OrderedCards {
 		chart, err := e.buildChart(oc.Card, dashboardUrn)
 		if err != nil {
@@ -151,20 +151,20 @@ func (e *Extractor) buildCharts(dashboardUrn string, dashboard Dashboard) (chart
 	return
 }
 
-func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assets.Chart, err error) {
-	var upstreams []*common.Resource
+func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assetsv1beta1.Chart, err error) {
+	var upstreams []*commonv1beta1.Resource
 	upstreams, err = e.buildUpstreams(card)
 	if err != nil {
 		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
 	}
 
-	return &assets.Chart{
+	return &assetsv1beta1.Chart{
 		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
 		DashboardUrn: dashboardUrn,
 		Source:       "metabase",
 		Name:         card.Name,
 		Description:  card.Description,
-		Properties: &facets.Properties{
+		Properties: &facetsv1beta1.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"id":                     card.ID,
 				"collection_id":          card.CollectionID,
@@ -176,13 +176,13 @@ func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assets.Ch
 				"archived":               card.Archived,
 			}),
 		},
-		Lineage: &facets.Lineage{
+		Lineage: &facetsv1beta1.Lineage{
 			Upstreams: upstreams,
 		},
 	}, nil
 }
 
-func (e *Extractor) buildUpstreams(card Card) (upstreams []*common.Resource, err error) {
+func (e *Extractor) buildUpstreams(card Card) (upstreams []*commonv1beta1.Resource, err error) {
 	switch card.DatasetQuery.Type {
 	case datasetQueryTypeQuery:
 		upstreams, err = e.buildUpstreamsFromQuery(card)
@@ -201,7 +201,7 @@ func (e *Extractor) buildUpstreams(card Card) (upstreams []*common.Resource, err
 	}
 }
 
-func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*common.Resource, err error) {
+func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*commonv1beta1.Resource, err error) {
 	table, err := e.client.GetTable(card.DatasetQuery.Query.SourceTable)
 	if err != nil {
 		err = errors.Wrap(err, "error getting table")
@@ -209,7 +209,7 @@ func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*common.Reso
 	}
 
 	service, cluster, dbName := e.extractDbComponent(table.Db)
-	upstreams = append(upstreams, &common.Resource{
+	upstreams = append(upstreams, &commonv1beta1.Resource{
 		Urn:     e.buildURN(service, cluster, dbName, table.Name),
 		Service: service,
 		Type:    "table",
@@ -218,7 +218,7 @@ func (e *Extractor) buildUpstreamsFromQuery(card Card) (upstreams []*common.Reso
 	return
 }
 
-func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*common.Resource, err error) {
+func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*commonv1beta1.Resource, err error) {
 	database, err := e.client.GetDatabase(card.DatasetQuery.Database)
 	if err != nil {
 		err = errors.Wrap(err, "error getting database")
@@ -233,7 +233,7 @@ func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*common.Res
 
 	service, cluster, dbName := e.extractDbComponent(database)
 	for _, tableName := range tableNames {
-		upstreams = append(upstreams, &common.Resource{
+		upstreams = append(upstreams, &commonv1beta1.Resource{
 			Urn:     e.buildURN(service, cluster, dbName, tableName),
 			Service: service,
 			Type:    "table",
@@ -243,7 +243,7 @@ func (e *Extractor) buildUpstreamsFromNative(card Card) (upstreams []*common.Res
 	return
 }
 
-func (e *Extractor) buildDashboardUpstreams(charts []*assets.Chart) (upstreams []*common.Resource) {
+func (e *Extractor) buildDashboardUpstreams(charts []*assetsv1beta1.Chart) (upstreams []*commonv1beta1.Resource) {
 	existing := map[string]bool{}
 	for _, chart := range charts {
 		if chart.Lineage == nil {

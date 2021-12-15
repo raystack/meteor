@@ -3,12 +3,13 @@ package github
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+
 	"github.com/pkg/errors"
 
 	"github.com/google/go-github/v37/github"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -78,11 +79,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	for _, user := range users {
 		usr, _, err := e.client.Users.Get(ctx, *user.Login)
 		if err != nil {
-			e.logger.Error("failed to fetch user" , "error", err)
+			e.logger.Error("failed to fetch user", "error", err)
 			continue
 		}
-		emit(models.NewRecord(&assets.User{
-			Resource: &common.Resource{
+		emit(models.NewRecord(&assetsv1beta1.User{
+			Resource: &commonv1beta1.Resource{
 				Urn: usr.GetURL(),
 			},
 			Email:    usr.GetEmail(),

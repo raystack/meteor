@@ -34,7 +34,6 @@ require (
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/knadh/koanf v1.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
@@ -54,7 +53,6 @@ require (
 	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.mongodb.org/mongo-driver v1.5.3
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.25.0
-	go.opentelemetry.io/otel/sdk/metric v0.24.0 // indirect
 	golang.org/x/net v0.0.0-20211101193420-4a448f8816b3 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect

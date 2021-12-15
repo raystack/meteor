@@ -1,16 +1,18 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package csv_test
 
 import (
 	"context"
-	"github.com/odpf/meteor/test/utils"
 	"testing"
 
+	"github.com/odpf/meteor/test/utils"
+
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/csv"
 	"github.com/odpf/meteor/test/mocks"
@@ -43,14 +45,14 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []models.Record{
-			models.NewRecord(&assets.Table{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "test.csv",
 					Name:    "test.csv",
 					Service: "csv",
 				},
-				Schema: &facets.Columns{
-					Columns: []*facets.Column{
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
 						{Name: "name"},
 						{Name: "age"},
 						{Name: "phone"},
@@ -77,28 +79,28 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []models.Record{
-			models.NewRecord(&assets.Table{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "test-2.csv",
 					Name:    "test-2.csv",
 					Service: "csv",
 				},
-				Schema: &facets.Columns{
-					Columns: []*facets.Column{
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
 						{Name: "order"},
 						{Name: "transaction_id"},
 						{Name: "total_price"},
 					},
 				},
 			}),
-			models.NewRecord(&assets.Table{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "test.csv",
 					Name:    "test.csv",
 					Service: "csv",
 				},
-				Schema: &facets.Columns{
-					Columns: []*facets.Column{
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
 						{Name: "name"},
 						{Name: "age"},
 						{Name: "phone"},

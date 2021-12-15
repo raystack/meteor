@@ -14,8 +14,8 @@ import (
 	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/grafana"
 	"github.com/odpf/meteor/test/mocks"
@@ -58,15 +58,15 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
 
 		expectedData := []models.Record{
-			models.NewRecord(&assets.Dashboard{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Dashboard{
+				Resource: &commonv1beta1.Resource{
 					Urn:         "grafana.HzK8qNW7z",
 					Name:        "new-dashboard-copy",
 					Service:     "grafana",
 					Url:         fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
 					Description: "",
 				},
-				Charts: []*assets.Chart{
+				Charts: []*assetsv1beta1.Chart{
 					{
 						Urn:             "HzK8qNW7z.2",
 						Name:            "Panel Title",
@@ -81,15 +81,15 @@ func TestExtract(t *testing.T) {
 					},
 				},
 			}),
-			models.NewRecord(&assets.Dashboard{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Dashboard{
+				Resource: &commonv1beta1.Resource{
 					Urn:         "grafana.5WsKOvW7z",
 					Name:        "test-dashboard-updated",
 					Service:     "grafana",
 					Url:         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
 					Description: "this is description for testing",
 				},
-				Charts: []*assets.Chart{
+				Charts: []*assetsv1beta1.Chart{
 					{
 						Urn:             "5WsKOvW7z.4",
 						Name:            "Panel Random",

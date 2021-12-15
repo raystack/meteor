@@ -1,22 +1,24 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package clickhouse_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/clickhouse"
 	"github.com/odpf/meteor/test/mocks"
@@ -120,13 +122,13 @@ func TestExtract(t *testing.T) {
 
 func getExpected() []models.Record {
 	return []models.Record{
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",
 				Name: "applicant",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "applicant_id",
 						DataType:    "Int32",
@@ -145,13 +147,13 @@ func getExpected() []models.Record {
 				},
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.jobs",
 				Name: "jobs",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "job_id",
 						DataType:    "Int32",

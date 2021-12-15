@@ -10,12 +10,12 @@ import (
 	"os"
 	"testing"
 
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/test/mocks"
@@ -105,7 +105,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			table := record.Data().(*assets.Table)
+			table := record.Data().(*assetsv1beta1.Table)
 			urns = append(urns, table.Resource.Urn)
 
 		}

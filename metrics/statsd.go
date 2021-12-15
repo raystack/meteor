@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net"
 	"strconv"
+
+	"github.com/pkg/errors"
 
 	statsd "github.com/etsy/statsd/examples/go"
 	"github.com/odpf/meteor/agent"
@@ -73,7 +74,7 @@ type statsdClient interface {
 func NewStatsdClient(statsdAddress string) (c *statsd.StatsdClient, err error) {
 	statsdHost, statsdPortStr, err := net.SplitHostPort(statsdAddress)
 	if err != nil {
-		err =  errors.Wrap(err, "failed to split the network address")
+		err = errors.Wrap(err, "failed to split the network address")
 		return
 	}
 	statsdPort, err := strconv.Atoi(statsdPortStr)
