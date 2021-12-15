@@ -7,13 +7,12 @@
 package assetsv1beta1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	v1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta11 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -30,25 +29,25 @@ type Dashboard struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Representation of the resource
-	Resource *commonv1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource *v1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The list of the charts in the dashboard.
 	// For an example, check the schema of the chart.
 	Charts []*Chart `protobuf:"bytes,21,rep,name=charts,proto3" json:"charts,omitempty"`
 	// The ownership of the dashboard.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the user's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a user.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The lineage of the dashboard.
 	// For an example check out lineage schema.
-	Lineage *facetsv1beta1.Lineage `protobuf:"bytes,34,opt,name=lineage,proto3" json:"lineage,omitempty"`
+	Lineage *v1beta11.Lineage `protobuf:"bytes,34,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *Dashboard) Reset() {
@@ -83,7 +82,7 @@ func (*Dashboard) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_v1beta1_dashboard_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Dashboard) GetResource() *commonv1beta1.Resource {
+func (x *Dashboard) GetResource() *v1beta1.Resource {
 	if x != nil {
 		return x.Resource
 	}
@@ -97,35 +96,35 @@ func (x *Dashboard) GetCharts() []*Chart {
 	return nil
 }
 
-func (x *Dashboard) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Dashboard) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Dashboard) GetProperties() *facetsv1beta1.Properties {
+func (x *Dashboard) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Dashboard) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Dashboard) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *Dashboard) GetLineage() *facetsv1beta1.Lineage {
+func (x *Dashboard) GetLineage() *v1beta11.Lineage {
 	if x != nil {
 		return x.Lineage
 	}
 	return nil
 }
 
-func (x *Dashboard) GetEvent() *commonv1beta1.Event {
+func (x *Dashboard) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -169,19 +168,19 @@ type Chart struct {
 	DashboardSource string `protobuf:"bytes,10,opt,name=dashboard_source,json=dashboardSource,proto3" json:"dashboard_source,omitempty"`
 	// The ownership of the dashboard.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// The lineage of the chart.
 	// For an example check out lineage schema.
-	Lineage *facetsv1beta1.Lineage `protobuf:"bytes,32,opt,name=lineage,proto3" json:"lineage,omitempty"`
+	Lineage *v1beta11.Lineage `protobuf:"bytes,32,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a dashboard.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,33,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,33,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the user's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a dashboard.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,34,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,34,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *Chart) Reset() {
@@ -286,35 +285,35 @@ func (x *Chart) GetDashboardSource() string {
 	return ""
 }
 
-func (x *Chart) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Chart) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Chart) GetLineage() *facetsv1beta1.Lineage {
+func (x *Chart) GetLineage() *v1beta11.Lineage {
 	if x != nil {
 		return x.Lineage
 	}
 	return nil
 }
 
-func (x *Chart) GetProperties() *facetsv1beta1.Properties {
+func (x *Chart) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Chart) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Chart) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *Chart) GetEvent() *commonv1beta1.Event {
+func (x *Chart) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -434,14 +433,14 @@ func file_odpf_assets_v1beta1_dashboard_proto_rawDescGZIP() []byte {
 
 var file_odpf_assets_v1beta1_dashboard_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_odpf_assets_v1beta1_dashboard_proto_goTypes = []interface{}{
-	(*Dashboard)(nil),                // 0: odpf.assets.v1beta1.Dashboard
-	(*Chart)(nil),                    // 1: odpf.assets.v1beta1.Chart
-	(*commonv1beta1.Resource)(nil),   // 2: odpf.assets.common.v1beta1.Resource
-	(*facetsv1beta1.Ownership)(nil),  // 3: odpf.assets.facets.v1beta1.Ownership
-	(*facetsv1beta1.Properties)(nil), // 4: odpf.assets.facets.v1beta1.Properties
-	(*commonv1beta1.Timestamp)(nil),  // 5: odpf.assets.common.v1beta1.Timestamp
-	(*facetsv1beta1.Lineage)(nil),    // 6: odpf.assets.facets.v1beta1.Lineage
-	(*commonv1beta1.Event)(nil),      // 7: odpf.assets.common.v1beta1.Event
+	(*Dashboard)(nil),           // 0: odpf.assets.v1beta1.Dashboard
+	(*Chart)(nil),               // 1: odpf.assets.v1beta1.Chart
+	(*v1beta1.Resource)(nil),    // 2: odpf.assets.common.v1beta1.Resource
+	(*v1beta11.Ownership)(nil),  // 3: odpf.assets.facets.v1beta1.Ownership
+	(*v1beta11.Properties)(nil), // 4: odpf.assets.facets.v1beta1.Properties
+	(*v1beta1.Timestamp)(nil),   // 5: odpf.assets.common.v1beta1.Timestamp
+	(*v1beta11.Lineage)(nil),    // 6: odpf.assets.facets.v1beta1.Lineage
+	(*v1beta1.Event)(nil),       // 7: odpf.assets.common.v1beta1.Event
 }
 var file_odpf_assets_v1beta1_dashboard_proto_depIdxs = []int32{
 	2,  // 0: odpf.assets.v1beta1.Dashboard.resource:type_name -> odpf.assets.common.v1beta1.Resource

@@ -7,13 +7,12 @@
 package assetsv1beta1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	v1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta11 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -32,7 +31,7 @@ type User struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Representation of the resource
-	Resource *commonv1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource *v1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The emai address of the user.
 	// Example: `job.deo@gmail.com`
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
@@ -68,13 +67,13 @@ type User struct {
 	Memberships []*Membership `protobuf:"bytes,22,rep,name=memberships,proto3" json:"memberships,omitempty"`
 	// Representation of custom properties of user.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,31,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,31,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the user's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a user.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,32,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,32,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *User) Reset() {
@@ -109,7 +108,7 @@ func (*User) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_v1beta1_user_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *User) GetResource() *commonv1beta1.Resource {
+func (x *User) GetResource() *v1beta1.Resource {
 	if x != nil {
 		return x.Resource
 	}
@@ -193,21 +192,21 @@ func (x *User) GetMemberships() []*Membership {
 	return nil
 }
 
-func (x *User) GetProperties() *facetsv1beta1.Properties {
+func (x *User) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *User) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *User) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *User) GetEvent() *commonv1beta1.Event {
+func (x *User) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -433,13 +432,13 @@ func file_odpf_assets_v1beta1_user_proto_rawDescGZIP() []byte {
 
 var file_odpf_assets_v1beta1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_odpf_assets_v1beta1_user_proto_goTypes = []interface{}{
-	(*User)(nil),                     // 0: odpf.assets.v1beta1.User
-	(*Membership)(nil),               // 1: odpf.assets.v1beta1.Membership
-	(*Profile)(nil),                  // 2: odpf.assets.v1beta1.Profile
-	(*commonv1beta1.Resource)(nil),   // 3: odpf.assets.common.v1beta1.Resource
-	(*facetsv1beta1.Properties)(nil), // 4: odpf.assets.facets.v1beta1.Properties
-	(*commonv1beta1.Timestamp)(nil),  // 5: odpf.assets.common.v1beta1.Timestamp
-	(*commonv1beta1.Event)(nil),      // 6: odpf.assets.common.v1beta1.Event
+	(*User)(nil),                // 0: odpf.assets.v1beta1.User
+	(*Membership)(nil),          // 1: odpf.assets.v1beta1.Membership
+	(*Profile)(nil),             // 2: odpf.assets.v1beta1.Profile
+	(*v1beta1.Resource)(nil),    // 3: odpf.assets.common.v1beta1.Resource
+	(*v1beta11.Properties)(nil), // 4: odpf.assets.facets.v1beta1.Properties
+	(*v1beta1.Timestamp)(nil),   // 5: odpf.assets.common.v1beta1.Timestamp
+	(*v1beta1.Event)(nil),       // 6: odpf.assets.common.v1beta1.Event
 }
 var file_odpf_assets_v1beta1_user_proto_depIdxs = []int32{
 	3, // 0: odpf.assets.v1beta1.User.resource:type_name -> odpf.assets.common.v1beta1.Resource

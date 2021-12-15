@@ -7,13 +7,12 @@
 package assetsv1beta1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	v1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta11 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -31,31 +30,31 @@ type Table struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Representation of the resource
-	Resource *commonv1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource *v1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The metrics about the table.
 	// For example check the profile schem.
 	Profile *TableProfile `protobuf:"bytes,21,opt,name=profile,proto3" json:"profile,omitempty"`
 	// The columns of the table.
 	// Example: 'id', `name`, `age'.
-	Schema *facetsv1beta1.Columns `protobuf:"bytes,22,opt,name=schema,proto3" json:"schema,omitempty"`
+	Schema *v1beta11.Columns `protobuf:"bytes,22,opt,name=schema,proto3" json:"schema,omitempty"`
 	// Previews of the table.
 	// For an example check out preview facet.
-	Preview *facetsv1beta1.Preview `protobuf:"bytes,23,opt,name=preview,proto3" json:"preview,omitempty"`
+	Preview *v1beta11.Preview `protobuf:"bytes,23,opt,name=preview,proto3" json:"preview,omitempty"`
 	// The ownership of the table.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// The lineage of the table.
 	// For an example check out lineage.
-	Lineage *facetsv1beta1.Lineage `protobuf:"bytes,32,opt,name=lineage,proto3" json:"lineage,omitempty"`
+	Lineage *v1beta11.Lineage `protobuf:"bytes,32,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,33,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,33,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the user's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a user.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,34,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,34,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *Table) Reset() {
@@ -90,7 +89,7 @@ func (*Table) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_v1beta1_table_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Table) GetResource() *commonv1beta1.Resource {
+func (x *Table) GetResource() *v1beta1.Resource {
 	if x != nil {
 		return x.Resource
 	}
@@ -104,49 +103,49 @@ func (x *Table) GetProfile() *TableProfile {
 	return nil
 }
 
-func (x *Table) GetSchema() *facetsv1beta1.Columns {
+func (x *Table) GetSchema() *v1beta11.Columns {
 	if x != nil {
 		return x.Schema
 	}
 	return nil
 }
 
-func (x *Table) GetPreview() *facetsv1beta1.Preview {
+func (x *Table) GetPreview() *v1beta11.Preview {
 	if x != nil {
 		return x.Preview
 	}
 	return nil
 }
 
-func (x *Table) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Table) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Table) GetLineage() *facetsv1beta1.Lineage {
+func (x *Table) GetLineage() *v1beta11.Lineage {
 	if x != nil {
 		return x.Lineage
 	}
 	return nil
 }
 
-func (x *Table) GetProperties() *facetsv1beta1.Properties {
+func (x *Table) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Table) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Table) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *Table) GetEvent() *commonv1beta1.Event {
+func (x *Table) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -421,17 +420,17 @@ func file_odpf_assets_v1beta1_table_proto_rawDescGZIP() []byte {
 
 var file_odpf_assets_v1beta1_table_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_odpf_assets_v1beta1_table_proto_goTypes = []interface{}{
-	(*Table)(nil),                    // 0: odpf.assets.v1beta1.Table
-	(*TableProfile)(nil),             // 1: odpf.assets.v1beta1.TableProfile
-	(*Join)(nil),                     // 2: odpf.assets.v1beta1.Join
-	(*commonv1beta1.Resource)(nil),   // 3: odpf.assets.common.v1beta1.Resource
-	(*facetsv1beta1.Columns)(nil),    // 4: odpf.assets.facets.v1beta1.Columns
-	(*facetsv1beta1.Preview)(nil),    // 5: odpf.assets.facets.v1beta1.Preview
-	(*facetsv1beta1.Ownership)(nil),  // 6: odpf.assets.facets.v1beta1.Ownership
-	(*facetsv1beta1.Lineage)(nil),    // 7: odpf.assets.facets.v1beta1.Lineage
-	(*facetsv1beta1.Properties)(nil), // 8: odpf.assets.facets.v1beta1.Properties
-	(*commonv1beta1.Timestamp)(nil),  // 9: odpf.assets.common.v1beta1.Timestamp
-	(*commonv1beta1.Event)(nil),      // 10: odpf.assets.common.v1beta1.Event
+	(*Table)(nil),               // 0: odpf.assets.v1beta1.Table
+	(*TableProfile)(nil),        // 1: odpf.assets.v1beta1.TableProfile
+	(*Join)(nil),                // 2: odpf.assets.v1beta1.Join
+	(*v1beta1.Resource)(nil),    // 3: odpf.assets.common.v1beta1.Resource
+	(*v1beta11.Columns)(nil),    // 4: odpf.assets.facets.v1beta1.Columns
+	(*v1beta11.Preview)(nil),    // 5: odpf.assets.facets.v1beta1.Preview
+	(*v1beta11.Ownership)(nil),  // 6: odpf.assets.facets.v1beta1.Ownership
+	(*v1beta11.Lineage)(nil),    // 7: odpf.assets.facets.v1beta1.Lineage
+	(*v1beta11.Properties)(nil), // 8: odpf.assets.facets.v1beta1.Properties
+	(*v1beta1.Timestamp)(nil),   // 9: odpf.assets.common.v1beta1.Timestamp
+	(*v1beta1.Event)(nil),       // 10: odpf.assets.common.v1beta1.Event
 }
 var file_odpf_assets_v1beta1_table_proto_depIdxs = []int32{
 	3,  // 0: odpf.assets.v1beta1.Table.resource:type_name -> odpf.assets.common.v1beta1.Resource

@@ -7,14 +7,13 @@
 package assetsv1beta1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	v1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta11 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -30,7 +29,7 @@ type Bucket struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Representation of the resource
-	Resource *commonv1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource *v1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The description of the bucket.
 	// Example: `This bucket was created by the product team.`
 	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
@@ -44,16 +43,16 @@ type Bucket struct {
 	Blobs []*Blob `protobuf:"bytes,7,rep,name=blobs,proto3" json:"blobs,omitempty"`
 	// The ownership of the bucket.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the bucket's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a bucket.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *Bucket) Reset() {
@@ -88,7 +87,7 @@ func (*Bucket) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_v1beta1_bucket_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Bucket) GetResource() *commonv1beta1.Resource {
+func (x *Bucket) GetResource() *v1beta1.Resource {
 	if x != nil {
 		return x.Resource
 	}
@@ -123,28 +122,28 @@ func (x *Bucket) GetBlobs() []*Blob {
 	return nil
 }
 
-func (x *Bucket) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Bucket) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Bucket) GetProperties() *facetsv1beta1.Properties {
+func (x *Bucket) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Bucket) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Bucket) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *Bucket) GetEvent() *commonv1beta1.Event {
+func (x *Bucket) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -174,13 +173,13 @@ type Blob struct {
 	ExpireTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
 	// The ownership of the blob.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,31,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,32,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the blob's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a blob.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,33,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 }
 
 func (x *Blob) Reset() {
@@ -257,21 +256,21 @@ func (x *Blob) GetExpireTime() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Blob) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Blob) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Blob) GetProperties() *facetsv1beta1.Properties {
+func (x *Blob) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Blob) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Blob) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
@@ -380,14 +379,14 @@ func file_odpf_assets_v1beta1_bucket_proto_rawDescGZIP() []byte {
 
 var file_odpf_assets_v1beta1_bucket_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_odpf_assets_v1beta1_bucket_proto_goTypes = []interface{}{
-	(*Bucket)(nil),                   // 0: odpf.assets.v1beta1.Bucket
-	(*Blob)(nil),                     // 1: odpf.assets.v1beta1.Blob
-	(*commonv1beta1.Resource)(nil),   // 2: odpf.assets.common.v1beta1.Resource
-	(*facetsv1beta1.Ownership)(nil),  // 3: odpf.assets.facets.v1beta1.Ownership
-	(*facetsv1beta1.Properties)(nil), // 4: odpf.assets.facets.v1beta1.Properties
-	(*commonv1beta1.Timestamp)(nil),  // 5: odpf.assets.common.v1beta1.Timestamp
-	(*commonv1beta1.Event)(nil),      // 6: odpf.assets.common.v1beta1.Event
-	(*timestamppb.Timestamp)(nil),    // 7: google.protobuf.Timestamp
+	(*Bucket)(nil),                // 0: odpf.assets.v1beta1.Bucket
+	(*Blob)(nil),                  // 1: odpf.assets.v1beta1.Blob
+	(*v1beta1.Resource)(nil),      // 2: odpf.assets.common.v1beta1.Resource
+	(*v1beta11.Ownership)(nil),    // 3: odpf.assets.facets.v1beta1.Ownership
+	(*v1beta11.Properties)(nil),   // 4: odpf.assets.facets.v1beta1.Properties
+	(*v1beta1.Timestamp)(nil),     // 5: odpf.assets.common.v1beta1.Timestamp
+	(*v1beta1.Event)(nil),         // 6: odpf.assets.common.v1beta1.Event
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
 }
 var file_odpf_assets_v1beta1_bucket_proto_depIdxs = []int32{
 	2,  // 0: odpf.assets.v1beta1.Bucket.resource:type_name -> odpf.assets.common.v1beta1.Resource

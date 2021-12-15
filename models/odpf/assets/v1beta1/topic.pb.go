@@ -7,13 +7,12 @@
 package assetsv1beta1
 
 import (
-	reflect "reflect"
-	sync "sync"
-
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	v1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta11 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -31,28 +30,28 @@ type Topic struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Representation of the resource
-	Resource *commonv1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource *v1beta1.Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// The metrics of the topic.
 	// For an example check out topic profile schema.
 	Profile *TopicProfile `protobuf:"bytes,21,opt,name=profile,proto3" json:"profile,omitempty"`
 	// The schama of the topic.
 	// For an example check out topic schema.
-	Schema *facetsv1beta1.TopicSchema `protobuf:"bytes,31,opt,name=schema,proto3" json:"schema,omitempty"`
+	Schema *v1beta11.TopicSchema `protobuf:"bytes,31,opt,name=schema,proto3" json:"schema,omitempty"`
 	// The ownership of the topic.
 	// For an example check out ownership.
-	Ownership *facetsv1beta1.Ownership `protobuf:"bytes,32,opt,name=ownership,proto3" json:"ownership,omitempty"`
+	Ownership *v1beta11.Ownership `protobuf:"bytes,32,opt,name=ownership,proto3" json:"ownership,omitempty"`
 	// The lineage of the topic.
 	// For an example check out lineage schema.
-	Lineage *facetsv1beta1.Lineage `protobuf:"bytes,33,opt,name=lineage,proto3" json:"lineage,omitempty"`
+	Lineage *v1beta11.Lineage `protobuf:"bytes,33,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	// List of the user's custom properties.
 	// Properties facet can be used to set custom properties, tags and labels for a user.
-	Properties *facetsv1beta1.Properties `protobuf:"bytes,34,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *v1beta11.Properties `protobuf:"bytes,34,opt,name=properties,proto3" json:"properties,omitempty"`
 	// The timestamp of the user's creation.
 	// Timstamp facet can be used to set the creation and updation timestamp of a user.
-	Timestamps *commonv1beta1.Timestamp `protobuf:"bytes,35,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
+	Timestamps *v1beta1.Timestamp `protobuf:"bytes,35,opt,name=timestamps,proto3" json:"timestamps,omitempty"`
 	// The timestamp of the generated event.
 	// Event schemas is defined in the common event schema.
-	Event *commonv1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
+	Event *v1beta1.Event `protobuf:"bytes,100,opt,name=event,proto3" json:"event,omitempty"`
 }
 
 func (x *Topic) Reset() {
@@ -87,7 +86,7 @@ func (*Topic) Descriptor() ([]byte, []int) {
 	return file_odpf_assets_v1beta1_topic_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Topic) GetResource() *commonv1beta1.Resource {
+func (x *Topic) GetResource() *v1beta1.Resource {
 	if x != nil {
 		return x.Resource
 	}
@@ -101,42 +100,42 @@ func (x *Topic) GetProfile() *TopicProfile {
 	return nil
 }
 
-func (x *Topic) GetSchema() *facetsv1beta1.TopicSchema {
+func (x *Topic) GetSchema() *v1beta11.TopicSchema {
 	if x != nil {
 		return x.Schema
 	}
 	return nil
 }
 
-func (x *Topic) GetOwnership() *facetsv1beta1.Ownership {
+func (x *Topic) GetOwnership() *v1beta11.Ownership {
 	if x != nil {
 		return x.Ownership
 	}
 	return nil
 }
 
-func (x *Topic) GetLineage() *facetsv1beta1.Lineage {
+func (x *Topic) GetLineage() *v1beta11.Lineage {
 	if x != nil {
 		return x.Lineage
 	}
 	return nil
 }
 
-func (x *Topic) GetProperties() *facetsv1beta1.Properties {
+func (x *Topic) GetProperties() *v1beta11.Properties {
 	if x != nil {
 		return x.Properties
 	}
 	return nil
 }
 
-func (x *Topic) GetTimestamps() *commonv1beta1.Timestamp {
+func (x *Topic) GetTimestamps() *v1beta1.Timestamp {
 	if x != nil {
 		return x.Timestamps
 	}
 	return nil
 }
 
-func (x *Topic) GetEvent() *commonv1beta1.Event {
+func (x *Topic) GetEvent() *v1beta1.Event {
 	if x != nil {
 		return x.Event
 	}
@@ -290,15 +289,15 @@ func file_odpf_assets_v1beta1_topic_proto_rawDescGZIP() []byte {
 
 var file_odpf_assets_v1beta1_topic_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_odpf_assets_v1beta1_topic_proto_goTypes = []interface{}{
-	(*Topic)(nil),                     // 0: odpf.assets.v1beta1.Topic
-	(*TopicProfile)(nil),              // 1: odpf.assets.v1beta1.TopicProfile
-	(*commonv1beta1.Resource)(nil),    // 2: odpf.assets.common.v1beta1.Resource
-	(*facetsv1beta1.TopicSchema)(nil), // 3: odpf.assets.facets.v1beta1.TopicSchema
-	(*facetsv1beta1.Ownership)(nil),   // 4: odpf.assets.facets.v1beta1.Ownership
-	(*facetsv1beta1.Lineage)(nil),     // 5: odpf.assets.facets.v1beta1.Lineage
-	(*facetsv1beta1.Properties)(nil),  // 6: odpf.assets.facets.v1beta1.Properties
-	(*commonv1beta1.Timestamp)(nil),   // 7: odpf.assets.common.v1beta1.Timestamp
-	(*commonv1beta1.Event)(nil),       // 8: odpf.assets.common.v1beta1.Event
+	(*Topic)(nil),                // 0: odpf.assets.v1beta1.Topic
+	(*TopicProfile)(nil),         // 1: odpf.assets.v1beta1.TopicProfile
+	(*v1beta1.Resource)(nil),     // 2: odpf.assets.common.v1beta1.Resource
+	(*v1beta11.TopicSchema)(nil), // 3: odpf.assets.facets.v1beta1.TopicSchema
+	(*v1beta11.Ownership)(nil),   // 4: odpf.assets.facets.v1beta1.Ownership
+	(*v1beta11.Lineage)(nil),     // 5: odpf.assets.facets.v1beta1.Lineage
+	(*v1beta11.Properties)(nil),  // 6: odpf.assets.facets.v1beta1.Properties
+	(*v1beta1.Timestamp)(nil),    // 7: odpf.assets.common.v1beta1.Timestamp
+	(*v1beta1.Event)(nil),        // 8: odpf.assets.common.v1beta1.Event
 }
 var file_odpf_assets_v1beta1_topic_proto_depIdxs = []int32{
 	2, // 0: odpf.assets.v1beta1.Topic.resource:type_name -> odpf.assets.common.v1beta1.Resource
