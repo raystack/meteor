@@ -81,6 +81,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		if err = s.send(columbusPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
+
 		s.logger.Info("successfully sinked record to columbus", "record", metadata.GetResource().Urn)
 	}
 
@@ -131,6 +132,7 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 	}
 
 	upstreams, downstreams := s.buildLineage(metadata)
+	owners := s.buildOwners(metadata)
 	resource := metadata.GetResource()
 	record := Record{
 		Urn:         resource.GetUrn(),
@@ -138,6 +140,7 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 		Service:     resource.GetService(),
 		Data:        metadata,
 		Labels:      labels,
+		Owners:      owners,
 		Upstreams:   upstreams,
 		Downstreams: downstreams,
 	}
@@ -169,6 +172,28 @@ func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []
 		})
 	}
 
+	return
+}
+
+func (s *Sink) buildOwners(metadata models.Metadata) (owners []Owner) {
+	om, modelHasOwnership := metadata.(models.OwnershipMetadata)
+
+	if !modelHasOwnership {
+		return
+	}
+
+	ownership := om.GetOwnership()
+	if ownership == nil {
+		return
+	}
+
+	for _, ownerProto := range ownership.GetOwners() {
+		owners = append(owners, Owner{
+			URN:  ownerProto.Urn,
+			Name: ownerProto.Name,
+			Role: ownerProto.Role,
+		})
+	}
 	return
 }
 
