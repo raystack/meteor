@@ -149,8 +149,9 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 		Ownership: &facets.Ownership{
 			Owners: []*facets.Owner{
 				{
-					Urn:  jobSpec.Owner,
-					Name: jobSpec.Owner,
+					Urn:   jobSpec.Owner,
+					Name:  jobSpec.Owner,
+					Email: jobSpec.Owner,
 				},
 			},
 		},

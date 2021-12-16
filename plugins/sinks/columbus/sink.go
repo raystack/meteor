@@ -189,9 +189,10 @@ func (s *Sink) buildOwners(metadata models.Metadata) (owners []Owner) {
 
 	for _, ownerProto := range ownership.GetOwners() {
 		owners = append(owners, Owner{
-			URN:  ownerProto.Urn,
-			Name: ownerProto.Name,
-			Role: ownerProto.Role,
+			URN:   ownerProto.Urn,
+			Name:  ownerProto.Name,
+			Role:  ownerProto.Role,
+			Email: ownerProto.Email,
 		})
 	}
 	return
