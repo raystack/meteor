@@ -149,8 +149,8 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard,
 				"owner_email":  wb.Owner.Email,
 			}),
 		},
-		Ownership: &facets.Ownership{
-			Owners: []*facets.Owner{
+		Ownership: &facetsv1beta1.Ownership{
+			Owners: []*facetsv1beta1.Owner{
 				{
 					Urn:   wb.Owner.Email,
 					Name:  wb.Owner.Name,
