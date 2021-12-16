@@ -8,8 +8,7 @@
         "ownership": {
             "owners": [{
                 "email": "john_doe@example.com",
-                "urn": "john_doe@example.com",
-                "name": "john_doe@example.com"
+                "urn": "john_doe@example.com"
             }]
         },
         "properties": {
@@ -58,8 +57,7 @@
         "ownership": {
             "owners": [{
                 "email": "jane_doe@example.com",
-                "urn": "jane_doe@example.com",
-                "name": "jane_doe@example.com"
+                "urn": "jane_doe@example.com"
             }]
         },
         "properties": {
