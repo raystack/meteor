@@ -1,5 +1,4 @@
-[
-    {
+[{
         "resource": {
             "urn": "optimus::optimus:80/project-A.namespace-A.job-A",
             "name": "job-A",
@@ -7,12 +6,10 @@
             "description": "sample description for job-A"
         },
         "ownership": {
-            "owners": [
-                {
-                    "urn": "john_doe@example.com",
-                    "name": "john_doe@example.com"
-                }
-            ]
+            "owners": [{
+                "email": "john_doe@example.com",
+                "urn": "john_doe@example.com"
+            }]
         },
         "properties": {
             "attributes": {
@@ -38,20 +35,16 @@
             }
         },
         "lineage": {
-            "upstreams": [
-                {
-                    "urn": "bigquery::src-project/src-dataset/src-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ],
-            "downstreams": [
-                {
-                    "urn": "bigquery::dst-project/dst-dataset/dst-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ]
+            "upstreams": [{
+                "urn": "bigquery::src-project/src-dataset/src-table",
+                "type": "table",
+                "service": "bigquery"
+            }],
+            "downstreams": [{
+                "urn": "bigquery::dst-project/dst-dataset/dst-table",
+                "type": "table",
+                "service": "bigquery"
+            }]
         }
     },
     {
@@ -62,12 +55,10 @@
             "description": "sample description for job-B"
         },
         "ownership": {
-            "owners": [
-                {
-                    "urn": "jane_doe@example.com",
-                    "name": "jane_doe@example.com"
-                }
-            ]
+            "owners": [{
+                "email": "jane_doe@example.com",
+                "urn": "jane_doe@example.com"
+            }]
         },
         "properties": {
             "attributes": {
@@ -93,8 +84,7 @@
             }
         },
         "lineage": {
-            "upstreams": [
-                {
+            "upstreams": [{
                     "urn": "bigquery::src-b1-project/src-b1-dataset/src-b1-table",
                     "type": "table",
                     "service": "bigquery"
@@ -105,13 +95,11 @@
                     "service": "bigquery"
                 }
             ],
-            "downstreams": [
-                {
-                    "urn": "bigquery::dst-b-project/dst-b-dataset/dst-b-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ]
+            "downstreams": [{
+                "urn": "bigquery::dst-b-project/dst-b-dataset/dst-b-table",
+                "type": "table",
+                "service": "bigquery"
+            }]
         }
     }
 ]

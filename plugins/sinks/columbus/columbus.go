@@ -18,7 +18,8 @@ type LineageRecord struct {
 }
 
 type Owner struct {
-	URN  string `json:"urn"`
-	Name string `json:"name"`
-	Role string `json:"role"`
+	URN   string `json:"urn"`
+	Name  string `json:"name"`
+	Role  string `json:"role"`
+	Email string `json:"email"`
 }

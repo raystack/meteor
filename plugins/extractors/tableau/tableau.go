@@ -149,6 +149,15 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assets.Dashboard, err er
 				"owner_email":  wb.Owner.Email,
 			}),
 		},
+		Ownership: &facets.Ownership{
+			Owners: []*facets.Owner{
+				{
+					Urn:   wb.Owner.Email,
+					Name:  wb.Owner.Name,
+					Email: wb.Owner.Email,
+				},
+			},
+		},
 		Lineage: lineages,
 		Timestamps: &common.Timestamp{
 			CreateTime: timestamppb.New(wb.CreatedAt),
