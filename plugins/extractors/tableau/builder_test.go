@@ -3,8 +3,8 @@ package tableau
 import (
 	"testing"
 
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +28,7 @@ func TestBuildLineageResource(t *testing.T) {
 		e := New(testutils.Logger)
 		res, err := e.buildLineageResources(table)
 
-		expectedResource := &common.Resource{
+		expectedResource := &commonv1beta1.Resource{
 			Urn:     "bigquery::database_server/access_data/table1",
 			Type:    "table",
 			Service: table.Database["connectionType"].(string),
@@ -55,7 +55,7 @@ func TestBuildLineageResource(t *testing.T) {
 		e := New(testutils.Logger)
 		res, err := e.buildLineageResources(table)
 
-		expectedResource := &common.Resource{
+		expectedResource := &commonv1beta1.Resource{
 			Urn:     "postgres::localhost:5432/database_server/table1",
 			Type:    "table",
 			Service: table.Database["connectionType"].(string),
@@ -81,7 +81,7 @@ func TestBuildLineageResource(t *testing.T) {
 		e := New(testutils.Logger)
 		res, err := e.buildLineageResources(table)
 
-		expectedResource := &common.Resource{
+		expectedResource := &commonv1beta1.Resource{
 			Urn:     "gcs::gcs/database_cloud_file/table_name",
 			Type:    "bucket",
 			Service: table.Database["connectionType"].(string),
@@ -107,7 +107,7 @@ func TestBuildLineageResource(t *testing.T) {
 		e := New(testutils.Logger)
 		res, err := e.buildLineageResources(table)
 
-		expectedResource := &common.Resource{
+		expectedResource := &commonv1beta1.Resource{
 			Urn:     "file::/this/is/file/database_file/table_name",
 			Type:    "bucket",
 			Service: table.Database["connectionType"].(string),
@@ -133,7 +133,7 @@ func TestBuildLineageResource(t *testing.T) {
 		e := New(testutils.Logger)
 		res, err := e.buildLineageResources(table)
 
-		expectedResource := &common.Resource{
+		expectedResource := &commonv1beta1.Resource{
 			Urn:     "web_data_connector::http://link_to_connector/database_wdc/table_name",
 			Type:    "table",
 			Service: table.Database["connectionType"].(string),
@@ -191,8 +191,8 @@ func TestBuildLineage(t *testing.T) {
 		UpstreamTables: upstreamTables,
 	}
 
-	expectedLineage := &facets.Lineage{
-		Upstreams: []*common.Resource{
+	expectedLineage := &facetsv1beta1.Lineage{
+		Upstreams: []*commonv1beta1.Resource{
 			{
 				Urn:     "postgres::localhost:5432/database_1/table_name_1",
 				Type:    "table",

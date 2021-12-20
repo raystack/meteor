@@ -4,12 +4,13 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
-	"github.com/pkg/errors"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -136,7 +137,7 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assets.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assetsv1beta1.Table, err error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
@@ -144,12 +145,12 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		return
 	}
 
-	table = &assets.Table{
-		Resource: &common.Resource{
+	table = &assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
 			Name: collectionName,
 		},
-		Profile: &assets.TableProfile{
+		Profile: &assetsv1beta1.TableProfile{
 			TotalRows: totalRows,
 		},
 	}

@@ -10,9 +10,9 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
 	"github.com/odpf/meteor/registry"
@@ -180,7 +180,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assets.Table {
+func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assetsv1beta1.Table {
 	tableFQN := t.FullyQualifiedName()
 	tableURN := models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID)
 
@@ -191,7 +191,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		partitionField = md.TimePartitioning.Field
 	}
 
-	var preview *facets.Preview
+	var preview *facetsv1beta1.Preview
 	if md.Type == bigquery.RegularTable {
 		var err error
 		preview, err = e.buildPreview(ctx, t)
@@ -200,18 +200,18 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		}
 	}
 
-	return &assets.Table{
-		Resource: &common.Resource{
+	return &assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:         tableURN,
 			Name:        t.TableID,
 			Description: md.Description,
 			Service:     "bigquery",
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: e.buildColumns(ctx, md),
 		},
 		Preview: preview,
-		Properties: &facets.Properties{
+		Properties: &facetsv1beta1.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"full_qualified_name": tableFQN,
 				"dataset":             t.DatasetID,
@@ -222,7 +222,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 			Labels: md.Labels,
 		},
 		Profile: tableProfile,
-		Timestamps: &common.Timestamp{
+		Timestamps: &commonv1beta1.Timestamp{
 			CreateTime: timestamppb.New(md.CreationTime),
 			UpdateTime: timestamppb.New(md.LastModifiedTime),
 		},
@@ -230,12 +230,12 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 }
 
 // Extract table schema
-func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata) []*facets.Column {
+func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata) []*facetsv1beta1.Column {
 	schema := tm.Schema
 	var wg sync.WaitGroup
 
 	wg.Add(len(schema))
-	columns := make([]*facets.Column, len(schema))
+	columns := make([]*facetsv1beta1.Column, len(schema))
 	for i, b := range schema {
 		index := i
 		go func(s *bigquery.FieldSchema) {
@@ -249,13 +249,13 @@ func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata
 	return columns
 }
 
-func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) (col *facets.Column) {
-	col = &facets.Column{
+func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) (col *facetsv1beta1.Column) {
+	col = &facetsv1beta1.Column{
 		Name:        field.Name,
 		Description: field.Description,
 		DataType:    string(field.Type),
 		IsNullable:  !(field.Required || field.Repeated),
-		Properties: &facets.Properties{
+		Properties: &facetsv1beta1.Properties{
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"mode": e.getColumnMode(field),
 			}),
@@ -273,8 +273,8 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	return
 }
 
-func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (preview *facets.Preview, err error) {
-	preview = &facets.Preview{
+func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (preview *facetsv1beta1.Preview, err error) {
+	preview = &facetsv1beta1.Preview{
 		Fields: []string{},
 	}
 	if e.config.MaxPreviewRows == 0 {
@@ -328,7 +328,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (previe
 	return
 }
 
-func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (cp *facets.ColumnProfile, err error) {
+func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (cp *facetsv1beta1.ColumnProfile, err error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
 		return
@@ -362,7 +362,7 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 	}
 
 	// map row data to column profile
-	cp = &facets.ColumnProfile{
+	cp = &facetsv1beta1.ColumnProfile{
 		Min:    row.Min,
 		Max:    row.Max,
 		Avg:    row.Avg,

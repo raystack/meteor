@@ -5,14 +5,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
+
+	"github.com/pkg/errors"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -107,9 +108,9 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			err = err1
 			return
 		}
-		var columns []*facets.Column
+		var columns []*facetsv1beta1.Column
 		for i := range docProperties {
-			columns = append(columns, &facets.Column{
+			columns = append(columns, &facetsv1beta1.Column{
 				Name:     i,
 				DataType: docProperties[i].(map[string]interface{})["type"].(string),
 			})
@@ -129,15 +130,15 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 
-		emit(models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		emit(models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
 				Name: indexName,
 			},
-			Schema: &facets.Columns{
+			Schema: &facetsv1beta1.Columns{
 				Columns: columns,
 			},
-			Profile: &assets.TableProfile{
+			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: int64(docCount),
 			},
 		}))

@@ -1,8 +1,9 @@
 package plugins
 
 import (
-	"github.com/pkg/errors"
 	"os/exec"
+
+	"github.com/pkg/errors"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"

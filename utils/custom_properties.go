@@ -2,8 +2,8 @@ package utils
 
 import (
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -29,29 +29,29 @@ func SetCustomProperties(metadata models.Metadata, customFields map[string]inter
 	}
 
 	switch metadata := metadata.(type) {
-	case *assets.Table:
+	case *assetsv1beta1.Table:
 		metadata.Properties = properties
-	case *assets.Topic:
+	case *assetsv1beta1.Topic:
 		metadata.Properties = properties
-	case *assets.Dashboard:
+	case *assetsv1beta1.Dashboard:
 		metadata.Properties = properties
-	case *assets.Bucket:
+	case *assetsv1beta1.Bucket:
 		metadata.Properties = properties
-	case *assets.Group:
+	case *assetsv1beta1.Group:
 		metadata.Properties = properties
-	case *assets.Job:
+	case *assetsv1beta1.Job:
 		metadata.Properties = properties
-	case *assets.User:
+	case *assetsv1beta1.User:
 		metadata.Properties = properties
 	}
 
 	return metadata, nil
 }
 
-func appendCustomFields(metadata models.Metadata, customFields map[string]interface{}) (*facets.Properties, error) {
+func appendCustomFields(metadata models.Metadata, customFields map[string]interface{}) (*facetsv1beta1.Properties, error) {
 	properties := metadata.GetProperties()
 	if properties == nil {
-		properties = &facets.Properties{
+		properties = &facetsv1beta1.Properties{
 			Attributes: &structpb.Struct{},
 		}
 	}

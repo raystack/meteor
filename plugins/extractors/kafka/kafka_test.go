@@ -15,8 +15,8 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/kafka"
 	"github.com/odpf/meteor/test/mocks"
@@ -112,33 +112,33 @@ func TestExtract(t *testing.T) {
 
 		// assert results with expected data
 		expected := []models.Record{
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-1",
 					Name:    "meteor-test-topic-1",
 					Service: "kafka",
 				},
-				Profile: &assets.TopicProfile{
+				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
 				},
 			}),
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-2",
 					Name:    "meteor-test-topic-2",
 					Service: "kafka",
 				},
-				Profile: &assets.TopicProfile{
+				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
 				},
 			}),
-			models.NewRecord(&assets.Topic{
-				Resource: &common.Resource{
+			models.NewRecord(&assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-3",
 					Name:    "meteor-test-topic-3",
 					Service: "kafka",
 				},
-				Profile: &assets.TopicProfile{
+				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
 				},
 			}),
@@ -180,14 +180,14 @@ func newExtractor() *kafka.Extractor {
 func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]*assets.Topic)
+	expectedMap := make(map[string]*assetsv1beta1.Topic)
 	for _, record := range expected {
-		topic := record.Data().(*assets.Topic)
+		topic := record.Data().(*assetsv1beta1.Topic)
 		expectedMap[topic.Resource.Urn] = topic
 	}
 
 	for _, record := range result {
-		topic := record.Data().(*assets.Topic)
+		topic := record.Data().(*assetsv1beta1.Topic)
 		assert.Contains(t, expectedMap, topic.Resource.Urn)
 		assert.Equal(t, expectedMap[topic.Resource.Urn], topic)
 

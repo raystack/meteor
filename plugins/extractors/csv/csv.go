@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/pkg/errors"
@@ -95,7 +95,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (table *assets.Table, err error) {
+func (e *Extractor) buildTable(filePath string) (table *assetsv1beta1.Table, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -114,13 +114,13 @@ func (e *Extractor) buildTable(filePath string) (table *assets.Table, err error)
 	}
 
 	fileName := stat.Name()
-	table = &assets.Table{
-		Resource: &common.Resource{
+	table = &assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:     fileName,
 			Name:    fileName,
 			Service: "csv",
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: e.buildColumns(content),
 		},
 	}
@@ -133,9 +133,9 @@ func (e *Extractor) readCSVFile(r io.Reader) (columns []string, err error) {
 	return reader.Read()
 }
 
-func (e *Extractor) buildColumns(csvColumns []string) (result []*facets.Column) {
+func (e *Extractor) buildColumns(csvColumns []string) (result []*facetsv1beta1.Column) {
 	for _, singleColumn := range csvColumns {
-		result = append(result, &facets.Column{
+		result = append(result, &facetsv1beta1.Column{
 			Name: singleColumn,
 		})
 	}

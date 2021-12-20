@@ -38,13 +38,13 @@ To check their implementation please refer [here](https://github.com/odpf/proton
 
 ```golang
 import(
-"github.com/odpf/meteor/models/odpf/assets"
-"github.com/odpf/meteor/models/odpf/assets/facets"
+"github.com/odpf/meteor/models/odpf/assets/v1beta1"
+"github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 )
 
 func main(){
-    // result is a var of data type of assets.Table one of our metadata model
-    result := &assets.Table{
+    // result is a var of data type of assetsv1beta1.Table one of our metadata model
+    result := &assetsv1beta1.Table{
         // assigining value to metadata model
         Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
         Name: tableName,
@@ -52,14 +52,14 @@ func main(){
 
     // using column facet to add metadata info of schema
 
-    var columns []*facets.Column
-    columns = append(columns, &facets.Column{
+    var columns []*facetsv1beta1.Column
+    columns = append(columns, &facetsv1beta1.Column{
             Name:       "column_name",
             DataType:   "varchar",
             IsNullable: true,
             Length:     256,
         })
-    result.Schema = &facets.Columns{
+    result.Schema = &facetsv1beta1.Columns{
         Columns: columns,
     }
 }

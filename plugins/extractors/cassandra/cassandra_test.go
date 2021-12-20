@@ -1,20 +1,22 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package cassandra_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/test/utils"
+
 	"github.com/gocql/gocql"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/cassandra"
 	"github.com/odpf/meteor/test/mocks"
@@ -122,7 +124,7 @@ func TestExtract(t *testing.T) {
 			"user_id":  user,
 			"password": pass,
 			"host":     host,
-			"port":		port,
+			"port":     port,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -181,46 +183,46 @@ func newExtractor() *cassandra.Extractor {
 // getExpected returns the expected result
 func getExpected() []models.Record {
 	return []models.Record{
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
-				Urn:   keyspace +".applicant",
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
+				Urn:  keyspace + ".applicant",
 				Name: "applicant",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
-						Name:        "applicantid",
-						DataType:    "int",
+						Name:     "applicantid",
+						DataType: "int",
 					},
 					{
-						Name:        "first_name",
-						DataType:    "text",
+						Name:     "first_name",
+						DataType: "text",
 					},
 					{
-						Name:        "last_name",
-						DataType:    "text",
+						Name:     "last_name",
+						DataType: "text",
 					},
 				},
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
-				Urn:  keyspace +".jobs",
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
+				Urn:  keyspace + ".jobs",
 				Name: "jobs",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
-						Name:        "department",
-						DataType:    "text",
+						Name:     "department",
+						DataType: "text",
 					},
 					{
-						Name:        "job",
-						DataType:    "text",
+						Name:     "job",
+						DataType: "text",
 					},
 					{
-						Name:        "jobid",
-						DataType:    "int",
+						Name:     "jobid",
+						DataType: "int",
 					},
 				},
 			},

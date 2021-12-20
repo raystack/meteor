@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/registry"
 
 	"cloud.google.com/go/bigtable"
@@ -126,13 +126,13 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err e
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				emit(models.NewRecord(&assets.Table{
-					Resource: &common.Resource{
+				emit(models.NewRecord(&assetsv1beta1.Table{
+					Resource: &commonv1beta1.Resource{
 						Urn:     fmt.Sprintf("%s.%s.%s", e.config.ProjectID, instance, table),
 						Name:    table,
 						Service: "bigtable",
 					},
-					Properties: &facets.Properties{
+					Properties: &facetsv1beta1.Properties{
 						Attributes: utils.TryParseMapToProto(map[string]interface{}{
 							"column_family": string(familyInfoBytes),
 						}),

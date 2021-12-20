@@ -16,9 +16,9 @@ import (
 	"testing"
 	"time"
 
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/test/utils"
 
-	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/superset"
 	"github.com/odpf/meteor/test/mocks"
@@ -136,7 +136,7 @@ func TestExtract(t *testing.T) {
 		var urns []string
 		fmt.Println(emitter.Get())
 		for _, record := range emitter.Get() {
-			dashboard := record.Data().(*assets.Dashboard)
+			dashboard := record.Data().(*assetsv1beta1.Dashboard)
 			urns = append(urns, dashboard.Resource.Urn)
 		}
 		assert.Equal(t, 10, len(urns))

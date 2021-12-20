@@ -21,7 +21,7 @@ type ProcessorRecipe struct {
 	Config map[string]interface{} `json:"config" yaml:"config"`
 }
 
-// Recipe contains the json data for a recipe 
+// Recipe contains the json data for a recipe
 type Recipe struct {
 	Name       string            `json:"name" yaml:"name" validate:"required"`
 	Source     SourceRecipe      `json:"source" yaml:"source" validate:"required"`

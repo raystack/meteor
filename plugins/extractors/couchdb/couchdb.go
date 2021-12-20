@@ -9,9 +9,9 @@ import (
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -136,19 +136,19 @@ func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error
 
 // Build and push document to output channel
 func (e *Extractor) processTable(ctx context.Context, dbName string, docID string) (err error) {
-	var columns []*facets.Column
+	var columns []*facetsv1beta1.Column
 	columns, err = e.extractColumns(ctx, docID)
 	if err != nil {
 		return
 	}
 
 	// push table to channel
-	e.emit(models.NewRecord(&assets.Table{
-		Resource: &common.Resource{
+	e.emit(models.NewRecord(&assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", dbName, docID),
 			Name: docID,
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
 		},
 	}))
@@ -157,7 +157,7 @@ func (e *Extractor) processTable(ctx context.Context, dbName string, docID strin
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []*facets.Column, err error) {
+func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []*facetsv1beta1.Column, err error) {
 	size, rev, err := e.db.GetMeta(ctx, docID)
 	if err != nil {
 		return
@@ -174,7 +174,7 @@ func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns [
 			continue
 		}
 
-		columns = append(columns, &facets.Column{
+		columns = append(columns, &facetsv1beta1.Column{
 			Name:        k,
 			DataType:    reflect.ValueOf(fields[k]).Kind().String(),
 			Description: rev,

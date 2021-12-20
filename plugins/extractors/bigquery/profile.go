@@ -1,10 +1,10 @@
 package bigquery
 
-import "github.com/odpf/meteor/models/odpf/assets"
+import assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
-func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile) {
+func (e *Extractor) buildTableProfile(tableURN string) (tp *assetsv1beta1.TableProfile) {
 	var tableUsage int64
-	var commonJoins []*assets.Join
+	var commonJoins []*assetsv1beta1.Join
 	var filterConditions []string
 
 	if e.config.IsCollectTableUsage && e.tableStats != nil {
@@ -18,7 +18,7 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 				for jc := range jd.Conditions {
 					joinConditions = append(joinConditions, jc)
 				}
-				commonJoins = append(commonJoins, &assets.Join{
+				commonJoins = append(commonJoins, &assetsv1beta1.Join{
 					Urn:        joinedTableURN,
 					Count:      jd.Usage,
 					Conditions: joinConditions,
@@ -34,7 +34,7 @@ func (e *Extractor) buildTableProfile(tableURN string) (tp *assets.TableProfile)
 		}
 	}
 
-	tp = &assets.TableProfile{
+	tp = &assetsv1beta1.TableProfile{
 		UsageCount: tableUsage,
 		Joins:      commonJoins,
 		Filters:    filterConditions,
