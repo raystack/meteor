@@ -6,7 +6,7 @@ Thus, for the entire set of orchestration all you will need to provide will be r
 Read more about the concepts of Recipe [here](../concepts/recipe.md).
 
 A sample recipe can be generated using the commands mentioned [below](#generating-sample-recipes).
-After making the necessary changes to the source, and sinks as per ypur local setup, you can validate the sample-recipe using steps mentioed [here](#linting-recipes).
+After making the necessary changes to the source, and sinks as per your local setup, you can validate the sample-recipe using steps mentioed [here](#linting-recipes).
 
 ## Generating Sample recipe\(s\)
 
