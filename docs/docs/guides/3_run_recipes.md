@@ -2,7 +2,7 @@
 
 After we are done with creating sample recipe or a folder of sample recipes.
 We move ahead with the process of metadata extraction with meteor.
-Follow the foloowing commands to run the recipes:
+Follow the following commands to run the recipes:
 
 ## with meteor binary installed
 
