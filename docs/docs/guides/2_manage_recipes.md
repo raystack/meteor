@@ -28,7 +28,7 @@ meteor gen recipe sample -e postgres -s console -p enrich > recipe.yaml
 
 ```bash
 # validate specified recipes.
-$ meteor lint recipe.yml
+$ meteor lint recipe.yaml
 ```
 
 More options for lint and gen commands can be found [here](../reference/commands.md).
