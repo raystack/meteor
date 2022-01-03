@@ -1,0 +1,10 @@
+name: sample
+source:
+ type: mysql
+ config:
+   host: localhost:3306
+   user_id: testing
+  #  password: "1234"    
+  #  broker: "localhost:9092"
+sinks: 
+  - name: console
