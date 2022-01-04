@@ -31,17 +31,12 @@ var defaultDBList = []string{
 	"sys",
 }
 
-// Config hold the set of configuration for the extractor
+// Config hold the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" default:"root"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionString string `mapstructure:"connection_string" validate:"required"`
 }
 
-var sampleConfig = `
-host: localhost:1433
-user_id: admin
-password: "1234"`
+var sampleConfig = `connection_string: "userid:password@tcp(localhost:3306)/"`
 
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
@@ -84,7 +79,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	if e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+	if e.db, err = sql.Open("mysql", e.config.ConnectionString); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
