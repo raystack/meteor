@@ -31,7 +31,7 @@ var defaultDBList = []string{
 	"sys",
 }
 
-// Config hold the connection URL for the extractor
+// Config hold the connection string for the extractor
 type Config struct {
 	ConnectionString string `mapstructure:"connection_string" validate:"required"`
 }
