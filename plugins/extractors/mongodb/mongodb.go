@@ -32,15 +32,11 @@ var defaultCollections = []string{
 
 // Config hold the set of configuration for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:27017
-user_id: admin
-password: "1234"`
+connection_url: "mongodb://admin:pass123@localhost:3306"`
 
 // Extractor manages the communication with the mongo server
 type Extractor struct {
@@ -83,8 +79,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedCollections()
 
 	// setup client
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", e.config.UserID, e.config.Password, e.config.Host)
-	if e.client, err = createAndConnnectClient(ctx, uri); err != nil {
+	if e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
