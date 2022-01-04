@@ -2,7 +2,7 @@ name: sample
 source:
  type: mysql
  config:
-  #  connection_string: "aditya:aditya@tcp(localhost:3306)/" # with password
-   connection_string: "root@tcp(localhost:3306)/" # without password
+  #  connection_url: "aditya:aditya@tcp(localhost:3306)/" # with password
+   connection_url: "root@tcp(localhost:3306)/" # without password
 sinks: 
   - name: console
