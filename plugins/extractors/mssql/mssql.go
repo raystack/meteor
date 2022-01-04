@@ -33,8 +33,8 @@ var defaultDBList = []string{
 
 // Config holds the set of configuration for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
+	UserID   string `mapstructure:"user_id" default:"root"`
+	Password string `mapstructure:"password"`
 	Host     string `mapstructure:"host" validate:"required"`
 }
 
