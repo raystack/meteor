@@ -113,54 +113,81 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		stream      = newStream()
 		recordCount = 0
 	)
+	var errs error
+
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
-		run.Error = errors.Wrap(err, "failed to setup extractor")
-		return
+		err = errors.Wrap(err, "failed to setup extractor")
+		if errs == nil {
+			errs = errors.New("")
+		}
+		errs = errors.Wrap(errs, err.Error())
 	}
 
 	for _, pr := range recipe.Processors {
 		if err := r.setupProcessor(ctx, pr, stream); err != nil {
-			run.Error = errors.Wrap(err, "failed to setup processor")
-			return
+			err = errors.Wrap(err, "failed to setup processor")
+			if errs == nil {
+				errs = errors.New("")
+			}
+			errs = errors.Wrap(errs, err.Error())
 		}
 	}
 
 	for _, sr := range recipe.Sinks {
 		if err := r.setupSink(ctx, sr, stream); err != nil {
-			run.Error = errors.Wrap(err, "failed to setup sink")
-			return
+			err = errors.Wrap(err, "failed to setup sink")
+			if errs == nil {
+				errs = errors.New("")
+			}
+			errs = errors.Wrap(errs, err.Error())
 		}
 	}
 
-	// to gather total number of records extracted
-	stream.setMiddleware(func(src models.Record) (models.Record, error) {
-		recordCount++
-		return src, nil
-	})
+	if runExtractor != nil {
+		// to gather total number of records extracted
+		stream.setMiddleware(func(src models.Record) (models.Record, error) {
+			recordCount++
+			return src, nil
+		})
 
-	// create a goroutine to let extractor concurrently emit data
-	// while stream is listening via stream.Listen().
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				run.Error = fmt.Errorf("%s", r)
+		// create a goroutine to let extractor concurrently emit data
+		// while stream is listening via stream.Listen().
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					if errs == nil {
+						errs = errors.New("")
+					}
+					errs = errors.Wrap(errs, fmt.Errorf("%s", r).Error())
+				}
+				stream.Close()
+			}()
+
+			err = runExtractor()
+			if err != nil {
+				err = errors.Wrap(err, "failed to run extractor")
+				if errs == nil {
+					errs = errors.New("")
+				}
+				errs = errors.Wrap(errs, err.Error())
 			}
-			stream.Close()
-		}()
-		err = runExtractor()
-		if err != nil {
-			run.Error = errors.Wrap(err, "failed to run extractor")
-		}
-	}()
 
-	// start listening.
-	// this process is blocking
-	if err := stream.broadcast(); err != nil {
-		run.Error = errors.Wrap(err, "failed to broadcast stream")
+		}()
+
+		// start listening.
+		// this process is blocking
+		if err := stream.broadcast(); err != nil {
+			err = errors.Wrap(err, "failed to broadcast stream")
+			if errs == nil {
+				errs = errors.New("")
+			}
+			errs = errors.Wrap(errs, err.Error())
+		}
 	}
 
 	// code will reach here stream.Listen() is done.
+	run.Error = errs
 	success := run.Error == nil
 	durationInMs := getDuration()
 	run.RecordCount = recordCount
