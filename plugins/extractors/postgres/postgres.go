@@ -25,14 +25,20 @@ var summary string
 
 var defaults = []string{"information_schema", "root", "postgres"}
 
-// Config hold the connection URL for the extractor
+// Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-	Exclude       string `mapstructure:"exclude"`
+	UserID   string `mapstructure:"user_id" validate:"required"`
+	Password string `mapstructure:"password" validate:"required"`
+	Host     string `mapstructure:"host" validate:"required"`
+	Database string `mapstructure:"database" default:"postgres"`
+	Exclude  string `mapstructure:"exclude"`
 }
 
 var sampleConfig = `
-connection_url: "postgres://admin:pass123@localhost:3306/testDB"
+host: localhost:1433
+user_id: admin
+password: "1234"
+database: database_name
 exclude: postgres`
 
 // Extractor manages the extraction of data from the extractor
@@ -71,9 +77,8 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 		return plugins.InvalidConfigError{}
 	}
 
-	_, database := SplitURL(e.config)
 	// Create database connection
-	e.db, err = connection(e.config, database)
+	e.db, err = connection(e.config, e.config.Database)
 	if err != nil {
 		return errors.Wrap(err, "failed to create connection")
 	}
@@ -176,10 +181,9 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 		return result, nil
 	}
 
-	host, _ := SplitURL(e.config)
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("postgres", host, dbName, tableName),
+			Urn:     models.TableURN("postgres", e.config.Host, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
 		},
@@ -226,18 +230,8 @@ func isNullable(value string) bool {
 
 // connection generates a connection string
 func connection(cfg Config, database string) (db *sql.DB, err error) {
-	connStr := fmt.Sprintf("%s?sslmode=disable", cfg.ConnectionURL)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", cfg.UserID, cfg.Password, cfg.Host, database)
 	return sql.Open("postgres", connStr)
-}
-
-// Extract the host and database from the connection URL
-func SplitURL(cfg Config) (host string, database string) {
-	splitString := strings.Split(cfg.ConnectionURL, "@")[1]
-	
-	host = strings.Split(splitString, "/")[0]
-	database = strings.Split(splitString, "/")[1]
-
-	return host, database
 }
 
 // Exclude checks if the database is in the ignored databases

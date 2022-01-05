@@ -30,7 +30,7 @@ var defaultCollections = []string{
 	"startup_log",
 }
 
-// Config hold the set of configuration for the extractor
+// Config hold the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }

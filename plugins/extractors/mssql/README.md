@@ -6,18 +6,14 @@
 source:
   type: mssql
   config:
-    host: localhost:1433
-    user_id: admin
-    password: 1234
+    connection_url: sqlserver://admin:pass123@localhost:3306/
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:1433` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the mssql server| *required* |
-| `password` | `string` | `1234` | Password for the mssql Server | *required* |
+| `connection_url` | `string` | `sqlserver://admin:pass123@localhost:3306/` | URL to access the mssql server | *required* |
 
 ## Outputs
 

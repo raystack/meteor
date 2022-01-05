@@ -6,18 +6,14 @@
 source:
   type: clickhouse
   config:
-    host: localhost:9000
-    user_id: admin
-    password: 1234
+    connection_url: tcp://localhost:3306?username=admin&password=pass123&debug=true
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:9000` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the clickhouse server| *required* |
-| `password` | `string` | `1234` | Password for the clickhouse Server | *required* |
+| `connection_url` | `string` | `tcp://localhost:3306?username=admin&password=pass123&debug=true` | URL to access the clickhouse server | *required* |
 
 ## Outputs
 
