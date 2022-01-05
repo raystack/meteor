@@ -1,8 +1,0 @@
-name: sample
-source:
- type: mysql
- config:
-  #  connection_url: "aditya:aditya@tcp(localhost:3306)/" # with password
-   connection_url: "root@tcp(localhost:3306)/" # without password
-sinks: 
-  - name: console
