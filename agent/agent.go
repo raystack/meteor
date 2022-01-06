@@ -162,17 +162,17 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
-	durationInMs := getDuration()
+	durationInSec := getDuration()
 	run.RecordCount = recordCount
 	run.Success = success
-	run.DurationInMs = durationInMs
+	run.DurationInSec = durationInSec
 
 	r.monitor.RecordRun(run)
 
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_sec", durationInSec, "record_count", run.RecordCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_sec", durationInSec, "records_count", run.RecordCount, "err", run.Error)
 	}
 
 	return
@@ -268,7 +268,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 func (r *Agent) startDuration() func() int {
 	start := time.Now()
 	return func() int {
-		duration := time.Since(start).Milliseconds()
+		duration := time.Since(start).Seconds()
 		return int(duration)
 	}
 }
