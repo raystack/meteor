@@ -546,8 +546,8 @@ func TestRunnerRun(t *testing.T) {
 			Recipe:      validRecipe,
 			RecordCount: 1,
 			Success:     true,
-			// DurationInSec is 0 because of the process took below a second, in production scenario it takes longer than that
-			DurationInSec: 0,
+			// DurationInMs is 1000 as an arbitary alloted duration time, in production scenario it takes longer than that
+			DurationInMs: 1000,
 		}
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", monitorRun).Once()
@@ -559,6 +559,11 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Monitor:          monitor,
 			Logger:           utils.Logger,
+			TimerFn: func() func() int {
+				return func() int {
+					return 1000
+				}
+			},
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)

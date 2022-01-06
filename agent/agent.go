@@ -25,6 +25,7 @@ type Agent struct {
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
+	timerFn          func() func() int
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -32,6 +33,11 @@ func NewAgent(config Config) *Agent {
 	mt := config.Monitor
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
+	}
+
+	timerFn := config.TimerFn
+	if timerFn == nil {
+		timerFn = startDuration
 	}
 
 	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
@@ -43,6 +49,7 @@ func NewAgent(config Config) *Agent {
 		monitor:          mt,
 		logger:           config.Logger,
 		retrier:          retrier,
+		timerFn:          timerFn,
 	}
 }
 
@@ -109,7 +116,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	var (
 		ctx         = context.Background()
-		getDuration = r.startDuration()
+		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
 	)
@@ -162,17 +169,17 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	// code will reach here stream.Listen() is done.
 	success := run.Error == nil
-	durationInSec := getDuration()
+	durationInMs := getDuration()
 	run.RecordCount = recordCount
 	run.Success = success
-	run.DurationInSec = durationInSec
+	run.DurationInMs = durationInMs
 
 	r.monitor.RecordRun(run)
 
 	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_sec", durationInSec, "record_count", run.RecordCount)
+		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_sec", durationInSec, "records_count", run.RecordCount, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 
 	return
@@ -265,10 +272,10 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 }
 
 // startDuration starts a timer.
-func (r *Agent) startDuration() func() int {
+func startDuration() func() int {
 	start := time.Now()
 	return func() int {
-		duration := time.Since(start).Seconds()
+		duration := time.Since(start).Milliseconds()
 		return int(duration)
 	}
 }

@@ -16,9 +16,9 @@ const (
 
 // Run contains the json data
 type Run struct {
-	Recipe        recipe.Recipe `json:"recipe"`
-	Error         error         `json:"error"`
-	DurationInSec int           `json:"duration_in_sec"`
-	RecordCount   int           `json:"record_count"`
-	Success       bool          `json:"success"`
+	Recipe       recipe.Recipe `json:"recipe"`
+	Error        error         `json:"error"`
+	DurationInMs int           `json:"duration_in_ms"`
+	RecordCount  int           `json:"record_count"`
+	Success      bool          `json:"success"`
 }
