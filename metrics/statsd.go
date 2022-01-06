@@ -36,7 +36,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, run.Recipe, run.Success, run.RecordCount),
-		int64(run.DurationInMs),
+		int64(run.DurationInSec),
 	)
 	m.client.Increment(
 		m.createMetricName(runMetricName, run.Recipe, run.Success, run.RecordCount),
