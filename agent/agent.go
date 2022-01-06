@@ -273,7 +273,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 func startDuration() func() int {
 	start := time.Now()
 	return func() int {
-		duration := time.Since(start).Seconds()
+		duration := time.Since(start).Milliseconds()
 		return int(duration)
 	}
 }
