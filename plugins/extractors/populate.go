@@ -20,4 +20,5 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/postgres"
 	_ "github.com/odpf/meteor/plugins/extractors/superset"
 	_ "github.com/odpf/meteor/plugins/extractors/tableau"
+	_ "github.com/odpf/meteor/plugins/extractors/oracle"
 )
