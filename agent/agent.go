@@ -16,6 +16,9 @@ import (
 
 const defaultBatchSize = 1
 
+// TimerFn of function type
+type TimerFn func() func() int
+
 // Agent runs recipes for specified plugins.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
@@ -25,7 +28,7 @@ type Agent struct {
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
-	timerFn          func() func() int
+	timerFn          TimerFn
 }
 
 // NewAgent returns an Agent with plugin factories.

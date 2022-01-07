@@ -16,5 +16,5 @@ type Config struct {
 	MaxRetries           int
 	RetryInitialInterval time.Duration
 	StopOnSinkError      bool
-	TimerFn              func() func() int
+	TimerFn              TimerFn
 }

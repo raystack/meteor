@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var expectedDuration = 1000
 var mockCtx = mock.AnythingOfType("*context.emptyCtx")
 
 var validRecipe = recipe.Recipe{
@@ -543,11 +544,10 @@ func TestRunnerRun(t *testing.T) {
 		}
 
 		monitorRun := agent.Run{
-			Recipe:      validRecipe,
-			RecordCount: 1,
-			Success:     true,
-			// DurationInMs is 1000 as an arbitary alloted duration time, in production scenario it takes longer than that
-			DurationInMs: 1000,
+			Recipe:       validRecipe,
+			RecordCount:  1,
+			Success:      true,
+			DurationInMs: expectedDuration,
 		}
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", monitorRun).Once()
@@ -559,11 +559,7 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Monitor:          monitor,
 			Logger:           utils.Logger,
-			TimerFn: func() func() int {
-				return func() int {
-					return 1000
-				}
-			},
+			TimerFn:          timerFn,
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
@@ -669,6 +665,12 @@ func TestRunnerRunMultiple(t *testing.T) {
 			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
+}
+
+func timerFn() func() int {
+	return func() int {
+		return expectedDuration
+	}
 }
 
 func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
