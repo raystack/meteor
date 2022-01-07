@@ -6,7 +6,7 @@
 source:
   type: postgres
   config:
-    connection_url: postgres://admin:pass123@localhost:3306
+    connection_url: postgres://admin:pass123@localhost:3306/testDB?sslmode=disable
     database_name: testDB
     exclude: postgres
 ```
@@ -15,8 +15,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `postgres://admin:pass123@localhost:3306` | URL to access the postgres server | *required* |
-| `database_name` | `string` | `testDB` | The Database owned by user mentioned in Config, root user can skip | *optional* |
+| `connection_url` | `string` | `postgres://admin:pass123@localhost:3306/testDB?sslmode=disable` | URL to access the postgres server | *required* |
 | `exclude` | `string` | `postgres` | The Database want to be ignored | *optional* |
 
 ## Outputs
