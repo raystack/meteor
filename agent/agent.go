@@ -113,95 +113,62 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		stream      = newStream()
 		recordCount = 0
 	)
-	var errs error
+
+	defer func() {
+		r.runRecordRun(run, getDuration, recipe.Name)
+	}()
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
-		err = errors.Wrap(err, "failed to setup extractor")
-		if errs == nil {
-			errs = errors.New("")
-		}
-		errs = errors.Wrap(errs, err.Error())
+		run.Error = errors.Wrap(err, "failed to setup extractor")
+		return
 	}
 
 	for _, pr := range recipe.Processors {
 		if err := r.setupProcessor(ctx, pr, stream); err != nil {
-			err = errors.Wrap(err, "failed to setup processor")
-			if errs == nil {
-				errs = errors.New("")
-			}
-			errs = errors.Wrap(errs, err.Error())
+			run.Error = errors.Wrap(err, "failed to setup processor")
+			return
 		}
 	}
 
 	for _, sr := range recipe.Sinks {
 		if err := r.setupSink(ctx, sr, stream); err != nil {
-			err = errors.Wrap(err, "failed to setup sink")
-			if errs == nil {
-				errs = errors.New("")
-			}
-			errs = errors.Wrap(errs, err.Error())
+			run.Error = errors.Wrap(err, "failed to setup sink")
+			return
 		}
 	}
 
-	if runExtractor != nil {
-		// to gather total number of records extracted
-		stream.setMiddleware(func(src models.Record) (models.Record, error) {
-			recordCount++
-			return src, nil
-		})
+	// to gather total number of records extracted
+	stream.setMiddleware(func(src models.Record) (models.Record, error) {
+		recordCount++
+		return src, nil
+	})
 
-		// create a goroutine to let extractor concurrently emit data
-		// while stream is listening via stream.Listen().
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					if errs == nil {
-						errs = errors.New("")
-					}
-					errs = errors.Wrap(errs, fmt.Errorf("%s", r).Error())
-				}
-				stream.Close()
-			}()
-
-			err = runExtractor()
-			if err != nil {
-				err = errors.Wrap(err, "failed to run extractor")
-				if errs == nil {
-					errs = errors.New("")
-				}
-				errs = errors.Wrap(errs, err.Error())
+	// create a goroutine to let extractor concurrently emit data
+	// while stream is listening via stream.Listen().
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				run.Error = fmt.Errorf("%s", r)
 			}
-
+			stream.Close()
 		}()
-
-		// start listening.
-		// this process is blocking
-		if err := stream.broadcast(); err != nil {
-			err = errors.Wrap(err, "failed to broadcast stream")
-			if errs == nil {
-				errs = errors.New("")
-			}
-			errs = errors.Wrap(errs, err.Error())
+		err = runExtractor()
+		if err != nil {
+			run.Error = errors.Wrap(err, "failed to run extractor")
 		}
+	}()
+
+	// start listening.
+	// this process is blocking
+	if err := stream.broadcast(); err != nil {
+		run.Error = errors.Wrap(err, "failed to broadcast stream")
 	}
 
 	// code will reach here stream.Listen() is done.
-	run.Error = errs
-	success := run.Error == nil
-	durationInMs := getDuration()
 	run.RecordCount = recordCount
+	success := run.Error == nil
 	run.Success = success
-	run.DurationInMs = durationInMs
-
-	r.monitor.RecordRun(run)
-
-	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
-	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
-	}
-
 	return
 }
 
@@ -297,5 +264,16 @@ func (r *Agent) startDuration() func() int {
 	return func() int {
 		duration := time.Since(start).Milliseconds()
 		return int(duration)
+	}
+}
+
+func (r *Agent) runRecordRun(run Run, getDuration func() int, recipeName string) {
+	durationInMs := getDuration()
+	run.DurationInMs = durationInMs
+	r.monitor.RecordRun(run)
+	if run.Success {
+		r.logger.Info("done running recipe", "recipe", recipeName, "duration_ms", durationInMs, "record_count", run.RecordCount)
+	} else {
+		r.logger.Error("error running recipe", "recipe", recipeName, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 }
