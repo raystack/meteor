@@ -115,7 +115,8 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	)
 
 	defer func() {
-		r.runRecordRun(run, getDuration, recipe.Name)
+		durationInMs := getDuration()
+		r.logAndRecordMetrics(run, durationInMs)
 	}()
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
@@ -267,13 +268,12 @@ func (r *Agent) startDuration() func() int {
 	}
 }
 
-func (r *Agent) runRecordRun(run Run, getDuration func() int, recipeName string) {
-	durationInMs := getDuration()
+func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	run.DurationInMs = durationInMs
 	r.monitor.RecordRun(run)
 	if run.Success {
-		r.logger.Info("done running recipe", "recipe", recipeName, "duration_ms", durationInMs, "record_count", run.RecordCount)
+		r.logger.Info("done running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
-		r.logger.Error("error running recipe", "recipe", recipeName, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
+		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 }
