@@ -28,7 +28,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the bigquery extractor
+// Config holds the set of configuration for the bigquery extractor
 type Config struct {
 	ProjectID            string   `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON   string   `mapstructure:"service_account_json"`

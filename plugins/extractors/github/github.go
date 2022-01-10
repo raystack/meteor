@@ -20,7 +20,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the extractor
+// Config holds the set of configuration for the extractor
 type Config struct {
 	Org   string `mapstructure:"org" validate:"required"`
 	Token string `mapstructure:"token" validate:"required"`

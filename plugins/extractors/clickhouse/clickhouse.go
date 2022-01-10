@@ -22,7 +22,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the connection URL for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }

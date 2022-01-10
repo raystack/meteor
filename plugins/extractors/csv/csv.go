@@ -27,7 +27,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the path configuration for the csv extractor
+// Config holds the path configuration for the csv extractor
 type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }

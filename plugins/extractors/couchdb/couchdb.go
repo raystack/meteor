@@ -27,7 +27,7 @@ var defaultDBList = []string{
 	"_users",
 }
 
-// Config hold the connection URL for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }

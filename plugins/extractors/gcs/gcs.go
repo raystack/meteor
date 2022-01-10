@@ -27,7 +27,7 @@ var summary string
 
 const metadataSource = "googlecloudstorage"
 
-// Config hold the set of configuration for the extractor
+// Config holds the set of configuration for the extractor
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON string `mapstructure:"service_account_json"`
