@@ -8,7 +8,7 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/optimus"
 	"github.com/odpf/meteor/test/mocks"
 	testutils "github.com/odpf/meteor/test/utils"
-	pb "github.com/odpf/optimus/api/proto/odpf/optimus"
+	pb "github.com/odpf/optimus/api/proto/odpf/optimus/core/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -151,8 +151,8 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	}, nil).Once()
 
 	client.On("ListJobSpecification", ctx, &pb.ListJobSpecificationRequest{
-		ProjectName: "project-A",
-		Namespace:   "namespace-A",
+		ProjectName:   "project-A",
+		NamespaceName: "namespace-A",
 	}, mock.Anything).Return(&pb.ListJobSpecificationResponse{
 		Jobs: []*pb.JobSpecification{
 			{
@@ -245,9 +245,9 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	}, nil).Once()
 
 	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
-		ProjectName: "project-A",
-		Namespace:   "namespace-A",
-		JobName:     "job-A",
+		ProjectName:   "project-A",
+		NamespaceName: "namespace-A",
+		JobName:       "job-A",
 	}, mock.Anything).Return(&pb.GetJobTaskResponse{
 		Task: &pb.JobTask{
 			Name:        "task-A",
@@ -266,9 +266,9 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	}, nil).Once()
 
 	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
-		ProjectName: "project-A",
-		Namespace:   "namespace-A",
-		JobName:     "job-B",
+		ProjectName:   "project-A",
+		NamespaceName: "namespace-A",
+		JobName:       "job-B",
 	}, mock.Anything).Return(&pb.GetJobTaskResponse{
 		Task: &pb.JobTask{
 			Name:        "task-B",

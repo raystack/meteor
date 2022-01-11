@@ -13,7 +13,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
-	pb "github.com/odpf/optimus/api/proto/odpf/optimus"
+	pb "github.com/odpf/optimus/api/proto/odpf/optimus/core/v1beta1"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 )
@@ -91,8 +91,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 		for _, namespace := range nspaceResp.Namespaces {
 			jobResp, err := e.client.ListJobSpecification(ctx, &pb.ListJobSpecificationRequest{
-				ProjectName: project.Name,
-				Namespace:   namespace.Name,
+				ProjectName:   project.Name,
+				NamespaceName: namespace.Name,
 			})
 			if err != nil {
 				e.logger.Error("error fetching job list", "err", err, "project", project.Name, "namespace", namespace.Name)
@@ -121,9 +121,9 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (job *assetsv1beta1.Job, err error) {
 	jobResp, err := e.client.GetJobTask(ctx, &pb.GetJobTaskRequest{
-		ProjectName: project,
-		Namespace:   namespace,
-		JobName:     jobSpec.Name,
+		ProjectName:   project,
+		NamespaceName: namespace,
+		JobName:       jobSpec.Name,
 	})
 	if err != nil {
 		err = errors.Wrap(err, "error fetching task")
