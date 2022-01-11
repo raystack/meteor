@@ -588,8 +588,14 @@ func TestRunnerRun(t *testing.T) {
 	})
 
 	t.Run("should collect run metrics", func(t *testing.T) {
+		expectedDuration := 1000
 		data := []models.Record{
 			models.NewRecord(&assetsv1beta1.Table{}),
+		}
+		timerFn := func() func() int {
+			return func() int {
+				return expectedDuration
+			}
 		}
 
 		extr := mocks.NewExtractor()
@@ -630,6 +636,7 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Monitor:          monitor,
 			Logger:           utils.Logger,
+			TimerFn:          timerFn,
 		})
 		run := r.Run(validRecipe)
 		assert.True(t, run.Success)

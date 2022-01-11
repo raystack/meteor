@@ -16,6 +16,9 @@ import (
 
 const defaultBatchSize = 1
 
+// TimerFn of function type
+type TimerFn func() func() int
+
 // Agent runs recipes for specified plugins.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
@@ -25,6 +28,7 @@ type Agent struct {
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
+	timerFn          TimerFn
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -32,6 +36,11 @@ func NewAgent(config Config) *Agent {
 	mt := config.Monitor
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
+	}
+
+	timerFn := config.TimerFn
+	if timerFn == nil {
+		timerFn = startDuration
 	}
 
 	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
@@ -43,6 +52,7 @@ func NewAgent(config Config) *Agent {
 		monitor:          mt,
 		logger:           config.Logger,
 		retrier:          retrier,
+		timerFn:          timerFn,
 	}
 }
 
@@ -109,7 +119,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	var (
 		ctx         = context.Background()
-		getDuration = r.startDuration()
+		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
 	)
@@ -260,7 +270,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 }
 
 // startDuration starts a timer.
-func (r *Agent) startDuration() func() int {
+func startDuration() func() int {
 	start := time.Now()
 	return func() int {
 		duration := time.Since(start).Milliseconds()
