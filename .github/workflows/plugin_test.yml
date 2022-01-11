@@ -17,10 +17,5 @@ jobs:
         run: sudo apt-get install build-essential
       - name: Install packages
         run: go mod tidy
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }} 
       - name: Run Test
         run: make test-plugins
