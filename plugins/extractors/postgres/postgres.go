@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	_ "github.com/lib/pq" // used to register the postgres driver
+	// used to register the postgres driver
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
@@ -24,7 +24,7 @@ import (
 //go:embed README.md
 var summary string
 
-var defaults = []string{"information_schema", "root", "postgres"}
+var defaultExcludes = []string{"information_schema", "root", "postgres"}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
@@ -33,15 +33,16 @@ type Config struct {
 }
 
 var sampleConfig = `
-connection_url: "postgres://admin:pass123@localhost:3306/testDB?sslmode=disable"
-exclude: testDB`
+connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disable"
+exclude: testDB,secondaryDB`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
-	logger   log.Logger
-	config   Config
-	db       *sql.DB
-	userDB   string
+	logger log.Logger
+	config Config
+	client *sql.DB
+
+	// These below values are used to recreate a connection for each database
 	host     string
 	username string
 	password string
@@ -77,15 +78,15 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 		return plugins.InvalidConfigError{}
 	}
 
+	// Create database connection
+	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
+	if err != nil {
+		return errors.Wrap(err, "failed to create connection")
+	}
+
 	if err = e.extractConnectionComponents(e.config.ConnectionURL); err != nil {
 		err = errors.Wrap(err, "failed to split host from connection string")
 		return
-	}
-
-	// Create database connection
-	e.db, err = e.connection(e.config, e.userDB)
-	if err != nil {
-		return errors.Wrap(err, "failed to create connection")
 	}
 
 	return
@@ -93,7 +94,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.db.Close()
+	defer e.client.Close()
 
 	// Get list of databases
 	dbs, err := e.getDatabases()
@@ -107,7 +108,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		// tables information without this default database
 		// information will be returned
 
-		db, err := e.connection(e.config, database)
+		db, err := e.connection(database)
 		if err != nil {
 			e.logger.Error("failed to connect, skipping database", "error", err)
 			continue
@@ -133,12 +134,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 func (e *Extractor) getDatabases() (list []string, err error) {
-	res, err := e.db.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
+	res, err := e.client.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return nil, err
 	}
 
-	excludeList := append(defaults, strings.Split(e.config.Exclude, ",")...)
+	excludeList := append(defaultExcludes, strings.Split(e.config.Exclude, ",")...)
 
 	for res.Next() {
 		var database string
@@ -235,7 +236,7 @@ func isNullable(value string) bool {
 }
 
 // connection generates a connection string
-func (e *Extractor) connection(cfg Config, database string) (db *sql.DB, err error) {
+func (e *Extractor) connection(database string) (db *sql.DB, err error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", e.username, e.password, e.host, database, e.sslmode)
 	return sql.Open("postgres", connStr)
 }
@@ -248,7 +249,6 @@ func (e *Extractor) extractConnectionComponents(connectionURL string) (err error
 		return
 	}
 	e.host = connectionStr.Host
-	e.userDB = connectionStr.Path[1:]
 	e.username = connectionStr.User.Username()
 	e.password, _ = connectionStr.User.Password()
 	e.sslmode = connectionStr.Query().Get("sslmode")
