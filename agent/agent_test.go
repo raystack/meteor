@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var expectedDuration = 1000
 var mockCtx = mock.AnythingOfType("*context.emptyCtx")
 
 var validRecipe = recipe.Recipe{
@@ -589,8 +588,14 @@ func TestRunnerRun(t *testing.T) {
 	})
 
 	t.Run("should collect run metrics", func(t *testing.T) {
+		expectedDuration := 1000
 		data := []models.Record{
 			models.NewRecord(&assetsv1beta1.Table{}),
+		}
+		timerFn := func() func() int {
+			return func() int {
+				return expectedDuration
+			}
 		}
 
 		extr := mocks.NewExtractor()
@@ -748,12 +753,6 @@ func TestRunnerRunMultiple(t *testing.T) {
 			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
-}
-
-func timerFn() func() int {
-	return func() int {
-		return expectedDuration
-	}
 }
 
 func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
