@@ -22,9 +22,10 @@ import (
 var summary string
 
 type Config struct {
-	Host   string            `mapstructure:"host" validate:"required"`
-	Type   string            `mapstructure:"type" validate:"required"`
-	Labels map[string]string `mapstructure:"labels"`
+	Host       string            `mapstructure:"host" validate:"required"`
+	Type       string            `mapstructure:"type" validate:"required"`
+	ApiVersion string            `mapstructure:"apiVersion" default:"v1"`
+	Labels     map[string]string `mapstructure:"labels"`
 }
 
 var sampleConfig = `
@@ -97,7 +98,7 @@ func (s *Sink) send(record Record) (err error) {
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1/types/%s/records", s.config.Host, s.config.Type)
+	url := fmt.Sprintf("%s/%s/types/%s/records", s.config.Host, s.config.ApiVersion, s.config.Type)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
