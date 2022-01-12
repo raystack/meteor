@@ -29,7 +29,7 @@ var (
 // sample metadata
 var (
 	columbusType = "my-type"
-	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
+	url          = fmt.Sprintf("%s/v1beta1/types/%s/records", host, columbusType)
 )
 
 func TestInit(t *testing.T) {
@@ -60,7 +60,7 @@ func TestSink(t *testing.T) {
 		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}"
 
 		// setup mock client
-		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
+		url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
 		client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
@@ -82,7 +82,7 @@ func TestSink(t *testing.T) {
 	t.Run("should return RetryError if columbus returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
-				url := fmt.Sprintf("%s/v1/types/my-type/records", host)
+				url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
 				client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()

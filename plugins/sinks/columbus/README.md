@@ -10,7 +10,6 @@ sinks:
   config:
     host: https://columbus.com
 	  type: sample-columbus-type
-    apiVersion: v1
     labels:
       myCustom: $properties.attributes.myCustomField
       sampleLabel: $properties.labels.sampleLabelField
