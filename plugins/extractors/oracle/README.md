@@ -6,20 +6,14 @@
 source:
   type: oracle
   config:
-    host: localhost:1521
-    user_id: admin
-    password: 1234
-    database: xe
+		connection_url: admin/1234@localhost:1521/xe
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:1521` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the Oracle server| *required* |
-| `password` | `string` | `1234` | Password for the Oracle Server | *required* |
-| `database` | `string` | `xe` | The Database owned by user mentioned in Config | *required* |
+| `connection_url` | `string` | `admin/1234@localhost:1521/xe` | Connection String to access Oracle Database | *required* |
 
 ## Outputs
 

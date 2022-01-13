@@ -25,17 +25,11 @@ var defaults = []string{}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
-	Database string `mapstructure:"database" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:1521
-user_id: system
-password: "1234"
-database: database_name`
+connection_url: username/passwd@localhost:1521/xe`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
@@ -74,7 +68,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 	}
 
 	// Create database connection
-	e.db, err = connection(e.config, e.config.Database)
+	e.db, err = connection(e.config)
 	if err != nil {
 		return errors.Wrap(err, "failed to create connection")
 	}
@@ -86,43 +80,85 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
 
-	var dbs = []string{e.config.Database}
+	// Open a new connection to the given database to collect tables information
+	db, err := connection(e.config)
+	if err != nil {
+		e.logger.Error("failed to connect, skipping database", "error", err)
+		// continue
+	}
 
-	// Iterate through all tables and databases
-	for _, database := range dbs {
-		// Open a new connection to the given database to collect tables information
-		db, err := connection(e.config, database)
-		if err != nil {
-			e.logger.Error("failed to connect, skipping database", "error", err)
-			continue
-		}
-		tables, err := e.getTables(db, database)
-		if err != nil {
-			e.logger.Error("failed to get tables, skipping database", "error", err)
-			continue
-		}
+	// Get username
+	userName, err := e.getUserName(db)
+	if err != nil {
+		e.logger.Error("failed to get the user name", "error", err)
+		return
+	}
 
-		for _, table := range tables {
-			result, err := e.getTableMetadata(db, database, table)
-			if err != nil {
-				e.logger.Error("failed to get table metadata, skipping table", "error", err)
-				continue
-			}
-			// Publish metadata to channel
-			emit(models.NewRecord(result))
+	// Get DB name
+	database, err := e.getDatabaseName(db)
+	if err != nil {
+		e.logger.Error("failed to get the database name", "error", err)
+		return
+	}
+
+	tables, err := e.getTables(db, database, userName)
+	if err != nil {
+		e.logger.Error("failed to get tables, skipping database", "error", err)
+		// continue
+	}
+
+	for _, table := range tables {
+		result, err := e.getTableMetadata(db, database, table)
+		if err != nil {
+			e.logger.Error("failed to get table metadata, skipping table", "error", err)
+			// continue
 		}
+		// Publish metadata to channel
+		emit(models.NewRecord(result))
 	}
 
 	return nil
 }
 
-func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err error) {
+func (e *Extractor) getUserName(db *sql.DB) (userName string, err error) {
+	sqlStr := `select user from dual`
+
+	rows, err := db.Query(sqlStr)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		err = rows.Scan(&userName)
+		if err != nil {
+			return
+		}
+	}
+	return userName, err
+}
+
+func (e *Extractor) getDatabaseName(db *sql.DB) (database string, err error) {
+	sqlStr := `select ora_database_name from dual`
+
+	rows, err := db.Query(sqlStr)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		err = rows.Scan(&database)
+		if err != nil {
+			return
+		}
+	}
+	return database, err
+}
+
+func (e *Extractor) getTables(db *sql.DB, dbName string, userName string) (list []string, err error) {
 	sqlStr := `SELECT object_name 
  		FROM all_objects
 		WHERE object_type = 'TABLE'
 		AND upper(owner) = upper('%s')`
 
-	rows, err := db.Query(fmt.Sprintf(sqlStr, e.config.UserID))
+	rows, err := db.Query(fmt.Sprintf(sqlStr, userName))
 	if err != nil {
 		return
 	}
@@ -134,6 +170,7 @@ func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err err
 		}
 		list = append(list, table)
 	}
+
 	return list, err
 }
 
@@ -215,9 +252,8 @@ func isNullable(value string) bool {
 }
 
 // connection generates a connection string
-func connection(cfg Config, database string) (db *sql.DB, err error) {
-	connStr := fmt.Sprintf("%s/%s@%s/%s", cfg.UserID, cfg.Password, cfg.Host, database)
-	return sql.Open("godror", connStr)
+func connection(cfg Config) (db *sql.DB, err error) {
+	return sql.Open("godror", cfg.ConnectionURL)
 }
 
 // Register the extractor to catalog

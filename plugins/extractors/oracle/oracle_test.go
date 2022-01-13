@@ -92,10 +92,7 @@ func TestExtract(t *testing.T) {
 		extr := oracle.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  user,
-			"password": password,
-			"host":     host,
-			"database": defaultDB,
+			"connection_url": fmt.Sprintf("%s/%s@%s/%s", user, password, host, defaultDB),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -160,7 +157,7 @@ func getExpected() []models.Record {
 	return []models.Record{
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:     "xe.EMPLOYEE",
+				Urn:     "XE.EMPLOYEE",
 				Name:    "EMPLOYEE",
 				Service: "Oracle",
 			},
@@ -190,7 +187,7 @@ func getExpected() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:     "xe.DEPARTMENT",
+				Urn:     "XE.DEPARTMENT",
 				Name:    "DEPARTMENT",
 				Service: "Oracle",
 			},
