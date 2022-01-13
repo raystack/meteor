@@ -28,7 +28,7 @@ host: http://localhost:3000
 user_id: meteor_tester
 password: meteor_pass_1234`
 
-// Config hold the set of configuration for the metabase extractor
+// Config holds the set of configuration for the metabase extractor
 type Config struct {
 	Host      string `mapstructure:"host" validate:"required"`
 	Username  string `mapstructure:"username" validate:"required"`

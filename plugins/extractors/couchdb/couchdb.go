@@ -27,17 +27,12 @@ var defaultDBList = []string{
 	"_users",
 }
 
-// Config hold the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-host: localhost:5984
-user_id: admin
-password: couchdb`
+var sampleConfig = `connection_url: http://admin:pass123@localhost:3306/`
 
 // Extractor manages the extraction of data from CouchDB
 type Extractor struct {
@@ -82,7 +77,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	e.client, err = kivik.New("couch", fmt.Sprintf("http://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host))
+	e.client, err = kivik.New("couch", e.config.ConnectionURL)
 	if err != nil {
 		return
 	}

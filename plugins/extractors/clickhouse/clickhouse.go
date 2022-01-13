@@ -22,17 +22,13 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:9000
-user_id: admin
-password: "1234"`
+connection_url: "tcp://localhost:3306?username=admin&password=pass123&debug=true"`
 
 // Extractor manages the output stream
 // and logger interface for the extractor
@@ -70,8 +66,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 		return plugins.InvalidConfigError{}
 	}
 
-	if e.db, err = sql.Open("clickhouse",
-		fmt.Sprintf("tcp://%s?username=%s&password=%s&debug=true", e.config.Host, e.config.UserID, e.config.Password)); err != nil {
+	if e.db, err = sql.Open("clickhouse", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create a client")
 	}
 

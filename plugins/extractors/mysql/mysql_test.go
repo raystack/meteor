@@ -82,8 +82,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := mysql.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -96,9 +95,7 @@ func TestExtract(t *testing.T) {
 		extr := mysql.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     host,
+			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
 		})
 		if err != nil {
 			t.Fatal(err)

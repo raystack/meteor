@@ -22,7 +22,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the configurations for the bigtable extractor
+// Config holds the configurations for the bigtable extractor
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
 }

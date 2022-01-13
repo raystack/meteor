@@ -31,7 +31,7 @@ var defaultKeyspaceList = []string{
 	"system_traces",
 }
 
-// Config hold the set of configuration for the cassandra extractor
+// Config holds the set of configuration for the cassandra extractor
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`

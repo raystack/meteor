@@ -31,17 +31,13 @@ var defaultDBList = []string{
 	"tempdb",
 }
 
-// Config holds the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:1433
-user_id: admin
-password: "1234"`
+connection_url: "sqlserver://admin:pass123@localhost:3306/"`
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {
@@ -85,7 +81,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	if e.db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+	if e.db, err = sql.Open("mssql", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 

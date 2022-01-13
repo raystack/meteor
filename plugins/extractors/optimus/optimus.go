@@ -21,7 +21,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the bigquery extractor
+// Config holds the set of configuration for the bigquery extractor
 type Config struct {
 	Host string `mapstructure:"host" validate:"required"`
 }

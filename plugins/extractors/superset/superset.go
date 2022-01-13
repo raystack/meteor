@@ -24,7 +24,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the superset extractor
+// Config holds the set of configuration for the superset extractor
 type Config struct {
 	Username string `mapstructure:"username" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`

@@ -27,7 +27,7 @@ var defaultTopics = map[string]byte{
 	"_schemas":           0,
 }
 
-// Config hold the set of configuration for the kafka extractor
+// Config holds the set of configuration for the kafka extractor
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 	Label  string `mapstructure:"label" validate:"required"`

@@ -89,8 +89,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -102,9 +101,7 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  "default",
-			"password": pass,
-			"host":     host,
+			"connection_url": fmt.Sprintf("tcp://%s?username=default&password=%s&debug=true", host, pass),
 		})
 		if err != nil {
 			t.Fatal(err)
