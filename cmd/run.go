@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/cheggaaa/pb/v3"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
@@ -73,6 +74,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			var failures = 0
 			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
+			bar := pb.StartNew(len(recipes))
 			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
@@ -87,7 +89,9 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
+				bar.Increment()
 			}
+			bar.Finish()
 
 			// Print the report
 			if failures > 0 {
