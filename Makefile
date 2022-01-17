@@ -25,7 +25,7 @@ test-e2e:
 	go test ./test/e2e -tags=integration -count=1
 
 test-plugins:
-	@echo " > Testing all plugins"
+	@echo " > Testing plugins with tag 'plugins'"
 	go test ./plugins... -tags=plugins -count=1
 
 generate-proto: ## regenerate protos
