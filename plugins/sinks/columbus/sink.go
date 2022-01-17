@@ -97,7 +97,7 @@ func (s *Sink) send(record Record) (err error) {
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1/types/%s/records", s.config.Host, s.config.Type)
+	url := fmt.Sprintf("%s/v1beta1/types/%s/records", s.config.Host, s.config.Type)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
