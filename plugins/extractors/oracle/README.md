@@ -6,7 +6,7 @@
 source:
   type: oracle
   config:
-		connection_url: admin/1234@localhost:1521/xe
+    connection_url: admin/1234@localhost:1521/xe
 ```
 
 ## Inputs
