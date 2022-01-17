@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package metabase_test
 
 import (

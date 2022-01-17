@@ -26,7 +26,7 @@ test-e2e:
 
 test-plugins:
 	@echo " > Testing all plugins"
-	go test ./plugins... -count=1 && go test ./plugins... -tags=integration -count=1
+	go test ./plugins... -tags=plugins -count=1
 
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
