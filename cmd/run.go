@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cheggaaa/pb/v3"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
@@ -16,6 +15,7 @@ import (
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -74,7 +74,13 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			var failures = 0
 			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
-			bar := pb.StartNew(len(recipes))
+			bar := progressbar.NewOptions(len(recipes),
+				progressbar.OptionEnableColorCodes(true),
+				progressbar.OptionSetDescription("[cyan]running recipes [reset]"),
+				progressbar.OptionShowCount(),
+			)
+			//.Default(int64(len(recipes)))
+
 			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
@@ -89,9 +95,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
-				bar.Increment()
+				bar.Add(1)
 			}
-			bar.Finish()
 
 			// Print the report
 			if failures > 0 {

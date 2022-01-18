@@ -13,13 +13,13 @@ require (
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
 	github.com/cenkalti/backoff/v4 v4.1.1
-	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/dnaeon/go-vcr/v2 v2.0.1
 	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
 	github.com/etsy/statsd v0.9.0
+	github.com/fatih/color v1.10.0 // indirect
 	github.com/flimzy/diff v0.1.7 // indirect
 	github.com/flimzy/testy v0.1.17 // indirect
 	github.com/go-kivik/couchdb v2.0.0+incompatible
@@ -47,6 +47,7 @@ require (
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
