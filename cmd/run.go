@@ -79,7 +79,6 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				progressbar.OptionSetDescription("[cyan]running recipes [reset]"),
 				progressbar.OptionShowCount(),
 			)
-			//.Default(int64(len(recipes)))
 
 			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
