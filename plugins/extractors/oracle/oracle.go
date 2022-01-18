@@ -8,7 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	_ "github.com/godror/godror" //used to register the oracle driver
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
@@ -17,11 +16,10 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	_ "github.com/sijms/go-ora/v2"
 )
 
 var summary string
-
-var defaults = []string{}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
@@ -253,7 +251,7 @@ func isNullable(value string) bool {
 
 // connection generates a connection string
 func connection(cfg Config) (db *sql.DB, err error) {
-	return sql.Open("godror", cfg.ConnectionURL)
+	return sql.Open("oracle", cfg.ConnectionURL)
 }
 
 // Register the extractor to catalog
