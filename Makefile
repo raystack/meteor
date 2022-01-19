@@ -24,6 +24,10 @@ test-coverage: test
 test-e2e:
 	go test ./test/e2e -tags=integration -count=1
 
+test-plugins:
+	@echo " > Testing plugins with tag 'plugins'"
+	go test ./plugins... -tags=plugins -count=1
+
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
 	@echo " > generating protobuf"
