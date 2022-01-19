@@ -18,12 +18,12 @@ import (
 
 	"database/sql"
 
-	_ "github.com/godror/godror" // used to register the oracle driver
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/oracle"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	_ "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/assert"
 )
 
