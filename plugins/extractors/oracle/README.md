@@ -6,14 +6,14 @@
 source:
   type: oracle
   config:
-    connection_url: admin/1234@localhost:1521/xe
+    connection_url: oracle://admin:1234@localhost:1521/xe
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `admin/1234@localhost:1521/xe` | Connection String to access Oracle Database | *required* |
+| `connection_url` | `string` | `oracle://admin:1234@localhost:1521/xe` | Connection String to access Oracle Database | *required* |
 
 ## Outputs
 
