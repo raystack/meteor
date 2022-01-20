@@ -910,6 +910,8 @@ github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749/go.mod h1:ZY1cvUeJ
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sijms/go-ora/v2 v2.2.20 h1:fhB7hLEtJZ3WEsbG2JVXOyoo2zZFstP0sWon6CAUvRM=
 github.com/sijms/go-ora/v2 v2.2.20/go.mod h1:jzfAFD+4CXHE+LjGWFl6cPrtiIpQVxakI2gvrMF2w6Y=
+github.com/sijms/go-ora/v2 v2.2.22 h1:XmJAEwgokgLfe43QZtYWi6+ziYKz4yHmqKQlbdNVFmA=
+github.com/sijms/go-ora/v2 v2.2.22/go.mod h1:jzfAFD+4CXHE+LjGWFl6cPrtiIpQVxakI2gvrMF2w6Y=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=

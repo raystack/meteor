@@ -27,7 +27,7 @@ type Config struct {
 }
 
 var sampleConfig = `
-connection_url: username/passwd@localhost:1521/xe`
+connection_url: oracle://username:passwd@localhost:1521/xe`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
@@ -78,35 +78,28 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
 
-	// Open a new connection to the given database to collect tables information
-	db, err := connection(e.config)
-	if err != nil {
-		e.logger.Error("failed to connect, skipping database", "error", err)
-		// continue
-	}
-
 	// Get username
-	userName, err := e.getUserName(db)
+	userName, err := e.getUserName(e.db)
 	if err != nil {
 		e.logger.Error("failed to get the user name", "error", err)
 		return
 	}
 
 	// Get DB name
-	database, err := e.getDatabaseName(db)
+	database, err := e.getDatabaseName(e.db)
 	if err != nil {
 		e.logger.Error("failed to get the database name", "error", err)
 		return
 	}
 
-	tables, err := e.getTables(db, database, userName)
+	tables, err := e.getTables(e.db, database, userName)
 	if err != nil {
 		e.logger.Error("failed to get tables, skipping database", "error", err)
 		// continue
 	}
 
 	for _, table := range tables {
-		result, err := e.getTableMetadata(db, database, table)
+		result, err := e.getTableMetadata(e.db, database, table)
 		if err != nil {
 			e.logger.Error("failed to get table metadata, skipping table", "error", err)
 			// continue
@@ -226,7 +219,8 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 	}
 
 	for rows.Next() {
-		var fieldName, dataType, isNullableString, fieldDesc string
+		var fieldName, dataType, isNullableString string
+		var fieldDesc sql.NullString
 		var length int
 		if err = rows.Scan(&fieldName, &dataType, &length, &isNullableString, &fieldDesc); err != nil {
 			e.logger.Error("failed to get fields", "error", err)
@@ -236,7 +230,7 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 		result = append(result, &facetsv1beta1.Column{
 			Name:        fieldName,
 			DataType:    dataType,
-			Description: fieldDesc,
+			Description: fieldDesc.String,
 			IsNullable:  isNullable(isNullableString),
 			Length:      int64(length),
 		})

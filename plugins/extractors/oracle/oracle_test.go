@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 
 	// Exponential backoff-retry for container to be resy to accept connections
 	retryFn := func(r *dockertest.Resource) (err error) {
-		db, err = sql.Open("godror", fmt.Sprintf("%s/%s@%s/%s", sysUser, password, host, defaultDB))
+		db, err = sql.Open("oracle", fmt.Sprintf("oracle://%s:%s@%s/%s", sysUser, password, host, defaultDB))
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func TestExtract(t *testing.T) {
 		extr := oracle.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"connection_url": fmt.Sprintf("%s/%s@%s/%s", user, password, host, defaultDB),
+			"connection_url": fmt.Sprintf("oracle://%s:%s@%s/%s", user, password, host, defaultDB),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -115,7 +115,7 @@ func setup() (err error) {
 	}
 	err = execute(db, queries)
 
-	userDB, err := sql.Open("godror", fmt.Sprintf("%s/%s@%s/%s", user, password, host, defaultDB))
+	userDB, err := sql.Open("oracle", fmt.Sprintf("oracle://%s:%s@%s/%s", user, password, host, defaultDB))
 	if err != nil {
 		return
 	}
