@@ -6,18 +6,14 @@
 source:
   type: mariadb
   config:
-    user_id: admin
-    password: 1234
-    host: localhost:3306
+    connection_url: admin:pass123@tcp(localhost:3306)/
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `user_id` | `string` | `admin` | User ID to access the mariadb server| *required* |
-| `password` | `string` | `1234` | Password for the mariadb Server | *required* |
-| `host` | `string` | `localhost:3306` | The Host at which server is running | *required* |
+| `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mariadb server | *required* |
 
 ## Outputs
 

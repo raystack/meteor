@@ -1,4 +1,5 @@
-// +build integration
+//go:build plugins
+// +build plugins
 
 package mariadb_test
 
@@ -7,11 +8,11 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/odpf/meteor/models/odpf/assets"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mariadb"
-	"github.com/odpf/meteor/test"
 	"github.com/odpf/meteor/test/mocks"
+	"github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -21,15 +22,15 @@ import (
 )
 
 const (
-	testDB    = "test_db"
-	user      = "test_user"
-	pass      = "pass"
-	port      = "3306"
+	testDB = "test_db"
+	user   = "test_user"
+	pass   = "pass"
+	port   = "3306"
 )
 
 var (
 	host = "127.0.0.1:" + port
-	db *sql.DB
+	db   *sql.DB
 )
 
 func TestMain(m *testing.M) {
@@ -56,7 +57,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}
-	purgeFn, err := test.CreateContainer(opts, retryFn)
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,9 +79,8 @@ func TestMain(m *testing.M) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := mariadb.New(test.Logger).Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+		err := mariadb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+			"invalid_config": "invalid_config_value",
 		})
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
@@ -90,12 +90,10 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with mariadb", func(t *testing.T) {
 		ctx := context.TODO()
-		newExtractor := mariadb.New(test.Logger)
+		newExtractor := mariadb.New(utils.Logger)
 
 		err := newExtractor.Init(ctx, map[string]interface{}{
-			"user_id":       user,
-			"password":      pass,
-			"host":          host,
+			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
 		})
 		if err != nil {
 
@@ -108,7 +106,7 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			table := record.Data().(*assets.Table)
+			table := record.Data().(*assetsv1beta1.Table)
 			urns = append(urns, table.Resource.Urn)
 
 		}
@@ -136,7 +134,7 @@ func setup() (err error) {
 		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",
 		"INSERT INTO jobs VALUES (2, 'test2', 'test22');",
 	}
-	if err = execute(db, populate); err != nil{
+	if err = execute(db, populate); err != nil {
 		return
 	}
 	return
