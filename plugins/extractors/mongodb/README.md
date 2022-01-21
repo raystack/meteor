@@ -6,18 +6,14 @@
 source:
   type: mongodb
   config:
-    host: localhost:27017
-    user_id: admin
-    password: 1234
+    connection_url: mongodb://admin:pass123@localhost:3306
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:27017` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the mongo server| *required* |
-| `password` | `string` | `1234` | Password for the Mongo Server | *required* |
+| `connection_url` | `string` | `mongodb://admin:pass123@localhost:3306` | URL to access the mongodb server | *required* |
 
 ## Outputs
 

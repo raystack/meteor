@@ -1,0 +1,49 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"credentials":{"name":"meteor_user","password":"xxxxxxxxxx","site":{"contentUrl":"testdev550928"}}}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+      X-Tableau-Auth:
+      - ""
+    url: https://server.tableau.com/api/3.12/auth/signin
+    method: POST
+  response:
+    body: '{"credentials":{"site":{"id":"529d2cc3-0b46-4360-aa69-688785ce1497","contentUrl":"testdev550928"},"user":{"id":"2aed1e7b-975b-430f-ab9d-a574bb88f245"},"token":"62x6Dwz3TueZJ90MvVBVtA|vN05qPXNMvAswMxkucHktjWecNvJIIAS"}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json;charset=utf-8
+      Date:
+      - Wed, 17 Nov 2021 09:40:12 GMT
+      P3p:
+      - CP="NON"
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - Tableau
+      Set-Cookie:
+      - hid=10axpd-hap02; domain=.server.tableau.com; path=/; HttpOnly; Secure;
+        SameSite=None
+      - AWSELB=3DAB357D1283FCCC77AA83D08989B29DE92E63276AE77AD4EE133E11E6F8E8568C0C008FC5E6AFD06266F24DE724486F3BC5D03FD411A6AA9828B89C5E5846354B6A1B34CAF64809065F8EB34318B654D2E3D02F6F;PATH=/;DOMAIN=.server.tableau.com;SECURE;HTTPONLY;SAMESITE=None
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      Vary:
+      - Accept-Encoding
+      X-Content-Type-Options:
+      - nosniff
+      X-Tableau:
+      - Tableau Server
+      X-Ua-Compatible:
+      - IE=Edge
+      X-Xss-Protection:
+      - 1; mode=block
+    status: '200 '
+    code: 200
+    duration: 1.699004504s

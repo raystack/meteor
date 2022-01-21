@@ -5,13 +5,16 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+
 	"github.com/pkg/errors"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -28,17 +31,12 @@ var defaultDBList = []string{
 	"sys",
 }
 
-// Config hold the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-host: localhost:1433
-user_id: admin
-password: "1234"`
+var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
 
 // Extractor manages the extraction of data from MySQL
 type Extractor struct {
@@ -81,7 +79,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	if e.db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
@@ -148,18 +146,18 @@ func (e *Extractor) extractTables(database string) (err error) {
 
 // processTable builds and push table to emitter
 func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*facets.Column
+	var columns []*facetsv1beta1.Column
 	if columns, err = e.extractColumns(tableName); err != nil {
 		return errors.Wrap(err, "failed to extract columns")
 	}
 
 	// push table to channel
-	e.emit(models.NewRecord(&assets.Table{
-		Resource: &common.Resource{
+	e.emit(models.NewRecord(&assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
 		},
 	}))
@@ -168,7 +166,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, err error) {
+func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.Column, err error) {
 	query := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -188,7 +186,7 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facets.Column, 
 			continue
 		}
 
-		columns = append(columns, &facets.Column{
+		columns = append(columns, &facetsv1beta1.Column{
 			Name:        fieldName,
 			DataType:    dataType,
 			Description: fieldDesc,

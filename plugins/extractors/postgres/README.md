@@ -6,25 +6,22 @@
 source:
   type: postgres
   config:
-    host: localhost:5432
-    user_id: admin
-    password: 1234
+    connection_url: postgres://admin:pass123@localhost:3306/testDB?sslmode=disable
+    exclude: primaryDB,secondaryDB
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:5432` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the postgres server| *required* |
-| `password` | `string` | `1234` | Password for the postgres Server | *required* |
-| `database_name` | `string` | `postgres` | The Database owned by user mentioned in Config, root user can skip | *optional* |
+| `connection_url` | `string` | `postgres://admin:pass123@localhost:3306/testDB?sslmode=disable` | URL to access the postgres server | *required* |
+| `exclude` | `string` | `primaryDB,secondaryDB` | This is a comma separated db list | *optional* |
 
 ## Outputs
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
+| `resource.urn` | `postgres::localhost:3306/my_database/my_table` |
 | `resource.name` | `my_table` |
 | `resource.service` | `postgres` |
 | `description` | `table description` |

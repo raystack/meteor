@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package postgres_test
 
@@ -10,24 +10,24 @@ import (
 	"os"
 	"testing"
 
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/models/odpf/assets"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var db *sql.DB
 
 const (
-	testDB    = "test_db"
 	user      = "test_user"
 	pass      = "pass"
 	port      = "5438"
@@ -76,8 +76,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := postgres.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -90,10 +89,7 @@ func TestExtract(t *testing.T) {
 		extr := postgres.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":       user,
-			"password":      pass,
-			"host":          host,
-			"database_name": testDB,
+			"connection_url": fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", user, pass, host),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -101,11 +97,11 @@ func TestExtract(t *testing.T) {
 
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			table := record.Data().(*assets.Table)
+			table := record.Data().(*assetsv1beta1.Table)
 			urns = append(urns, table.Resource.Urn)
 
 		}
@@ -114,6 +110,8 @@ func TestExtract(t *testing.T) {
 }
 
 func setup() (err error) {
+	testDB := "test_db"
+
 	var queries = []string{
 		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
 		fmt.Sprintf("CREATE DATABASE %s", testDB),

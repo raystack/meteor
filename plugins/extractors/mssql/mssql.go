@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+
 	"github.com/pkg/errors"
 
 	"github.com/odpf/salt/log"
@@ -13,11 +14,11 @@ import (
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
-
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
 	"github.com/odpf/meteor/utils"
+
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 )
 
 //go:embed README.md
@@ -30,17 +31,13 @@ var defaultDBList = []string{
 	"tempdb",
 }
 
-// Config holds the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:1433
-user_id: admin
-password: "1234"`
+connection_url: "sqlserver://admin:pass123@localhost:3306/"`
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {
@@ -84,7 +81,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	if e.db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", e.config.UserID, e.config.Password, e.config.Host)); err != nil {
+	if e.db, err = sql.Open("mssql", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
@@ -152,12 +149,12 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	}
 
 	// push table to channel
-	e.emit(models.NewRecord(&assets.Table{
-		Resource: &common.Resource{
+	e.emit(models.NewRecord(&assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
 		},
-		Schema: &facets.Columns{
+		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
 		},
 	}))
@@ -166,7 +163,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 }
 
 // getColumns extract columns from the given table
-func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Column, err error) {
+func (e *Extractor) getColumns(database, tableName string) (columns []*facetsv1beta1.Column, err error) {
 	query := fmt.Sprintf(
 		`SELECT COLUMN_NAME, DATA_TYPE, 
 		IS_NULLABLE, coalesce(CHARACTER_MAXIMUM_LENGTH,0) 
@@ -186,7 +183,7 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Co
 			e.logger.Error("failed to scan fields", "error", err)
 			continue
 		}
-		columns = append(columns, &facets.Column{
+		columns = append(columns, &facetsv1beta1.Column{
 			Name:       fieldName,
 			DataType:   dataType,
 			IsNullable: e.isNullable(isNullableString),
@@ -196,6 +193,7 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*facets.Co
 
 	return
 }
+
 // isExcludedDB checks if the given db is in the list of excluded databases
 func (e *Extractor) buildExcludedDBs() {
 	excludedMap := make(map[string]bool)

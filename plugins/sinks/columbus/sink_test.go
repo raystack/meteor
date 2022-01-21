@@ -14,9 +14,9 @@ import (
 	"github.com/odpf/meteor/utils"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/columbus"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ var (
 // sample metadata
 var (
 	columbusType = "my-type"
-	url          = fmt.Sprintf("%s/v1/types/%s/records", host, columbusType)
+	url          = fmt.Sprintf("%s/v1beta1/types/%s/records", host, columbusType)
 )
 
 func TestInit(t *testing.T) {
@@ -60,7 +60,7 @@ func TestSink(t *testing.T) {
 		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}"
 
 		// setup mock client
-		url := fmt.Sprintf("%s/v1/types/my-type/records", host)
+		url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
 		client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
@@ -74,7 +74,7 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		data := &assets.Topic{Resource: &common.Resource{}}
+		data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
 		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
 	})
@@ -82,7 +82,7 @@ func TestSink(t *testing.T) {
 	t.Run("should return RetryError if columbus returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
-				url := fmt.Sprintf("%s/v1/types/my-type/records", host)
+				url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
 				client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
@@ -96,7 +96,7 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				data := &assets.Topic{Resource: &common.Resource{}}
+				data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
 				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
@@ -111,8 +111,8 @@ func TestSink(t *testing.T) {
 	}{
 		{
 			description: "should create the right request to columbus",
-			data: &assets.User{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.User{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
@@ -130,13 +130,13 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should build columbus labels if labels is defined in config",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Properties: &facets.Properties{
+				Properties: &facetsv1beta1.Properties{
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{
 						"attrA": "valueAttrA",
 						"attrB": "valueAttrB",
@@ -167,14 +167,14 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should send upstreams if data has upstreams",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Lineage: &facets.Lineage{
-					Upstreams: []*common.Resource{
+				Lineage: &facetsv1beta1.Lineage{
+					Upstreams: []*commonv1beta1.Resource{
 						{
 							Urn:  "urn-1",
 							Type: "type-a",
@@ -208,14 +208,14 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should send downstreams if data has downstreams",
-			data: &assets.Topic{
-				Resource: &common.Resource{
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
 					Urn:     "my-topic-urn",
 					Name:    "my-topic",
 					Service: "kafka",
 				},
-				Lineage: &facets.Lineage{
-					Downstreams: []*common.Resource{
+				Lineage: &facetsv1beta1.Lineage{
+					Downstreams: []*commonv1beta1.Resource{
 						{
 							Urn:  "urn-1",
 							Type: "type-a",
@@ -243,6 +243,67 @@ func TestSink(t *testing.T) {
 					{
 						Urn:  "urn-2",
 						Type: "type-b",
+					},
+				},
+			},
+		},
+		{
+			description: "should send owners if data has ownership",
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+				Ownership: &facetsv1beta1.Ownership{
+					Owners: []*facetsv1beta1.Owner{
+						{
+							Urn:   "urn-1",
+							Name:  "owner-a",
+							Role:  "role-a",
+							Email: "email-1",
+						},
+						{
+							Urn:   "urn-2",
+							Name:  "owner-b",
+							Role:  "role-b",
+							Email: "email-2",
+						},
+						{
+							Urn:   "urn-3",
+							Name:  "owner-c",
+							Role:  "role-c",
+							Email: "email-3",
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+				Owners: []columbus.Owner{
+					{
+						URN:   "urn-1",
+						Name:  "owner-a",
+						Role:  "role-a",
+						Email: "email-1",
+					},
+					{
+						URN:   "urn-2",
+						Name:  "owner-b",
+						Role:  "role-b",
+						Email: "email-2",
+					},
+					{
+						URN:   "urn-3",
+						Name:  "owner-c",
+						Role:  "role-c",
+						Email: "email-3",
 					},
 				},
 			},

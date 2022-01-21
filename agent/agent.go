@@ -16,6 +16,9 @@ import (
 
 const defaultBatchSize = 1
 
+// TimerFn of function type
+type TimerFn func() func() int
+
 // Agent runs recipes for specified plugins.
 type Agent struct {
 	extractorFactory *registry.ExtractorFactory
@@ -25,6 +28,7 @@ type Agent struct {
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
+	timerFn          TimerFn
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -32,6 +36,11 @@ func NewAgent(config Config) *Agent {
 	mt := config.Monitor
 	if isNilMonitor(mt) {
 		mt = new(defaultMonitor)
+	}
+
+	timerFn := config.TimerFn
+	if timerFn == nil {
+		timerFn = startDuration
 	}
 
 	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
@@ -43,6 +52,7 @@ func NewAgent(config Config) *Agent {
 		monitor:          mt,
 		logger:           config.Logger,
 		retrier:          retrier,
+		timerFn:          timerFn,
 	}
 }
 
@@ -109,10 +119,16 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 
 	var (
 		ctx         = context.Background()
-		getDuration = r.startDuration()
+		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
 	)
+
+	defer func() {
+		durationInMs := getDuration()
+		r.logAndRecordMetrics(run, durationInMs)
+	}()
+
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
 		run.Error = errors.Wrap(err, "failed to setup extractor")
@@ -161,20 +177,9 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	}
 
 	// code will reach here stream.Listen() is done.
-	success := run.Error == nil
-	durationInMs := getDuration()
 	run.RecordCount = recordCount
+	success := run.Error == nil
 	run.Success = success
-	run.DurationInMs = durationInMs
-
-	r.monitor.RecordRun(run)
-
-	if success {
-		r.logger.Info("done running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
-	} else {
-		r.logger.Error("error running recipe", "recipe", recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
-	}
-
 	return
 }
 
@@ -265,10 +270,20 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 }
 
 // startDuration starts a timer.
-func (r *Agent) startDuration() func() int {
+func startDuration() func() int {
 	start := time.Now()
 	return func() int {
 		duration := time.Since(start).Milliseconds()
 		return int(duration)
+	}
+}
+
+func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
+	run.DurationInMs = durationInMs
+	r.monitor.RecordRun(run)
+	if run.Success {
+		r.logger.Info("done running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
+	} else {
+		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
 }

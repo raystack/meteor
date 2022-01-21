@@ -1,22 +1,24 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package clickhouse_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/clickhouse"
 	"github.com/odpf/meteor/test/mocks"
@@ -87,8 +89,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -100,9 +101,7 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  "default",
-			"password": pass,
-			"host":     host,
+			"connection_url": fmt.Sprintf("tcp://%s?username=default&password=%s&debug=true", host, pass),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -120,13 +119,13 @@ func TestExtract(t *testing.T) {
 
 func getExpected() []models.Record {
 	return []models.Record{
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",
 				Name: "applicant",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "applicant_id",
 						DataType:    "Int32",
@@ -145,13 +144,13 @@ func getExpected() []models.Record {
 				},
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.jobs",
 				Name: "jobs",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "job_id",
 						DataType:    "Int32",

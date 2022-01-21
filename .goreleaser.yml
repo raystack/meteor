@@ -100,5 +100,5 @@ brews:
       bin.install "meteor"
     commit_author:
       name: Ravi Suhag
-      email: ravi.suhag@gmail.com
+      email: suhag.ravi@gmail.com
       

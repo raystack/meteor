@@ -4,12 +4,13 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
-	"github.com/pkg/errors"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -29,17 +30,13 @@ var defaultCollections = []string{
 	"startup_log",
 }
 
-// Config hold the set of configuration for the extractor
+// Config holds the connection URL for the extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `
-host: localhost:27017
-user_id: admin
-password: "1234"`
+connection_url: "mongodb://admin:pass123@localhost:3306"`
 
 // Extractor manages the communication with the mongo server
 type Extractor struct {
@@ -82,8 +79,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedCollections()
 
 	// setup client
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", e.config.UserID, e.config.Password, e.config.Host)
-	if e.client, err = createAndConnnectClient(ctx, uri); err != nil {
+	if e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
@@ -136,7 +132,7 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assets.Table, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *assetsv1beta1.Table, err error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
@@ -144,12 +140,12 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		return
 	}
 
-	table = &assets.Table{
-		Resource: &common.Resource{
+	table = &assetsv1beta1.Table{
+		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
 			Name: collectionName,
 		},
-		Profile: &assets.TableProfile{
+		Profile: &assetsv1beta1.TableProfile{
 			TotalRows: totalRows,
 		},
 	}

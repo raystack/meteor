@@ -8,7 +8,7 @@ import (
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
@@ -63,13 +63,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -88,13 +94,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -115,13 +127,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      registry.NewSinkFactory(),
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -146,13 +164,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -179,13 +203,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -214,13 +244,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -250,13 +286,19 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
@@ -285,19 +327,25 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
 	t.Run("should return error when processing fails", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -327,19 +375,25 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
 	t.Run("should return error when processing panics", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -368,19 +422,25 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
 	t.Run("should not return error when sink fails", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -410,20 +470,26 @@ func TestRunnerRun(t *testing.T) {
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
 			t.Fatal(err)
 		}
+
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
+		assert.True(t, run.Success)
 		assert.NoError(t, run.Error)
 	})
 
 	t.Run("should return error when sink fails if StopOnSinkError is true", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -453,6 +519,10 @@ func TestRunnerRun(t *testing.T) {
 		if err := sf.Register("test-sink", newSink(sink)); err != nil {
 			t.Fatal(err)
 		}
+
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
@@ -460,14 +530,17 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
 			StopOnSinkError:  true,
+			Monitor:          monitor,
 		})
+
 		run := r.Run(validRecipe)
+		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
 
 	t.Run("should return run on success", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -498,11 +571,16 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		run := r.Run(validRecipe)
 		assert.NoError(t, run.Error)
@@ -510,8 +588,14 @@ func TestRunnerRun(t *testing.T) {
 	})
 
 	t.Run("should collect run metrics", func(t *testing.T) {
+		expectedDuration := 1000
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
+		}
+		timerFn := func() func() int {
+			return func() int {
+				return expectedDuration
+			}
 		}
 
 		extr := mocks.NewExtractor()
@@ -542,15 +626,8 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		monitorRun := agent.Run{
-			Recipe:      validRecipe,
-			RecordCount: 1,
-			Success:     true,
-			// DurationInMs is 0 because of the process took below a millisecond, in production scenario it takes longer than that
-			DurationInMs: 0,
-		}
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", monitorRun).Once()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -559,8 +636,10 @@ func TestRunnerRun(t *testing.T) {
 			SinkFactory:      sf,
 			Monitor:          monitor,
 			Logger:           utils.Logger,
+			TimerFn:          timerFn,
 		})
 		run := r.Run(validRecipe)
+		assert.True(t, run.Success)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
@@ -568,7 +647,7 @@ func TestRunnerRun(t *testing.T) {
 	t.Run("should retry if sink returns retry error", func(t *testing.T) {
 		err := errors.New("some-error")
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -600,11 +679,16 @@ func TestRunnerRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory:     ef,
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
 			Logger:               utils.Logger,
+			Monitor:              monitor,
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
@@ -620,7 +704,7 @@ func TestRunnerRunMultiple(t *testing.T) {
 		validRecipe2.Name = "sample-2"
 		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
 		data := []models.Record{
-			models.NewRecord(&assets.Table{}),
+			models.NewRecord(&assetsv1beta1.Table{}),
 		}
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
@@ -650,11 +734,16 @@ func TestRunnerRunMultiple(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run"))
+		defer monitor.AssertExpectations(t)
+
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
+			Monitor:          monitor,
 		})
 		runs := r.RunMultiple(recipeList)
 

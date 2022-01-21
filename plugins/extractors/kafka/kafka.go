@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	kafka "github.com/segmentio/kafka-go"
@@ -27,7 +27,7 @@ var defaultTopics = map[string]byte{
 	"_schemas":           0,
 }
 
-// Config hold the set of configuration for the kafka extractor
+// Config holds the set of configuration for the kafka extractor
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 	Label  string `mapstructure:"label" validate:"required"`
@@ -121,14 +121,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 // Build topic metadata model using a topic and number of partitions
-func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assets.Topic {
-	return &assets.Topic{
-		Resource: &common.Resource{
+func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assetsv1beta1.Topic {
+	return &assetsv1beta1.Topic{
+		Resource: &commonv1beta1.Resource{
 			Urn:     fmt.Sprintf("kafka::%s/%s", e.config.Label, topic),
 			Name:    topic,
 			Service: "kafka",
 		},
-		Profile: &assets.TopicProfile{
+		Profile: &assetsv1beta1.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),
 		},
 	}

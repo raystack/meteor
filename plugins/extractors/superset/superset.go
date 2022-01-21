@@ -6,24 +6,25 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 //go:embed README.md
 var summary string
 
-// Config hold the set of configuration for the superset extractor
+// Config holds the set of configuration for the superset extractor
 type Config struct {
 	Username string `mapstructure:"username" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
@@ -107,15 +108,15 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 }
 
 // buildDashboard builds a dashboard from superset server
-func (e *Extractor) buildDashboard(id int) (data *assets.Dashboard, err error) {
+func (e *Extractor) buildDashboard(id int) (data *assetsv1beta1.Dashboard, err error) {
 	var dashboard Dashboard
 	chart, err := e.getChartsList(id)
 	if err != nil {
 		err = errors.Wrap(err, "failed to get chart list")
 		return
 	}
-	data = &assets.Dashboard{
-		Resource: &common.Resource{
+	data = &assetsv1beta1.Dashboard{
+		Resource: &commonv1beta1.Resource{
 			Urn:     fmt.Sprintf("superset.%s", dashboard.DashboardTitle),
 			Name:    dashboard.DashboardTitle,
 			Service: "superset",
@@ -140,7 +141,7 @@ func (e *Extractor) getDashboardsList() (dashboards []Dashboard, err error) {
 }
 
 // getChartsList gets a list of charts from superset server
-func (e *Extractor) getChartsList(id int) (charts []*assets.Chart, err error) {
+func (e *Extractor) getChartsList(id int) (charts []*assetsv1beta1.Chart, err error) {
 	type responseChart struct {
 		Result []Chart `json:"result"`
 	}
@@ -150,9 +151,9 @@ func (e *Extractor) getChartsList(id int) (charts []*assets.Chart, err error) {
 		err = errors.Wrap(err, "failed to get list of chart details")
 		return
 	}
-	var tempCharts []*assets.Chart
+	var tempCharts []*assetsv1beta1.Chart
 	for _, res := range data.Result {
-		var tempChart assets.Chart
+		var tempChart assetsv1beta1.Chart
 		tempChart.Name = res.SliceName
 		tempChart.Source = "superset"
 		tempChart.Description = res.Description

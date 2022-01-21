@@ -1,22 +1,24 @@
-//+build integration
+//go:build plugins
+// +build plugins
 
 package mysql_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
-	"github.com/odpf/meteor/models/odpf/assets/facets"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mysql"
 	"github.com/odpf/meteor/test/mocks"
@@ -80,8 +82,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := mysql.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
-			"password": "pass",
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -94,9 +95,7 @@ func TestExtract(t *testing.T) {
 		extr := mysql.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     host,
+			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -151,13 +150,13 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func getExpected() []models.Record {
 	return []models.Record{
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",
 				Name: "applicant",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "applicant_id",
 						DataType:    "int",
@@ -182,13 +181,13 @@ func getExpected() []models.Record {
 				},
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.jobs",
 				Name: "jobs",
 			},
-			Schema: &facets.Columns{
-				Columns: []*facets.Column{
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
 					{
 						Name:        "department",
 						DataType:    "varchar",

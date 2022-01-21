@@ -96,3 +96,12 @@ func (m *Emitter) Push(record models.Record) {
 func (m *Emitter) Get() []models.Record {
 	return m.data
 }
+
+func (m *Emitter) GetAllData() (data []models.Metadata) {
+	records := m.Get()
+	for _, r := range records {
+		data = append(data, r.Data())
+	}
+
+	return
+}

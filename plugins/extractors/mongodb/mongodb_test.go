@@ -1,18 +1,20 @@
-//+build integration
+//go:build plugins
+// +build plugins
 
 package mongodb_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/odpf/meteor/test/utils"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/test/utils"
+
 	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/models/odpf/assets"
-	"github.com/odpf/meteor/models/odpf/assets/common"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
 	"github.com/odpf/meteor/test/mocks"
@@ -93,8 +95,7 @@ func TestMain(m *testing.M) {
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid", func(t *testing.T) {
 		err := mongodb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
-			"password": pass,
-			"host":     host,
+			"invalid_config": "invalid_config_value",
 		})
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
@@ -107,9 +108,7 @@ func TestExtract(t *testing.T) {
 		extr := mongodb.New(utils.Logger)
 
 		err := extr.Init(ctx, map[string]interface{}{
-			"user_id":  user,
-			"password": pass,
-			"host":     host,
+			"connection_url": fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host),
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -162,30 +161,30 @@ func createCollection(ctx context.Context, collectionName string, data []interfa
 
 func getExpected() []models.Record {
 	return []models.Record{
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".connections",
 				Name: "connections",
 			},
-			Profile: &assets.TableProfile{
+			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 3,
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".posts",
 				Name: "posts",
 			},
-			Profile: &assets.TableProfile{
+			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 2,
 			},
 		}),
-		models.NewRecord(&assets.Table{
-			Resource: &common.Resource{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".stats",
 				Name: "stats",
 			},
-			Profile: &assets.TableProfile{
+			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 1,
 			},
 		}),

@@ -36,7 +36,7 @@ func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Reso
 
 		return
 	}); err != nil {
-	 	if err := purgeFn(); err != nil {
+		if err := purgeFn(); err != nil {
 			return nil, err
 		}
 		return purgeFn, fmt.Errorf("could not connect to docker: %s", err.Error())

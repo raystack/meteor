@@ -1,11 +1,13 @@
-// +build integration
+//go:build plugins
+// +build plugins
 
 package bigquery_test
 
 import (
 	"context"
-	"github.com/odpf/meteor/test/utils"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery"

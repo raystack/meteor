@@ -6,18 +6,14 @@
 source:
   type: couchdb
   config:
-    host: localhost:5984
-    user_id: admin
-    password: couchdb
+    connection_url: http://admin:pass123@localhost:3306/
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `localhost:5984` | The Host at which server is running | *required* |
-| `user_id` | `string` | `admin` | User ID to access the couchdb server| *required* |
-| `password` | `string` | `couchdb` | Password for the couchdb Server | *required* |
+| `connection_url` | `string` | `http://admin:pass123@localhost:3306/` | URL to access the couchdb server | *required* |
 
 ## Outputs
 

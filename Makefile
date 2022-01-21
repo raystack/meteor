@@ -24,8 +24,12 @@ test-coverage: test
 test-e2e:
 	go test ./test/e2e -tags=integration -count=1
 
+test-plugins:
+	@echo " > Testing plugins with tag 'plugins'"
+	go test ./plugins... -tags=plugins -count=1
+
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
 	@echo " > generating protobuf"
-	@buf generate --template buf.gen.yaml https://github.com/odpf/proton/archive/52353ad461321cb601b6c963c26f0ee50e0d398b.zip#strip_components=1 --path odpf/assets
+	@buf generate --template buf.gen.yaml https://github.com/odpf/proton/archive/a0bc6dbf2ad91abfebc4bf5f70e275983109baca.zip#strip_components=1 --path odpf/assets
 	@echo " > protobuf compilation finished"
