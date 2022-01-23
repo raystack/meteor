@@ -13,6 +13,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
+	"github.com/odpf/salt/cmdx"
 	"github.com/odpf/salt/log"
 )
 
@@ -42,18 +43,22 @@ func main() {
 		monitor = metrics.NewStatsdMonitor(client, cfg.StatsdPrefix)
 	}
 
-	command := cmd.New(lg, monitor, cfg)
+	// Execute the root command
+	root := cmd.New(lg, monitor, cfg)
+	cmd, err := root.ExecuteC()
 
-	if err := command.Execute(); err != nil {
-		if strings.HasPrefix(err.Error(), "unknown command") {
-			if !strings.HasSuffix(err.Error(), "\n") {
-				fmt.Println()
-			}
-			fmt.Println(command.UsageString())
-			os.Exit(exitOK)
-		} else {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(exitError)
-		}
+	if err == nil {
+		return
 	}
+
+	if cmdx.IsCmdErr(err) {
+		if !strings.HasSuffix(err.Error(), "\n") {
+			fmt.Println()
+		}
+		fmt.Println(cmd.UsageString())
+		os.Exit(exitOK)
+	}
+
+	fmt.Println(err)
+	os.Exit(exitError)
 }
