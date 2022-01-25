@@ -40,7 +40,7 @@ func InfoSinkCmd() *cobra.Command {
 			$ meteor info sink console
 			$ meteor info sink columbus
 		`),
-		// Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -85,7 +85,7 @@ func InfoExtCmd() *cobra.Command {
 			$ meteor info extractor postgres
 			$ meteor info extractor bigquery
 		`),
-		//Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
@@ -129,7 +129,7 @@ func InfoProccCmd() *cobra.Command {
 		Example: heredoc.Doc(`
 			$ meteor info processor enrich
 		`),
-		// Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
