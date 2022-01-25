@@ -25,7 +25,6 @@ func Load() (cfg Config, err error) {
 	if errors.As(err, &config.ConfigFileNotFoundError{}) {
 		log.Println(err)
 		err = nil
-		return
 	}
 
 	return
