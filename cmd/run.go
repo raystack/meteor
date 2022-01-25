@@ -15,6 +15,7 @@ import (
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -73,6 +74,12 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			var failures = 0
 			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
+			bar := progressbar.NewOptions(len(recipes),
+				progressbar.OptionEnableColorCodes(true),
+				progressbar.OptionSetDescription("[cyan]running recipes [reset]"),
+				progressbar.OptionShowCount(),
+			)
+
 			// Run recipes and collect results
 			runs := runner.RunMultiple(recipes)
 			for _, run := range runs {
@@ -87,6 +94,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
+				bar.Add(1)
 			}
 
 			// Print the report

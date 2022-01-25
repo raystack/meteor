@@ -1,6 +1,9 @@
 package config
 
 import (
+	"errors"
+	"log"
+
 	"github.com/odpf/salt/config"
 )
 
@@ -19,8 +22,9 @@ func Load() (cfg Config, err error) {
 	err = config.
 		NewLoader(config.WithPath("./")).
 		Load(&cfg)
-	if err != nil {
-		return
+	if errors.As(err, &config.ConfigFileNotFoundError{}) {
+		log.Println(err)
+		err = nil
 	}
 
 	return
