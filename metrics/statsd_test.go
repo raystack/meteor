@@ -32,31 +32,37 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	t.Run("should create metrics with the correct name and value", func(t *testing.T) {
 		recipe := recipe.Recipe{
 			Name: "test-recipe",
+			Source: recipe.SourceRecipe{
+				Type: "mysql",
+			},
 		}
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d",
+			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d",
+			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d",
+			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
-
+		t.Log(recordIncrementMetric)
 		client := new(mockStatsdClient)
 		client.On("Timing", timingMetric, int64(duration))
 		client.On("Increment", incrementMetric)
@@ -64,37 +70,43 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false, Extractor: recipe.Source})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
 		recipe := recipe.Recipe{
 			Name: "test-recipe",
+			Source: recipe.SourceRecipe{
+				Type: "bigquery",
+			},
 		}
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d",
+			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d",
+			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d",
+			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
-
+		t.Log(recordIncrementMetric)
 		client := new(mockStatsdClient)
 		client.On("Timing", timingMetric, int64(duration))
 		client.On("Increment", incrementMetric)
@@ -102,6 +114,6 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true, Extractor: recipe.Source})
 	})
 }

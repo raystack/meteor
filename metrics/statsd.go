@@ -35,32 +35,33 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 // RecordRun records a run behavior
 func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	m.client.Timing(
-		m.createMetricName(runDurationMetricName, run.Recipe, run.Success, run.RecordCount),
+		m.createMetricName(runDurationMetricName, run.Recipe, run.Success, run.RecordCount, run.Extractor),
 		int64(run.DurationInMs),
 	)
 	m.client.Increment(
-		m.createMetricName(runMetricName, run.Recipe, run.Success, run.RecordCount),
+		m.createMetricName(runMetricName, run.Recipe, run.Success, run.RecordCount, run.Extractor),
 	)
 	m.client.IncrementByValue(
-		m.createMetricName(runRecordCountMetricName, run.Recipe, run.Success, run.RecordCount),
+		m.createMetricName(runRecordCountMetricName, run.Recipe, run.Success, run.RecordCount, run.Extractor),
 		run.RecordCount,
 	)
 }
 
 // createMetricName creates a metric name for a given recipe and success
-func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool, recordCount int) string {
+func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool, recordCount int, extractor recipe.SourceRecipe) string {
 	var successText = "false"
 	if success {
 		successText = "true"
 	}
 
 	return fmt.Sprintf(
-		"%s.%s,name=%s,success=%s,records=%d",
+		"%s.%s,name=%s,success=%s,records=%d,extractor=%s",
 		m.prefix,
 		metricName,
 		recipe.Name,
 		successText,
 		recordCount,
+		extractor.Type,
 	)
 }
 
