@@ -94,7 +94,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Type), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
-				bar.Add(1)
+				err := bar.Add(1)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Print the report
