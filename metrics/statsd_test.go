@@ -62,7 +62,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			recordCount,
 			recipe.Source.Type,
 		)
-		t.Log(recordIncrementMetric)
+
 		client := new(mockStatsdClient)
 		client.On("Timing", timingMetric, int64(duration))
 		client.On("Increment", incrementMetric)
@@ -106,7 +106,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 			recordCount,
 			recipe.Source.Type,
 		)
-		t.Log(recordIncrementMetric)
+
 		client := new(mockStatsdClient)
 		client.On("Timing", timingMetric, int64(duration))
 		client.On("Increment", incrementMetric)
