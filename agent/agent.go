@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -122,11 +123,16 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
+		recordList  []string
 	)
 
 	defer func() {
 		durationInMs := getDuration()
 		r.logAndRecordMetrics(run, durationInMs)
+	}()
+
+	defer func() {
+		r.logRecords(recordList)
 	}()
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
@@ -152,6 +158,8 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
 		recordCount++
+		record := src.Data().GetResource().Name
+		recordList = append(recordList, record)
 		return src, nil
 	})
 
@@ -286,4 +294,9 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	} else {
 		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
+}
+
+func (r *Agent) logRecords(recordList []string) {
+	records := strings.Join(recordList, ", ")
+	r.logger.Info("Successfully extracted records", "records", records)
 }
