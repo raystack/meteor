@@ -70,7 +70,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false, Extractor: recipe.Source})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -114,6 +114,6 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true, Extractor: recipe.Source})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true})
 	})
 }
