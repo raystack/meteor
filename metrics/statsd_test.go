@@ -32,29 +32,35 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	t.Run("should create metrics with the correct name and value", func(t *testing.T) {
 		recipe := recipe.Recipe{
 			Name: "test-recipe",
+			Source: recipe.SourceRecipe{
+				Type: "mysql",
+			},
 		}
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d",
+			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d",
+			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d",
+			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
 			recordCount,
+			recipe.Source.Type,
 		)
 
 		client := new(mockStatsdClient)
@@ -70,29 +76,35 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	t.Run("should set success field to true on success", func(t *testing.T) {
 		recipe := recipe.Recipe{
 			Name: "test-recipe",
+			Source: recipe.SourceRecipe{
+				Type: "bigquery",
+			},
 		}
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d",
+			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d",
+			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d",
+			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
 			recordCount,
+			recipe.Source.Type,
 		)
 
 		client := new(mockStatsdClient)
