@@ -55,12 +55,13 @@ func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe
 	}
 
 	return fmt.Sprintf(
-		"%s.%s,name=%s,success=%s,records=%d",
+		"%s.%s,name=%s,success=%s,records=%d,extractor=%s",
 		m.prefix,
 		metricName,
 		recipe.Name,
 		successText,
 		recordCount,
+		recipe.Source.Type,
 	)
 }
 

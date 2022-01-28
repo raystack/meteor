@@ -34,7 +34,10 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Com
 		},
 	}
 
+	// Help topics
 	cmdx.SetHelp(cmd)
+	cmd.AddCommand(cmdx.SetCompletionCmd("meteor"))
+	cmd.AddCommand(cmdx.SetRefCmd(cmd))
 
 	cmd.AddCommand(VersionCmd())
 	cmd.AddCommand(GenCmd(lg))

@@ -20,6 +20,7 @@ require (
 	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
 	github.com/etsy/statsd v0.9.0
+	github.com/fatih/color v1.10.0 // indirect
 	github.com/flimzy/diff v0.1.7 // indirect
 	github.com/flimzy/testy v0.1.17 // indirect
 	github.com/go-kivik/couchdb v2.0.0+incompatible
@@ -30,7 +31,7 @@ require (
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/google/go-github/v37 v37.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
@@ -43,10 +44,11 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249
 	github.com/odpf/optimus v0.0.5-rc.1.0.20220106085648-02efc17c1c8d
-	github.com/odpf/salt v0.0.0-20210919015538-3fd8ab22acea
+	github.com/odpf/salt v0.0.0-20220123093403-faac19525416
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/sijms/go-ora/v2 v2.2.22
 	github.com/spf13/cobra v1.2.1
