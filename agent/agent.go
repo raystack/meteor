@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -123,16 +122,11 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
-		recordList  []string
 	)
 
 	defer func() {
 		durationInMs := getDuration()
 		r.logAndRecordMetrics(run, durationInMs)
-	}()
-
-	defer func() {
-		r.logRecords(recordList)
 	}()
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
@@ -149,7 +143,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	}
 
 	for _, sr := range recipe.Sinks {
-		if err := r.setupSink(ctx, sr, stream); err != nil {
+		if err := r.setupSink(ctx, sr, stream, recipe); err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
@@ -158,8 +152,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
 		recordCount++
-		record := src.Data().GetResource().Name
-		recordList = append(recordList, record)
+		r.logExtractedRecord(recipe, src)
 		return src, nil
 	})
 
@@ -234,7 +227,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, s
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
@@ -262,6 +255,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 				err = nil
 			}
 		}
+		r.logger.Info("Successfully sank record", "sink", sr.Name, "recipe", recipe.Name)
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
@@ -296,7 +290,8 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	}
 }
 
-func (r *Agent) logRecords(recordList []string) {
-	records := strings.Join(recordList, ", ")
-	r.logger.Info("Successfully extracted records", "records", records)
+// logExtractedRecord logs the extracted record
+func (r *Agent) logExtractedRecord(recipe recipe.Recipe, record models.Record) {
+	urn := record.Data().GetResource().Urn
+	r.logger.Info("Successfully extracted record", "record", urn, "recipe", recipe.Name)
 }
