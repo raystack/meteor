@@ -152,7 +152,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
 		recordCount++
-		r.logExtractedRecord(recipe, src)
+		r.logger.Info("Successfully extracted record", "record", src.Data().GetResource().Urn, "recipe", recipe.Name)
 		return src, nil
 	})
 
@@ -255,7 +255,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 				err = nil
 			}
 		}
-		r.logger.Info("Successfully sank record", "sink", sr.Name, "recipe", recipe.Name)
+		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
@@ -288,10 +288,4 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	} else {
 		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
 	}
-}
-
-// logExtractedRecord logs the extracted record
-func (r *Agent) logExtractedRecord(recipe recipe.Recipe, record models.Record) {
-	urn := record.Data().GetResource().Urn
-	r.logger.Info("Successfully extracted record", "record", urn, "recipe", recipe.Name)
 }
