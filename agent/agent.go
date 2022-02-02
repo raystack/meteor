@@ -59,6 +59,8 @@ func NewAgent(config Config) *Agent {
 // Validate checks the recipe for linting errors.
 func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 	if ext, err := r.extractorFactory.Get(rcp.Source.Type); err != nil {
+		//pc, fn, line, _ := runtime.Caller(1)
+		//errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s), check %s[%s:%d]", rcp.Source.Type, plugins.PluginTypeExtractor, runtime.FuncForPC(pc).Name(), fn, line))
 		errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
 	} else {
 		if err = ext.Validate(rcp.Source.Config); err != nil {
