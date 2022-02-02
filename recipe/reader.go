@@ -32,7 +32,7 @@ type Data struct {
 	RecStr yaml.Node
 }
 
-type Dataa struct {
+type ReadData struct {
 	Info map[string]string
 	node yaml.Node
 }
@@ -113,4 +113,15 @@ func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
 	}
 
 	return
+}
+
+func (l *Location) LocationYAML(value *yaml.Node) error {
+	if err := value.Decode(&l.Recipe); err != nil {
+		return err
+	}
+
+	l.Line = value.Line
+	l.Column = value.Column
+
+	return nil
 }

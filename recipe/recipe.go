@@ -28,3 +28,9 @@ type Recipe struct {
 	Sinks      []SinkRecipe      `json:"sinks" yaml:"sinks" validate:"required,min=1"`
 	Processors []ProcessorRecipe `json:"processors" yaml:"processors"`
 }
+
+type Location struct {
+	Line   int
+	Column int
+	Recipe
+}
