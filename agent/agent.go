@@ -143,7 +143,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	}
 
 	for _, sr := range recipe.Sinks {
-		if err := r.setupSink(ctx, sr, stream); err != nil {
+		if err := r.setupSink(ctx, sr, stream, recipe); err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
@@ -152,6 +152,7 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
 		recordCount++
+		r.logger.Info("Successfully extracted record", "record", src.Data().GetResource().Urn, "recipe", recipe.Name)
 		return src, nil
 	})
 
@@ -226,7 +227,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, s
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
@@ -254,6 +255,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 				err = nil
 			}
 		}
+		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
