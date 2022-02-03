@@ -1,0 +1,29 @@
+name: recipe-read-line
+source:
+  type: srcA
+  config:
+    srcKey1: srcVal1
+    srcKey2: srcVal2
+    srcKey3: srcVal3
+processors:
+  - name: procA
+    config:
+      procAKey1: procAVal1
+      procAKey2: procAVal2
+      procAKey3: procAVal3
+  - name: procB
+    config:
+      procBKey1: procBVal1
+      procBKey2: procBVal2
+      procBKey3: procBVal3
+sinks:
+  - name: sinkA
+    config:
+      sinkAKey1: sinkAVal1
+      sinkAKey2: sinkAVal2
+      sinkAKey3: sinkAVal3
+  - name: sinkB
+    config:
+      sinkBKey1: sinkBVal1
+      sinkBKey2: sinkBVal2
+      sinkBKey3: sinkBVal3
