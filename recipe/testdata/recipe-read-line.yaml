@@ -1,6 +1,6 @@
 name: recipe-read-line
 source:
-  type: srcA
+  name: srcA
   config:
     srcKey1: srcVal1
     srcKey2: srcVal2

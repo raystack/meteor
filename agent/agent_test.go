@@ -24,15 +24,15 @@ var mockCtx = mock.AnythingOfType("*context.emptyCtx")
 
 var validRecipe = recipe.Recipe{
 	Name: "sample",
-	Source: recipe.SourceRecipe{
-		Type: "test-extractor",
+	Source: recipe.PluginRecipe{
+		Name: "test-extractor",
 	},
-	Processors: []recipe.ProcessorRecipe{
+	Processors: []recipe.PluginRecipe{
 		{Name: "test-processor", Config: map[string]interface{}{
 			"proc-foo": "proc-bar",
 		}},
 	},
-	Sinks: []recipe.SinkRecipe{
+	Sinks: []recipe.PluginRecipe{
 		{Name: "test-sink", Config: map[string]interface{}{
 			"url": "http://localhost:3000/data",
 		}},

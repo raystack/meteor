@@ -58,11 +58,11 @@ func NewAgent(config Config) *Agent {
 
 // Validate checks the recipe for linting errors.
 func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
-	if ext, err := r.extractorFactory.Get(rcp.Source.Type); err != nil {
+	if ext, err := r.extractorFactory.Get(rcp.Source.Name); err != nil {
 		errs = append(errs, err)
 	} else {
 		if err = ext.Validate(rcp.Source.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Name, plugins.PluginTypeExtractor))
 		}
 	}
 
@@ -184,20 +184,20 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str *stream) (runFn func() error, err error) {
-	extractor, err := r.extractorFactory.Get(sr.Type)
+func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
+	extractor, err := r.extractorFactory.Get(sr.Name)
 	if err != nil {
-		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Type)
+		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Name)
 		return
 	}
 	if err = extractor.Init(ctx, sr.Config); err != nil {
-		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Type)
+		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Name)
 		return
 	}
 
 	runFn = func() (err error) {
 		if err = extractor.Extract(ctx, str.push); err != nil {
-			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
+			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
 		}
 
 		return
@@ -205,7 +205,7 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str 
 	return
 }
 
-func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, str *stream) (err error) {
+func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream) (err error) {
 	var proc plugins.Processor
 	if proc, err = r.processorFactory.Get(pr.Name); err != nil {
 		return errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
@@ -227,7 +227,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, s
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream, recipe recipe.Recipe) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)

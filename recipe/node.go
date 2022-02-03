@@ -7,28 +7,20 @@ import (
 )
 
 type RecipeNode struct {
-	Name       yaml.Node             `json:"name" yaml:"name"`
-	Source     SourceRecipeNode      `json:"source" yaml:"source"`
-	Sinks      []SinkRecipeNode      `json:"sinks" yaml:"sinks"`
-	Processors []ProcessorRecipeNode `json:"processors" yaml:"processors"`
+	Name       yaml.Node    `json:"name" yaml:"name"`
+	Source     PluginNode   `json:"source" yaml:"source"`
+	Sinks      []PluginNode `json:"sinks" yaml:"sinks"`
+	Processors []PluginNode `json:"processors" yaml:"processors"`
 }
-type SourceRecipeNode struct {
-	Type   yaml.Node `json:"type" yaml:"type"`
-	Config yaml.Node `json:"config" yaml:"config"`
-}
-type ProcessorRecipeNode struct {
-	Name   yaml.Node `json:"name" yaml:"name"`
-	Config yaml.Node `json:"config" yaml:"config"`
-}
-type SinkRecipeNode struct {
+
+type PluginNode struct {
 	Name   yaml.Node `json:"name" yaml:"name"`
 	Config yaml.Node `json:"config" yaml:"config"`
 }
 
 func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	var sourceConfig map[string]interface{}
-	err = node.Source.Config.Decode(&sourceConfig)
-	if err != nil {
+	if err = node.Source.Config.Decode(&sourceConfig); err != nil {
 		err = fmt.Errorf("error decoding yaml node to source :%w", err)
 		return
 	}
@@ -45,8 +37,8 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 
 	recipe = Recipe{
 		Name: node.Name.Value,
-		Source: SourceRecipe{
-			Type:   node.Source.Type.Value,
+		Source: PluginRecipe{
+			Name:   node.Source.Name.Value,
 			Config: sourceConfig,
 			Node:   node.Source,
 		},
@@ -58,35 +50,35 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	return
 }
 
-func (node RecipeNode) toProcessors() (processors []ProcessorRecipe, err error) {
-	for _, ns := range node.Processors {
+func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
+	for _, processor := range node.Processors {
 		var config map[string]interface{}
-		err = ns.Config.Decode(&config)
+		err = processor.Config.Decode(&config)
 		if err != nil {
 			err = fmt.Errorf("error decoding yaml node to processor :%w", err)
 			return
 		}
-		processors = append(processors, ProcessorRecipe{
-			Name:   ns.Name.Value,
+		processors = append(processors, PluginRecipe{
+			Name:   processor.Name.Value,
 			Config: config,
-			Node:   ns,
+			Node:   processor,
 		})
 	}
 	return
 }
 
-func (node RecipeNode) toSinks() (sinks []SinkRecipe, err error) {
-	for _, ns := range node.Sinks {
+func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
+	for _, sink := range node.Sinks {
 		var config map[string]interface{}
-		err = ns.Config.Decode(&config)
+		err = sink.Config.Decode(&config)
 		if err != nil {
 			err = fmt.Errorf("error decoding yaml node to sink :%w", err)
 			return
 		}
-		sinks = append(sinks, SinkRecipe{
-			Name:   ns.Name.Value,
+		sinks = append(sinks, PluginRecipe{
+			Name:   sink.Name.Value,
 			Config: config,
-			Node:   ns,
+			Node:   sink,
 		})
 	}
 	return

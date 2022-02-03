@@ -33,13 +33,13 @@ func TestReaderRead(t *testing.T) {
 		expectedRecipes := []recipe.Recipe{
 			{
 				Name: "test-recipe",
-				Source: recipe.SourceRecipe{
-					Type: "test-source",
+				Source: recipe.PluginRecipe{
+					Name: "test-source",
 					Config: map[string]interface{}{
 						"foo": "bar",
 					},
 				},
-				Sinks: []recipe.SinkRecipe{
+				Sinks: []recipe.PluginRecipe{
 					{
 						Name: "test-sink",
 					},
@@ -72,19 +72,19 @@ func TestReaderRead(t *testing.T) {
 		expectedRecipes := []recipe.Recipe{
 			{
 				Name: "test-recipe",
-				Source: recipe.SourceRecipe{
-					Type: "test-source",
+				Source: recipe.PluginRecipe{
+					Name: "test-source",
 					Config: map[string]interface{}{
 						"username": username,
 						"password": password,
 					},
 				},
-				Sinks: []recipe.SinkRecipe{
+				Sinks: []recipe.PluginRecipe{
 					{
 						Name: "test-sink",
 					},
 				},
-				Processors: []recipe.ProcessorRecipe{
+				Processors: []recipe.PluginRecipe{
 					{
 						Name: "test-processor",
 					},
@@ -129,19 +129,19 @@ func TestReaderRead(t *testing.T) {
 		expected := []recipe.Recipe{
 			{
 				Name: "test-recipe",
-				Source: recipe.SourceRecipe{
-					Type: "test-source",
+				Source: recipe.PluginRecipe{
+					Name: "test-source",
 					Config: map[string]interface{}{
 						"username": username,
 						"password": password,
 					},
 				},
-				Sinks: []recipe.SinkRecipe{
+				Sinks: []recipe.PluginRecipe{
 					{
 						Name: "test-sink",
 					},
 				},
-				Processors: []recipe.ProcessorRecipe{
+				Processors: []recipe.PluginRecipe{
 					{
 						Name: "test-processor",
 					},
@@ -149,13 +149,13 @@ func TestReaderRead(t *testing.T) {
 			},
 			{
 				Name: "test-recipe",
-				Source: recipe.SourceRecipe{
-					Type: "test-source",
+				Source: recipe.PluginRecipe{
+					Name: "test-source",
 					Config: map[string]interface{}{
 						"foo": "bar",
 					},
 				},
-				Sinks: []recipe.SinkRecipe{
+				Sinks: []recipe.PluginRecipe{
 					{
 						Name: "test-sink",
 					},
@@ -175,7 +175,7 @@ func compareRecipes(t *testing.T, expected, actual recipe.Recipe) {
 	assert.Equal(t, len(expected.Sinks), len(actual.Sinks))
 	assert.Equal(t, len(expected.Processors), len(actual.Processors))
 
-	assert.Equal(t, expected.Source.Type, actual.Source.Type)
+	assert.Equal(t, expected.Source.Name, actual.Source.Name)
 	assert.Equal(t, expected.Source.Config, actual.Source.Config)
 	for i := range actual.Sinks {
 		assert.Equal(t, expected.Sinks[i].Name, actual.Sinks[i].Name)

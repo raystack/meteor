@@ -1,6 +1,7 @@
 package recipe_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/odpf/meteor/recipe"
@@ -14,10 +15,13 @@ func TestRecipeGetLine(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, r, 1)
 	rcp := r[0]
+	fmt.Println(rcp.Node)
+	fmt.Println(rcp.Source)
+	fmt.Println(rcp.Source.Node)
 
 	t.Run("should return source line and column", func(t *testing.T) {
-		assert.Equal(t, 3, rcp.Source.Node.Type.Line)
-		assert.Equal(t, 9, rcp.Source.Node.Type.Column)
+		assert.Equal(t, 3, rcp.Source.Node.Name.Line)
+		assert.Equal(t, 9, rcp.Source.Node.Name.Column)
 	})
 
 	t.Run("should return processors line and column", func(t *testing.T) {

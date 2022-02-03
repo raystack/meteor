@@ -73,6 +73,25 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				if len(errs) > 0 {
 					for _, err := range errs {
 						lg.Error(err.Error())
+
+						_, err := registry.Extractors.Get(recipe.Source.Name)
+						if err != nil {
+							lg.Error("invalid source", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line)
+						}
+
+						for _, p := range recipe.Processors {
+							_, err := registry.Sinks.Get(p.Name)
+							if err != nil {
+								lg.Error("invalid processor", "processor", p.Name, "line", p.Node.Name.Line)
+							}
+						}
+
+						for _, s := range recipe.Sinks {
+							_, err := registry.Sinks.Get(s.Name)
+							if err != nil {
+								lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
+							}
+						}
 					}
 					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
 					failures++
