@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"github.com/odpf/meteor/plugins"
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
@@ -73,25 +75,25 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				if len(errs) > 0 {
 					for _, err := range errs {
 						lg.Error(err.Error())
+						//getLine(lg, recipe)
 
-						_, err := registry.Extractors.Get(recipe.Source.Name)
-						if err != nil {
-							lg.Error("invalid source", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line)
+						//var plugTest plugins.NotFoundError
+						//if errors.As(err, &plugTest) {
+						//	fmt.Println("testing", bad.Name)
+						//	err = nil
+						//}
+
+						if errors.As(err, &plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: recipe.Source.Name}) {
+							lg.Error("source missing", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line, "err", err.Error())
+							err = nil
 						}
-
-						for _, p := range recipe.Processors {
-							_, err := registry.Sinks.Get(p.Name)
-							if err != nil {
-								lg.Error("invalid processor", "processor", p.Name, "line", p.Node.Name.Line)
-							}
-						}
-
 						for _, s := range recipe.Sinks {
-							_, err := registry.Sinks.Get(s.Name)
-							if err != nil {
-								lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
+							if errors.As(err, &plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: s.Name}) {
+								lg.Info("sink missing", "sink", s.Name, "line", s.Node.Name.Line, "error", err.Error())
+								err = nil
 							}
 						}
+
 					}
 					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
 					failures++
@@ -112,5 +114,27 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			printer.Table(os.Stdout, report)
 			return nil
 		},
+	}
+}
+
+func getLine(lg log.Logger, recipe recipe.Recipe) {
+
+	_, err := registry.Extractors.Get(recipe.Source.Name)
+	if err != nil {
+		lg.Error("invalid source", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line)
+	}
+
+	for _, p := range recipe.Processors {
+		_, err := registry.Sinks.Get(p.Name)
+		if err != nil {
+			lg.Error("invalid processor", "processor", p.Name, "line", p.Node.Name.Line)
+		}
+	}
+
+	for _, s := range recipe.Sinks {
+		_, err := registry.Sinks.Get(s.Name)
+		if err != nil {
+			lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
+		}
 	}
 }

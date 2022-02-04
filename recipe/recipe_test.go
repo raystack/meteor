@@ -1,7 +1,7 @@
 package recipe_test
 
 import (
-	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/odpf/meteor/recipe"
@@ -15,13 +15,21 @@ func TestRecipeGetLine(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, r, 1)
 	rcp := r[0]
-	fmt.Println(rcp.Node)
-	fmt.Println(rcp.Source)
-	fmt.Println(rcp.Source.Node)
 
 	t.Run("should return source line and column", func(t *testing.T) {
 		assert.Equal(t, 3, rcp.Source.Node.Name.Line)
 		assert.Equal(t, 9, rcp.Source.Node.Name.Column)
+	})
+
+	t.Run("should return config source line and column", func(t *testing.T) {
+		expectedLineNum := []int{5, 6, 7}
+		var lineNum []int
+		srcConfig := rcp.Source.Node.Config
+		for _, j := range srcConfig {
+			lineNum = append(lineNum, j.Line)
+		}
+		sort.Ints(lineNum)
+		assert.Equal(t, expectedLineNum, lineNum)
 	})
 
 	t.Run("should return processors line and column", func(t *testing.T) {

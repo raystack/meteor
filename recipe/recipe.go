@@ -16,3 +16,19 @@ type PluginRecipe struct {
 	Config map[string]interface{} `json:"config" yaml:"config"`
 	Node   PluginNode
 }
+
+//func (r *Recipe) accessRecipeNode() RecipeNode {
+//	return r.node
+//}
+//
+//func (p *PluginRecipe) accessPluginNode() PluginNode {
+//	return p.node
+//}
+//
+//type myinterface interface {
+//	do() RecipeNode
+//}
+//
+//func (r *Recipe) do() RecipeNode {
+//	return r.accessRecipeNode()
+//}

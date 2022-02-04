@@ -61,7 +61,11 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	if err != nil {
 		return
 	}
+
 	recipe, err = node.toRecipe()
+	if err != nil {
+		return
+	}
 
 	return
 }

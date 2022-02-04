@@ -1,0 +1,7 @@
+name: sample
+source:
+  name: mysql
+  config:
+    connection_url: "root@tcp(localhost:3306)/" # without password
+sinks:
+  - name: consol
