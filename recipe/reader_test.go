@@ -41,7 +41,8 @@ func TestReaderRead(t *testing.T) {
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
-						Name: "test-sink",
+						Name:   "test-sink",
+						Config: map[string]interface{}{},
 					},
 				},
 			}}
@@ -81,12 +82,14 @@ func TestReaderRead(t *testing.T) {
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
-						Name: "test-sink",
+						Name:   "test-sink",
+						Config: map[string]interface{}{},
 					},
 				},
 				Processors: []recipe.PluginRecipe{
 					{
-						Name: "test-processor",
+						Name:   "test-processor",
+						Config: map[string]interface{}{},
 					},
 				},
 			}}
@@ -138,12 +141,14 @@ func TestReaderRead(t *testing.T) {
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
-						Name: "test-sink",
+						Name:   "test-sink",
+						Config: map[string]interface{}{},
 					},
 				},
 				Processors: []recipe.PluginRecipe{
 					{
-						Name: "test-processor",
+						Name:   "test-processor",
+						Config: map[string]interface{}{},
 					},
 				},
 			},
@@ -157,7 +162,8 @@ func TestReaderRead(t *testing.T) {
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
-						Name: "test-sink",
+						Name:   "test-sink",
+						Config: map[string]interface{}{},
 					},
 				},
 			},
