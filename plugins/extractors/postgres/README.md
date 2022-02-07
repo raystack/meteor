@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: postgres
+  name: postgres
   config:
     connection_url: postgres://admin:pass123@localhost:3306/testDB?sslmode=disable
     exclude: primaryDB,secondaryDB

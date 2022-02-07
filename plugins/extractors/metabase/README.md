@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: metabase
+  name: metabase
   config:
     host: http://localhost:3000
     username: meteor_tester

@@ -6,7 +6,7 @@ When the source field is defined, Meteor will extract data from a metadata sourc
 
 ```yaml
 source:
-  type: kafka
+  name: kafka
   config:
     broker: broker:9092
 ```

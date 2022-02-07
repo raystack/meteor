@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: cassandra
+  name: cassandra
   config:
     user_id: admin
     password: 1234

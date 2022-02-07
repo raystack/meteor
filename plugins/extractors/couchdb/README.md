@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: couchdb
+  name: couchdb
   config:
     connection_url: http://admin:pass123@localhost:3306/
 ```

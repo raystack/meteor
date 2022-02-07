@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: superset
+  name: superset
   config:
     username: meteor_tester
     password: meteor_pass_1234

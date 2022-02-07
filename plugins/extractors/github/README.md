@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: github
+  name: github
   config:
     org: odpf
     token: github_token

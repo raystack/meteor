@@ -16,12 +16,12 @@ var validate *validator.Validate
 func init() {
 	validate = validator.New()
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("mapstructure"), ",", 2)[0]
+		configName := strings.SplitN(fld.Tag.Get("mapstructure"), ",", 2)[0]
 
-		if name == "-" {
+		if configName == "-" {
 			return ""
 		}
-		return name
+		return configName
 	})
 }
 

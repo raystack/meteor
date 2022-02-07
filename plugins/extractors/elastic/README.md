@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: elasticsearch
+  name: elasticsearch
   config:
     host: elastic_server
 ```

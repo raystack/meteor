@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: bigquery
+  name: bigquery
   config:
     project_id: google-project-id
     table_pattern: gofood.fact_

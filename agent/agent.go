@@ -281,6 +281,7 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	}
 }
 
+// enrichInvalidConfigError enrich the error with plugin information
 func (r *Agent) enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
 	if errors.As(err, &plugins.InvalidConfigError{}) {
 		icErr := err.(plugins.InvalidConfigError)

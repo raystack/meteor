@@ -21,7 +21,7 @@ func TestRecipeGetLine(t *testing.T) {
 		assert.Equal(t, 9, rcp.Source.Node.Name.Column)
 	})
 
-	t.Run("should return config source line and column", func(t *testing.T) {
+	t.Run("should return config source lines", func(t *testing.T) {
 		expectedLineNum := []int{5, 6, 7}
 		var lineNum []int
 		srcConfig := rcp.Source.Node.Config
@@ -32,7 +32,7 @@ func TestRecipeGetLine(t *testing.T) {
 		assert.Equal(t, expectedLineNum, lineNum)
 	})
 
-	t.Run("should return config source line and column", func(t *testing.T) {
+	t.Run("should return config source line for a specific config key", func(t *testing.T) {
 		expectedLineNum := 6
 		srcConfigKey := rcp.Source.Node.Config["srcKey2"]
 		assert.Equal(t, expectedLineNum, srcConfigKey.Line)

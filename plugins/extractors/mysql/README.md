@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: mysql
+  name: mysql
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
 ```

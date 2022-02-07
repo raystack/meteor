@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: grafana
+  name: grafana
   config:
     base_url: grafana_server
     api_key: your_api_key

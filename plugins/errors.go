@@ -2,6 +2,7 @@ package plugins
 
 import "fmt"
 
+// ConfigError contains fields to check error
 type ConfigError struct {
 	Key     string
 	Message string

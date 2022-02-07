@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// RecipeNode contains the json data for a recipe node
 type RecipeNode struct {
 	Name       yaml.Node    `json:"name" yaml:"name"`
 	Source     PluginNode   `json:"source" yaml:"source"`
@@ -13,27 +14,26 @@ type RecipeNode struct {
 	Processors []PluginNode `json:"processors" yaml:"processors"`
 }
 
+// PluginNode contains the json data for a recipe node that is being used for
+// generating the plugins code for a recipe.
 type PluginNode struct {
 	Name   yaml.Node            `json:"name" yaml:"name"`
 	Config map[string]yaml.Node `json:"config" yaml:"config"`
 }
 
-func (plug *PluginNode) toDecode() map[string]interface{} {
+// decodeConfig decodes the plugins config
+func (plug *PluginNode) decodeConfig() map[string]interface{} {
 	config := make(map[string]interface{})
 
-	for i, j := range plug.Config {
-		config[i] = j.Value
+	for key, val := range plug.Config {
+		config[key] = val.Value
 	}
 	return config
 }
 
+// toRecipe passes the value from RecipeNode to Recipe
 func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
-	var sourceConfig map[string]interface{}
-	sourceConfig = node.Source.toDecode()
-	//if err = node.Source.Config.Decode(&sourceConfig); err != nil {
-	//	err = fmt.Errorf("error decoding yaml node to source :%w", err)
-	//	return
-	//}
+	sourceConfig := node.Source.decodeConfig()
 	processors, err := node.toProcessors()
 	if err != nil {
 		err = fmt.Errorf("error building processors :%w", err)
@@ -60,36 +60,26 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	return
 }
 
+// toProcessors passes the value of processor PluginNode to its PluginRecipe
 func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
 	for _, processor := range node.Processors {
-		var config map[string]interface{}
-		config = processor.toDecode()
-		//err = processor.Config.Decode(&config)
-		//if err != nil {
-		//	err = fmt.Errorf("error decoding yaml node to processor :%w", err)
-		//	return
-		//}
+		processorConfig := processor.decodeConfig()
 		processors = append(processors, PluginRecipe{
 			Name:   processor.Name.Value,
-			Config: config,
+			Config: processorConfig,
 			Node:   processor,
 		})
 	}
 	return
 }
 
+// toSinks passes the value of sink PluginNode to its PluginRecipe
 func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
 	for _, sink := range node.Sinks {
-		var config map[string]interface{}
-		config = sink.toDecode()
-		//err = sink.Config.Decode(&config)
-		//if err != nil {
-		//	err = fmt.Errorf("error decoding yaml node to sink :%w", err)
-		//	return
-		//}
+		sinkConfig := sink.decodeConfig()
 		sinks = append(sinks, PluginRecipe{
 			Name:   sink.Name.Value,
-			Config: config,
+			Config: sinkConfig,
 			Node:   sink,
 		})
 	}

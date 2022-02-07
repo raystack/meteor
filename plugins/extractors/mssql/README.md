@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: mssql
+  name: mssql
   config:
     connection_url: sqlserver://admin:pass123@localhost:3306/
 ```

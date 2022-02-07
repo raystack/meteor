@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: googlecloudstorage
+  name: googlecloudstorage
   config:
     project_id: google-project-id
     extract_blob: true

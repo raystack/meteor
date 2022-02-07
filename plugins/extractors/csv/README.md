@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: csv
+  name: csv
   config:
     path: ./path-to-a-file-or-a-directory
 ```

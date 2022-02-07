@@ -1,6 +1,6 @@
 name: sample-recipe
 source:
-  type: kafka
+  name: kafka
   config:
     broker: {{ .kafka_broker }}
 sinks:

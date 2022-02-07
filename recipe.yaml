@@ -1,9 +1,0 @@
-name: sample
-source:
-  name: kafka
-  config:
-    broker:
-sinks:
-  - name: consol
-    config:
-      fdjbsdk:

@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: oracle
+  name: oracle
   config:
     connection_url: oracle://admin:1234@localhost:1521/xe
 ```
