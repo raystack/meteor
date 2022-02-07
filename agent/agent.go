@@ -62,7 +62,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 		errs = append(errs, err)
 	} else {
 		if err = ext.Validate(rcp.Source.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Name, plugins.PluginTypeExtractor))
+			errs = append(errs, r.enrichInvalidConfigError(err, rcp.Source.Name, plugins.PluginTypeExtractor))
 		}
 	}
 
@@ -73,7 +73,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			continue
 		}
 		if err = sink.Validate(s.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink))
+			errs = append(errs, r.enrichInvalidConfigError(err, s.Name, plugins.PluginTypeSink))
 		}
 	}
 
@@ -84,7 +84,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			continue
 		}
 		if err = procc.Validate(p.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", p.Name, plugins.PluginTypeProcessor))
+			errs = append(errs, r.enrichInvalidConfigError(err, p.Name, plugins.PluginTypeProcessor))
 		}
 	}
 	return
@@ -271,15 +271,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 	return
 }
 
-// startDuration starts a timer.
-func startDuration() func() int {
-	start := time.Now()
-	return func() int {
-		duration := time.Since(start).Milliseconds()
-		return int(duration)
-	}
-}
-
 func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	run.DurationInMs = durationInMs
 	r.monitor.RecordRun(run)
@@ -287,5 +278,26 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 		r.logger.Info("done running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
 		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
+	}
+}
+
+func (r *Agent) enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
+	if errors.As(err, &plugins.InvalidConfigError{}) {
+		icErr := err.(plugins.InvalidConfigError)
+		icErr.PluginName = pluginName
+		icErr.Type = pluginType
+
+		return icErr
+	}
+
+	return err
+}
+
+// startDuration starts a timer.
+func startDuration() func() int {
+	start := time.Now()
+	return func() int {
+		duration := time.Since(start).Milliseconds()
+		return int(duration)
 	}
 }

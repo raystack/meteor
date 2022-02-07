@@ -3,8 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/odpf/meteor/plugins"
 	"os"
+
+	"github.com/odpf/meteor/plugins"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
@@ -43,7 +44,6 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			cs := term.NewColorScheme()
 			runner := agent.NewAgent(agent.Config{
 				ExtractorFactory: registry.Extractors,
@@ -72,70 +72,18 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			for _, recipe := range recipes {
 				errs := runner.Validate(recipe)
 				var row []string
-				if len(errs) > 0 {
-					for _, err := range errs {
-						lg.Error(err.Error())
-						//getLine(lg, recipe)
+				var icon string
 
-						var plug plugins.NotFoundError
-						if errors.As(err, &plug) {
-							if plug.Type == "extractor" {
-								lg.Error("source missing", "source", plug.Name, "line", recipe.Source.Node.Name.Line, "err", err.Error())
-							} else if plug.Type == "processor" {
-								lg.Error("processor missing", "processor", plug.Name, "line", "--------", "err", err.Error())
-							} else if plug.Type == "sink" {
-								lg.Error("sink missing", "sink", plug.Name, "line", "??????", "err", err.Error())
-
-							}
-							err = nil
-						}
-
-						//for _, s := range recipe.Sinks {
-						//	sink, err := registry.Sinks.Get(s.Name)
-						//	if err != nil {
-						//		lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
-						//	}
-						//}
-
-						var configTest plugins.InvalidConfigError
-						if errors.As(err, &configTest) {
-							//for i, j := range recipe.Source.Node.Config {
-							//	if i == configTest.Key {
-							//		lg.Info("line", j.Line)
-							//	}x
-							//}
-							fmt.Println("testing")
-							lg.Error("config missing", "line", recipe.Source.Node.Config[configTest.Key].Line, "key", configTest.Key, "err", err.Error())
-							err = nil
-						}
-
-						//for i, _ := range recipe.Source.Config {
-						//
-						//	fmt.Println("hy 1")
-						//	if errors.As(err, &plugTest) {
-						//		lg.Error("config source missing", "source", plugTest.Key, "line", recipe.Source.Node.Config[i].Line, "err", err.Error())
-						//		err = nil
-						//	}
-
-						//for i, _ := range recipe.Source.Config {
-						//	if errors.As(err, &plugins.InvalidConfigError{
-						//		Type:       plugins.PluginTypeExtractor,
-						//		PluginName: recipe.Source.Name,
-						//		Key:        "Config" + i,
-						//	}) {
-						//		fmt.Println("hy 1")
-						//		lg.Error("config source missing", "source", recipe.Source.Name, "line", recipe.Source.Node.Config[i].Line, "err", err.Error())
-						//		err = nil
-						//	}
-						//}
-
-					}
-					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
-					failures++
-				} else {
-					row = []string{fmt.Sprintf("%s  %s", cs.SuccessIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
+				if len(errs) == 0 {
+					icon = cs.SuccessIcon()
 					success++
+				} else {
+					icon = cs.FailureIcon()
+					printLintErrors(errs, recipe)
+					failures++
 				}
+
+				row = []string{fmt.Sprintf("%s  %s", icon, recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
 				report = append(report, row)
 			}
 
@@ -152,24 +100,84 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 	}
 }
 
-func getLine(lg log.Logger, recipe recipe.Recipe) {
-
-	_, err := registry.Extractors.Get(recipe.Source.Name)
-	if err != nil {
-		lg.Error("invalid source", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line)
+func printLintErrors(errs []error, rcp recipe.Recipe) {
+	for _, err := range errs {
+		printLintError(err, rcp)
 	}
+}
 
-	for _, p := range recipe.Processors {
-		_, err := registry.Sinks.Get(p.Name)
-		if err != nil {
-			lg.Error("invalid processor", "processor", p.Name, "line", p.Node.Name.Line)
+func printLintError(err error, rcp recipe.Recipe) {
+	var notFoundError plugins.NotFoundError
+	var invalidConfigError plugins.InvalidConfigError
+	if errors.As(err, &notFoundError) {
+		if notFoundError.Type == plugins.PluginTypeExtractor {
+			line := rcp.Source.Node.Name.Line
+			fmt.Printf("invalid extractor on line: %d\n", line)
+		} else if notFoundError.Type == plugins.PluginTypeProcessor {
+			plugin, exists := findPluginByName(rcp.Processors, notFoundError.Name)
+			if exists {
+				line := plugin.Node.Name.Line
+				fmt.Printf("invalid processor on line: %d\n", line)
+			}
+		} else if notFoundError.Type == plugins.PluginTypeSink {
+			plugin, exists := findPluginByName(rcp.Sinks, notFoundError.Name)
+			if exists {
+				line := plugin.Node.Name.Line
+				fmt.Printf("invalid sink on line: %d\n", line)
+			}
+		}
+	} else if errors.As(err, &invalidConfigError) {
+		if invalidConfigError.Type == plugins.PluginTypeExtractor {
+			pluginNode := rcp.Source.Node
+			for _, configError := range invalidConfigError.Errors {
+				cfg, ok := pluginNode.Config[configError.Key]
+				if ok {
+					line := cfg.Line
+					fmt.Printf("invalid %s extractor config on line: %d\n", invalidConfigError.PluginName, line)
+				} else {
+					fmt.Printf("invalid %s extractor config: %s\n", invalidConfigError.PluginName, configError.Message)
+				}
+			}
+		} else if invalidConfigError.Type == plugins.PluginTypeProcessor {
+			plugin, exists := findPluginByName(rcp.Processors, invalidConfigError.PluginName)
+			if exists {
+				pluginNode := plugin.Node
+				for _, configError := range invalidConfigError.Errors {
+					cfg, ok := pluginNode.Config[configError.Key]
+					if ok {
+						line := cfg.Line
+						fmt.Printf("invalid %s processor config on line: %d\n", plugin.Name, line)
+					} else {
+						fmt.Printf("invalid %s processor config: %s\n", plugin.Name, configError.Message)
+					}
+				}
+			}
+		} else if invalidConfigError.Type == plugins.PluginTypeSink {
+			plugin, exists := findPluginByName(rcp.Sinks, invalidConfigError.PluginName)
+			if exists {
+				pluginNode := plugin.Node
+				for _, configError := range invalidConfigError.Errors {
+					cfg, ok := pluginNode.Config[configError.Key]
+					if ok {
+						line := cfg.Line
+						fmt.Printf("invalid %s sink config on line: %d\n", plugin.Name, line)
+					} else {
+						fmt.Printf("invalid %s sink config: %s\n", plugin.Name, configError.Message)
+					}
+				}
+			}
+		}
+	}
+}
+
+func findPluginByName(plugins []recipe.PluginRecipe, name string) (plugin recipe.PluginRecipe, exists bool) {
+	for _, p := range plugins {
+		if p.Name == name {
+			exists = true
+			plugin = p
+			return
 		}
 	}
 
-	for _, s := range recipe.Sinks {
-		_, err := registry.Sinks.Get(s.Name)
-		if err != nil {
-			lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
-		}
-	}
+	return
 }

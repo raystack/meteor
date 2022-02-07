@@ -2,15 +2,24 @@ package plugins
 
 import "fmt"
 
+type ConfigError struct {
+	Key     string
+	Message string
+}
+
 // InvalidConfigError is returned when a plugin's configuration is invalid.
 type InvalidConfigError struct {
 	Type       PluginType
 	PluginName string
-	Key        []string
+	Errors     []ConfigError
 }
 
 func (err InvalidConfigError) Error() string {
 	return fmt.Sprintf("invalid %s config", err.Type)
+}
+
+func (err InvalidConfigError) HasError() bool {
+	return len(err.Errors) > 0
 }
 
 // NotFoundError contains fields required to checks for a missing plugin.
