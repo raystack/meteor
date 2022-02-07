@@ -4,7 +4,9 @@ import "fmt"
 
 // InvalidConfigError is returned when a plugin's configuration is invalid.
 type InvalidConfigError struct {
-	Type PluginType
+	Type       PluginType
+	PluginName string
+	Key        []string
 }
 
 func (err InvalidConfigError) Error() string {

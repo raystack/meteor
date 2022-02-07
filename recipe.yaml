@@ -1,7 +1,9 @@
 name: sample
 source:
-  name: mysql
+  name: kafka
   config:
-    connection_url: "root@tcp(localhost:3306)/" # without password
+    broker:
 sinks:
   - name: consol
+    config:
+      fdjbsdk:

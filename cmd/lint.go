@@ -77,22 +77,57 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 						lg.Error(err.Error())
 						//getLine(lg, recipe)
 
-						//var plugTest plugins.NotFoundError
-						//if errors.As(err, &plugTest) {
-						//	fmt.Println("testing", bad.Name)
-						//	err = nil
-						//}
+						var plug plugins.NotFoundError
+						if errors.As(err, &plug) {
+							if plug.Type == "extractor" {
+								lg.Error("source missing", "source", plug.Name, "line", recipe.Source.Node.Name.Line, "err", err.Error())
+							} else if plug.Type == "processor" {
+								lg.Error("processor missing", "processor", plug.Name, "line", "--------", "err", err.Error())
+							} else if plug.Type == "sink" {
+								lg.Error("sink missing", "sink", plug.Name, "line", "??????", "err", err.Error())
 
-						if errors.As(err, &plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: recipe.Source.Name}) {
-							lg.Error("source missing", "source", recipe.Source.Name, "line", recipe.Source.Node.Name.Line, "err", err.Error())
+							}
 							err = nil
 						}
-						for _, s := range recipe.Sinks {
-							if errors.As(err, &plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: s.Name}) {
-								lg.Info("sink missing", "sink", s.Name, "line", s.Node.Name.Line, "error", err.Error())
-								err = nil
-							}
+
+						//for _, s := range recipe.Sinks {
+						//	sink, err := registry.Sinks.Get(s.Name)
+						//	if err != nil {
+						//		lg.Error("invalid sink", "sink", s.Name, "line", s.Node.Name.Line)
+						//	}
+						//}
+
+						var configTest plugins.InvalidConfigError
+						if errors.As(err, &configTest) {
+							//for i, j := range recipe.Source.Node.Config {
+							//	if i == configTest.Key {
+							//		lg.Info("line", j.Line)
+							//	}x
+							//}
+							fmt.Println("testing")
+							lg.Error("config missing", "line", recipe.Source.Node.Config[configTest.Key].Line, "key", configTest.Key, "err", err.Error())
+							err = nil
 						}
+
+						//for i, _ := range recipe.Source.Config {
+						//
+						//	fmt.Println("hy 1")
+						//	if errors.As(err, &plugTest) {
+						//		lg.Error("config source missing", "source", plugTest.Key, "line", recipe.Source.Node.Config[i].Line, "err", err.Error())
+						//		err = nil
+						//	}
+
+						//for i, _ := range recipe.Source.Config {
+						//	if errors.As(err, &plugins.InvalidConfigError{
+						//		Type:       plugins.PluginTypeExtractor,
+						//		PluginName: recipe.Source.Name,
+						//		Key:        "Config" + i,
+						//	}) {
+						//		fmt.Println("hy 1")
+						//		lg.Error("config source missing", "source", recipe.Source.Name, "line", recipe.Source.Node.Config[i].Line, "err", err.Error())
+						//		err = nil
+						//	}
+						//}
 
 					}
 					row = []string{fmt.Sprintf("%s  %s", cs.FailureIcon(), recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
