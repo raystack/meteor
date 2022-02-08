@@ -110,7 +110,7 @@ func TestExtract(t *testing.T) {
 			urns = append(urns, table.Resource.Urn)
 
 		}
-		assert.Equal(t, []string{"test_db.applicant", "test_db.jobs"}, urns)
+		assert.Equal(t, []string{"db01.applicant", "db01.jobs", "test_db.applicant", "test_db.jobs"}, urns)
 	})
 }
 

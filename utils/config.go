@@ -35,9 +35,9 @@ func BuildConfig(configMap map[string]interface{}, c interface{}) error {
 
 	var configErrors []plugins.ConfigError
 	if err := validate.Struct(c); err != nil {
-		if errors.As(err, &validator.ValidationErrors{}) {
-			validationErrors := err.(validator.ValidationErrors)
-			for _, fieldErr := range validationErrors {
+		var validationErr validator.ValidationErrors
+		if errors.As(err, &validationErr) {
+			for _, fieldErr := range validationErr {
 				key := strings.TrimPrefix(fieldErr.Namespace(), "Config.")
 				configErrors = append(configErrors, plugins.ConfigError{
 					Key:     key,
@@ -46,7 +46,9 @@ func BuildConfig(configMap map[string]interface{}, c interface{}) error {
 			}
 		}
 	}
-
+	if configErrors == nil {
+		return nil
+	}
 	icErr := plugins.InvalidConfigError{
 		Errors: configErrors,
 	}

@@ -108,11 +108,13 @@ func printLintErrors(errs []error, rcp recipe.Recipe) {
 	for _, err := range errs {
 		if errors.As(err, &notFoundError) {
 			printPluginError(rcp, notFoundError)
-		} else if errors.As(err, &invalidConfigError) {
-			printConfigError(rcp, invalidConfigError)
-		} else {
-			fmt.Printf("recipe error: %s", err.Error())
+			continue
 		}
+		if errors.As(err, &invalidConfigError) {
+			printConfigError(rcp, invalidConfigError)
+			continue
+		}
+		fmt.Printf("recipe error: %s", err.Error())
 	}
 }
 
