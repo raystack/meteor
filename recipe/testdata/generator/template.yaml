@@ -1,0 +1,12 @@
+name: {{ .FileName }}
+source:
+  type: kafka
+  config:
+    broker: "{{ .Data.broker }}"
+sinks:
+  - name: console
+processors:
+  - name: enrich
+    config:
+      host:  {{ .Data.broker }}
+      owner:  {{ .Data.owner }}

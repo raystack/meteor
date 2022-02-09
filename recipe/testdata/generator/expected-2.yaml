@@ -1,0 +1,12 @@
+name: recipe-2
+source:
+  type: kafka
+  config:
+    broker: "secondary-broker.com:9092"
+sinks:
+  - name: console
+processors:
+  - name: enrich
+    config:
+      host:  secondary-broker.com:9092
+      owner:  jane@example.com
