@@ -18,7 +18,7 @@ import (
 func ListCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list <command>",
-		Short: "List available plugins in meteor",
+		Short: "List available plugins",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},

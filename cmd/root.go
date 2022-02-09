@@ -45,6 +45,7 @@ func New(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Com
 	cmd.AddCommand(InfoCmd(lg))
 	cmd.AddCommand(RunCmd(lg, mt, cfg))
 	cmd.AddCommand(LintCmd(lg, mt))
+	cmd.AddCommand(NewCmd(lg))
 
 	return cmd
 }

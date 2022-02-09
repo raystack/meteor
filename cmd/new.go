@@ -13,7 +13,7 @@ import (
 func NewCmd(lg log.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
-		Short: "Generate new sample recipes with its plugins",
+		Short: "Bootstrap new recipes",
 		Annotations: map[string]string{
 			"group:core": "true",
 		},
