@@ -21,6 +21,12 @@ import (
 
 // LintCmd creates a command object for linting recipes
 func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
+	var (
+		report   [][]string
+		success  = 0
+		failures = 0
+	)
+
 	return &cobra.Command{
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
@@ -64,10 +70,6 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				return nil
 			}
 
-			report := [][]string{}
-			var success = 0
-			var failures = 0
-
 			// Run linters and generate report
 			for _, recipe := range recipes {
 				errs := runner.Validate(recipe)
@@ -103,81 +105,85 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 
 // printLintErrors prints the recipe errors
 func printLintErrors(errs []error, rcp recipe.Recipe) {
-	var notFoundError plugins.NotFoundError
-	var invalidConfigError plugins.InvalidConfigError
+	var (
+		notFoundError      plugins.NotFoundError
+		invalidConfigError plugins.InvalidConfigError
+	)
+
 	for _, err := range errs {
 		if errors.As(err, &notFoundError) {
-			printPluginError(rcp, notFoundError)
+			findPluginError(rcp, notFoundError)
 			continue
 		}
 		if errors.As(err, &invalidConfigError) {
-			printConfigError(rcp, invalidConfigError)
+			findConfigError(rcp, invalidConfigError)
 			continue
 		}
 		fmt.Printf("recipe error: %s", err.Error())
 	}
 }
 
-// printPluginError print the plugin type error
-func printPluginError(rcp recipe.Recipe, notFoundError plugins.NotFoundError) {
+// findPluginError print the plugin type error
+func findPluginError(rcp recipe.Recipe, notFoundError plugins.NotFoundError) {
 	if notFoundError.Type == plugins.PluginTypeExtractor {
-		line := rcp.Source.Node.Name.Line
-		fmt.Printf("%s: invalid extractor on line: %d\n", rcp.Name, line)
+		printSourceError(rcp, rcp.Source, notFoundError)
 	} else if notFoundError.Type == plugins.PluginTypeProcessor {
 		plugin, exists := findPluginByName(rcp.Processors, notFoundError.Name)
 		if exists {
-			line := plugin.Node.Name.Line
-			fmt.Printf("%s: invalid processor on line: %d\n", rcp.Name, line)
+			printPluginError(rcp, plugin, notFoundError)
 		}
 	} else if notFoundError.Type == plugins.PluginTypeSink {
 		plugin, exists := findPluginByName(rcp.Sinks, notFoundError.Name)
 		if exists {
-			line := plugin.Node.Name.Line
-			fmt.Printf("%s: invalid sink on line: %d\n", rcp.Name, line)
+			printPluginError(rcp, plugin, notFoundError)
 		}
 	}
 }
 
-// printConfigError print the plugin config error
-func printConfigError(rcp recipe.Recipe, invalidConfigError plugins.InvalidConfigError) {
+// printSourceError prints the source type error
+// In present, supporting both tags `type` and `name` for source, till tag `type` gets deprecated
+func printSourceError(rcp recipe.Recipe, plugin recipe.PluginRecipe, notFoundError plugins.NotFoundError) {
+	if plugin.Node.Name.IsZero() {
+		line := plugin.Node.Type.Line
+		fmt.Printf("%s: invalid %s on line: %d\n", rcp.Name, notFoundError.Type, line)
+	} else {
+		line := plugin.Node.Name.Line
+		fmt.Printf("%s: invalid %s on line: %d\n", rcp.Name, notFoundError.Type, line)
+	}
+}
+
+// printPluginError prints the plugin type error
+func printPluginError(rcp recipe.Recipe, plugin recipe.PluginRecipe, notFoundError plugins.NotFoundError) {
+	line := plugin.Node.Name.Line
+	fmt.Printf("%s: invalid %s on line: %d\n", rcp.Name, notFoundError.Type, line)
+}
+
+// findConfigError print the plugin config error
+func findConfigError(rcp recipe.Recipe, invalidConfigError plugins.InvalidConfigError) {
 	if invalidConfigError.Type == plugins.PluginTypeExtractor {
-		pluginNode := rcp.Source.Node
-		for _, configError := range invalidConfigError.Errors {
-			cfg, ok := pluginNode.Config[configError.Key]
-			if ok {
-				line := cfg.Line
-				fmt.Printf("%s: invalid %s extractor config on line: %d\n", rcp.Name, invalidConfigError.PluginName, line)
-			} else {
-				fmt.Printf("%s: invalid %s extractor config: %s\n", rcp.Name, invalidConfigError.PluginName, configError.Message)
-			}
-		}
+		printConfigError(rcp, rcp.Source.Node, invalidConfigError)
 	} else if invalidConfigError.Type == plugins.PluginTypeProcessor {
 		plugin, exists := findPluginByName(rcp.Processors, invalidConfigError.PluginName)
 		if exists {
-			pluginNode := plugin.Node
-			for _, configError := range invalidConfigError.Errors {
-				cfg, ok := pluginNode.Config[configError.Key]
-				if ok {
-					line := cfg.Line
-					fmt.Printf("%s: invalid %s processor config on line: %d\n", rcp.Name, plugin.Name, line)
-				} else {
-					fmt.Printf("%s: invalid %s processor config: %s\n", rcp.Name, plugin.Name, configError.Message)
-				}
-			}
+			printConfigError(rcp, plugin.Node, invalidConfigError)
 		}
 	} else if invalidConfigError.Type == plugins.PluginTypeSink {
 		plugin, exists := findPluginByName(rcp.Sinks, invalidConfigError.PluginName)
 		if exists {
-			pluginNode := plugin.Node
-			for _, configError := range invalidConfigError.Errors {
-				cfg, ok := pluginNode.Config[configError.Key]
-				if ok {
-					line := cfg.Line
-					fmt.Printf("%s: invalid %s sink config on line: %d\n", rcp.Name, plugin.Name, line)
-				} else {
-					fmt.Printf("%s: invalid %s sink config: %s\n", rcp.Name, plugin.Name, configError.Message)
-				}
-			}
+			printConfigError(rcp, plugin.Node, invalidConfigError)
+		}
+	}
+}
+
+// printConfigError finds the config error in plugin by searching key
+func printConfigError(rcp recipe.Recipe, pluginNode recipe.PluginNode, invalidConfigError plugins.InvalidConfigError) {
+	for _, configError := range invalidConfigError.Errors {
+		cfg, ok := pluginNode.Config[configError.Key]
+		if ok {
+			line := cfg.Line
+			fmt.Printf("%s: invalid %s %s config on line: %d\n", rcp.Name, invalidConfigError.PluginName, invalidConfigError.Type, line)
+		} else {
+			fmt.Printf("%s: invalid %s %s config: %s\n", rcp.Name, invalidConfigError.PluginName, invalidConfigError.Type, configError.Message)
 		}
 	}
 }

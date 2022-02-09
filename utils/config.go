@@ -26,31 +26,30 @@ func init() {
 }
 
 // BuildConfig builds a config struct from a map
-func BuildConfig(configMap map[string]interface{}, c interface{}) error {
+func BuildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	defaults.SetDefaults(c)
 
-	if err := mapstructure.Decode(configMap, c); err != nil {
-		return plugins.InvalidConfigError{}
+	if err = mapstructure.Decode(configMap, c); err != nil {
+		return err
 	}
-
-	var configErrors []plugins.ConfigError
-	if err := validate.Struct(c); err != nil {
-		var validationErr validator.ValidationErrors
-		if errors.As(err, &validationErr) {
-			for _, fieldErr := range validationErr {
-				key := strings.TrimPrefix(fieldErr.Namespace(), "Config.")
-				configErrors = append(configErrors, plugins.ConfigError{
-					Key:     key,
-					Message: fieldErr.Error(),
-				})
-			}
-		}
-	}
-	if configErrors == nil {
+	if err = validate.Struct(c); err == nil {
 		return nil
 	}
-	icErr := plugins.InvalidConfigError{
-		Errors: configErrors,
+
+	var validationErr validator.ValidationErrors
+	if errors.As(err, &validationErr) {
+		var configErrors []plugins.ConfigError
+		for _, fieldErr := range validationErr {
+			key := strings.TrimPrefix(fieldErr.Namespace(), "Config.")
+			configErrors = append(configErrors, plugins.ConfigError{
+				Key:     key,
+				Message: fieldErr.Error(),
+			})
+		}
+		return plugins.InvalidConfigError{
+			Errors: configErrors,
+		}
 	}
-	return icErr
+
+	return err
 }

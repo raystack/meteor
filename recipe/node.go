@@ -18,11 +18,12 @@ type RecipeNode struct {
 // generating the plugins code for a recipe.
 type PluginNode struct {
 	Name   yaml.Node            `json:"name" yaml:"name"`
+	Type   yaml.Node            `json:"type" yaml:"type"`
 	Config map[string]yaml.Node `json:"config" yaml:"config"`
 }
 
 // decodeConfig decodes the plugins config
-func (plug *PluginNode) decodeConfig() map[string]interface{} {
+func (plug PluginNode) decodeConfig() map[string]interface{} {
 	config := make(map[string]interface{})
 
 	for key, val := range plug.Config {
@@ -34,6 +35,7 @@ func (plug *PluginNode) decodeConfig() map[string]interface{} {
 // toRecipe passes the value from RecipeNode to Recipe
 func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	sourceConfig := node.Source.decodeConfig()
+	sourceName := node.toSupportMultipleSrcTags()
 	processors, err := node.toProcessors()
 	if err != nil {
 		err = fmt.Errorf("error building processors :%w", err)
@@ -44,11 +46,10 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 		err = fmt.Errorf("error building sinks :%w", err)
 		return
 	}
-
 	recipe = Recipe{
 		Name: node.Name.Value,
 		Source: PluginRecipe{
-			Name:   node.Source.Name.Value,
+			Name:   sourceName,
 			Config: sourceConfig,
 			Node:   node.Source,
 		},
@@ -84,4 +85,14 @@ func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
 		})
 	}
 	return
+}
+
+// toSupportMultipleSrcTags helps to support both tags `name` and `type` for source
+// till `type` tag gets deprecated
+func (node RecipeNode) toSupportMultipleSrcTags() string {
+	if node.Source.Name.IsZero() {
+		node.Source.Name = node.Source.Type
+	}
+
+	return node.Source.Name.Value
 }
