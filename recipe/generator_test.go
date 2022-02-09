@@ -14,7 +14,7 @@ func TestFromTemplate(t *testing.T) {
 	t.Run("should output recipe files using template to output directory", func(t *testing.T) {
 		templatePath := "./testdata/generator/template.yaml"
 		outputDir := "./testdata/generator/temp"
-		data := []recipe.FromTemplateData{
+		data := []recipe.TemplateData{
 			{
 				FileName: "recipe-1",
 				Data: map[string]interface{}{
@@ -34,7 +34,7 @@ func TestFromTemplate(t *testing.T) {
 		cleanDir(t, outputDir)
 		defer cleanDir(t, outputDir)
 
-		err := recipe.FromTemplate(recipe.FromTemplateConfig{
+		err := recipe.FromTemplate(recipe.TemplateConfig{
 			TemplateFilePath: templatePath,
 			OutputDirPath:    outputDir,
 			Data:             data,

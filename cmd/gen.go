@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"github.com/MakeNowJust/heredoc"
@@ -35,18 +36,17 @@ func GenCmd(lg log.Logger) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			templatePath := args[0]
+
 			bytes, err := ioutil.ReadFile(dataFilePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("error reading data: %w", err)
+			}
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				return fmt.Errorf("error parsing data: %w", err)
 			}
 
-			var data []recipe.FromTemplateData
-			err = yaml.Unmarshal(bytes, &data)
-			if err != nil {
-				return err
-			}
-
-			return recipe.FromTemplate(recipe.FromTemplateConfig{
+			return recipe.FromTemplate(recipe.TemplateConfig{
 				TemplateFilePath: templatePath,
 				OutputDirPath:    outputDirPath,
 				Data:             data,
