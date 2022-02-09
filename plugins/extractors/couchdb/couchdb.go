@@ -88,7 +88,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the CouchDB server
 // and collected through the out channel
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.client.Close(ctx)
+	//defer e.client.Close(ctx)
 	e.emit = emit
 
 	res, err := e.client.AllDBs(ctx)
@@ -200,4 +200,11 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	var ctx context.Context
+	return e.client.Close(ctx)
+
 }

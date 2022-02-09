@@ -89,7 +89,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the MySQL server
 // and collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.db.Close()
+	//defer e.db.Close()
 	e.emit = emit
 
 	res, err := e.db.Query("SHOW DATABASES;")
@@ -226,4 +226,9 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	return e.db.Close()
 }

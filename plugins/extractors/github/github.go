@@ -106,3 +106,6 @@ func init() {
 		panic(err)
 	}
 }
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) { return }

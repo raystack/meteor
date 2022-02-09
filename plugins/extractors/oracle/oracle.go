@@ -76,7 +76,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.db.Close()
+	//defer e.db.Close()
 
 	// Get username
 	userName, err := e.getUserName(e.db)
@@ -257,4 +257,9 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	return e.db.Close()
 }

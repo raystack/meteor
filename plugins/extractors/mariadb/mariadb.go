@@ -87,7 +87,7 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 
 // Extract collects metadata of the database through emitter
 func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
-	defer e.db.Close()
+	//defer e.db.Close()
 	e.emit = emit
 
 	// Get list of databases
@@ -218,4 +218,9 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	return e.db.Close()
 }

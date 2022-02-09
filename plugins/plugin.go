@@ -43,6 +43,9 @@ type Plugin interface {
 type Extractor interface {
 	Plugin
 	Extract(ctx context.Context, emit Emit) (err error)
+
+	// Close will be called once after everything is done
+	Close() error
 }
 
 // Processor are the functions that are executed on the extracted data.

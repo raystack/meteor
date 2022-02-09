@@ -20,7 +20,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold 
+// Config hold
 type Config struct {
 	BaseURL string `mapstructure:"base_url" validate:"required"`
 	APIKey  string `mapstructure:"api_key" validate:"required"`
@@ -140,3 +140,6 @@ func init() {
 		panic(err)
 	}
 }
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) { return }

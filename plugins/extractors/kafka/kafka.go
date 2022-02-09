@@ -87,7 +87,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.conn.Close()
+	//defer e.conn.Close()
 
 	partitions, err := e.conn.ReadPartitions()
 	if err != nil {
@@ -140,4 +140,9 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	return e.conn.Close()
 }

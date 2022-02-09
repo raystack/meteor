@@ -191,3 +191,9 @@ func init() {
 		panic(err)
 	}
 }
+
+// Close shutdown the extractor
+func (e *Extractor) Close() (err error) {
+	var ctx context.Context
+	return e.client.Disconnect(ctx)
+}
