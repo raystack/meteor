@@ -47,6 +47,7 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	sourceConfig, err := node.Source.decodeConfig()
 	if err != nil {
 		err = fmt.Errorf("error decoding source config :%w", err)
+		return
 	}
 	processors, err := node.toProcessors()
 	if err != nil {
@@ -76,9 +77,10 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 // toProcessors passes the value of processor PluginNode to its PluginRecipe
 func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
 	for _, processor := range node.Processors {
-		processorConfig, err := processor.decodeConfig()
-		if err != nil {
-			err = fmt.Errorf("error decoding processor config :%w", err)
+		processorConfig, cfgErr := processor.decodeConfig()
+		if cfgErr != nil {
+			err = fmt.Errorf("error decoding processor config :%w", cfgErr)
+			return
 		}
 		processors = append(processors, PluginRecipe{
 			Name:   processor.Name.Value,
@@ -92,9 +94,10 @@ func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
 // toSinks passes the value of sink PluginNode to its PluginRecipe
 func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
 	for _, sink := range node.Sinks {
-		sinkConfig, err := sink.decodeConfig()
-		if err != nil {
-			err = fmt.Errorf("error decoding sink config :%w", err)
+		sinkConfig, cfgErr := sink.decodeConfig()
+		if cfgErr != nil {
+			err = fmt.Errorf("error decoding sink config :%w", cfgErr)
+			return
 		}
 		sinks = append(sinks, PluginRecipe{
 			Name:   sink.Name.Value,
