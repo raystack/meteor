@@ -23,19 +23,31 @@ type PluginNode struct {
 }
 
 // decodeConfig decodes the plugins config
-func (plug PluginNode) decodeConfig() map[string]interface{} {
+func (plug PluginNode) decodeConfig() (map[string]interface{}, error) {
 	config := make(map[string]interface{})
 
 	for key, val := range plug.Config {
-		config[key] = val.Value
+		var configVal interface{}
+		if err := val.Decode(&configVal); err != nil {
+			return nil, fmt.Errorf("error decoding config :%w", err)
+		}
+		config[key] = configVal
 	}
-	return config
+
+	return config, nil
 }
 
 // toRecipe passes the value from RecipeNode to Recipe
 func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
-	sourceConfig := node.Source.decodeConfig()
-	sourceName := node.toSupportMultipleSrcTags()
+	// It supports both tags `name` and `type` for source
+	// till `type` tag gets deprecated
+	if node.Source.Name.IsZero() {
+		node.Source.Name = node.Source.Type
+	}
+	sourceConfig, err := node.Source.decodeConfig()
+	if err != nil {
+		err = fmt.Errorf("error decoding source config :%w", err)
+	}
 	processors, err := node.toProcessors()
 	if err != nil {
 		err = fmt.Errorf("error building processors :%w", err)
@@ -49,7 +61,7 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 	recipe = Recipe{
 		Name: node.Name.Value,
 		Source: PluginRecipe{
-			Name:   sourceName,
+			Name:   node.Source.Name.Value,
 			Config: sourceConfig,
 			Node:   node.Source,
 		},
@@ -64,7 +76,10 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 // toProcessors passes the value of processor PluginNode to its PluginRecipe
 func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
 	for _, processor := range node.Processors {
-		processorConfig := processor.decodeConfig()
+		processorConfig, err := processor.decodeConfig()
+		if err != nil {
+			err = fmt.Errorf("error decoding processor config :%w", err)
+		}
 		processors = append(processors, PluginRecipe{
 			Name:   processor.Name.Value,
 			Config: processorConfig,
@@ -77,7 +92,10 @@ func (node RecipeNode) toProcessors() (processors []PluginRecipe, err error) {
 // toSinks passes the value of sink PluginNode to its PluginRecipe
 func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
 	for _, sink := range node.Sinks {
-		sinkConfig := sink.decodeConfig()
+		sinkConfig, err := sink.decodeConfig()
+		if err != nil {
+			err = fmt.Errorf("error decoding sink config :%w", err)
+		}
 		sinks = append(sinks, PluginRecipe{
 			Name:   sink.Name.Value,
 			Config: sinkConfig,
@@ -85,14 +103,4 @@ func (node RecipeNode) toSinks() (sinks []PluginRecipe, err error) {
 		})
 	}
 	return
-}
-
-// toSupportMultipleSrcTags helps to support both tags `name` and `type` for source
-// till `type` tag gets deprecated
-func (node RecipeNode) toSupportMultipleSrcTags() string {
-	if node.Source.Name.IsZero() {
-		node.Source.Name = node.Source.Type
-	}
-
-	return node.Source.Name.Value
 }
