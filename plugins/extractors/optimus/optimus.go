@@ -73,7 +73,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
-	//defer e.client.Close()
+	defer e.client.Close()
 
 	projResp, err := e.client.ListProjects(ctx, &pb.ListProjectsRequest{})
 	if err != nil {
@@ -267,9 +267,4 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
-}
-
-// Close shutdown the extractor
-func (e *Extractor) Close() (err error) {
-	return e.client.Close()
 }

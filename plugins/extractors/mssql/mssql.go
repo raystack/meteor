@@ -91,7 +91,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract checks if the extractor is ready to extract
 // and then extract and push data into stream
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	//defer e.db.Close()
+	defer e.db.Close()
 	e.emit = emit
 
 	res, err := e.db.Query("SELECT name FROM sys.databases;")
@@ -222,9 +222,4 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
-}
-
-// Close shutdown the extractor
-func (e *Extractor) Close() (err error) {
-	return e.db.Close()
 }

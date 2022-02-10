@@ -116,7 +116,6 @@ func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run 
 func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
-	fmt.Println("start run")
 
 	var (
 		//ctx         = context.Background()
@@ -126,7 +125,6 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	)
 
 	defer func() {
-		fmt.Println("logging karo")
 		durationInMs := getDuration()
 		r.logAndRecordMetrics(run, durationInMs)
 	}()
@@ -153,23 +151,25 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 
 	// to gather total number of records extracted
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
-		fmt.Println("set middleware")
 		recordCount++
 		r.logger.Info("Successfully extracted record", "record", src.Data().GetResource().Urn, "recipe", recipe.Name)
 		return src, nil
 	})
 
+	go func() {
+		<-ctx.Done()
+		r.logger.Info("shutting down stream gracefully")
+
+		stream.Close()
+	}()
+
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
-		<-ctx.Done()
-
-		r.logger.Info("Shutdown signal received")
 		defer func() {
 			if r := recover(); r != nil {
 				run.Error = fmt.Errorf("%s", r)
 			}
-			fmt.Println("stream close")
 			stream.Close()
 		}()
 		err = runExtractor()
@@ -183,7 +183,6 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	if err := stream.broadcast(); err != nil {
 		run.Error = errors.Wrap(err, "failed to broadcast stream")
 	}
-	fmt.Println("run end")
 
 	// code will reach here stream.Listen() is done.
 	run.RecordCount = recordCount
@@ -207,18 +206,9 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str 
 		if err = extractor.Extract(ctx, str.push); err != nil {
 			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
 		}
-		fmt.Println("extr runFn")
 		return
 	}
 
-	str.onClose(func() {
-		fmt.Println("src closing")
-		if err = extractor.Close(); err != nil {
-			r.logger.Warn("error closing src", "source", sr.Type, "error", err)
-		}
-	})
-
-	fmt.Println("extr setup exit")
 	return
 }
 
@@ -273,7 +263,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			}
 		}
 		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
-		fmt.Println("sink publish")
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
@@ -281,7 +270,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 	}, defaultBatchSize)
 
 	stream.onClose(func() {
-		fmt.Println("sink closing")
 		if err = sink.Close(); err != nil {
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
 		}

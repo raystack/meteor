@@ -107,7 +107,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // if the connection to the DB is successful
 // and then starts the extraction process
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	//defer e.session.Close()
+	defer e.session.Close()
 	e.emit = emit
 
 	scanner := e.session.
@@ -224,10 +224,4 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
-}
-
-// Close shutdown the extractor
-func (e *Extractor) Close() (err error) {
-	e.session.Close()
-	return
 }

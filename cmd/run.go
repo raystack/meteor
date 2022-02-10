@@ -23,6 +23,12 @@ import (
 
 // RunCmd creates a command object for the "run" action.
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
+	var (
+		report   [][]string
+		success  = 0
+		failures = 0
+	)
+
 	return &cobra.Command{
 		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
@@ -79,9 +85,6 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				return nil
 			}
 
-			report := [][]string{}
-			var success = 0
-			var failures = 0
 			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
 			bar := progressbar.NewOptions(len(recipes),
@@ -93,14 +96,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			// Run recipes and collect results
 			runs := runner.RunMultiple(ctx, recipes)
 			for _, run := range runs {
-				//select {
-				//case <-ctx.Done():
-				//	stop()
-				//	fmt.Println("signal received")
-				//	break
-				//case <-time.After(time.Second * 10):
 				lg.Debug("recipe details", "recipe", run.Recipe)
-				row := []string{}
+				var row []string
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe")
 					failures++
@@ -111,10 +108,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				}
 				report = append(report, row)
 				if err = bar.Add(1); err != nil {
-					fmt.Println("error in progressbar: %w", err)
+					return err
 				}
 			}
-			//}
+
 			// Print the report
 			if failures > 0 {
 				fmt.Println("\nSome recipes were not successful")
@@ -122,11 +119,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				fmt.Println("\nAll recipes ran successful")
 			}
 			fmt.Printf("%d failing, %d successful, and %d total\n\n", failures, success, len(recipes))
-
 			printer.Table(os.Stdout, report)
-
 			return nil
-
 		},
 	}
 }
