@@ -1,11 +1,8 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"strconv"
-	"time"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
@@ -17,6 +14,11 @@ import (
 	"github.com/odpf/salt/term"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 )
 
 // RunCmd creates a command object for the "run" action.
@@ -59,6 +61,14 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				StopOnSinkError:      cfg.StopOnSinkError,
 			})
 
+			// Monitoring system signals and creating context
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+			// When receiving the signal, ctx done will be automatically triggered.
+			// This stop means that the registered signal will no longer be captured. It is a kind of resource release.
+			defer stop()
+
+			//func util(str agent.)
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
 				return err
@@ -81,8 +91,14 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			)
 
 			// Run recipes and collect results
-			runs := runner.RunMultiple(recipes)
+			runs := runner.RunMultiple(ctx, recipes)
 			for _, run := range runs {
+				//select {
+				//case <-ctx.Done():
+				//	stop()
+				//	fmt.Println("signal received")
+				//	break
+				//case <-time.After(time.Second * 10):
 				lg.Debug("recipe details", "recipe", run.Recipe)
 				row := []string{}
 				if run.Error != nil {
@@ -94,11 +110,11 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Name), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
-				if err := bar.Add(1); err != nil {
-					return err
+				if err = bar.Add(1); err != nil {
+					fmt.Println("error in progressbar: %w", err)
 				}
 			}
-
+			//}
 			// Print the report
 			if failures > 0 {
 				fmt.Println("\nSome recipes were not successful")
@@ -106,8 +122,11 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				fmt.Println("\nAll recipes ran successful")
 			}
 			fmt.Printf("%d failing, %d successful, and %d total\n\n", failures, success, len(recipes))
+
 			printer.Table(os.Stdout, report)
+
 			return nil
+
 		},
 	}
 }

@@ -91,7 +91,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 }
 
 // RunMultiple executes multiple recipes.
-func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
+func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run {
 	var wg sync.WaitGroup
 	runs := make([]Run, len(recipes))
 
@@ -101,7 +101,7 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 		tempIndex := i
 		tempRecipe := recipe
 		go func() {
-			run := r.Run(tempRecipe)
+			run := r.Run(ctx, tempRecipe)
 			runs[tempIndex] = run
 			wg.Done()
 		}()
@@ -113,13 +113,13 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 }
 
 // Run executes the specified recipe.
-func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
+func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 	fmt.Println("start run")
 
 	var (
-		ctx         = context.Background()
+		//ctx         = context.Background()
 		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
@@ -162,6 +162,9 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	// create a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
+		<-ctx.Done()
+
+		r.logger.Info("Shutdown signal received")
 		defer func() {
 			if r := recover(); r != nil {
 				run.Error = fmt.Errorf("%s", r)
@@ -277,10 +280,12 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return err
 	}, defaultBatchSize)
 
-	fmt.Println("sink closing")
-	if err = sink.Close(); err != nil {
-		r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
-	}
+	stream.onClose(func() {
+		fmt.Println("sink closing")
+		if err = sink.Close(); err != nil {
+			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
+		}
+	})
 
 	return
 }
