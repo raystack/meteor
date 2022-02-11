@@ -20,8 +20,10 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 )
 
-var mockCtx = mock.AnythingOfType("*context.emptyCtx")
-var ctx = context.TODO()
+var (
+	mockCtx = mock.AnythingOfType("*context.emptyCtx")
+	ctx     = context.TODO()
+)
 
 var validRecipe = recipe.Recipe{
 	Name: "sample",

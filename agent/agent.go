@@ -118,7 +118,6 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 
 	var (
-		//ctx         = context.Background()
 		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
@@ -156,10 +155,10 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		return src, nil
 	})
 
+	// goroutine to shut down stream gracefully
 	go func() {
 		<-ctx.Done()
 		r.logger.Info("shutting down stream gracefully")
-
 		stream.Close()
 	}()
 

@@ -69,12 +69,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 
 			// Monitoring system signals and creating context
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-
-			// When receiving the signal, ctx done will be automatically triggered.
-			// This stop means that the registered signal will no longer be captured. It is a kind of resource release.
 			defer stop()
 
-			//func util(str agent.)
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
 				return err
