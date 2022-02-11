@@ -20,7 +20,7 @@ import (
 //go:embed README.md
 var summary string
 
-// Config hold
+// Config holds the set of configuration for the grafana extractor
 type Config struct {
 	BaseURL string `mapstructure:"base_url" validate:"required"`
 	APIKey  string `mapstructure:"api_key" validate:"required"`

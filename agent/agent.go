@@ -155,14 +155,14 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		return src, nil
 	})
 
-	// goroutine to shut down stream gracefully
+	// a goroutine to shut down stream gracefully
 	go func() {
 		<-ctx.Done()
 		r.logger.Info("shutting down stream gracefully")
 		stream.Close()
 	}()
 
-	// create a goroutine to let extractor concurrently emit data
+	// a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
 		defer func() {
