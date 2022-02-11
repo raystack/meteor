@@ -158,7 +158,7 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	// a goroutine to shut down stream gracefully
 	go func() {
 		<-ctx.Done()
-		r.logger.Info("shutting down stream gracefully")
+		r.logger.Info("force closing run", "recipe", recipe.Name)
 		stream.Close()
 	}()
 
