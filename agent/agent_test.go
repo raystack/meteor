@@ -24,22 +24,22 @@ var mockCtx = mock.AnythingOfType("*context.emptyCtx")
 
 var validRecipe = recipe.Recipe{
 	Name: "sample",
-	Source: recipe.SourceRecipe{
-		Type: "test-extractor",
+	Source: recipe.PluginRecipe{
+		Name: "test-extractor",
 	},
-	Processors: []recipe.ProcessorRecipe{
+	Processors: []recipe.PluginRecipe{
 		{Name: "test-processor", Config: map[string]interface{}{
 			"proc-foo": "proc-bar",
 		}},
 	},
-	Sinks: []recipe.SinkRecipe{
+	Sinks: []recipe.PluginRecipe{
 		{Name: "test-sink", Config: map[string]interface{}{
 			"url": "http://localhost:3000/data",
 		}},
 	},
 }
 
-func TestRunnerRun(t *testing.T) {
+func TestAgentRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
 		r := agent.NewAgent(agent.Config{
 			ExtractorFactory: registry.NewExtractorFactory(),
@@ -78,7 +78,7 @@ func TestRunnerRun(t *testing.T) {
 		})
 		run := r.Run(validRecipe)
 		assert.False(t, run.Success)
-		assert.Error(t, run.Error)
+		assert.ErrorIs(t, run.Error, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "test-extractor"})
 	})
 
 	t.Run("should return error if processor could not be found", func(t *testing.T) {
@@ -714,7 +714,7 @@ func TestRunnerRun(t *testing.T) {
 	})
 }
 
-func TestRunnerRunMultiple(t *testing.T) {
+func TestAgentRunMultiple(t *testing.T) {
 	t.Run("should return list of runs when finished", func(t *testing.T) {
 		validRecipe2 := validRecipe
 		validRecipe2.Name = "sample-2"

@@ -1,6 +1,6 @@
 name: test-recipe
 source:
-  type: test-source
+  name: test-source
   config:
     username: {{.source_username}}
     password: "{{.source_password}}"

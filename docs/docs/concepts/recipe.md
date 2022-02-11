@@ -13,7 +13,7 @@ Recipe is a yaml file, follows a structure as shown below and needs to passed as
 ```yaml
 name: main-kafka-production # unique recipe name as an ID
 source: # required - for fetching input from sources
- type: kafka # required - collector to use (e.g. bigquery, kafka)
+ name: kafka # required - collector to use (e.g. bigquery, kafka)
  config:
    broker: "localhost:9092"
 sinks: # required - at least 1 sink defined
@@ -49,7 +49,7 @@ Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), 
 ```yaml
 name: sample-recipe
 source:
-  type: mongodb
+  name: mongodb
   config:
     user_id: {{ .mongodb_user }}
     # wrap it with double quotes to make sure value is read as a string

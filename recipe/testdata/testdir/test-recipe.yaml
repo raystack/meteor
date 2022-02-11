@@ -1,6 +1,6 @@
 name: test-recipe
 source:
-  type: test-source
+  name: test-source
   config:
     foo: bar
 sinks:

@@ -56,7 +56,13 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 		return
 	}
 
-	err = yaml.Unmarshal(buff.Bytes(), &recipe)
+	var node RecipeNode
+	err = yaml.Unmarshal(buff.Bytes(), &node)
+	if err != nil {
+		return
+	}
+
+	recipe, err = node.toRecipe()
 	if err != nil {
 		return
 	}

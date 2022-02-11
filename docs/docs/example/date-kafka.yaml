@@ -1,6 +1,6 @@
 name: date-kafka-recipe
 source:
-  type: date
+  name: date
 sinks:
   - name: kafka
     config:

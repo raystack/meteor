@@ -1,6 +1,6 @@
 name: sample
 source:
-  type: mysql
+  name: mysql
   config:
     user_id: root
     password: admin

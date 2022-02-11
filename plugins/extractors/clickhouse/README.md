@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: clickhouse
+  name: clickhouse
   config:
     connection_url: tcp://localhost:3306?username=admin&password=pass123&debug=true
 ```

@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: kafka
+  name: kafka
   config:
     broker: "localhost:9092"
     label: "my-kafka-cluster"

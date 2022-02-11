@@ -58,33 +58,33 @@ func NewAgent(config Config) *Agent {
 
 // Validate checks the recipe for linting errors.
 func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
-	if ext, err := r.extractorFactory.Get(rcp.Source.Type); err != nil {
-		errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+	if ext, err := r.extractorFactory.Get(rcp.Source.Name); err != nil {
+		errs = append(errs, err)
 	} else {
 		if err = ext.Validate(rcp.Source.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+			errs = append(errs, r.enrichInvalidConfigError(err, rcp.Source.Name, plugins.PluginTypeExtractor))
 		}
 	}
 
 	for _, s := range rcp.Sinks {
 		sink, err := r.sinkFactory.Get(s.Name)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+			errs = append(errs, err)
 			continue
 		}
 		if err = sink.Validate(s.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", s.Name, plugins.PluginTypeSink))
+			errs = append(errs, r.enrichInvalidConfigError(err, s.Name, plugins.PluginTypeSink))
 		}
 	}
 
 	for _, p := range rcp.Processors {
 		procc, err := r.processorFactory.Get(p.Name)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", rcp.Source.Type, plugins.PluginTypeExtractor))
+			errs = append(errs, err)
 			continue
 		}
 		if err = procc.Validate(p.Config); err != nil {
-			errs = append(errs, errors.Wrapf(err, "invalid config for %s (%s)", p.Name, plugins.PluginTypeProcessor))
+			errs = append(errs, r.enrichInvalidConfigError(err, p.Name, plugins.PluginTypeProcessor))
 		}
 	}
 	return
@@ -184,20 +184,20 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 	return
 }
 
-func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str *stream) (runFn func() error, err error) {
-	extractor, err := r.extractorFactory.Get(sr.Type)
+func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
+	extractor, err := r.extractorFactory.Get(sr.Name)
 	if err != nil {
-		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Type)
+		err = errors.Wrapf(err, "could not find extractor \"%s\"", sr.Name)
 		return
 	}
 	if err = extractor.Init(ctx, sr.Config); err != nil {
-		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Type)
+		err = errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Name)
 		return
 	}
 
 	runFn = func() (err error) {
 		if err = extractor.Extract(ctx, str.push); err != nil {
-			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Type)
+			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
 		}
 
 		return
@@ -205,7 +205,7 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.SourceRecipe, str 
 	return
 }
 
-func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, str *stream) (err error) {
+func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream) (err error) {
 	var proc plugins.Processor
 	if proc, err = r.processorFactory.Get(pr.Name); err != nil {
 		return errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
@@ -227,7 +227,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.ProcessorRecipe, s
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *stream, recipe recipe.Recipe) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
@@ -271,15 +271,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.SinkRecipe, stream *str
 	return
 }
 
-// startDuration starts a timer.
-func startDuration() func() int {
-	start := time.Now()
-	return func() int {
-		duration := time.Since(start).Milliseconds()
-		return int(duration)
-	}
-}
-
 func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 	run.DurationInMs = durationInMs
 	r.monitor.RecordRun(run)
@@ -287,5 +278,27 @@ func (r *Agent) logAndRecordMetrics(run Run, durationInMs int) {
 		r.logger.Info("done running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "record_count", run.RecordCount)
 	} else {
 		r.logger.Error("error running recipe", "recipe", run.Recipe.Name, "duration_ms", durationInMs, "records_count", run.RecordCount, "err", run.Error)
+	}
+}
+
+// enrichInvalidConfigError enrich the error with plugin information
+func (r *Agent) enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
+	if errors.As(err, &plugins.InvalidConfigError{}) {
+		icErr := err.(plugins.InvalidConfigError)
+		icErr.PluginName = pluginName
+		icErr.Type = pluginType
+
+		return icErr
+	}
+
+	return err
+}
+
+// startDuration starts a timer.
+func startDuration() func() int {
+	start := time.Now()
+	return func() int {
+		duration := time.Since(start).Milliseconds()
+		return int(duration)
 	}
 }

@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: mongodb
+  name: mongodb
   config:
     connection_url: mongodb://admin:pass123@localhost:3306
 ```

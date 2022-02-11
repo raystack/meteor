@@ -4,7 +4,7 @@
 
 ```yaml
 source:
-  type: bigtable
+  name: bigtable
   config:
     project_id: google-project-id
 ```

@@ -61,7 +61,7 @@ func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe
 		recipe.Name,
 		successText,
 		recordCount,
-		recipe.Source.Type,
+		recipe.Source.Name,
 	)
 }
 
