@@ -107,7 +107,7 @@ func recipeSinkSurvey() ([]string, error) {
 	var availableSinks []string
 	var sinkInput []string
 
-	for sink, _ := range registry.Sinks.List() {
+	for sink := range registry.Sinks.List() {
 		availableSinks = append(availableSinks, sink)
 	}
 	if len(availableSinks) == 0 {
@@ -136,7 +136,7 @@ func recipeProcessorSurvey() ([]string, error) {
 	var availableProcessors []string
 	var processorInput []string
 
-	for processor, _ := range registry.Processors.List() {
+	for processor := range registry.Processors.List() {
 		availableProcessors = append(availableProcessors, processor)
 	}
 	if len(availableProcessors) == 0 {
@@ -165,7 +165,7 @@ func recipeExtractorSurvey() (string, error) {
 	var availableExtractors []string
 	var extractorInput string
 
-	for extractor, _ := range registry.Extractors.List() {
+	for extractor := range registry.Extractors.List() {
 		availableExtractors = append(availableExtractors, extractor)
 	}
 	if len(availableExtractors) == 0 {
