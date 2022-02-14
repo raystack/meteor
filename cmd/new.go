@@ -118,7 +118,7 @@ func recipeSinkSurvey() ([]string, error) {
 		{
 			Name: "sink",
 			Prompt: &survey.MultiSelect{
-				Message: "What is the sink name?",
+				Message: "Select sink(s)",
 				Options: availableSinks,
 				Help:    "Select the sink(s) for this recipe",
 			},
@@ -147,7 +147,7 @@ func recipeProcessorSurvey() ([]string, error) {
 		{
 			Name: "processor",
 			Prompt: &survey.MultiSelect{
-				Message: "What is the processor name?",
+				Message: "Select processor",
 				Options: availableProcessors,
 				Help:    "Select the processor(s) for this recipe",
 			},
@@ -176,7 +176,7 @@ func recipeExtractorSurvey() (string, error) {
 		{
 			Name: "extractor",
 			Prompt: &survey.Select{
-				Message: "What is the extractor name?",
+				Message: "Select an extractor",
 				Options: availableExtractors,
 				Help:    "Select the extractor for this recipe",
 			},
