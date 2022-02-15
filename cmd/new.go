@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -91,6 +92,9 @@ func NewRecipeCmd() *cobra.Command {
 				}
 			}
 
+			if extractor == "" {
+				return fmt.Errorf("empty extractor field")
+			}
 			if sinkList == nil {
 				sinkList = []string{"console"}
 			}
@@ -100,7 +104,6 @@ func NewRecipeCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
-	cmd.MarkFlagRequired("extractor")
 	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
 	cmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Enables interactive mode")
