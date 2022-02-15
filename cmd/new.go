@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -31,10 +30,9 @@ func NewCmd(lg log.Logger) *cobra.Command {
 // NewRecipeCmd creates a command object for newerating recipes
 func NewRecipeCmd() *cobra.Command {
 	var (
-		extractor   string
-		sinks       string
-		processors  string
-		interactive bool
+		extractor  string
+		sinks      string
+		processors string
 	)
 
 	cmd := &cobra.Command{
@@ -67,36 +65,29 @@ func NewRecipeCmd() *cobra.Command {
 			var procList []string
 			var err error
 
-			if interactive {
+			if extractor == "" {
 				extractor, err = recipeExtractorSurvey()
 				if err != nil {
 					return err
 				}
+			}
 
+			if sinks != "" {
+				sinkList = strings.Split(sinks, ",")
+			} else {
 				sinkList, err = recipeSinkSurvey()
 				if err != nil {
 					return err
 				}
+			}
 
+			if processors != "" {
+				procList = strings.Split(processors, ",")
+			} else {
 				procList, err = recipeProcessorSurvey()
 				if err != nil {
 					return err
 				}
-			} else {
-				if sinks != "" {
-					sinkList = strings.Split(sinks, ",")
-				}
-
-				if processors != "" {
-					procList = strings.Split(processors, ",")
-				}
-			}
-
-			if extractor == "" {
-				return fmt.Errorf("empty extractor field")
-			}
-			if sinkList == nil {
-				sinkList = []string{"console"}
 			}
 
 			return generator.Recipe(args[0], extractor, sinkList, procList)
@@ -106,7 +97,6 @@ func NewRecipeCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
 	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
-	cmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Enables interactive mode")
 
 	return cmd
 
@@ -131,6 +121,7 @@ func recipeSinkSurvey() ([]string, error) {
 				Options: availableSinks,
 				Help:    "Select the sink(s) for this recipe",
 			},
+			Validate: survey.Required,
 		},
 	}
 
