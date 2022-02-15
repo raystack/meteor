@@ -95,6 +95,7 @@ func NewRecipeCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
+	cmd.MarkFlagRequired("extractor")
 	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
 	cmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Enables interactive mode")
@@ -180,6 +181,7 @@ func recipeExtractorSurvey() (string, error) {
 				Options: availableExtractors,
 				Help:    "Select the extractor for this recipe",
 			},
+			Validate: survey.Required,
 		},
 	}
 
