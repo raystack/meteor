@@ -90,6 +90,11 @@ func NewRecipeCmd() *cobra.Command {
 					procList = strings.Split(processors, ",")
 				}
 			}
+
+			if sinkList == nil {
+				sinkList = []string{"console"}
+			}
+
 			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}
