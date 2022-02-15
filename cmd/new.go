@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/generator"
+	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
@@ -57,17 +60,35 @@ func NewRecipeCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			var sinkList []string
 			var procList []string
+			var err error
+
+			if extractor == "" {
+				extractor, err = recipeExtractorSurvey()
+				if err != nil {
+					return err
+				}
+			}
 
 			if sinks != "" {
 				sinkList = strings.Split(sinks, ",")
+			} else {
+				sinkList, err = recipeSinkSurvey()
+				if err != nil {
+					return err
+				}
 			}
 
 			if processors != "" {
 				procList = strings.Split(processors, ",")
+			} else {
+				procList, err = recipeProcessorSurvey()
+				if err != nil {
+					return err
+				}
 			}
+
 			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}
@@ -77,4 +98,94 @@ func NewRecipeCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
 
 	return cmd
+
+}
+
+func recipeSinkSurvey() ([]string, error) {
+	var availableSinks []string
+	var sinkInput []string
+
+	for sink := range registry.Sinks.List() {
+		availableSinks = append(availableSinks, sink)
+	}
+	if len(availableSinks) == 0 {
+		return []string{}, errors.New("no sinks found")
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name: "sink",
+			Prompt: &survey.MultiSelect{
+				Message: "Select sink(s)",
+				Options: availableSinks,
+				Help:    "Select the sink(s) for this recipe",
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	if err := survey.Ask(qs, &sinkInput); err != nil {
+		return []string{}, err
+	}
+
+	return sinkInput, nil
+}
+
+func recipeProcessorSurvey() ([]string, error) {
+	var availableProcessors []string
+	var processorInput []string
+
+	for processor := range registry.Processors.List() {
+		availableProcessors = append(availableProcessors, processor)
+	}
+	if len(availableProcessors) == 0 {
+		return []string{}, errors.New("no processors found")
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name: "processor",
+			Prompt: &survey.MultiSelect{
+				Message: "Select processor",
+				Options: availableProcessors,
+				Help:    "Select the processor(s) for this recipe",
+			},
+		},
+	}
+
+	if err := survey.Ask(qs, &processorInput); err != nil {
+		return []string{}, err
+	}
+
+	return processorInput, nil
+}
+
+func recipeExtractorSurvey() (string, error) {
+	var availableExtractors []string
+	var extractorInput string
+
+	for extractor := range registry.Extractors.List() {
+		availableExtractors = append(availableExtractors, extractor)
+	}
+	if len(availableExtractors) == 0 {
+		return "", errors.New("no extractors found")
+	}
+
+	var qs = []*survey.Question{
+		{
+			Name: "extractor",
+			Prompt: &survey.Select{
+				Message: "Select an extractor",
+				Options: availableExtractors,
+				Help:    "Select the extractor for this recipe",
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	if err := survey.Ask(qs, &extractorInput); err != nil {
+		return "", err
+	}
+
+	return extractorInput, nil
 }
