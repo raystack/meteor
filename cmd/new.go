@@ -45,8 +45,7 @@ func NewRecipeCmd() *cobra.Command {
 
 			The recipe will be printed on standard output.
 			Specify recipe name with the first argument without extension.
-			Use commma to separate multiple sinks and processors.
-			Interactive mode can be enabled by setting --interactive or -i to true`),
+			Use commma to separate multiple sinks and processors.`),
 		Example: heredoc.Doc(`
 			# generate a recipe with a bigquery extractor and a console sink
 			$ meteor new recipe sample -e bigquery -s console
