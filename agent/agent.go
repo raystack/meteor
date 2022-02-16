@@ -91,7 +91,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 }
 
 // RunMultiple executes multiple recipes.
-func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
+func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run {
 	var wg sync.WaitGroup
 	runs := make([]Run, len(recipes))
 
@@ -101,7 +101,7 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 		tempIndex := i
 		tempRecipe := recipe
 		go func() {
-			run := r.Run(tempRecipe)
+			run := r.Run(ctx, tempRecipe)
 			runs[tempIndex] = run
 			wg.Done()
 		}()
@@ -113,12 +113,11 @@ func (r *Agent) RunMultiple(recipes []recipe.Recipe) []Run {
 }
 
 // Run executes the specified recipe.
-func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
+func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 
 	var (
-		ctx         = context.Background()
 		getDuration = r.timerFn()
 		stream      = newStream()
 		recordCount = 0
@@ -156,7 +155,14 @@ func (r *Agent) Run(recipe recipe.Recipe) (run Run) {
 		return src, nil
 	})
 
-	// create a goroutine to let extractor concurrently emit data
+	// a goroutine to shut down stream gracefully
+	go func() {
+		<-ctx.Done()
+		r.logger.Info("force closing run", "recipe", recipe.Name)
+		stream.Close()
+	}()
+
+	// a goroutine to let extractor concurrently emit data
 	// while stream is listening via stream.Listen().
 	go func() {
 		defer func() {
@@ -199,9 +205,9 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str 
 		if err = extractor.Extract(ctx, str.push); err != nil {
 			err = errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
 		}
-
 		return
 	}
+
 	return
 }
 

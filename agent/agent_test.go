@@ -20,7 +20,10 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 )
 
-var mockCtx = mock.AnythingOfType("*context.emptyCtx")
+var (
+	mockCtx = mock.AnythingOfType("*context.emptyCtx")
+	ctx     = context.TODO()
+)
 
 var validRecipe = recipe.Recipe{
 	Name: "sample",
@@ -47,7 +50,7 @@ func TestAgentRun(t *testing.T) {
 			SinkFactory:      registry.NewSinkFactory(),
 			Logger:           utils.Logger,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.IsType(t, agent.Run{}, run)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
@@ -76,7 +79,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.ErrorIs(t, run.Error, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "test-extractor"})
 	})
@@ -107,7 +110,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -140,7 +143,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -177,7 +180,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -216,7 +219,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -257,7 +260,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -299,7 +302,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -340,7 +343,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -390,7 +393,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -439,7 +442,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -490,7 +493,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.True(t, run.Success)
 		assert.NoError(t, run.Error)
 	})
@@ -543,7 +546,7 @@ func TestAgentRun(t *testing.T) {
 			Monitor:          monitor,
 		})
 
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
 		assert.Error(t, run.Error)
 	})
@@ -594,7 +597,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
@@ -652,7 +655,7 @@ func TestAgentRun(t *testing.T) {
 			Logger:           utils.Logger,
 			TimerFn:          timerFn,
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.True(t, run.Success)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
@@ -708,7 +711,7 @@ func TestAgentRun(t *testing.T) {
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
-		run := r.Run(validRecipe)
+		run := r.Run(ctx, validRecipe)
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
@@ -763,7 +766,7 @@ func TestAgentRunMultiple(t *testing.T) {
 			Logger:           utils.Logger,
 			Monitor:          monitor,
 		})
-		runs := r.RunMultiple(recipeList)
+		runs := r.RunMultiple(ctx, recipeList)
 
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{

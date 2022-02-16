@@ -1,11 +1,8 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"strconv"
-	"time"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
@@ -17,10 +14,21 @@ import (
 	"github.com/odpf/salt/term"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 )
 
 // RunCmd creates a command object for the "run" action.
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
+	var (
+		report   [][]string
+		success  = 0
+		failures = 0
+	)
+
 	return &cobra.Command{
 		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
@@ -59,6 +67,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				StopOnSinkError:      cfg.StopOnSinkError,
 			})
 
+			// Monitoring system signals and creating context
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
 				return err
@@ -69,9 +81,6 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 				return nil
 			}
 
-			report := [][]string{}
-			var success = 0
-			var failures = 0
 			report = append(report, []string{"Status", "Recipe", "Source", "Duration(ms)", "Records"})
 
 			bar := progressbar.NewOptions(len(recipes),
@@ -81,10 +90,10 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			)
 
 			// Run recipes and collect results
-			runs := runner.RunMultiple(recipes)
+			runs := runner.RunMultiple(ctx, recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
-				row := []string{}
+				var row []string
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe")
 					failures++
@@ -94,7 +103,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Name), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
-				if err := bar.Add(1); err != nil {
+				if err = bar.Add(1); err != nil {
 					return err
 				}
 			}
