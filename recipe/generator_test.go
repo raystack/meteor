@@ -14,41 +14,74 @@ func TestFromTemplate(t *testing.T) {
 	t.Run("should output recipe files using template to output directory", func(t *testing.T) {
 		templatePath := "./testdata/generator/template.yaml"
 		outputDir := "./testdata/generator/temp"
-		data := []recipe.TemplateData{
-			{
-				FileName: "recipe-1",
-				Data: map[string]interface{}{
-					"broker": "main-broker.com:9092",
-					"owner":  "john@example.com",
-				},
-			},
-			{
-				FileName: "recipe-2",
-				Data: map[string]interface{}{
-					"broker": "secondary-broker.com:9092",
-					"owner":  "jane@example.com",
-				},
-			},
-		}
 
-		cleanDir(t, outputDir)
-		defer cleanDir(t, outputDir)
+		t.Run("when recipe has a name", func(t *testing.T) {
+			data := []recipe.TemplateData{
+				{
+					FileName: "recipe-one",
+					Data: map[string]interface{}{
+						"name":   "recipe-1",
+						"broker": "main-broker.com:9092",
+						"owner":  "john@example.com",
+					},
+				},
+				{
+					FileName: "recipe-two",
+					Data: map[string]interface{}{
+						"name":   "recipe-2",
+						"broker": "secondary-broker.com:9092",
+						"owner":  "jane@example.com",
+					},
+				},
+			}
 
-		err := recipe.FromTemplate(recipe.TemplateConfig{
-			TemplateFilePath: templatePath,
-			OutputDirPath:    outputDir,
-			Data:             data,
+			cleanDir(t, outputDir)
+			defer cleanDir(t, outputDir)
+
+			err := recipe.FromTemplate(recipe.TemplateConfig{
+				TemplateFilePath: templatePath,
+				OutputDirPath:    outputDir,
+				Data:             data,
+			})
+			require.NoError(t, err)
+
+			assertRecipeFile(t,
+				"./testdata/generator/expected.yaml",
+				path.Join(outputDir, data[0].FileName+".yaml"),
+			)
+			assertRecipeFile(t,
+				"./testdata/generator/expected-2.yaml",
+				path.Join(outputDir, data[1].FileName+".yaml"),
+			)
 		})
-		require.NoError(t, err)
 
-		assertRecipeFile(t,
-			"./testdata/generator/expected.yaml",
-			path.Join(outputDir, data[0].FileName+".yaml"),
-		)
-		assertRecipeFile(t,
-			"./testdata/generator/expected-2.yaml",
-			path.Join(outputDir, data[1].FileName+".yaml"),
-		)
+		t.Run("when recipe does not have a name", func(t *testing.T) {
+			data := []recipe.TemplateData{
+				{
+					FileName: "recipe-three",
+					Data: map[string]interface{}{
+						"broker": "main-broker.com:9092",
+						"owner":  "john@example.com",
+					},
+				},
+			}
+
+			cleanDir(t, outputDir)
+			defer cleanDir(t, outputDir)
+
+			err := recipe.FromTemplate(recipe.TemplateConfig{
+				TemplateFilePath: templatePath,
+				OutputDirPath:    outputDir,
+				Data:             data,
+			})
+			require.NoError(t, err)
+
+			assertRecipeFile(t,
+				"./testdata/generator/expected-3.yaml",
+				path.Join(outputDir, data[0].FileName+".yaml"),
+			)
+		})
+
 	})
 }
 
