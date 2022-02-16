@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
@@ -60,6 +61,12 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	err = yaml.Unmarshal(buff.Bytes(), &node)
 	if err != nil {
 		return
+	}
+
+	if node.Name.Value == "" {
+		file := filepath.Base(path)
+		fileName := strings.TrimSuffix(file, filepath.Ext(file))
+		node.Name.Value = fileName
 	}
 
 	recipe, err = node.toRecipe()

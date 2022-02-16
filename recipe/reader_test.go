@@ -24,33 +24,65 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should return recipe from a path given in parameter", func(t *testing.T) {
-		reader := recipe.NewReader()
+		t.Run("where recipe has a name", func(t *testing.T) {
+			reader := recipe.NewReader()
 
-		recipes, err := reader.Read("./testdata/testdir/test-recipe.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		expectedRecipes := []recipe.Recipe{
-			{
-				Name: "test-recipe",
-				Source: recipe.PluginRecipe{
-					Name: "test-source",
-					Config: map[string]interface{}{
-						"foo": "bar",
+			recipes, err := reader.Read("./testdata/testdir/test-recipe.yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			expectedRecipes := []recipe.Recipe{
+				{
+					Name: "test-recipe",
+					Source: recipe.PluginRecipe{
+						Name: "test-source",
+						Config: map[string]interface{}{
+							"foo": "bar",
+						},
 					},
-				},
-				Sinks: []recipe.PluginRecipe{
-					{
-						Name:   "test-sink",
-						Config: map[string]interface{}{},
+					Sinks: []recipe.PluginRecipe{
+						{
+							Name:   "test-sink",
+							Config: map[string]interface{}{},
+						},
 					},
-				},
-			}}
+				}}
 
-		assert.Len(t, recipes, len(expectedRecipes))
-		for i, r := range recipes {
-			compareRecipes(t, expectedRecipes[i], r)
-		}
+			assert.Len(t, recipes, len(expectedRecipes))
+			for i, r := range recipes {
+				compareRecipes(t, expectedRecipes[i], r)
+			}
+		})
+
+		t.Run("where recipe does not have a name", func(t *testing.T) {
+			reader := recipe.NewReader()
+
+			recipes, err := reader.Read("./testdata/testdir/test-recipe-no-name.yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			expectedRecipes := []recipe.Recipe{
+				{
+					Name: "test-recipe-no-name",
+					Source: recipe.PluginRecipe{
+						Name: "test-source",
+						Config: map[string]interface{}{
+							"foo": "bar",
+						},
+					},
+					Sinks: []recipe.PluginRecipe{
+						{
+							Name:   "test-sink",
+							Config: map[string]interface{}{},
+						},
+					},
+				}}
+
+			assert.Len(t, recipes, len(expectedRecipes))
+			for i, r := range recipes {
+				compareRecipes(t, expectedRecipes[i], r)
+			}
+		})
 	})
 
 	t.Run("should parse variable in recipe with value from env vars prefixed with METEOR_", func(t *testing.T) {
@@ -130,6 +162,21 @@ func TestReaderRead(t *testing.T) {
 			t.Fatal(err)
 		}
 		expected := []recipe.Recipe{
+			{
+				Name: "test-recipe-no-name",
+				Source: recipe.PluginRecipe{
+					Name: "test-source",
+					Config: map[string]interface{}{
+						"foo": "bar",
+					},
+				},
+				Sinks: []recipe.PluginRecipe{
+					{
+						Name:   "test-sink",
+						Config: map[string]interface{}{},
+					},
+				},
+			},
 			{
 				Name: "test-recipe",
 				Source: recipe.PluginRecipe{

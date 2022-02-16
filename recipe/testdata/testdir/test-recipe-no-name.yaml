@@ -1,0 +1,6 @@
+source:
+  name: test-source
+  config:
+    foo: bar
+sinks:
+  - name: test-sink
