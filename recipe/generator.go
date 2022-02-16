@@ -46,6 +46,10 @@ func outputRecipe(tmplt *template.Template, outputDir string, data TemplateData)
 	}
 	defer file.Close()
 
+	if data.Data["name"] == nil {
+		data.Data["name"] = data.FileName
+	}
+
 	if err := tmplt.Execute(file, data); err != nil {
 		return fmt.Errorf("error executing template: %w", err)
 	}
