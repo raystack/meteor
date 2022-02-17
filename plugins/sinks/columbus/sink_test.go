@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	testUtils "github.com/odpf/meteor/test/utils"
@@ -45,7 +46,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newMockHTTPClient(http.MethodGet, url, []columbus.Record{}), testUtils.Logger)
+				columbusSink := columbus.New(newMockHTTPClient(config, http.MethodGet, url, []columbus.Record{}), testUtils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -61,7 +62,7 @@ func TestSink(t *testing.T) {
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
-		client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
+		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPut, url, []columbus.Record{})
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
@@ -83,7 +84,7 @@ func TestSink(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
 				url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
-				client := newMockHTTPClient(http.MethodPut, url, []columbus.Record{})
+				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPut, url, []columbus.Record{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
@@ -308,6 +309,29 @@ func TestSink(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "should send headers if get populated in config",
+			data: &assetsv1beta1.Topic{
+				Resource: &commonv1beta1.Resource{
+					Urn:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"type": columbusType,
+				"headers": map[string]string{
+					"Key1": "value11, value12",
+					"Key2": "value2",
+				},
+			},
+			expected: columbus.Record{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+			},
+		},
 	}
 
 	for _, tc := range successTestCases {
@@ -315,7 +339,7 @@ func TestSink(t *testing.T) {
 			tc.expected.Data = tc.data
 			payload := []columbus.Record{tc.expected}
 
-			client := newMockHTTPClient(http.MethodPut, url, payload)
+			client := newMockHTTPClient(tc.config, http.MethodPut, url, payload)
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
 
@@ -336,16 +360,22 @@ func TestSink(t *testing.T) {
 type mockHTTPClient struct {
 	URL            string
 	Method         string
+	Headers        map[string]string
 	RequestPayload []columbus.Record
 	ResponseJSON   string
 	ResponseStatus int
 	req            *http.Request
 }
 
-func newMockHTTPClient(method, url string, payload []columbus.Record) *mockHTTPClient {
+func newMockHTTPClient(config map[string]interface{}, method, url string, payload []columbus.Record) *mockHTTPClient {
+	headersMap := map[string]string{}
+	if headersItf, ok := config["headers"]; ok {
+		headersMap = headersItf.(map[string]string)
+	}
 	return &mockHTTPClient{
 		Method:         method,
 		URL:            url,
+		Headers:        headersMap,
 		RequestPayload: payload,
 	}
 }
@@ -383,6 +413,11 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 	)
 	assert.Equal(t, m.URL, actualURL)
 
+	headersMap := map[string]string{}
+	for hdrKey, hdrVals := range m.req.Header {
+		headersMap[hdrKey] = strings.Join(hdrVals, ",")
+	}
+	assert.Equal(t, m.Headers, headersMap)
 	var bodyBytes = []byte("")
 	if m.req.Body != nil {
 		var err error

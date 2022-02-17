@@ -22,16 +22,21 @@ import (
 var summary string
 
 type Config struct {
-	Host   string            `mapstructure:"host" validate:"required"`
-	Type   string            `mapstructure:"type" validate:"required"`
-	Labels map[string]string `mapstructure:"labels"`
+	Host    string            `mapstructure:"host" validate:"required"`
+	Type    string            `mapstructure:"type" validate:"required"`
+	Headers map[string]string `mapstructure:"headers"`
+	Labels  map[string]string `mapstructure:"labels"`
 }
 
 var sampleConfig = `
 # The hostnmame of the columbus service
 host: https://columbus.com
 # The type of the data to send
-type: sample-columbus-type`
+type: sample-columbus-type
+# Additional HTTP headers send to columbus, multiple headers value are separated by a comma
+headers:
+	Columbus-User-Email: meteor@odpf.io
+	X-Other-Header: value1, value2`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -102,6 +107,14 @@ func (s *Sink) send(record Record) (err error) {
 	if err != nil {
 		return
 	}
+
+	for hdrKey, hdrVal := range s.config.Headers {
+		hdrVals := strings.Split(hdrVal, ",")
+		for _, val := range hdrVals {
+			req.Header.Add(hdrKey, val)
+		}
+	}
+
 	res, err := s.client.Do(req)
 	if err != nil {
 		return
