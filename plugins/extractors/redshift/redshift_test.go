@@ -1,76 +1,115 @@
 package redshift_test
 
 import (
-	"database/sql"
-	"fmt"
-	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/test/utils"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
-
-	"log"
-	"os"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
+	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice/redshiftdataapiserviceiface"
+	"github.com/odpf/meteor/plugins/extractors/redshift"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-const (
-	testDB    = "test_db"
-	user      = "test_user"
-	pass      = "pass"
-	port      = "5439"
-	root      = "root"
-	defaultDB = "postgres"
-)
+// Define a mock struct to be used in your unit tests of myFunc.
+type mockRedshiftDataAPIServiceClient struct {
+	redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
+	ListDatabasesOutput redshiftdataapiservice.ListDatabasesOutput
+}
+
+//func (m *mockRedshiftDataAPIServiceClient) ListDatabases(input *redshiftdataapiservice.ListDatabasesInput) (out *redshiftdataapiservice.ListDatabasesOutput, err error) {
+//	input = &redshiftdataapiservice.ListDatabasesInput{
+//		ClusterIdentifier: nil,
+//		Database:          nil,
+//		DbUser:            nil,
+//		MaxResults:        nil,
+//		NextToken:         nil,
+//		SecretArn:         nil,
+//	}
+//
+//	out = &redshiftdataapiservice.ListDatabasesOutput{
+//		Databases: nil,
+//		NextToken: nil,
+//	}
+//
+//	return out, nil
+//}
+
+func (m *mockRedshiftDataAPIServiceClient) ListDatabases(*redshiftdataapiservice.ListDatabasesInput) (*redshiftdataapiservice.ListDatabasesOutput, error) {
+	return &m.ListDatabasesOutput, nil
+}
 
 var (
-	host = "127.0.0.1:" + port
-	db   *sql.DB
+	listDatabaseOutputNonEmptyDB = redshiftdataapiservice.ListDatabasesOutput{
+		Databases: []*string{aws.String("dev"), aws.String("test")},
+		NextToken: nil,
+	}
+
+	listDatabaseOutputEmptyDB = redshiftdataapiservice.ListDatabasesOutput{
+		Databases: []*string{aws.String("dev"), aws.String("test")},
+		NextToken: nil,
+	}
 )
 
-func TestMain(m *testing.M) {
-	// setup test
-	opts := dockertest.RunOptions{
-		Repository: "hearthsim/pgredshift",
-		Tag:        "latest",
-		Env: []string{
-			"POSTGRES_USER=" + root, "POSTGRES_PASSWORD=" + pass, "POSTGRES_DB=" + defaultDB,
+func TestExtractor_GetDBList(t *testing.T) {
+	mockSvc := &mockRedshiftDataAPIServiceClient{}
+	mockExtractor := redshift.New(mockSvc, nil)
+	cases := []struct {
+		Name     string
+		Resp     redshiftdataapiservice.ListDatabasesOutput
+		Expected []string
+	}{
+		{
+			Name:     "NonEmptyDatabaseListOutput",
+			Resp:     listDatabaseOutputNonEmptyDB,
+			Expected: []string{"dev", "test"},
 		},
-		ExposedPorts: []string{port, "5432"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"5439": {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
+		{
+			Name:     "EmptyDatabaseListOutput",
+			Resp:     listDatabaseOutputEmptyDB,
+			Expected: []string{},
 		},
 	}
 
-	// Exponential backoff-retry for container to accept connections
-	retryFn := func(r *dockertest.Resource) (err error) {
-		db, err = sql.Open("postgres", fmt.Sprintf("postgres://root:%s@%s/%s?sslmode=disable", pass, host, defaultDB))
-		if err != nil {
-			return err
-		}
-		if err := r.Expire(120); err != nil {
-			log.Fatal("closed")
-		}
-		return db.Ping()
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			out, err := mockExtractor.GetDBList()
+
+			assert.Equal(t, c.Expected, out)
+
+			assert.NoError(t, err)
+		})
 	}
-	purgeFn, err := utils.CreateContainer(opts, retryFn)
+}
+
+//func TestExtractor_GetDBList(t *testing.T) {
+//	mockSvc := &mockRedshiftDataAPIServiceClient{}
+//	mockExtractor := redshift.New(mockSvc, nil)
+//
+//	listDB, err := mockExtractor.GetDBList()
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	assert.Equal(t, listDB, "")
+//}
+
+func TestExtractor_GetTables(t *testing.T) {
+	mockSvc := &mockRedshiftDataAPIServiceClient{}
+	mockExtractor := redshift.New(mockSvc, nil)
+	dbName := ""
+	list, err := mockExtractor.GetTables(dbName)
 	if err != nil {
-		log.Fatal(err)
+		t.Error(err)
 	}
-	//if err := setup(); err != nil {
-	// log.Fatal(err)
-	//}
+	assert.Equal(t, list, "")
+}
 
-	// Run tests
-	code := m.Run()
-
-	// Clean tests
-	if err = db.Close(); err != nil {
-		log.Fatal(err)
+func TestExtractor_GetColumn(t *testing.T) {
+	mockSvc := &mockRedshiftDataAPIServiceClient{}
+	mockExtractor := redshift.New(mockSvc, nil)
+	dbName := ""
+	tableName := ""
+	list, err := mockExtractor.GetColumn(dbName, tableName)
+	if err != nil {
+		t.Error(err)
 	}
-	if err = purgeFn(); err != nil {
-		log.Fatal(err)
-	}
-	os.Exit(code)
+	assert.Equal(t, list, "")
 }
