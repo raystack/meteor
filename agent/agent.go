@@ -260,9 +260,9 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			if !r.stopOnSinkError {
 				err = nil
 			}
-		} else {
-			r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
+			return err
 		}
+		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
