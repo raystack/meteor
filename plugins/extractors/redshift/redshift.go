@@ -1,6 +1,7 @@
 package redshift
 
 import (
+	"context"
 	_ "embed" // used to print the embedded assets
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -50,32 +51,51 @@ var defaultExcludes = []string{"information_schema", "pg_catalog", "pg_internal"
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	ClusterID       string `json:"cluster_id"`
-	DbName          string `json:"db_name"`
-	DbUser          string `json:"db_user"`
-	IamRole         string `json:"iam_role"`
-	AwsRegion       string `json:"aws_region"`
-	AccessKeyID     string `json:"access_key_id"`
-	SecretAccessKey string `json:"secret_access_key"`
-	Exclude         string `mapstructure:"exclude"`
+	ClusterID string `mapstructure:"cluster_id"`
+	DbName    string `mapstructure:"db_name"`
+	DbUser    string `mapstructure:"db_user"`
+	AwsRegion string `mapstructure:"aws_region"`
+	Exclude   string `mapstructure:"exclude"`
+
+	//IamRole         string `json:"iam_role"`
+	//AccessKeyID     string `json:"access_key_id"`
+	//SecretAccessKey string `json:"secret_access_key"`
 }
 
-var sampleConfig = ``
+var sampleConfig = `
+cluster_id: 1234567
+db_name: testDB
+db_user: testUser
+aws_region: us-east-1
+exclude: secondaryDB
+`
+
+// Option provides extension abstraction to Extractor constructor
+type Option func(*Extractor)
+
+// WithClient assign custom client to the Extractor constructor
+func WithClient(redshiftClient redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI) Option {
+	return func(e *Extractor) {
+		e.apiClient = redshiftClient
+	}
+}
 
 type Extractor struct {
-	config Config
-	logger log.Logger
-	//rsClient redshiftiface.RedshiftAPI
+	config    Config
+	logger    log.Logger
 	apiClient redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
-	//client    *http.Client
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(client redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI, logger log.Logger) *Extractor {
-	return &Extractor{
-		apiClient: client,
-		logger:    logger,
+func New(logger log.Logger, opts ...Option) *Extractor {
+	e := &Extractor{
+		logger: logger,
 	}
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 // Info returns the brief information about the extractor
@@ -93,24 +113,26 @@ func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (e *Extractor) Init(config map[string]interface{}) (err error) {
+// Init initializes the extractor
+func (e *Extractor) Init(_ context.Context, config map[string]interface{}) (err error) {
 	// Build and validate config received from recipe
 	if err = utils.BuildConfig(config, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
-	// Create session
-	var sess = session.Must(session.NewSession())
-	//e.rsClient = redshift.New(sess)
-	//e.rsClient.GetClusterCredentials()
+	if e.apiClient != nil {
+		// Create session
+		var sess = session.Must(session.NewSession())
 
-	// Initialize the redshift client
-	e.apiClient = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AwsRegion))
+		// Initialize the redshift client
+		e.apiClient = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AwsRegion))
+	}
 
 	return
 }
 
-func (e *Extractor) Extract(emit plugins.Emit) error {
+// Extract collects metadata from the source. Metadata is collected through the emitter
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	// The Data API uses either credentials stored in AWS Secrets Manager or temporary database credentials.
 	// auth through IAM -> get key -> access list db -> iterate through each db to list tables
 	excludeList := append(defaultExcludes, strings.Split(e.config.Exclude, ",")...)
@@ -144,7 +166,7 @@ func (e *Extractor) Extract(emit plugins.Emit) error {
 	return nil
 }
 
-// SDK
+// GetDBList returns the list of databases in a cluster
 func (e *Extractor) GetDBList() (list []string, err error) {
 	listDbOutput, err := e.apiClient.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
@@ -157,6 +179,7 @@ func (e *Extractor) GetDBList() (list []string, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, db := range listDbOutput.Databases {
 		list = append(list, aws.StringValue(db))
 	}
@@ -164,25 +187,7 @@ func (e *Extractor) GetDBList() (list []string, err error) {
 	return list, nil
 }
 
-//func (e *Extractor) getDatabaseList() (listDB []*string, err error) {
-//	payload := map[string]interface{}{
-//		"ClusterIdentifier": e.config.ClusterID,
-//		"Database":          e.config.DbName,
-//		"DbUser":            e.config.DbUser,
-//		"MaxResults":        1,
-//		"NextToken":         "",
-//	}
-//	type responseToken struct {
-//		ListDB []*string `json:"Databases"`
-//	}
-//	var data responseToken
-//	if err = e.makeRequest("POST", fmt.Sprintf("https://redshift-data.%s.amazonaws.com", e.config.AwsRegion), payload, &data); err != nil {
-//		return nil, errors.Wrap(err, "failed to fetch data")
-//	}
-//	return data.ListDB, nil
-//}
-
-// SDK
+// GetTables return the list of table
 func (e *Extractor) GetTables(dbName string) (list []string, err error) {
 	listTbOutput, err := e.apiClient.ListTables(&redshiftdataapiservice.ListTablesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
@@ -206,63 +211,21 @@ func (e *Extractor) GetTables(dbName string) (list []string, err error) {
 	return list, nil
 }
 
-//func (e *Extractor) listTables(dbList string) (listTables []Table, err error) {
-//	payload := map[string]interface{}{
-//		"ClusterIdentifier": e.config.ClusterID,
-//		"ConnectedDatabase": e.config.DbName,
-//		"Database":          dbList,
-//		"DbUser":            e.config.DbUser,
-//		"MaxResults":        nil,
-//		"NextToken":         "",
-//		"SchemaPattern":     "information_schema",
-//		"SecretArn":         nil, // required when authenticating through secret manager
-//		"TablePattern":      nil,
-//	}
-//	type responseTable struct {
-//		//NextToken string  `json:"NextToken"`
-//		Tables []Table `json:"Tables"`
-//	}
-//	var data responseTable
-//	if err = e.makeRequest("POST", fmt.Sprintf("https://redshift-data.%s.amazonaws.com", e.config.AwsRegion), payload, &data); err != nil {
-//		return nil, errors.Wrap(err, "failed to fetch data")
-//	}
-//	return data.Tables, nil
-//}
-
-func (e *Extractor) executeCommand(query string) string {
-	execstmtReq, execstmtErr := e.apiClient.ExecuteStatement(&redshiftdataapiservice.ExecuteStatementInput{
-		ClusterIdentifier: aws.String(e.config.ClusterID),
-		DbUser:            aws.String(e.config.DbUser),
-		Database:          aws.String(e.config.DbName),
-		Sql:               aws.String("query"),
-	})
-	if execstmtErr != nil {
-		// logs error and exists
-		e.logger.Fatal("", "error", execstmtErr)
-	}
-
-	descstmtReq, descstmtErr := e.apiClient.DescribeStatement(&redshiftdataapiservice.DescribeStatementInput{
-		Id: execstmtReq.Id,
-	})
-	query_status := aws.StringValue(descstmtReq.Status)
-	if descstmtErr != nil {
-		// logs error and exists
-		e.logger.Fatal("", "error", descstmtErr)
-	}
-	return query_status
-}
-
-// Prepares the list of tables and the attached metadata
+// getTableMetadata prepares the list of tables and the attached metadata
 func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *assetsv1beta1.Table, err error) {
 	var columns []*facetsv1beta1.Column
-	columns, err = e.GetColumn(dbName, tableName)
+	colMetadata, err := e.GetColumn(dbName, tableName)
+	if err != nil {
+		return result, nil
+	}
+	columns, err = e.GetColumnMetadata(colMetadata)
 	if err != nil {
 		return result, nil
 	}
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("redshift", "", dbName, tableName),
+			Urn:     models.TableURN("redshift", e.config.AwsRegion, dbName, tableName),
 			Name:    tableName,
 			Service: "redshift",
 		},
@@ -274,8 +237,8 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 	return
 }
 
-// SDK
-func (e *Extractor) GetColumn(dbName string, tableName string) (result []*facetsv1beta1.Column, err error) {
+// GetColumn returns the column metadata of particular table in a database
+func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshiftdataapiservice.ColumnMetadata, err error) {
 	descTable, err := e.apiClient.DescribeTable(&redshiftdataapiservice.DescribeTableInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(e.config.DbName),
@@ -290,9 +253,14 @@ func (e *Extractor) GetColumn(dbName string, tableName string) (result []*facets
 	if err != nil {
 		return nil, err
 	}
-	//return data.ColumnList, nil
+
+	return descTable.ColumnList, nil
+}
+
+// GetColumnMetadata returns the
+func (e *Extractor) GetColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) (result []*facetsv1beta1.Column, err error) {
 	var tempresults []*facetsv1beta1.Column
-	for _, column := range descTable.ColumnList {
+	for _, column := range columnMetadata {
 		var tempresult facetsv1beta1.Column
 		tempresult.Name = aws.StringValue(column.Name)
 		tempresult.Description = aws.StringValue(column.Label)
@@ -305,82 +273,6 @@ func (e *Extractor) GetColumn(dbName string, tableName string) (result []*facets
 	}
 	return tempresults, nil
 }
-
-//func (e *Extractor) listColumn(dbName string, tableName string) (result []*facetsv1beta1.Column, err error) {
-//	payload := map[string]interface{}{
-//		"ClusterIdentifier": e.config.ClusterID,
-//		"ConnectedDatabase": e.config.DbName,
-//		"Database":          dbName,
-//		"DbUser":            e.config.DbUser,
-//		"MaxResults":        nil,
-//		"NextToken":         "",
-//		"SchemaPattern":     "information_schema",
-//		"SecretArn":         nil, // required when authenticating through secret manager
-//		"TablePattern":      nil,
-//	}
-//	type responseToken struct {
-//		ColumnList []ColumnList `json:"ColumnList"`
-//		NextToken  string       `json:"NextToken"`
-//		TableName  string       `json:"TableName"`
-//	}
-//	var data responseToken
-//	if err = e.makeRequest("POST", fmt.Sprintf("https://redshift-data.%s.amazonaws.com", e.config.AwsRegion), payload, &data); err != nil {
-//		return nil, errors.Wrap(err, "failed to fetch data")
-//	}
-//	//return data.ColumnList, nil
-//	var tempresults []*facetsv1beta1.Column
-//	for _, column := range data.ColumnList {
-//		var tempresult facetsv1beta1.Column
-//		tempresult.Name = column.Name
-//		tempresult.Description = column.Label
-//		tempresult.DataType = column.TypeName
-//		//tempresult.IsNullable
-//		//tempresult.Length = column.Length
-//		//tempresult.Profile
-//		//tempresult.Properties
-//		tempresults = append(tempresults, &tempresult)
-//	}
-//	return tempresults, nil
-//}
-
-// makeRequest helper function to avoid rewriting a request
-//func (e *Extractor) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
-//	jsonifyPayload, err := json.Marshal(payload)
-//	if err != nil {
-//		return errors.Wrap(err, "failed to encode the payload JSON")
-//	}
-//	body := bytes.NewBuffer(jsonifyPayload)
-//	req, err := http.NewRequest(method, url, body)
-//	if err != nil {
-//		return errors.Wrap(err, "failed to create request")
-//	}
-//
-//	var bearer = "Bearer " + e.config.AccessKeyID
-//	req.Header.Set("Content-Type", "application/x-amz-json-1.1")
-//	req.Header.Set("X-Amz-Target", "RedshiftData.ListDatabases") // to list database (diff for all api, rest part is same)
-//	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-//
-//	req.Header.Set("Authorization", bearer)
-//	req.Header.Set("X-SecretKey", e.config.SecretAccessKey)
-//	//req.Header.Set("X-CSRFToken", e.csrfToken)
-//	req.Header.Set("Referer", url)
-//
-//	res, err := e.client.Do(req)
-//	if err != nil {
-//		return errors.Wrap(err, "failed to generate response")
-//	}
-//	if res.StatusCode < 200 || res.StatusCode >= 300 {
-//		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
-//	}
-//	b, err := ioutil.ReadAll(res.Body)
-//	if err != nil {
-//		return errors.Wrap(err, "failed to read response body")
-//	}
-//	if err = json.Unmarshal(b, &data); err != nil {
-//		return errors.Wrapf(err, "failed to parse: %s", string(b))
-//	}
-//	return
-//}
 
 // Exclude checks if the database is in the ignored databases
 func exclude(names []string, database string) bool {
@@ -395,7 +287,7 @@ func exclude(names []string, database string) bool {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("redshift", func() plugins.Extractor {
-		return New(redshiftdataapiservice.New(), plugins.GetLog())
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
@@ -404,6 +296,3 @@ func init() {
 // IMP Links :
 // https://docs.aws.amazon.com/redshift/latest/mgmt/data-api.html
 // https://aws.amazon.com/blogs/big-data/using-the-amazon-redshift-data-api-to-interact-with-amazon-redshift-clusters/
-
-// each db -> tables -> each table through (describe table) to get column metadata
-// TODO: make request is diff for each api (specifically headers)
