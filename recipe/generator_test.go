@@ -1,6 +1,8 @@
 package recipe_test
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -8,47 +10,76 @@ import (
 	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestFromTemplate(t *testing.T) {
 	t.Run("should output recipe files using template to output directory", func(t *testing.T) {
 		templatePath := "./testdata/generator/template.yaml"
 		outputDir := "./testdata/generator/temp"
-		data := []recipe.TemplateData{
-			{
-				FileName: "recipe-1",
-				Data: map[string]interface{}{
-					"broker": "main-broker.com:9092",
-					"owner":  "john@example.com",
-				},
-			},
-			{
-				FileName: "recipe-2",
-				Data: map[string]interface{}{
-					"broker": "secondary-broker.com:9092",
-					"owner":  "jane@example.com",
-				},
-			},
-		}
 
-		cleanDir(t, outputDir)
-		defer cleanDir(t, outputDir)
+		t.Run("when recipe has a name", func(t *testing.T) {
+			bytes, err := ioutil.ReadFile("./testdata/generator/data-1-2.yaml")
+			if err != nil {
+				fmt.Println(fmt.Errorf("error reading data: %w", err))
+				return
+			}
 
-		err := recipe.FromTemplate(recipe.TemplateConfig{
-			TemplateFilePath: templatePath,
-			OutputDirPath:    outputDir,
-			Data:             data,
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				fmt.Println(fmt.Errorf("error parsing data: %w", err))
+				return
+			}
+
+			cleanDir(t, outputDir)
+			defer cleanDir(t, outputDir)
+
+			err = recipe.FromTemplate(recipe.TemplateConfig{
+				TemplateFilePath: templatePath,
+				OutputDirPath:    outputDir,
+				Data:             data,
+			})
+			require.NoError(t, err)
+
+			assertRecipeFile(t,
+				"./testdata/generator/expected.yaml",
+				path.Join(outputDir, data[0].FileName+".yaml"),
+			)
+			assertRecipeFile(t,
+				"./testdata/generator/expected-2.yaml",
+				path.Join(outputDir, data[1].FileName+".yaml"),
+			)
 		})
-		require.NoError(t, err)
 
-		assertRecipeFile(t,
-			"./testdata/generator/expected.yaml",
-			path.Join(outputDir, data[0].FileName+".yaml"),
-		)
-		assertRecipeFile(t,
-			"./testdata/generator/expected-2.yaml",
-			path.Join(outputDir, data[1].FileName+".yaml"),
-		)
+		t.Run("when recipe does not have a name", func(t *testing.T) {
+			bytes, err := ioutil.ReadFile("./testdata/generator/data-3.yaml")
+			if err != nil {
+				fmt.Println(fmt.Errorf("error reading data: %w", err))
+				return
+			}
+
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				fmt.Println(fmt.Errorf("error parsing data: %w", err))
+				return
+			}
+
+			cleanDir(t, outputDir)
+			defer cleanDir(t, outputDir)
+
+			err = recipe.FromTemplate(recipe.TemplateConfig{
+				TemplateFilePath: templatePath,
+				OutputDirPath:    outputDir,
+				Data:             data,
+			})
+			require.NoError(t, err)
+
+			assertRecipeFile(t,
+				"./testdata/generator/expected-3.yaml",
+				path.Join(outputDir, data[0].FileName+".yaml"),
+			)
+		})
+
 	})
 }
 

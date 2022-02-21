@@ -1,4 +1,4 @@
-name: {{ .FileName }}
+name: {{ .Data.name }}
 source:
   type: kafka
   config:

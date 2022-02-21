@@ -1,0 +1,12 @@
+name: recipe-three
+source:
+  type: kafka
+  config:
+    broker: "main-broker.com:9092"
+sinks:
+  - name: console
+processors:
+  - name: enrich
+    config:
+      host:  main-broker.com:9092
+      owner:  john@example.com
