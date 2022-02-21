@@ -260,6 +260,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			if !r.stopOnSinkError {
 				err = nil
 			}
+			return err
 		}
 		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 
