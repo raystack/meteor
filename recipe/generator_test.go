@@ -1,6 +1,8 @@
 package recipe_test
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -8,6 +10,7 @@ import (
 	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestFromTemplate(t *testing.T) {
@@ -16,29 +19,22 @@ func TestFromTemplate(t *testing.T) {
 		outputDir := "./testdata/generator/temp"
 
 		t.Run("when recipe has a name", func(t *testing.T) {
-			data := []recipe.TemplateData{
-				{
-					FileName: "recipe-one",
-					Data: map[string]interface{}{
-						"name":   "recipe-1",
-						"broker": "main-broker.com:9092",
-						"owner":  "john@example.com",
-					},
-				},
-				{
-					FileName: "recipe-two",
-					Data: map[string]interface{}{
-						"name":   "recipe-2",
-						"broker": "secondary-broker.com:9092",
-						"owner":  "jane@example.com",
-					},
-				},
+			bytes, err := ioutil.ReadFile("./testdata/generator/data-1-2.yaml")
+			if err != nil {
+				fmt.Println(fmt.Errorf("error reading data: %w", err))
+				return
+			}
+
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				fmt.Println(fmt.Errorf("error parsing data: %w", err))
+				return
 			}
 
 			cleanDir(t, outputDir)
 			defer cleanDir(t, outputDir)
 
-			err := recipe.FromTemplate(recipe.TemplateConfig{
+			err = recipe.FromTemplate(recipe.TemplateConfig{
 				TemplateFilePath: templatePath,
 				OutputDirPath:    outputDir,
 				Data:             data,
@@ -56,20 +52,22 @@ func TestFromTemplate(t *testing.T) {
 		})
 
 		t.Run("when recipe does not have a name", func(t *testing.T) {
-			data := []recipe.TemplateData{
-				{
-					FileName: "recipe-three",
-					Data: map[string]interface{}{
-						"broker": "main-broker.com:9092",
-						"owner":  "john@example.com",
-					},
-				},
+			bytes, err := ioutil.ReadFile("./testdata/generator/data-3.yaml")
+			if err != nil {
+				fmt.Println(fmt.Errorf("error reading data: %w", err))
+				return
+			}
+
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				fmt.Println(fmt.Errorf("error parsing data: %w", err))
+				return
 			}
 
 			cleanDir(t, outputDir)
 			defer cleanDir(t, outputDir)
 
-			err := recipe.FromTemplate(recipe.TemplateConfig{
+			err = recipe.FromTemplate(recipe.TemplateConfig{
 				TemplateFilePath: templatePath,
 				OutputDirPath:    outputDir,
 				Data:             data,

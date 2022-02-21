@@ -1,0 +1,10 @@
+- FileName: recipe-one
+  Data:
+    name: recipe-1
+    broker: main-broker.com:9092
+    owner: john@example.com
+- FileName: recipe-two
+  Data:
+    name: recipe-2
+    broker: secondary-broker.com:9092
+    owner: jane@example.com
