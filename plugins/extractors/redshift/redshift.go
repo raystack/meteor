@@ -18,32 +18,6 @@ import (
 	"strings"
 )
 
-//The URL for the Amazon Redshift Data API is: https://redshift-data.[aws-region].amazonaws.com
-//AWS IAM User
-// 1.Access Key ID
-// 2. Secret Access Key ID
-// 3. Attached AmazonRedshiftDataFullAccess permission
-//An API client
-//An available Amazon Redshift cluster in your aws-region
-
-// 2 ways to authenticate
-// https://docs.aws.amazon.com/redshift/latest/mgmt/data-api.html#data-api-calling-considerations-authentication
-// 1. AwS IAM Temporary Credentials
-// 2. AWS Secrets Manager Secret
-//* Secrets Manager - when connecting to a cluster, specify the Amazon Resource
-//Name (ARN) of the secret, the database name, and the cluster identifier
-//that matches the cluster in the secret. When connecting to a serverless
-//endpoint, specify the Amazon Resource Name (ARN) of the secret and the
-//database name.
-//
-//* Temporary credentials - when connecting to a cluster, specify the cluster
-//identifier, the database name, and the database user name. Also, permission
-//to call the redshift:GetClusterCredentials operation is required. When
-//connecting to a serverless endpoint, specify the database name.
-
-// Permission to call GetClusterCredentials :
-// https://docs.aws.amazon.com/redshift/latest/mgmt/generating-iam-credentials-role-permissions.html
-
 //go:embed README.md
 var summary string
 
@@ -51,19 +25,15 @@ var defaultExcludes = []string{"information_schema", "pg_catalog", "pg_internal"
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	ClusterID string `mapstructure:"cluster_id"`
-	DbName    string `mapstructure:"db_name"`
-	DbUser    string `mapstructure:"db_user"`
-	AwsRegion string `mapstructure:"aws_region"`
+	ClusterID string `mapstructure:"cluster_id" validate:"required"`
+	DbName    string `mapstructure:"db_name" validate:"required"`
+	DbUser    string `mapstructure:"db_user" validate:"required"`
+	AwsRegion string `mapstructure:"aws_region" validate:"required"`
 	Exclude   string `mapstructure:"exclude"`
-
-	//IamRole         string `json:"iam_role"`
-	//AccessKeyID     string `json:"access_key_id"`
-	//SecretAccessKey string `json:"secret_access_key"`
 }
 
 var sampleConfig = `
-cluster_id: 1234567
+cluster_id: cluster_test
 db_name: testDB
 db_user: testUser
 aws_region: us-east-1
@@ -76,14 +46,16 @@ type Option func(*Extractor)
 // WithClient assign custom client to the Extractor constructor
 func WithClient(redshiftClient redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI) Option {
 	return func(e *Extractor) {
-		e.apiClient = redshiftClient
+		e.client = redshiftClient
 	}
 }
 
+// Extractor manages the extraction of data
+// from the redshift server
 type Extractor struct {
-	config    Config
-	logger    log.Logger
-	apiClient redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
+	config Config
+	logger log.Logger
+	client redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -120,21 +92,19 @@ func (e *Extractor) Init(_ context.Context, config map[string]interface{}) (err 
 		return plugins.InvalidConfigError{}
 	}
 
-	if e.apiClient != nil {
+	if e.client != nil {
 		// Create session
 		var sess = session.Must(session.NewSession())
 
 		// Initialize the redshift client
-		e.apiClient = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AwsRegion))
+		e.client = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AwsRegion))
 	}
 
 	return
 }
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
-	// The Data API uses either credentials stored in AWS Secrets Manager or temporary database credentials.
-	// auth through IAM -> get key -> access list db -> iterate through each db to list tables
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	excludeList := append(defaultExcludes, strings.Split(e.config.Exclude, ",")...)
 
 	listDB, err := e.GetDBList()
@@ -168,7 +138,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 
 // GetDBList returns the list of databases in a cluster
 func (e *Extractor) GetDBList() (list []string, err error) {
-	listDbOutput, err := e.apiClient.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
+	listDbOutput, err := e.client.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		Database:          aws.String(e.config.DbName),
 		DbUser:            aws.String(e.config.DbUser),
@@ -187,16 +157,16 @@ func (e *Extractor) GetDBList() (list []string, err error) {
 	return list, nil
 }
 
-// GetTables return the list of table
+// GetTables return the list of tables name
 func (e *Extractor) GetTables(dbName string) (list []string, err error) {
-	listTbOutput, err := e.apiClient.ListTables(&redshiftdataapiservice.ListTablesInput{
+	listTbOutput, err := e.client.ListTables(&redshiftdataapiservice.ListTablesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(dbName),
 		Database:          aws.String(e.config.DbName),
 		DbUser:            aws.String(e.config.DbUser),
+		SchemaPattern:     nil,
 		MaxResults:        nil,
 		NextToken:         nil,
-		SchemaPattern:     aws.String("information_schema"),
 		SecretArn:         nil, // required when authenticating through secret manager
 		TablePattern:      nil,
 	})
@@ -218,7 +188,7 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 	if err != nil {
 		return result, nil
 	}
-	columns, err = e.GetColumnMetadata(colMetadata)
+	columns, err = e.getColumnMetadata(colMetadata)
 	if err != nil {
 		return result, nil
 	}
@@ -239,16 +209,16 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 
 // GetColumn returns the column metadata of particular table in a database
 func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshiftdataapiservice.ColumnMetadata, err error) {
-	descTable, err := e.apiClient.DescribeTable(&redshiftdataapiservice.DescribeTableInput{
+	descTable, err := e.client.DescribeTable(&redshiftdataapiservice.DescribeTableInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(e.config.DbName),
 		Database:          aws.String(dbName),
 		DbUser:            aws.String(e.config.DbName),
+		Table:             aws.String(tableName),
+		Schema:            nil,
 		MaxResults:        nil,
 		NextToken:         nil,
-		Schema:            aws.String("information_schema"),
 		SecretArn:         nil,
-		Table:             aws.String(tableName),
 	})
 	if err != nil {
 		return nil, err
@@ -257,21 +227,24 @@ func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshi
 	return descTable.ColumnList, nil
 }
 
-// GetColumnMetadata returns the
-func (e *Extractor) GetColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) (result []*facetsv1beta1.Column, err error) {
-	var tempresults []*facetsv1beta1.Column
+// getColumnMetadata prepares the list of columns and the attached metadata
+func (e *Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) (result []*facetsv1beta1.Column, err error) {
+	var tempResults []*facetsv1beta1.Column
 	for _, column := range columnMetadata {
-		var tempresult facetsv1beta1.Column
-		tempresult.Name = aws.StringValue(column.Name)
-		tempresult.Description = aws.StringValue(column.Label)
-		tempresult.DataType = aws.StringValue(column.TypeName)
-		//tempresult.IsNullable
-		//tempresult.Length = column.Length
-		//tempresult.Profile
-		//tempresult.Properties
-		tempresults = append(tempresults, &tempresult)
+		var tempResult facetsv1beta1.Column
+		tempResult.Name = aws.StringValue(column.Name)
+		tempResult.Description = aws.StringValue(column.Label)
+		tempResult.DataType = aws.StringValue(column.TypeName)
+		tempResult.IsNullable = isNullable(aws.Int64Value(column.Nullable))
+		tempResult.Length = aws.Int64Value(column.Length)
+		tempResults = append(tempResults, &tempResult)
 	}
-	return tempresults, nil
+	return tempResults, nil
+}
+
+// Convert nullable int to a boolean
+func isNullable(value int64) bool {
+	return value == 1
 }
 
 // Exclude checks if the database is in the ignored databases
@@ -292,7 +265,3 @@ func init() {
 		panic(err)
 	}
 }
-
-// IMP Links :
-// https://docs.aws.amazon.com/redshift/latest/mgmt/data-api.html
-// https://aws.amazon.com/blogs/big-data/using-the-amazon-redshift-data-api-to-interact-with-amazon-redshift-clusters/
