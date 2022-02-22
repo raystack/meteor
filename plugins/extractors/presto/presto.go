@@ -149,7 +149,7 @@ func (e *Extractor) extractColumns(tableName string) (result []*facetsv1beta1.Co
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC;`
-	rows, err := e.db.Query(sqlStr, tableName)
+	rows, err := e.db.Query(sqlStr, sql.Named("X-Presto-User", tableName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
 	}
@@ -187,5 +187,4 @@ func init() {
 	}
 }
 
-// TODO: check for authentication if dsn contains password : https://github.com/prestodb/presto-go-client
 // https://prestodb.io/docs/current/sql.html
