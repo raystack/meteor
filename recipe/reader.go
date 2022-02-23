@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,6 +74,8 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	if err != nil {
 		return
 	}
+
+	fmt.Println(recipe.Version)
 
 	return
 }
