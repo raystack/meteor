@@ -1,4 +1,5 @@
 name: recipe-2
+version: v1beta1
 source:
   type: kafka
   config:

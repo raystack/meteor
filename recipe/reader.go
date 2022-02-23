@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/odpf/meteor/generator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -70,12 +71,16 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 		node.Name.Value = fileName
 	}
 
-	recipe, err = node.toRecipe()
+	versions := generator.GetRecipeVersions()
+	err = validateRecipeVersion(node.Version.Value, versions[len(versions)-1])
 	if err != nil {
 		return
 	}
 
-	fmt.Println(recipe.Version)
+	recipe, err = node.toRecipe()
+	if err != nil {
+		return
+	}
 
 	return
 }
@@ -96,4 +101,11 @@ func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
 	}
 
 	return
+}
+
+func validateRecipeVersion(receivedVersion, expectedVersion string) (err error) {
+	if strings.Compare(receivedVersion, expectedVersion) == 0 {
+		return
+	}
+	return fmt.Errorf("received recipe version %s does not match to expected error %s", receivedVersion, expectedVersion)
 }

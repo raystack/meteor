@@ -63,7 +63,8 @@ func TestReaderRead(t *testing.T) {
 			}
 			expectedRecipes := []recipe.Recipe{
 				{
-					Name: "test-recipe-no-name",
+					Name:    "test-recipe-no-name",
+					Version: "v1beta1",
 					Source: recipe.PluginRecipe{
 						Name: "test-source",
 						Config: map[string]interface{}{

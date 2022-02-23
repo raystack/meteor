@@ -26,11 +26,13 @@ var templateFuncs = map[string]interface{}{
 	"indent": indent,
 }
 
+var recipeVersions = [1]string{"v1beta1"}
+
 // Recipe checks if the recipe is valid and returns a Template
-func Recipe(name string, version string, source string, sinks []string, processors []string) (err error) {
+func Recipe(name string, source string, sinks []string, processors []string) (err error) {
 	tem := Template{
 		Name:    name,
-		Version: version,
+		Version: recipeVersions[len(recipeVersions)-1],
 	}
 
 	if source != "" {
@@ -74,4 +76,8 @@ func Recipe(name string, version string, source string, sinks []string, processo
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+
+func GetRecipeVersions() [1]string {
+	return recipeVersions
 }

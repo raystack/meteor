@@ -89,7 +89,7 @@ func NewRecipeCmd() *cobra.Command {
 				}
 			}
 
-			return generator.Recipe(args[0], "v1beta1", extractor, sinkList, procList)
+			return generator.Recipe(args[0], extractor, sinkList, procList)
 		},
 	}
 
