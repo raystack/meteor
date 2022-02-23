@@ -63,15 +63,17 @@ USAGE
   meteor <command> <subcommand> [flags]
 
 CORE COMMANDS
-  gen         Generate sample recipes and plugins
+  gen         Generate recipes
   info        Display plugin information
-  lint        Check of issues in recipes
-  list        List available plugins in meteor
+  lint        Check for issues in recipes
+  list        List available plugins
+  new         Bootstrap new recipes
   run         Execute recipes for metadata extraction
 
 ADDITIONAL COMMANDS
-  completion  Generate the autocompletion script
+  completion  Generate shell completion scripts
   help        Help about any command
+  reference   Show command reference
   version     Print meteor version information
 
 FLAGS
@@ -80,7 +82,11 @@ FLAGS
 EXAMPLES
   $ meteor list extractors
   $ meteor run recipe.yaml
-  $ meteor gen recipe --extractor=date
+  $ meteor gen recipe --extractor=date --sink console
+
+LEARN MORE
+  Use 'meteor <command> <subcommand> --help' for more information about a command.
+  Read the manual at https://odpf.github.io/meteor/
 
 FEEDBACK
   Open an issue here https://github.com/odpf/meteor/issues
