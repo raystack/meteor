@@ -222,6 +222,15 @@ func TestReaderRead(t *testing.T) {
 			compareRecipes(t, expected[i], r)
 		}
 	})
+
+	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
+		reader := recipe.NewReader()
+		_, err := reader.Read("./testdata/missing-version.yaml")
+		assert.NotNil(t, err)
+
+		_, err = reader.Read("./testdata/incorrect-version.yaml")
+		assert.NotNil(t, err)
+	})
 }
 
 func compareRecipes(t *testing.T, expected, actual recipe.Recipe) {
