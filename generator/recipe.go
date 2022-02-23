@@ -16,6 +16,7 @@ var file embed.FS
 // Template represents the template for generating a recipe.
 type Template struct {
 	Name       string
+	Version    string
 	Source     map[string]string
 	Sinks      map[string]string
 	Processors map[string]string
@@ -26,9 +27,10 @@ var templateFuncs = map[string]interface{}{
 }
 
 // Recipe checks if the recipe is valid and returns a Template
-func Recipe(name string, source string, sinks []string, processors []string) (err error) {
+func Recipe(name string, version string, source string, sinks []string, processors []string) (err error) {
 	tem := Template{
-		Name: name,
+		Name:    name,
+		Version: version,
 	}
 
 	if source != "" {

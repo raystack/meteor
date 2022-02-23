@@ -117,6 +117,8 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 
+	fmt.Println(recipe.Version)
+
 	var (
 		getDuration = r.timerFn()
 		stream      = newStream()
