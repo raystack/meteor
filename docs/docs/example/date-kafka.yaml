@@ -1,4 +1,5 @@
 name: date-kafka-recipe
+version: v1beta1
 source:
   name: date
 sinks:
