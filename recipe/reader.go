@@ -107,5 +107,5 @@ func validateRecipeVersion(receivedVersion, expectedVersion string) (err error) 
 	if strings.Compare(receivedVersion, expectedVersion) == 0 {
 		return
 	}
-	return fmt.Errorf("received recipe version %s does not match to expected error %s", receivedVersion, expectedVersion)
+	return fmt.Errorf("received recipe version %s does not match to the expected version %s", receivedVersion, expectedVersion)
 }
