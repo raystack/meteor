@@ -15,20 +15,17 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
-	"strings"
 )
 
 //go:embed README.md
 var summary string
 
-var defaultExcludes = []string{"information_schema", "pg_catalog", "pg_internal", "public"}
-
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
 	ClusterID string `mapstructure:"cluster_id" validate:"required"`
-	DbName    string `mapstructure:"db_name" validate:"required"`
-	DbUser    string `mapstructure:"db_user" validate:"required"`
-	AwsRegion string `mapstructure:"aws_region" validate:"required"`
+	DBName    string `mapstructure:"db_name" validate:"required"`
+	DBUser    string `mapstructure:"db_user" validate:"required"`
+	AWSRegion string `mapstructure:"aws_region" validate:"required"`
 	Exclude   string `mapstructure:"exclude"`
 }
 
@@ -97,7 +94,7 @@ func (e *Extractor) Init(_ context.Context, config map[string]interface{}) (err 
 		var sess = session.Must(session.NewSession())
 
 		// Initialize the redshift client
-		e.client = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AwsRegion))
+		e.client = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AWSRegion))
 	}
 
 	return
@@ -105,17 +102,12 @@ func (e *Extractor) Init(_ context.Context, config map[string]interface{}) (err 
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
 func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
-	excludeList := append(defaultExcludes, strings.Split(e.config.Exclude, ",")...)
-
 	listDB, err := e.GetDBList()
 	if err != nil {
 		return err
 	}
-	for _, database := range listDB {
-		if exclude(excludeList, database) {
-			continue
-		}
 
+	for _, database := range listDB {
 		tables, err := e.GetTables(database)
 		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
@@ -140,8 +132,8 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 func (e *Extractor) GetDBList() (list []string, err error) {
 	listDbOutput, err := e.client.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
-		Database:          aws.String(e.config.DbName),
-		DbUser:            aws.String(e.config.DbUser),
+		Database:          aws.String(e.config.DBName),
+		DbUser:            aws.String(e.config.DBUser),
 		MaxResults:        nil,
 		NextToken:         nil,
 		SecretArn:         nil,
@@ -162,8 +154,8 @@ func (e *Extractor) GetTables(dbName string) (list []string, err error) {
 	listTbOutput, err := e.client.ListTables(&redshiftdataapiservice.ListTablesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(dbName),
-		Database:          aws.String(e.config.DbName),
-		DbUser:            aws.String(e.config.DbUser),
+		Database:          aws.String(e.config.DBName),
+		DbUser:            aws.String(e.config.DBUser),
 		SchemaPattern:     nil,
 		MaxResults:        nil,
 		NextToken:         nil,
@@ -195,7 +187,7 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("redshift", e.config.AwsRegion, dbName, tableName),
+			Urn:     models.TableURN("redshift", e.config.AWSRegion, dbName, tableName),
 			Name:    tableName,
 			Service: "redshift",
 		},
@@ -211,9 +203,9 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshiftdataapiservice.ColumnMetadata, err error) {
 	descTable, err := e.client.DescribeTable(&redshiftdataapiservice.DescribeTableInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
-		ConnectedDatabase: aws.String(e.config.DbName),
+		ConnectedDatabase: aws.String(e.config.DBName),
 		Database:          aws.String(dbName),
-		DbUser:            aws.String(e.config.DbName),
+		DbUser:            aws.String(e.config.DBName),
 		Table:             aws.String(tableName),
 		Schema:            nil,
 		MaxResults:        nil,
@@ -245,16 +237,6 @@ func (e *Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.C
 // Convert nullable int to a boolean
 func isNullable(value int64) bool {
 	return value == 1
-}
-
-// Exclude checks if the database is in the ignored databases
-func exclude(names []string, database string) bool {
-	for _, b := range names {
-		if b == database {
-			return true
-		}
-	}
-	return false
 }
 
 // Register the extractor to catalog
