@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
@@ -77,20 +78,33 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	e.emit = emit
 
 	// link: https://docs.treasuredata.com/display/public/PD/How+do+I+Access+TD+table+Metadata+using+Presto
-	// Get list of databases
-	dbs, err := e.db.Query("SHOW SCHEMAS;")
+	catalogs, err := e.db.Query("SHOW CATALOGS")
 	if err != nil {
-		return fmt.Errorf("failed to get the list of databases: %w", err)
+		return fmt.Errorf("failed to get the list of catalogs: %w", err)
 	}
 
-	// Iterate through all tables and databases
-	for dbs.Next() {
-		var database string
-		if err = dbs.Scan(&database); err != nil {
-			return fmt.Errorf("failed to scan %s: %w", database, err)
+	for catalogs.Next() {
+		var schema string
+		if err = catalogs.Scan(&schema); err != nil {
+			return fmt.Errorf("failed to scan schema %s: %w", schema, err)
 		}
-		if err = e.extractTables(database); err != nil {
-			return fmt.Errorf("failed to extract tables from %s: %w", database, err)
+
+		// Get list of databases
+		showSchemasQuery := fmt.Sprintf("show schemas in %s", schema)
+		dbs, err := e.db.Query(showSchemasQuery)
+		if err != nil {
+			return fmt.Errorf("failed to get the list of schemas: %w", err)
+		}
+
+		// Iterate through all tables and databases
+		for dbs.Next() {
+			var database string
+			if err = dbs.Scan(&database); err != nil {
+				return fmt.Errorf("failed to scan %s: %w", database, err)
+			}
+			if err = e.extractTables(database); err != nil {
+				return fmt.Errorf("failed to extract tables from %s: %w", database, err)
+			}
 		}
 	}
 	return
