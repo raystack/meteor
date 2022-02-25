@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
@@ -15,17 +14,23 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	_ "github.com/prestodb/presto-go-client/presto" // presto driver
+	"strings"
 )
 
 //go:embed README.md
 var summary string
 
+var defaultCatalogExcludes = []string{"jmx", "memory", "system", "tpcds", "tpch"}
+
 // Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	Exclude       string `mapstructure:"exclude"`
 }
 
-var sampleConfig = `connection_url: "http://user:pass@localhost:8080?catalog=default&schema=test"`
+var sampleConfig = `
+connection_url: "http://user:pass@localhost:8080?catalog=default&schema=test"
+exclude: `
 
 // Extractor manages the extraction of data
 type Extractor struct {
@@ -72,6 +77,30 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	return
 }
 
+func (e *Extractor) getCatalog() (list []string, err error) {
+
+	catalogs, err := e.db.Query("SHOW CATALOGS")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the list of catalogs: %w", err)
+	}
+
+	excludeList := append(defaultCatalogExcludes, strings.Split(e.config.Exclude, ",")...)
+
+	for catalogs.Next() {
+		var catalog string
+		if err = catalogs.Scan(&catalog); err != nil {
+			return nil, fmt.Errorf("failed to scan schema %s: %w", catalog, err)
+		}
+
+		if exclude(excludeList, catalog) {
+			continue
+		}
+		list = append(list, catalog)
+	}
+	return list, err
+
+}
+
 // Extract collects metadata of the database through emitter
 func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	defer e.db.Close()
@@ -84,13 +113,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	}
 
 	for catalogs.Next() {
-		var schema string
-		if err = catalogs.Scan(&schema); err != nil {
-			return fmt.Errorf("failed to scan schema %s: %w", schema, err)
+		var catalog string
+		if err = catalogs.Scan(&catalog); err != nil {
+			return fmt.Errorf("failed to scan schema %s: %w", catalog, err)
 		}
 
 		// Get list of databases
-		showSchemasQuery := fmt.Sprintf("show schemas in %s", schema)
+		showSchemasQuery := fmt.Sprintf("show schemas in %s", catalog)
 		dbs, err := e.db.Query(showSchemasQuery)
 		if err != nil {
 			return fmt.Errorf("failed to get the list of schemas: %w", err)
@@ -102,7 +131,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 			if err = dbs.Scan(&database); err != nil {
 				return fmt.Errorf("failed to scan %s: %w", database, err)
 			}
-			if err = e.extractTables(database); err != nil {
+			if err = e.extractTables(catalog, database); err != nil {
 				return fmt.Errorf("failed to extract tables from %s: %w", database, err)
 			}
 		}
@@ -111,13 +140,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 }
 
 // extractTables extracts tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(catalog string, database string) (err error) {
 	// extract tables
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
-	if err != nil {
-		return fmt.Errorf("failed to execute USE query on %s: %w", database, err)
-	}
-	rows, err := e.db.Query("SHOW TABLES;")
+	//_, err = e.db.Exec(fmt.Sprintf("USE %s.%s;", database))
+	//if err != nil {
+	//	return fmt.Errorf("failed to execute USE query on %s: %w", database, err)
+	//}
+	rows, err := e.db.Query(fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database))
 	if err != nil {
 		return fmt.Errorf("failed to show tables for %s: %w", database, err)
 	}
@@ -128,7 +157,7 @@ func (e *Extractor) extractTables(database string) (err error) {
 		if err := rows.Scan(&tableName); err != nil {
 			return err
 		}
-		if err := e.processTable(database, tableName); err != nil {
+		if err := e.processTable(catalog, database, tableName); err != nil {
 			return err
 		}
 	}
@@ -136,9 +165,9 @@ func (e *Extractor) extractTables(database string) (err error) {
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(database string, tableName string) (err error) {
+func (e *Extractor) processTable(catalog string, database string, tableName string) (err error) {
 	var columns []*facetsv1beta1.Column
-	columns, err = e.extractColumns(tableName)
+	columns, err = e.extractColumns(catalog, database, tableName)
 	if err != nil {
 		return fmt.Errorf("failed to extract columns: %w", err)
 	}
@@ -156,32 +185,32 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	return
 }
 
+//catalog.schema.tablename
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(tableName string) (result []*facetsv1beta1.Column, err error) {
-	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
-				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
-				FROM information_schema.columns
-				WHERE table_name = ?
-				ORDER BY COLUMN_NAME ASC;`
-	rows, err := e.db.Query(sqlStr, sql.Named("X-Presto-User", tableName))
+func (e *Extractor) extractColumns(catalog string, database string, tableName string) (result []*facetsv1beta1.Column, err error) {
+	sqlStr := fmt.Sprintf(`SELECT column_name,data_type,
+				is_nullable, comment
+				FROM %s.information_schema.columns
+				ORDER BY column_name ASC`, catalog)
+	//sqlst := fmt.Sprintf(`show columns from %s.%s.%s`, catalog, database, tableName)
+	//l.Fatal(sqlst)
+	rows, err := e.db.Query(sqlStr)
+	//l.Fatal(rows)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
 	}
 
 	for rows.Next() {
-		var fieldName, fieldDesc, dataType, isNullableString string
-		var length int
-		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
+		var column, typeName, extra, comment sql.NullString
+		err = rows.Scan(&column, &typeName, &extra, &comment)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan fields from query: %w", err)
 		}
 
 		result = append(result, &facetsv1beta1.Column{
-			Name:        fieldName,
-			DataType:    dataType,
-			Description: fieldDesc,
-			IsNullable:  e.isNullable(isNullableString),
-			Length:      int64(length),
+			Name:        column.String,
+			DataType:    typeName.String,
+			Description: extra.String,
 		})
 	}
 	return result, nil
@@ -199,6 +228,16 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+// Exclude checks if the database is in the ignored databases
+func exclude(names []string, database string) bool {
+	for _, b := range names {
+		if b == database {
+			return true
+		}
+	}
+	return false
 }
 
 // https://prestodb.io/docs/current/sql.html

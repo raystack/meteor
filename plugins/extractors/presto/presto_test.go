@@ -1,13 +1,11 @@
+//go:build integration
+// +build integration
+
 package presto_test
 
 import (
 	"context"
 	"database/sql"
-	"log"
-	"os"
-	"testing"
-	"time"
-
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/presto"
@@ -17,13 +15,14 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 	_ "github.com/prestodb/presto-go-client/presto"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"os"
+	"testing"
+	"time"
 )
 
 const (
-	testDB = "test_db"
-	user   = "test_user"
-	pass   = "pass"
-	port   = "8080"
+	port = "8080"
 )
 
 var (
@@ -113,7 +112,6 @@ func TestExtract(t *testing.T) {
 
 			t.Fatal(err)
 		}
-
 		emitter := mocks.NewEmitter()
 		err = newExtractor.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
@@ -124,6 +122,6 @@ func TestExtract(t *testing.T) {
 			urns = append(urns, table.Resource.Urn)
 
 		}
-		assert.Equal(t, []string{"test_db.applicant", "test_db.jobs"}, urns)
+		assert.Equal(t, 619, len(urns))
 	})
 }
