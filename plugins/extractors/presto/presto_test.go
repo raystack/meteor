@@ -1,11 +1,12 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package presto_test
 
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/presto"
@@ -22,26 +23,20 @@ import (
 )
 
 const (
+	user = "presto"
 	port = "8080"
 )
 
 var (
-	host = "127.0.0.1:" + port
+	host = "localhost:" + port
 	db   *sql.DB
 )
 
 func TestMain(m *testing.M) {
-	// pwd, err := os.Getwd()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository: "ahanaio/prestodb-sandbox",
-		Tag:        "0.270",
-		//Mounts: []string{
-		//	fmt.Sprintf("%s/etc:/etc:rw", pwd),
-		//},
+		Repository:   "ahanaio/prestodb-sandbox",
+		Tag:          "0.270",
 		ExposedPorts: []string{"8080"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"8080": {
@@ -51,10 +46,9 @@ func TestMain(m *testing.M) {
 	}
 
 	// Exponential backoff-retry for container to accept connections
+	//dsn format - http[s]://user[:pass]@host[:port][?parameters]
 	retryFn := func(r *dockertest.Resource) (err error) {
 		dsn := "http://presto@localhost:8080"
-		//dsn - http[s]://user[:pass]@host[:port][?parameters]
-		//dsn := fmt.Sprintf("http://%s:%s@%s?catalog=default&schema=%s", user, pass, host, testDB)
 		db, err = sql.Open("presto", dsn)
 		if err != nil {
 			return err
@@ -62,19 +56,13 @@ func TestMain(m *testing.M) {
 
 		// wait until presto ready, might want to call SELECT 1 and retry if failed and give timeout
 		time.Sleep(1 * time.Minute)
-		//if err = r.Expire(100); err != nil {
-		//	log.Fatal(err)
-		//}
+
 		return db.Ping()
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// if err := setup(); err != nil {
-	//	fmt.Println("test1")
-	//	log.Fatal(err)
-	// }
 
 	// Run tests
 	code := m.Run()
@@ -106,7 +94,8 @@ func TestExtract(t *testing.T) {
 		newExtractor := presto.New(utils.Logger)
 
 		err := newExtractor.Init(ctx, map[string]interface{}{
-			"connection_url": "http://presto@localhost:8080", //fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
+			"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
+			"exclude_catalog": "memory,system,tpcds,tpch", // jmx catalog is not excluded
 		})
 		if err != nil {
 
@@ -122,6 +111,6 @@ func TestExtract(t *testing.T) {
 			urns = append(urns, table.Resource.Urn)
 
 		}
-		assert.Equal(t, 619, len(urns))
+		assert.Equal(t, 242, len(urns))
 	})
 }
