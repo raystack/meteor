@@ -1,44 +1,22 @@
 package recipe
 
 import (
-	"os"
+	"log"
 	"strings"
-)
 
-var (
-	recipeEnvVarPrefix = "METEOR_"
+	"github.com/joho/godotenv"
 )
 
 func populateData() map[string]string {
-	data := make(map[string]string)
-	for _, envvar := range os.Environ() {
-		keyval := strings.SplitN(envvar, "=", 2) // "sampleKey=sample=Value" returns ["sampleKey", "sample=value"]
-		key := keyval[0]
-		val := os.ExpandEnv(keyval[1])
+	data, err := godotenv.Read()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		key, ok := mapToMeteorKey(key)
-		if !ok {
-			continue
-		}
-
-		data[key] = val
+	for key, val := range data {
+		k := strings.ToLower(key)
+		data[k] = val
 	}
 
 	return data
-}
-
-func mapToMeteorKey(rawKey string) (key string, ok bool) {
-	// we are doing everything in lowercase for case insensitivity
-	key = strings.ToLower(rawKey)
-	meteorPrefix := strings.ToLower(recipeEnvVarPrefix)
-	keyPrefixLen := len(meteorPrefix)
-
-	isMeteorKeyFormat := len(key) > keyPrefixLen && key[:keyPrefixLen] == meteorPrefix
-	if !isMeteorKeyFormat {
-		return
-	}
-	key = key[keyPrefixLen:] // strips prefix - meteor_user_id becomes user_id
-	ok = true
-
-	return
 }
