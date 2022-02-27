@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Exponential backoff-retry for container to accept connections
-	//dsn format - http[s]://user[:pass]@host[:port][?parameters]
+	// dsn format - http[s]://user[:pass]@host[:port][?parameters]
 	retryFn := func(r *dockertest.Resource) (err error) {
 		dsn := "http://presto@localhost:8080"
 		db, err = sql.Open("presto", dsn)
@@ -69,9 +69,9 @@ func TestMain(m *testing.M) {
 
 	// Clean tests
 	if err = db.Close(); err != nil {
-		return
+		log.Fatal(err)
 	}
-	if err := purgeFn(); err != nil {
+	if err = purgeFn(); err != nil {
 		log.Fatal(err)
 	}
 	os.Exit(code)
@@ -93,14 +93,13 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := presto.New(utils.Logger)
 
-		err := newExtractor.Init(ctx, map[string]interface{}{
+		if err := newExtractor.Init(ctx, map[string]interface{}{
 			"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
-			"exclude_catalog": "memory,system,tpcds,tpch", // jmx catalog is not excluded
-		})
-		if err != nil {
-
+			"exclude_catalog": "memory,system,tpcds,tpch", // only jmx catalog is not excluded
+		}); err != nil {
 			t.Fatal(err)
 		}
+
 		emitter := mocks.NewEmitter()
 		err = newExtractor.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)

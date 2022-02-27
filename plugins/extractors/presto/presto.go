@@ -91,8 +91,8 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 	catalogs, err := e.getCatalogs()
 	for _, catalog := range catalogs {
-		// Open a new connection to the given catalogs list to collect
-		// schemas information
+		// Open a new connection to the given catalogs list
+		// to collect schemas information
 
 		db, err := e.connection(catalog)
 		if err != nil {
@@ -125,6 +125,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	return nil
 }
 
+// getCatalogs prepares the list of catalogs
 func (e *Extractor) getCatalogs() (list []string, err error) {
 	// Get list of catalogs
 	catalogs, err := e.client.Query("SHOW CATALOGS")
@@ -149,6 +150,7 @@ func (e *Extractor) getCatalogs() (list []string, err error) {
 	return list, err
 }
 
+// getDatabases prepares the list of databases
 func (e *Extractor) getDatabases(db *sql.DB, catalog string) (list []string, err error) {
 	// Get list of databases
 	showSchemasQuery := fmt.Sprintf("show schemas in %s", catalog)
