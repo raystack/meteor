@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -12,16 +13,32 @@ var (
 )
 
 func populateData() map[string]string {
-	data, err := godotenv.Read()
-	if err != nil {
-		return populateDataFromLocal()
+	dataUpperCase, err := godotenv.Read()
+	// warns user about missing .env file
+	if err.Error() == "open .env: no such file or directory" {
+		log.Warnln(".env file not found")
+	} else if err != nil {
+		log.Error(err)
 	}
 
-	for key, val := range data {
+	data := make(map[string]string)
+	// convert variable names to lower case
+	for key, val := range dataUpperCase {
 		k := strings.ToLower(key)
 		data[k] = val
 	}
 
+	// fecthes local environment variable with prefix METEOR_
+	envData := populateDataFromLocal()
+
+	for key, val := range envData {
+		_, keyAlreadyExists := data[key]
+		// prefer variables from .env file in cases of replication
+		if keyAlreadyExists {
+			continue
+		}
+		data[key] = val
+	}
 	return data
 }
 
