@@ -14,7 +14,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `http://user:pass@localhost:8080?catalog=default&schema=test` | URL to access the presto server | *required* |
+| `connection_url` | `string` | `http://user:pass@localhost:8080` | URL to access the presto server | *required* |
 | `exclude` | `string` | `memory,system` | This is a comma separated catalog list to exclude from querying data | *optional* |
 
 ## Outputs
