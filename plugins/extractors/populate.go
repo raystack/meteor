@@ -22,6 +22,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/postgres"
 	_ "github.com/odpf/meteor/plugins/extractors/redshift"
 	_ "github.com/odpf/meteor/plugins/extractors/presto"
+	_ "github.com/odpf/meteor/plugins/extractors/snowflake"
 	_ "github.com/odpf/meteor/plugins/extractors/superset"
 	_ "github.com/odpf/meteor/plugins/extractors/tableau"
 )
