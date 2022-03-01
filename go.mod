@@ -12,6 +12,7 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
+	github.com/aws/aws-sdk-go v1.40.34
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/containerd/continuity v0.1.0 // indirect
