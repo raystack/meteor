@@ -42,7 +42,9 @@ Contains details about the ingridients of our recipe. The `config` of each sourc
 
 ## Dynamic recipe value
 
-Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe. Environment variables with prefix `METEOR_`, such as `METEOR_MONGODB_PASS`, will be used as the template data for the recipe. This is to allow you to skip creating recipes containing the credentials of datasource.
+Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), which means you can put a variable instead of static value in a recipe.
+Environment variables with prefix `METEOR_`, such as `METEOR_MONGODB_PASS`, will be used as the template data for the recipe.
+This is to allow you to skip creating recipes containing the credentials of datasource.
 
 * _recipe-with-variable.yaml_
 
@@ -51,9 +53,8 @@ name: sample-recipe
 source:
   name: mongodb
   config:
-    user_id: {{ .mongodb_user }}
     # wrap it with double quotes to make sure value is read as a string
-    password: "{{ .mongodb_pass }}"
+    connection_url: "{{ .connection_url }}"
 sinks:
   - name: http
     config:
@@ -65,11 +66,21 @@ sinks:
 
 ```text
 #setup environment variables
-> export METEOR_MONGODB_USER=admin
-> export METEOR_MONGODB_PASS=1234
+> export METEOR_CONNECTION_URL=mongodb://admin:pass123@localhost:3306
 #run a single recipe
 > meteor run recipe-with-variable.yaml
 #run multiple recipes contained in single directory
 > meteor rundir path/directory-of-recipes
 ```
 
+## Support to pass secrets through .env file
+
+Meteor allows you to maintain a `.env` file as well which can be used as a template data for recipe.
+The variables here should not contain a `METEOR_` prefix and should be as normal as any other `.env` file.
+Meteor reads both local environment variables as well as the ones from `.env` file and in case of conflict prefers the one mentioned in `.env` file.
+
+* _.env_
+
+```env
+CONNECTION_URL=mongodb://admin:pass123@localhost:3306
+```
