@@ -2,6 +2,7 @@ package recipe
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,6 +17,10 @@ import (
 type Reader struct {
 	data map[string]string
 }
+
+var (
+	ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
+)
 
 // NewReader returns a new Reader.
 func NewReader() *Reader {

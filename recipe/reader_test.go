@@ -1,11 +1,16 @@
 package recipe_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/odpf/meteor/recipe"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
 )
 
 func TestReaderRead(t *testing.T) {
@@ -226,10 +231,10 @@ func TestReaderRead(t *testing.T) {
 	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
 		reader := recipe.NewReader()
 		_, err := reader.Read("./testdata/missing-version.yaml")
-		assert.NotNil(t, err)
+		errors.Is(err, ErrInvalidRecipeVersion)
 
 		_, err = reader.Read("./testdata/incorrect-version.yaml")
-		assert.NotNil(t, err)
+		errors.Is(err, ErrInvalidRecipeVersion)
 	})
 }
 
