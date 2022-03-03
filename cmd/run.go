@@ -3,6 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
@@ -14,22 +20,18 @@ import (
 	"github.com/odpf/salt/term"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
-	"strconv"
-	"syscall"
-	"time"
 )
 
 // RunCmd creates a command object for the "run" action.
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
 	var (
-		report   [][]string
-		success  = 0
-		failures = 0
+		report       [][]string
+		pathToConfig string
+		success      = 0
+		failures     = 0
 	)
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
 		Long: heredoc.Doc(`
@@ -70,6 +72,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			// Monitoring system signals and creating context
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
+
+			fmt.Printf("Path to config: %s \n\n\n", pathToConfig)
 
 			recipes, err := recipe.NewReader().Read(args[0])
 			if err != nil {
@@ -119,4 +123,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&pathToConfig, "config", "undeclared", "Path to Config file with env variables for recipe")
+
+	return cmd
 }
