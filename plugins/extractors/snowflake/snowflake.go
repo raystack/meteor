@@ -87,6 +87,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	for dbs.Next() {
 		var createdOn, name, isDefault, isCurrent, origin, owner, comment, options string
 		var retentionTime int
+
 		if err = dbs.Scan(&createdOn, &name, &isDefault, &isCurrent, &origin, &owner, &comment, &options, &retentionTime); err != nil {
 			return fmt.Errorf("failed to scan database %s: %w", name, err)
 		}
@@ -112,9 +113,11 @@ func (e *Extractor) extractTables(database string) (err error) {
 
 	// process each rows
 	for rows.Next() {
-		var createdOn, name, databaseName, schemaName, kind, comment, clusterBy, rowsName, bytes, owner, retentionTime, autoClustering, changeTracking, isExternal string
-		//var tableName string
-		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsName, &bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
+		var createdOn, name, databaseName, schemaName, kind, comment, clusterBy, owner, autoClustering, changeTracking, isExternal string
+		var bytes, rowsCount, retentionTime int
+
+		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsCount,
+			&bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
 			return err
 		}
 		if err = e.processTable(database, name); err != nil {
@@ -168,10 +171,10 @@ func (e *Extractor) extractColumns(database string, tableName string) (result []
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString sql.NullString
 		var length int
+
 		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
 			return nil, fmt.Errorf("failed to scan fields from query: %w", err)
 		}
-
 		result = append(result, &facetsv1beta1.Column{
 			Name:        fieldName.String,
 			DataType:    dataType.String,
