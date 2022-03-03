@@ -13,27 +13,27 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `user:password@my_organization-my_account/mydb` | URL to access the snowflake server | *required* |
+| `connection_url` | `string` | `user:password@org22-acc123/mydb` | URL to access the snowflake server | *required* |
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `snowflake` |
-| `description` | `table description` |
-| `schema` | [][Column](#column) |
+| Field              | Sample Value           |
+|:-------------------|:-----------------------|
+| `resource.urn`     | `my_database.my_table` |
+| `resource.name`    | `my_table`             |
+| `resource.service` | `snowflake`            |
+| `description`      | `table description`    |
+| `schema`           | [][Column](#column)    |
 
 ### Column
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
+| Field         | Sample Value         |
+|:--------------|:---------------------|
+| `name`        | `total_price`        |
 | `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `11` |
+| `data_type`   | `decimal`            |
+| `is_nullable` | `true`               |
+| `length`      | `11`                 |
 
 ## Contributing
 

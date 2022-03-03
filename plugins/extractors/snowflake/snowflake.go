@@ -10,7 +10,6 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
-	"github.com/pkg/errors"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
@@ -66,10 +65,8 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	}
 
 	// create snowflake client
-
-	// https://github.com/snowflakedb/gosnowflake/blob/e24bda449ced75324e8ce61377c88e4cea9c1efa/driver_test.go#L79
 	if e.db, err = sql.Open("snowflake", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("failed to create client: %w", err)
 	}
 
 	return
@@ -83,19 +80,21 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	// Get list of databases
 	dbs, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
-		return errors.Wrapf(err, "failed to get the list of databases")
+		return fmt.Errorf("failed to get the list of databases: %w", err)
 	}
 
 	// Iterate through all tables and databases
 	for dbs.Next() {
-		var database string
-		if err := dbs.Scan(&database); err != nil {
-			return errors.Wrapf(err, "failed to scan: %s", database)
+		var createdOn, name, isDefault, isCurrent, origin, owner, comment, options string
+		var retentionTime int
+		if err = dbs.Scan(&createdOn, &name, &isDefault, &isCurrent, &origin, &owner, &comment, &options, &retentionTime); err != nil {
+			return fmt.Errorf("failed to scan database %s: %w", name, err)
 		}
-		if err := e.extractTables(database); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", database)
+		if err = e.extractTables(name); err != nil {
+			return fmt.Errorf("failed to extract tables from %s: %w", name, err)
 		}
 	}
+
 	return
 }
 
@@ -104,32 +103,34 @@ func (e *Extractor) extractTables(database string) (err error) {
 	// extract tables
 	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute USE query on %s", database)
+		return fmt.Errorf("failed to execute USE query on %s: %w", database, err)
 	}
 	rows, err := e.db.Query("SHOW TABLES;")
 	if err != nil {
-		return errors.Wrapf(err, "failed to show tables for %s", database)
+		return fmt.Errorf("failed to show tables for %s: %w", database, err)
 	}
 
 	// process each rows
 	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
+		var createdOn, name, databaseName, schemaName, kind, comment, clusterBy, rowsName, bytes, owner, retentionTime, autoClustering, changeTracking, isExternal string
+		//var tableName string
+		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsName, &bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
 			return err
 		}
-		if err := e.processTable(database, tableName); err != nil {
+		if err = e.processTable(database, name); err != nil {
 			return err
 		}
 	}
+
 	return
 }
 
 // processTable builds and push table to out channel
 func (e *Extractor) processTable(database string, tableName string) (err error) {
 	var columns []*facetsv1beta1.Column
-	columns, err = e.extractColumns(tableName)
+	columns, err = e.extractColumns(database, tableName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to extract columns")
+		return fmt.Errorf("failed to extract columns from %s.%s: %w", database, tableName, err)
 	}
 
 	// push table to channel
@@ -143,37 +144,43 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 			Columns: columns,
 		},
 	}))
+
 	return
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(tableName string) (result []*facetsv1beta1.Column, err error) {
-	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
+func (e *Extractor) extractColumns(database string, tableName string) (result []*facetsv1beta1.Column, err error) {
+	// extract columns
+	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute USE query on %s: %w", database, err)
+	}
+	sqlStr := `SELECT COLUMN_NAME,COMMENT,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC;`
 	rows, err := e.db.Query(sqlStr, tableName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to execute a query to extract columns metadata")
+		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
 	}
 
 	for rows.Next() {
-		var fieldName, fieldDesc, dataType, isNullableString string
+		var fieldName, fieldDesc, dataType, isNullableString sql.NullString
 		var length int
-		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to scan fields from query")
+		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
+			return nil, fmt.Errorf("failed to scan fields from query: %w", err)
 		}
 
 		result = append(result, &facetsv1beta1.Column{
-			Name:        fieldName,
-			DataType:    dataType,
-			Description: fieldDesc,
-			IsNullable:  e.isNullable(isNullableString),
+			Name:        fieldName.String,
+			DataType:    dataType.String,
+			Description: fieldDesc.String,
+			IsNullable:  e.isNullable(isNullableString.String),
 			Length:      int64(length),
 		})
 	}
+
 	return result, nil
 }
 

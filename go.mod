@@ -56,6 +56,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/sijms/go-ora/v2 v2.2.22
+	github.com/snowflakedb/gosnowflake v1.3.5
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
