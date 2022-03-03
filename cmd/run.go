@@ -75,7 +75,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 
 			fmt.Printf("Path to config: %s \n\n\n", pathToConfig)
 
-			recipes, err := recipe.NewReader().Read(args[0])
+			recipes, err := recipe.NewReader(pathToConfig).Read(args[0])
 			if err != nil {
 				return err
 			}
