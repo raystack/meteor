@@ -14,8 +14,9 @@ var (
 
 func populateData() map[string]string {
 	dataUpperCase, err := godotenv.Read()
+
 	// warns user about missing .env file
-	if err.Error() == "open .env: no such file or directory" {
+	if err != nil && err.Error() == "open .env: no such file or directory" {
 		log.Warnln(".env file not found")
 	} else if err != nil {
 		log.Error(err)
