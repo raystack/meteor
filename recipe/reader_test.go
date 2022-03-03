@@ -10,6 +10,8 @@ import (
 
 var (
 	emptyConfigPath = ""
+	username        = "admin"
+	password        = "1234"
 )
 
 func TestReaderRead(t *testing.T) {
@@ -90,10 +92,6 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should parse variable in recipe with value from env vars prefixed with METEOR_", func(t *testing.T) {
-		var (
-			username = "admin"
-			password = "1234"
-		)
 		os.Setenv("METEOR_SOURCE_USERNAME", username)
 		os.Setenv("METEOR_SOURCE_PASSWORD", password)
 		defer func() {
@@ -149,10 +147,6 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should return recipes on success", func(t *testing.T) {
-		var (
-			username = "admin"
-			password = "1234"
-		)
 		os.Setenv("METEOR_SOURCE_USERNAME", username)
 		os.Setenv("METEOR_SOURCE_PASSWORD", password)
 		defer func() {
@@ -228,10 +222,6 @@ func TestReaderRead(t *testing.T) {
 
 	// Testing populateData() with various environment configs!!
 	t.Run("should read config file in current directory", func(t *testing.T) {
-		var (
-			username = "admin"
-			password = "1234"
-		)
 		reader := recipe.NewReader("sample_config.yaml")
 		results, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
 		if err != nil {
@@ -263,10 +253,6 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should read config file in other directory", func(t *testing.T) {
-		var (
-			username = "admin"
-			password = "1234"
-		)
 		reader := recipe.NewReader("testdata/config2.yaml")
 		results, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
 		if err != nil {
