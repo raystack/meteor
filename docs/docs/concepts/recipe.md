@@ -70,17 +70,24 @@ sinks:
 #run a single recipe
 > meteor run recipe-with-variable.yaml
 #run multiple recipes contained in single directory
-> meteor rundir path/directory-of-recipes
+> meteor run path/directory-of-recipes
 ```
 
-## Support to pass secrets through .env file
+## Support to pass secrets with --config flag
 
-Meteor allows you to maintain a `.env` file as well which can be used as a template data for recipe.
-The variables here should not contain a `METEOR_` prefix and should be as normal as any other `.env` file.
-Meteor reads both local environment variables as well as the ones from `.env` file and in case of conflict prefers the one mentioned in `.env` file.
+Meteor allows you to maintain a `.yaml` file as well which can be used as a template data for recipe.
+The variables here should not contain a `METEOR_` prefix and should be as normal as any other `config` file.
+Meteor reads both local environment variables as well as the ones from `yaml` file and in case of conflict prefers the one mentioned in `yaml` file.
 
-* _.env_
+* _sample-config.yaml_
 
-```env
-CONNECTION_URL=mongodb://admin:pass123@localhost:3306
+```yaml
+SOURCE:
+  USERNAME: admin
+  PASSWORD: "1234"
+```
+
+```bash
+#run recipes in _recipes folder with secrets from sample-config.yaml
+$ meteor run _recipes --config sample-config.yaml
 ```
