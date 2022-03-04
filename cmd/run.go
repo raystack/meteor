@@ -73,8 +73,6 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			fmt.Printf("Path to config: %s \n\n\n", pathToConfig)
-
 			recipes, err := recipe.NewReader(pathToConfig).Read(args[0])
 			if err != nil {
 				return err
@@ -124,7 +122,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 		},
 	}
 
-	cmd.Flags().StringVar(&pathToConfig, "config", "", "Path to Config file with env variables for recipe")
+	cmd.Flags().StringVar(&pathToConfig, "secrets", "", "Path to Config file with env variables for recipe")
 
 	return cmd
 }
