@@ -158,11 +158,10 @@ func (e *Extractor) extractColumns(database string, tableName string) (result []
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute USE query on %s: %w", database, err)
 	}
-	sqlStr := `SELECT COLUMN_NAME,COMMENT,DATA_TYPE,
-				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
-				FROM information_schema.columns
-				WHERE table_name = ?
-				ORDER BY COLUMN_NAME ASC;`
+	sqlStr := `SELECT COLUMN_NAME,COMMENT,DATA_TYPE,IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
+			   FROM information_schema.columns
+		       WHERE TABLE_NAME = ?
+		       ORDER BY COLUMN_NAME ASC;`
 	rows, err := e.db.Query(sqlStr, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
