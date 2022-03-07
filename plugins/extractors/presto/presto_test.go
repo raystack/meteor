@@ -101,7 +101,7 @@ func TestExtract(t *testing.T) {
 		}
 
 		emitter := mocks.NewEmitter()
-		err = newExtractor.Extract(ctx, emitter.Push)
+		err := newExtractor.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
 		var urns []string

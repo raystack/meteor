@@ -153,7 +153,7 @@ func (e *Extractor) getCatalogs() (list []string, err error) {
 // getDatabases prepares the list of databases
 func (e *Extractor) getDatabases(db *sql.DB, catalog string) (list []string, err error) {
 	// Get list of databases
-	showSchemasQuery := fmt.Sprintf("show schemas in %s", catalog)
+	showSchemasQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
 	dbs, err := db.Query(showSchemasQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the list of schemas from %s: %w", catalog, err)
@@ -215,10 +215,9 @@ func (e *Extractor) processTable(db *sql.DB, catalog string, database string, ta
 
 // extractColumns extracts columns from a given table
 func (e *Extractor) extractColumns(db *sql.DB, catalog string) (result []*facetsv1beta1.Column, err error) {
-	sqlStr := fmt.Sprintf(`SELECT column_name,data_type,
-				is_nullable, comment
+	sqlStr := fmt.Sprintf(`SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,COMMENT
 				FROM %s.information_schema.columns
-				ORDER BY column_name ASC`, catalog)
+				ORDER BY COLUMN_NAME ASC`, catalog)
 	rows, err := db.Query(sqlStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
