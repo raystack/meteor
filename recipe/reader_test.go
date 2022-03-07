@@ -9,10 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
-)
-
 func TestReaderRead(t *testing.T) {
 	t.Run("should return error if file is not found", func(t *testing.T) {
 		reader := recipe.NewReader()
@@ -231,10 +227,10 @@ func TestReaderRead(t *testing.T) {
 	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
 		reader := recipe.NewReader()
 		_, err := reader.Read("./testdata/missing-version.yaml")
-		errors.Is(err, ErrInvalidRecipeVersion)
+		errors.Is(err, recipe.ErrInvalidRecipeVersion)
 
 		_, err = reader.Read("./testdata/incorrect-version.yaml")
-		errors.Is(err, ErrInvalidRecipeVersion)
+		errors.Is(err, recipe.ErrInvalidRecipeVersion)
 	})
 }
 
