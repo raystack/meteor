@@ -122,7 +122,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 		},
 	}
 
-	cmd.Flags().StringVar(&pathToConfig, "secrets", "", "Path to Config file with env variables for recipe")
+	cmd.Flags().StringVar(&pathToConfig, "var", "", "Path to Config file with env variables for recipe")
 
 	return cmd
 }

@@ -73,7 +73,7 @@ sinks:
 > meteor run path/directory-of-recipes
 ```
 
-## Support to pass secrets with --secrets flag
+## Support to pass env variables with --var flag
 
 Meteor allows you to maintain a `.yaml` file as well which can be used as a template data for recipe.
 The variables here should not contain a `METEOR_` prefix and should be as normal as any other `config` file.
@@ -89,5 +89,5 @@ SOURCE:
 
 ```bash
 #run recipes in _recipes folder with secrets from sample-config.yaml
-$ meteor run _recipes --secrets sample-config.yaml
+$ meteor run _recipes --var sample-config.yaml
 ```
