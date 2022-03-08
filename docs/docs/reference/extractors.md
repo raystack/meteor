@@ -18,6 +18,7 @@ Meteor currently support metadata extraction on these data sources. To perform e
 | [`oracle`](https://github.com/odpf/meteor/tree/main/plugins/extractors/oracle/README.md)         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
 | [`mariadb`](https://github.com/odpf/meteor/tree/main/plugins/extractors/mariadb/README.md)       | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
 | [`redshift`](https://github.com/odpf/meteor/tree/main/plugins/extractors/redshift/README.md)     | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`presto`](https://github.com/odpf/meteor/tree/main/plugins/extractors/presto/README.md)         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
 
 ### Dashboard
 
