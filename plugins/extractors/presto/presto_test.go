@@ -19,12 +19,11 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 )
 
 const (
 	user = "presto"
-	port = "8080"
+	port = "8888"
 )
 
 var (
@@ -38,26 +37,18 @@ func TestMain(m *testing.M) {
 		Repository:   "ahanaio/prestodb-sandbox",
 		Tag:          "0.270",
 		ExposedPorts: []string{"8080"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"8080": {
-				{HostIP: "0.0.0.0", HostPort: "8080"},
-			},
-		},
+		PortBindings: map[docker.Port][]docker.PortBinding{"8080": {{HostIP: "0.0.0.0", HostPort: port}}},
 	}
 
-	// Exponential backoff-retry for container to accept connections
 	// dsn format - http[s]://user[:pass]@host[:port][?parameters]
 	retryFn := func(r *dockertest.Resource) (err error) {
-		dsn := "http://presto@localhost:8080"
+		dsn := fmt.Sprintf("http://presto@localhost:%s", port)
 		db, err = sql.Open("presto", dsn)
 		if err != nil {
 			return err
 		}
-
-		// wait until presto ready, might want to call SELECT 1 and retry if failed and give timeout
-		time.Sleep(1 * time.Minute)
-
-		return db.Ping()
+		_, err = db.Query("SELECT 1")
+		return
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
@@ -95,7 +86,7 @@ func TestExtract(t *testing.T) {
 
 		if err := newExtractor.Init(ctx, map[string]interface{}{
 			"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
-			"exclude_catalog": "memory,system,tpcds,tpch", // only jmx catalog is not excluded
+			"exclude_catalog": "memory,jmx,tpcds,tpch", // only system catalog is not excluded
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -110,6 +101,6 @@ func TestExtract(t *testing.T) {
 			urns = append(urns, table.Resource.Urn)
 
 		}
-		assert.Equal(t, 242, len(urns))
+		assert.Equal(t, 30, len(urns))
 	})
 }
