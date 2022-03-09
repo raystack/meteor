@@ -283,10 +283,10 @@ func TestReaderRead(t *testing.T) {
 			},
 		}
 		compareRecipes(t, expected, results[0])
-  })
+	})
 
 	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
-		reader := recipe.NewReader()
+		reader := recipe.NewReader("testdata/config2.yaml")
 		_, err := reader.Read("./testdata/missing-version.yaml")
 		errors.Is(err, recipe.ErrInvalidRecipeVersion)
 
