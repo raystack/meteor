@@ -23,9 +23,9 @@ var (
 )
 
 // NewReader returns a new Reader.
-func NewReader() *Reader {
+func NewReader(pathToConfig string) *Reader {
 	reader := &Reader{}
-	reader.data = populateData()
+	reader.data = populateData(pathToConfig)
 
 	return reader
 }

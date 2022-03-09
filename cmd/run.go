@@ -25,12 +25,13 @@ import (
 // RunCmd creates a command object for the "run" action.
 func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
 	var (
-		report   [][]string
-		success  = 0
-		failures = 0
+		report       [][]string
+		pathToConfig string
+		success      = 0
+		failures     = 0
 	)
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "run <path>|<name>",
 		Short: "Execute recipes for metadata extraction",
 		Long: heredoc.Doc(`
@@ -72,7 +73,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			recipes, err := recipe.NewReader().Read(args[0])
+			recipes, err := recipe.NewReader(pathToConfig).Read(args[0])
 			if err != nil {
 				return err
 			}
@@ -120,4 +121,8 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&pathToConfig, "var", "", "Path to Config file with env variables for recipe")
+
+	return cmd
 }
