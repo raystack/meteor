@@ -2,11 +2,14 @@ package recipe
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/odpf/meteor/generator"
 	"gopkg.in/yaml.v3"
 )
 
@@ -14,6 +17,10 @@ import (
 type Reader struct {
 	data map[string]string
 }
+
+var (
+	ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
+)
 
 // NewReader returns a new Reader.
 func NewReader(pathToConfig string) *Reader {
@@ -69,6 +76,12 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 		node.Name.Value = fileName
 	}
 
+	versions := generator.GetRecipeVersions()
+	err = validateRecipeVersion(node.Version.Value, versions[len(versions)-1])
+	if err != nil {
+		return
+	}
+
 	recipe, err = node.toRecipe()
 	if err != nil {
 		return
@@ -93,4 +106,11 @@ func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
 	}
 
 	return
+}
+
+func validateRecipeVersion(receivedVersion, expectedVersion string) (err error) {
+	if strings.Compare(receivedVersion, expectedVersion) == 0 {
+		return
+	}
+	return fmt.Errorf("received recipe version %s does not match to the expected version %s", receivedVersion, expectedVersion)
 }

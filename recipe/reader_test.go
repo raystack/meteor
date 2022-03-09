@@ -1,6 +1,7 @@
 package recipe_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -69,7 +70,8 @@ func TestReaderRead(t *testing.T) {
 			}
 			expectedRecipes := []recipe.Recipe{
 				{
-					Name: "test-recipe-no-name",
+					Name:    "test-recipe-no-name",
+					Version: "v1beta1",
 					Source: recipe.PluginRecipe{
 						Name: "test-source",
 						Config: map[string]interface{}{
@@ -281,6 +283,15 @@ func TestReaderRead(t *testing.T) {
 			},
 		}
 		compareRecipes(t, expected, results[0])
+  })
+
+	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
+		reader := recipe.NewReader()
+		_, err := reader.Read("./testdata/missing-version.yaml")
+		errors.Is(err, recipe.ErrInvalidRecipeVersion)
+
+		_, err = reader.Read("./testdata/incorrect-version.yaml")
+		errors.Is(err, recipe.ErrInvalidRecipeVersion)
 	})
 }
 

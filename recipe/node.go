@@ -9,6 +9,7 @@ import (
 // RecipeNode contains the json data for a recipe node
 type RecipeNode struct {
 	Name       yaml.Node    `json:"name" yaml:"name"`
+	Version    yaml.Node    `json:"version" yaml:"version"`
 	Source     PluginNode   `json:"source" yaml:"source"`
 	Sinks      []PluginNode `json:"sinks" yaml:"sinks"`
 	Processors []PluginNode `json:"processors" yaml:"processors"`
@@ -60,7 +61,8 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 		return
 	}
 	recipe = Recipe{
-		Name: node.Name.Value,
+		Name:    node.Name.Value,
+		Version: node.Version.Value,
 		Source: PluginRecipe{
 			Name:   node.Source.Name.Value,
 			Config: sourceConfig,

@@ -1,4 +1,5 @@
 name: {{.Name}}
+version: {{.Version}}
 source:
 {{- range $key, $value := .Source }}
   type: {{$key}}

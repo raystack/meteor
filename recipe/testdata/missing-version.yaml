@@ -1,5 +1,4 @@
 name: recipe-three
-version: v1beta1
 source:
   type: kafka
   config:

@@ -1,4 +1,5 @@
 name: recipe-read-line
+version: v1beta1
 source:
   type: srcA
   config:

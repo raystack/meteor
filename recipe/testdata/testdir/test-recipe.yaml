@@ -1,4 +1,5 @@
 name: test-recipe
+version: v1beta1
 source:
   name: test-source
   config:

@@ -18,12 +18,12 @@ func TestRecipeGetLine(t *testing.T) {
 	rcp := r[0]
 
 	t.Run("should return source line and column", func(t *testing.T) {
-		assert.Equal(t, 3, rcp.Source.Node.Name.Line)
+		assert.Equal(t, 4, rcp.Source.Node.Name.Line)
 		assert.Equal(t, 9, rcp.Source.Node.Name.Column)
 	})
 
 	t.Run("should return config source lines", func(t *testing.T) {
-		expectedLineNum := []int{5, 6, 7}
+		expectedLineNum := []int{6, 7, 8}
 		var lineNum []int
 		srcConfig := rcp.Source.Node.Config
 		for _, j := range srcConfig {
@@ -34,24 +34,24 @@ func TestRecipeGetLine(t *testing.T) {
 	})
 
 	t.Run("should return config source line for a specific config key", func(t *testing.T) {
-		expectedLineNum := 6
+		expectedLineNum := 7
 		srcConfigKey := rcp.Source.Node.Config["srcKey2"]
 		assert.Equal(t, expectedLineNum, srcConfigKey.Line)
 	})
 
 	t.Run("should return processors line and column", func(t *testing.T) {
-		assert.Equal(t, 9, rcp.Processors[0].Node.Name.Line)
+		assert.Equal(t, 10, rcp.Processors[0].Node.Name.Line)
 		assert.Equal(t, 11, rcp.Processors[0].Node.Name.Column)
 
-		assert.Equal(t, 14, rcp.Processors[1].Node.Name.Line)
+		assert.Equal(t, 15, rcp.Processors[1].Node.Name.Line)
 		assert.Equal(t, 11, rcp.Processors[1].Node.Name.Column)
 	})
 
 	t.Run("should return sinks line and column", func(t *testing.T) {
-		assert.Equal(t, 20, rcp.Sinks[0].Node.Name.Line)
+		assert.Equal(t, 21, rcp.Sinks[0].Node.Name.Line)
 		assert.Equal(t, 11, rcp.Sinks[0].Node.Name.Column)
 
-		assert.Equal(t, 25, rcp.Sinks[1].Node.Name.Line)
+		assert.Equal(t, 26, rcp.Sinks[1].Node.Name.Line)
 		assert.Equal(t, 11, rcp.Sinks[1].Node.Name.Column)
 	})
 }
@@ -65,12 +65,12 @@ func TestRecipeGetLineBySrcTypeTag(t *testing.T) {
 	rcp := r[0]
 
 	t.Run("should return source line and column", func(t *testing.T) {
-		assert.Equal(t, 3, rcp.Source.Node.Type.Line)
+		assert.Equal(t, 4, rcp.Source.Node.Type.Line)
 		assert.Equal(t, 9, rcp.Source.Node.Type.Column)
 	})
 
 	t.Run("should return config source lines", func(t *testing.T) {
-		expectedLineNum := []int{5, 6, 7}
+		expectedLineNum := []int{6, 7, 8}
 		var lineNum []int
 		srcConfig := rcp.Source.Node.Config
 		for _, j := range srcConfig {
@@ -81,7 +81,7 @@ func TestRecipeGetLineBySrcTypeTag(t *testing.T) {
 	})
 
 	t.Run("should return config source line for a specific config key", func(t *testing.T) {
-		expectedLineNum := 6
+		expectedLineNum := 7
 		srcConfigKey := rcp.Source.Node.Config["srcKey2"]
 		assert.Equal(t, expectedLineNum, srcConfigKey.Line)
 	})
