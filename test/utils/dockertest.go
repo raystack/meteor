@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ory/dockertest/v3"
 )
@@ -13,6 +14,8 @@ import (
 //"retryOp" is an exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Resource) error) (purgeFn func() error, err error) {
 	pool, err := dockertest.NewPool("")
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	pool.MaxWait = 120 * time.Second
 	if err != nil {
 		return purgeFn, fmt.Errorf("could not create dockertest pool: %s", err)
 	}
