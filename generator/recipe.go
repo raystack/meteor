@@ -16,6 +16,7 @@ var file embed.FS
 // Template represents the template for generating a recipe.
 type Template struct {
 	Name       string
+	Version    string
 	Source     map[string]string
 	Sinks      map[string]string
 	Processors map[string]string
@@ -25,10 +26,13 @@ var templateFuncs = map[string]interface{}{
 	"indent": indent,
 }
 
+var recipeVersions = [1]string{"v1beta1"}
+
 // Recipe checks if the recipe is valid and returns a Template
 func Recipe(name string, source string, sinks []string, processors []string) (err error) {
 	tem := Template{
-		Name: name,
+		Name:    name,
+		Version: recipeVersions[len(recipeVersions)-1],
 	}
 
 	if source != "" {
@@ -72,4 +76,8 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+
+func GetRecipeVersions() [1]string {
+	return recipeVersions
 }

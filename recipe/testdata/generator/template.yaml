@@ -1,4 +1,5 @@
 name: {{ .Data.name }}
+version: v1beta1
 source:
   type: kafka
   config:

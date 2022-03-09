@@ -12,6 +12,7 @@ Recipe is a yaml file, follows a structure as shown below and needs to passed as
 
 ```yaml
 name: main-kafka-production # unique recipe name as an ID
+version: v1beta1 #recipe version
 source: # required - for fetching input from sources
  name: kafka # required - collector to use (e.g. bigquery, kafka)
  config:
@@ -36,6 +37,7 @@ Contains details about the ingridients of our recipe. The `config` of each sourc
 | Key | Description | Requirement | further reference |
 | :--- | :--- | :--- | :--- |
 | `name` | **unique** recipe name, will be used as ID for job | required | N/A |
+| `version` | Specify the version of recipe being used | required | N/A |
 | `source` | contains details about the source of metadata extraction | required | [source](source.md) |
 | `sinks` | defines the final destination's of extracted and processed metadata | required | [sink](sink.md) |
 | `processors` | used process the metadata before sinking | optional | [processor](processor.md) |
@@ -48,6 +50,7 @@ Meteor reads recipe using [go template](https://golang.org/pkg/text/template/), 
 
 ```yaml
 name: sample-recipe
+version: v1beta1
 source:
   name: mongodb
   config:

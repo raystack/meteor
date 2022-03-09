@@ -3,6 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
@@ -14,11 +20,6 @@ import (
 	"github.com/odpf/salt/term"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
-	"strconv"
-	"syscall"
-	"time"
 )
 
 // RunCmd creates a command object for the "run" action.
