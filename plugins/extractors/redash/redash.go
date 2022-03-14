@@ -92,7 +92,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 }
 
 // buildDashboard builds a dashboard from redash server
-func (e *Extractor) buildDashboard(dashboard Dashboard) (data *assetsv1beta1.Dashboard, err error) {
+func (e *Extractor) buildDashboard(dashboard Results) (data *assetsv1beta1.Dashboard, err error) {
 	//var dashboard Dashboard
 	//chart, err := e.getChartsList(id)
 	//if err != nil {
@@ -113,10 +113,16 @@ func (e *Extractor) buildDashboard(dashboard Dashboard) (data *assetsv1beta1.Das
 }
 
 // getDashboardsList gets a list of dashboards from redash server
-func (e *Extractor) getDashboardsList() (dashboards []Dashboard, err error) {
+func (e *Extractor) getDashboardsList() (dashboards []Results, err error) {
 	type response struct {
-		Body       []Dashboard `json:"body"`
-		StatusCode int         `json:"statusCode"`
+		Count    int       `json:"count"`
+		Page     int       `json:"page"`
+		PageSize int       `json:"page_size"`
+		Results  []Results `json:"results"`
+
+		//Body       []Dashboard `json:"body"`
+		//StatusCode int         `json:"statusCode"`
+		//Results    []Results   `json:"results"`
 	}
 	var data response
 	if err = e.makeRequest("GET",
@@ -125,7 +131,7 @@ func (e *Extractor) getDashboardsList() (dashboards []Dashboard, err error) {
 		return
 	}
 
-	return data.Body, nil
+	return data.Results, nil
 }
 
 // makeRequest helper function to avoid rewriting a request

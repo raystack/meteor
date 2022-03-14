@@ -1,18 +1,38 @@
 package redash
 
-type Dashboard struct {
-	ID         int    `json:"id"`
-	UserID     int    `json:"user_id"`
-	Name       string `json:"name"`
-	Version    string `json:"version"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-	Filter     bool   `json:"dashboard_filters_enabled"`
-	Slug       string `json:"slug"`
-	IsArchived bool   `json:"is_archived"`
-	IsDraft    bool   `json:"is_draft"`
-	Layout     []int  `json:"layout"`
-	Widgets    []int  `json:"widgets"`
-}
+import "time"
 
 // https://github1s.com/getredash/redash/blob/HEAD/redash/handlers/dashboards.py
+
+type Results struct {
+	Tags       []interface{} `json:"tags"`
+	IsArchived bool          `json:"is_archived"`
+	UpdatedAt  time.Time     `json:"updated_at"`
+	IsFavorite bool          `json:"is_favorite"`
+	User       User          `json:"user"`
+	Layout     []interface{} `json:"layout"`
+	IsDraft    bool          `json:"is_draft"`
+	ID         int           `json:"id"`
+	UserID     int           `json:"user_id"`
+	Name       string        `json:"name"`
+	CreatedAt  time.Time     `json:"created_at"`
+	Slug       string        `json:"slug"`
+	Version    int           `json:"version"`
+	Widgets    interface{}   `json:"widgets"`
+}
+
+type User struct {
+	AuthType            string      `json:"auth_type"`
+	IsDisabled          bool        `json:"is_disabled"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	ProfileImageUrl     string      `json:"profile_image_url"`
+	IsInvitationPending bool        `json:"is_invitation_pending"`
+	Groups              []int       `json:"groups"`
+	Id                  int         `json:"id"`
+	Name                string      `json:"name"`
+	CreatedAt           time.Time   `json:"created_at"`
+	DisabledAt          interface{} `json:"disabled_at"`
+	IsEmailVerified     bool        `json:"is_email_verified"`
+	ActiveAt            time.Time   `json:"active_at"`
+	Email               string      `json:"email"`
+}
