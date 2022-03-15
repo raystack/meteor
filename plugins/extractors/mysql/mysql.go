@@ -75,7 +75,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.ExcludedDbs = extutils.BuildExcludedDBs(defaultDBList)
 
 	// create client
 	if e.DB, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -114,7 +114,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 // Extract tables from a given database
 func (e *Extractor) extractTables(database string) (err error) {
 	// skip if database is default
-	if e.isExcludedDB(database) {
+	if extutils.IsExcludedDB(database, e.ExcludedDbs) {
 		return
 	}
 
@@ -189,33 +189,12 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 			Name:        fieldName,
 			DataType:    dataType,
 			Description: fieldDesc,
-			IsNullable:  e.isNullable(isNullableString),
+			IsNullable:  extutils.IsNullable(isNullableString),
 			Length:      int64(length),
 		})
 	}
 
 	return
-}
-
-// buildExcludedDBs builds the list of excluded databases
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.ExcludedDbs = excludedMap
-}
-
-// isExcludedDB checks if the given db is in the list of excluded databases
-func (e *Extractor) isExcludedDB(database string) bool {
-	_, ok := e.ExcludedDbs[database]
-	return ok
-}
-
-// isNullable checks if the given string is null or not
-func (e *Extractor) isNullable(value string) bool {
-	return value == "YES"
 }
 
 // init register the extractor to the catalog
