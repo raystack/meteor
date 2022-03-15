@@ -14,7 +14,6 @@ require (
 	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
 	github.com/aws/aws-sdk-go v1.40.34
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
-	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/containerd/continuity v0.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.10.0
@@ -33,7 +32,6 @@ require (
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/google/go-github/v37 v37.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
-	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-hclog v0.16.1
@@ -49,7 +47,6 @@ require (
 	github.com/odpf/optimus v0.0.5-rc.1.0.20220106085648-02efc17c1c8d
 	github.com/odpf/salt v0.0.0-20220123093403-faac19525416
 	github.com/opencontainers/runc v1.0.1 // indirect
-	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/ory/dockertest/v3 v3.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c

@@ -15,6 +15,8 @@ import (
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
+	extutils "github.com/odpf/meteor/plugins/extractors/utils"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -38,13 +40,10 @@ type Config struct {
 
 var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
 
-// Extractor manages the extraction of data from MySQL
 type Extractor struct {
-	excludedDbs map[string]bool
-	logger      log.Logger
-	config      Config
-	db          *sql.DB
-	emit        plugins.Emit
+	extutils.BaseExtractor
+	config Config
+	logger log.Logger
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -79,7 +78,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.buildExcludedDBs()
 
 	// create client
-	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
+	if e.DB, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
@@ -89,10 +88,10 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the MySQL server
 // and collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.db.Close()
-	e.emit = emit
+	defer e.DB.Close()
+	e.Emit = emit
 
-	res, err := e.db.Query("SHOW DATABASES;")
+	res, err := e.DB.Query("SHOW DATABASES;")
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch databases")
 	}
@@ -120,11 +119,11 @@ func (e *Extractor) extractTables(database string) (err error) {
 	}
 
 	// extract tables
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err = e.DB.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
 		return errors.Wrapf(err, "failed to iterate over %s", database)
 	}
-	rows, err := e.db.Query("SHOW TABLES;")
+	rows, err := e.DB.Query("SHOW TABLES;")
 	if err != nil {
 		return errors.Wrapf(err, "failed to show tables of %s", database)
 	}
@@ -152,7 +151,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	}
 
 	// push table to channel
-	e.emit(models.NewRecord(&assetsv1beta1.Table{
+	e.Emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -172,7 +171,7 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC`
-	rows, err := e.db.Query(query, tableName)
+	rows, err := e.DB.Query(query, tableName)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute query")
 		return
@@ -205,12 +204,12 @@ func (e *Extractor) buildExcludedDBs() {
 		excludedMap[db] = true
 	}
 
-	e.excludedDbs = excludedMap
+	e.ExcludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases
 func (e *Extractor) isExcludedDB(database string) bool {
-	_, ok := e.excludedDbs[database]
+	_, ok := e.ExcludedDbs[database]
 	return ok
 }
 
