@@ -5,9 +5,13 @@ package snowflake_test
 
 import (
 	"context"
-	"github.com/odpf/meteor/plugins/extractors/snowflake"
+	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/odpf/meteor/plugins/extractors/snowflake"
+
+	"github.com/dnaeon/go-vcr/v2/cassette"
 	"github.com/dnaeon/go-vcr/v2/recorder"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
@@ -38,6 +42,17 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer r.Stop()
+
+		r.SetMatcher(func(req *http.Request, i cassette.Request) bool {
+			if req.Body == nil {
+				return cassette.DefaultMatcher(req, i)
+			}
+			iURL, err := url.Parse(i.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return (req.Method == i.Method) && (req.URL.Host == iURL.Host) && (req.URL.Path == iURL.Path)
+		})
 
 		ctx := context.TODO()
 		newExtractor := snowflake.New(
