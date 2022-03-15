@@ -8,6 +8,7 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/snowflake"
 	"testing"
 
+	"github.com/dnaeon/go-vcr/v2/recorder"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/test/mocks"
@@ -30,9 +31,18 @@ func TestInit(t *testing.T) {
 // after that the extraction of dummy data will not be possible and test will fail.
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
+
 	t.Run("should return mock-data we generated with snowflake", func(t *testing.T) {
+		r, err := recorder.New("fixtures/get_snowflakes_sample_data")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Stop()
+
 		ctx := context.TODO()
-		newExtractor := snowflake.New(utils.Logger)
+		newExtractor := snowflake.New(
+			utils.Logger,
+			snowflake.WithHTTPTransport(r))
 
 		if err := newExtractor.Init(ctx, map[string]interface{}{
 			"connection_url": "testing:Snowtest0512@lrwfgiz-hi47152/SNOWFLAKE_SAMPLE_DATA",
@@ -41,7 +51,7 @@ func TestExtract(t *testing.T) {
 		}
 
 		emitter := mocks.NewEmitter()
-		err := newExtractor.Extract(ctx, emitter.Push)
+		err = newExtractor.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
 		var urns []string

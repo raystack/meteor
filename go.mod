@@ -38,7 +38,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-plugin v1.4.2
-	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/mcuadros/go-defaults v1.2.0
@@ -56,7 +55,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/sijms/go-ora/v2 v2.2.22
-	github.com/snowflakedb/gosnowflake v1.3.5
+	github.com/snowflakedb/gosnowflake v1.6.7
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0

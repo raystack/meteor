@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+	"net/http"
+
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	"github.com/snowflakedb/gosnowflake"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
@@ -29,17 +32,34 @@ var sampleConfig = `connection_url: "user:password@my_organization-my_account/my
 
 // Extractor manages the extraction of data from snowflake
 type Extractor struct {
-	logger log.Logger
-	config Config
-	db     *sql.DB
-	emit   plugins.Emit
+	logger        log.Logger
+	config        Config
+	httpTransport http.RoundTripper
+	db            *sql.DB
+	emit          plugins.Emit
+}
+
+// Option provides extension abstraction to Extractor constructor
+type Option func(*Extractor)
+
+// WithHTTPTransport assign custom http client to the Extractor constructor
+func WithHTTPTransport(htr http.RoundTripper) Option {
+	return func(e *Extractor) {
+		e.httpTransport = htr
+	}
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
-	return &Extractor{
+func New(logger log.Logger, opts ...Option) *Extractor {
+	e := &Extractor{
 		logger: logger,
 	}
+
+	for _, opt := range opts {
+		opt(e)
+	}
+
+	return e
 }
 
 // Info returns the brief information about the extractor
@@ -64,10 +84,21 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 		return plugins.InvalidConfigError{}
 	}
 
-	// create snowflake client
-	if e.db, err = sql.Open("snowflake", e.config.ConnectionURL); err != nil {
-		return fmt.Errorf("failed to create client: %w", err)
+	if e.httpTransport == nil {
+		// create snowflake client
+		if e.db, err = sql.Open("snowflake", e.config.ConnectionURL); err != nil {
+			return fmt.Errorf("failed to create client: %w", err)
+		}
+		return
 	}
+
+	cfg, err := gosnowflake.ParseDSN(e.config.ConnectionURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse dsn when creating client: %w", err)
+	}
+	cfg.Transporter = e.httpTransport
+	connector := gosnowflake.NewConnector(&gosnowflake.SnowflakeDriver{}, *cfg)
+	e.db = sql.OpenDB(connector)
 
 	return
 }
