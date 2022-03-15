@@ -33,16 +33,10 @@ var defaultDBList = []string{
 	"sys",
 }
 
-// Config holds the connection URL for the extractor
-type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-}
-
 var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
 
 type Extractor struct {
 	extutils.BaseExtractor
-	config Config
 	logger log.Logger
 }
 
@@ -63,14 +57,9 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
-}
-
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	if err = utils.BuildConfig(configMap, &e.config); err != nil {
+	if err = utils.BuildConfig(configMap, &e.Config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
@@ -78,7 +67,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	e.ExcludedDbs = extutils.BuildExcludedDBs(defaultDBList)
 
 	// create client
-	if e.DB, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
+	if e.DB, err = sql.Open("mysql", e.Config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 

@@ -4,13 +4,25 @@ import (
 	"database/sql"
 
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/utils"
 )
+
+// Config holds the connection URL for the extractor
+type Config struct {
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+}
 
 // Extractor manages the extraction of data from MySQL
 type BaseExtractor struct {
 	ExcludedDbs map[string]bool
 	DB          *sql.DB
 	Emit        plugins.Emit
+	Config      Config
+}
+
+// Validate validates the configuration of the extractor
+func (bs *BaseExtractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
 }
 
 // BuildExcludedDBs builds the list of excluded databases
