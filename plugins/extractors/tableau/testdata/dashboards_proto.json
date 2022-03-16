@@ -1,10 +1,12 @@
-[{
+[
+    {
         "resource": {
             "urn": "tableau::https://server.tableau.com/workbook/d74564cf-931c-2df2-fd8f-8b974fbc0b14",
             "name": "Regional",
             "service": "tableau"
         },
-        "charts": [{
+        "charts": [
+            {
                 "urn": "tableau::https://server.tableau.com/sheet/2f97fce2-e291-e229-842d-b7af508aebfc",
                 "name": "Obesity Map",
                 "source": "tableau",
@@ -205,6 +207,15 @@
                 }
             }
         ],
+        "ownership": {
+            "owners": [
+                {
+                    "urn": "meteor_user",
+                    "name": "Meteor User",
+                    "email": "meteor_user"
+                }
+            ]
+        },
         "properties": {
             "attributes": {
                 "id": "d74564cf-931c-2df2-fd8f-8b974fbc0b14",
@@ -225,7 +236,8 @@
             }
         },
         "lineage": {
-            "upstreams": [{
+            "upstreams": [
+                {
                     "urn": "hyper::6025bab5-2ce4-491b-90fd-891f1f33316c/6025bab5-2ce4-491b-90fd-891f1f33316c/Extract",
                     "service": "hyper",
                     "type": "bucket"
@@ -265,7 +277,8 @@
             "service": "tableau",
             "description": "A sample superstore"
         },
-        "charts": [{
+        "charts": [
+            {
                 "urn": "tableau::https://server.tableau.com/sheet/0421101f-cd87-a6b9-e502-eca8f8e96a3a",
                 "name": "CustomerOverview",
                 "source": "tableau",
@@ -686,6 +699,15 @@
                 }
             }
         ],
+        "ownership": {
+            "owners": [
+                {
+                    "urn": "meteor_user",
+                    "name": "Meteor User",
+                    "email": "meteor_user"
+                }
+            ]
+        },
         "properties": {
             "attributes": {
                 "id": "e1f0aab7-e3ff-8727-8461-4d4294e220f0",
@@ -706,7 +728,8 @@
             }
         },
         "lineage": {
-            "upstreams": [{
+            "upstreams": [
+                {
                     "urn": "textscan::Sales Commission.csv/Sales Commission.csv/Sales Commission.csv",
                     "service": "textscan",
                     "type": "bucket"
@@ -730,7 +753,8 @@
             "name": "InMail Engagement",
             "service": "tableau"
         },
-        "charts": [{
+        "charts": [
+            {
                 "urn": "tableau::https://server.tableau.com/sheet/3250190d-e1f8-3e1e-e43e-3485ea87990e",
                 "name": "Best Day to Send InMails",
                 "source": "tableau",
@@ -971,6 +995,15 @@
                 }
             }
         ],
+        "ownership": {
+            "owners": [
+                {
+                    "urn": "meteor_user",
+                    "name": "Meteor User",
+                    "email": "meteor_user"
+                }
+            ]
+        },
         "properties": {
             "attributes": {
                 "id": "d7db01c0-b311-6f47-31bf-ad1c42e67629",
@@ -991,7 +1024,8 @@
             }
         },
         "lineage": {
-            "upstreams": [{
+            "upstreams": [
+                {
                     "urn": "webdata-direct:linkedin-snap::https://connectors.tableau.com/linkedin/snap/1/snap.html/Sales Navigator Connection/ActivityOutcome",
                     "service": "webdata-direct:linkedin-snap",
                     "type": "table"
