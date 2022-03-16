@@ -1,5 +1,5 @@
-//go:build plugins
-// +build plugins
+//go:build integration
+// +build integration
 
 package oracle_test
 
