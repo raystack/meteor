@@ -19,5 +19,4 @@ jobs:
       - name: Install packages
         run: go mod tidy
       - name: Run Test
-        timeout-minute: 30
         run: make test-plugins
