@@ -43,5 +43,5 @@ func IsExcludedDB(database string, excludedDbs map[string]bool) bool {
 
 // IsNullable checks if the given string is null or not
 func IsNullable(value string) bool {
-	return value == "YES"
+	return value == "YES" || value == "Y"
 }
