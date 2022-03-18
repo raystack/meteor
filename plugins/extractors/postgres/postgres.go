@@ -79,8 +79,9 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 	if err := utils.BuildConfig(config, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
+
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
 
 	// Create database connection
 	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
@@ -225,16 +226,6 @@ func (e *Extractor) extractConnectionComponents(connectionURL string) (err error
 	e.sslmode = connectionStr.Query().Get("sslmode")
 
 	return
-}
-
-// buildExcludedDBs builds the list of excluded databases
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.excludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases

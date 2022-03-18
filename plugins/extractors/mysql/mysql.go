@@ -77,7 +77,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
 
 	// create client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -185,16 +185,6 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 	}
 
 	return
-}
-
-// buildExcludedDBs builds the list of excluded databases
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.excludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases

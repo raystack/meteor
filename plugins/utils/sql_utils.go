@@ -46,3 +46,13 @@ func FetchTablesInDB(db *sql.DB, dbName, query string) (list []string, err error
 	}
 	return list, err
 }
+
+// buildExcludedDBs builds the list of excluded databases
+func BuildBoolMap(strList []string) map[string]bool {
+	boolMap := make(map[string]bool)
+	for _, db := range strList {
+		boolMap[db] = true
+	}
+
+	return boolMap
+}
