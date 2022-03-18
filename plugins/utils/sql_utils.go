@@ -15,14 +15,14 @@ func FetchDBs(db *sql.DB, logger log.Logger, query string) ([]string, error) {
 
 	var dbs []string
 	for res.Next() {
-		var db string
-		err := res.Scan(&db)
+		var database string
+		err := res.Scan(&database)
 		if err != nil {
 			return nil, err
 		}
 
-		dbs = append(dbs, db)
-		if err := res.Scan(&db); err != nil {
+		dbs = append(dbs, database)
+		if err := res.Scan(&database); err != nil {
 			logger.Error("failed to connect, skipping database", "error", err)
 			continue
 		}
