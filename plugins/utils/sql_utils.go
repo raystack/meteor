@@ -30,3 +30,19 @@ func FetchDBs(db *sql.DB, logger log.Logger, query string) ([]string, error) {
 	}
 	return dbs, nil
 }
+
+func FetchTablesInDB(db *sql.DB, dbName, query string) (list []string, err error) {
+	rows, err := db.Query(query)
+	if err != nil {
+		return
+	}
+	for rows.Next() {
+		var table string
+		err = rows.Scan(&table)
+		if err != nil {
+			return
+		}
+		list = append(list, table)
+	}
+	return list, err
+}

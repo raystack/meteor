@@ -121,7 +121,17 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to connect, skipping database", "error", err)
 			continue
 		}
-		tables, err := e.getTables(db, database)
+		query := `SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = 'public'
+		ORDER BY table_name;`
+
+		_, err = db.Exec(fmt.Sprintf("SET search_path TO %s, public;", database))
+		if err != nil {
+			e.logger.Error("failed to get tables, skipping database", "error", err)
+			continue
+		}
+		tables, err := sqlutils.FetchTablesInDB(db, database, query)
 		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
@@ -139,31 +149,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	return nil
-}
-
-func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err error) {
-	sqlStr := `SELECT table_name
-	FROM information_schema.tables
-	WHERE table_schema = 'public'
-	ORDER BY table_name;`
-
-	_, err = db.Exec(fmt.Sprintf("SET search_path TO %s, public;", dbName))
-	if err != nil {
-		return
-	}
-	rows, err := db.Query(sqlStr)
-	if err != nil {
-		return
-	}
-	for rows.Next() {
-		var table string
-		err = rows.Scan(&table)
-		if err != nil {
-			return
-		}
-		list = append(list, table)
-	}
-	return list, err
 }
 
 // Prepares the list of tables and the attached metadata

@@ -116,23 +116,15 @@ func (e *Extractor) extractTables(database string) (err error) {
 		return
 	}
 
-	// extract tables
+	// set database
 	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
 		return errors.Wrapf(err, "failed to iterate over %s", database)
 	}
-	rows, err := e.db.Query("SHOW TABLES;")
-	if err != nil {
-		return errors.Wrapf(err, "failed to show tables of %s", database)
-	}
 
-	// process each rows
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", tableName)
-		}
-
+	// get list of tables
+	tables, err := sqlutils.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")
 		}
