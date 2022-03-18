@@ -6,7 +6,6 @@ import (
 	_ "embed" // // used to print the embedded assets
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -16,6 +15,8 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	sqlutils "github.com/odpf/meteor/plugins/utils"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -25,12 +26,11 @@ import (
 //go:embed README.md
 var summary string
 
-var defaultExcludes = []string{"information_schema", "root", "postgres"}
+var defaultDBList = []string{"information_schema", "root", "postgres"}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-	Exclude       string `mapstructure:"exclude"`
 }
 
 var sampleConfig = `
@@ -39,9 +39,10 @@ exclude: testDB,secondaryDB`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
-	logger log.Logger
-	config Config
-	client *sql.DB
+	excludedDbs map[string]bool
+	logger      log.Logger
+	config      Config
+	client      *sql.DB
 
 	// These below values are used to recreate a connection for each database
 	host     string
@@ -78,6 +79,8 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 	if err := utils.BuildConfig(config, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
+	// build excluded database list
+	e.buildExcludedDBs()
 
 	// Create database connection
 	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
@@ -98,13 +101,17 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.client.Close()
 
 	// Get list of databases
-	dbs, err := e.getDatabases()
+	dbs, err := sqlutils.FetchDBs(e.client, e.logger, "SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch databases")
 	}
 
 	// Iterate through all tables and databases
 	for _, database := range dbs {
+		//skip dbs meant to be excluded
+		if e.isExcludedDB(database) {
+			continue
+		}
 		// Open a new connection to the given database to collect
 		// tables information without this default database
 		// information will be returned
@@ -132,28 +139,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	return nil
-}
-
-func (e *Extractor) getDatabases() (list []string, err error) {
-	res, err := e.client.Query("SELECT datname FROM pg_database WHERE datistemplate = false;")
-	if err != nil {
-		return nil, err
-	}
-
-	excludeList := append(defaultExcludes, strings.Split(e.config.Exclude, ",")...)
-
-	for res.Next() {
-		var database string
-		err := res.Scan(&database)
-		if err != nil {
-			return nil, err
-		}
-		if exclude(excludeList, database) {
-			continue
-		}
-		list = append(list, database)
-	}
-	return list, nil
 }
 
 func (e *Extractor) getTables(db *sql.DB, dbName string) (list []string, err error) {
@@ -257,14 +242,20 @@ func (e *Extractor) extractConnectionComponents(connectionURL string) (err error
 	return
 }
 
-// Exclude checks if the database is in the ignored databases
-func exclude(names []string, database string) bool {
-	for _, b := range names {
-		if b == database {
-			return true
-		}
+// buildExcludedDBs builds the list of excluded databases
+func (e *Extractor) buildExcludedDBs() {
+	excludedMap := make(map[string]bool)
+	for _, db := range defaultDBList {
+		excludedMap[db] = true
 	}
-	return false
+
+	e.excludedDbs = excludedMap
+}
+
+// isExcludedDB checks if the given db is in the list of excluded databases
+func (e *Extractor) isExcludedDB(database string) bool {
+	_, ok := e.excludedDbs[database]
+	return ok
 }
 
 // Register the extractor to catalog

@@ -16,6 +16,7 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
 	"github.com/odpf/meteor/plugins"
+	sqlutils "github.com/odpf/meteor/plugins/utils"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -92,18 +93,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.db.Close()
 	e.emit = emit
 
-	res, err := e.db.Query("SHOW DATABASES;")
+	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch databases")
+		return err
 	}
-	for res.Next() {
-		var database string
-		if err := res.Scan(&database); err != nil {
-			e.logger.Error("failed to connect, skipping database", "error", err)
-			continue
-		}
 
-		if err := e.extractTables(database); err != nil {
+	for _, db := range dbs {
+		err := e.extractTables(db)
+		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
