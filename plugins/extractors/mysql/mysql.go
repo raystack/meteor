@@ -15,8 +15,6 @@ import (
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
-	extutils "github.com/odpf/meteor/plugins/extractors/utils"
-
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -33,11 +31,20 @@ var defaultDBList = []string{
 	"sys",
 }
 
+// Config holds the connection URL for the extractor
+type Config struct {
+	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+}
+
 var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
 
+// Extractor manages the extraction of data from MySQL
 type Extractor struct {
-	extutils.BaseExtractor
-	logger log.Logger
+	excludedDbs map[string]bool
+	logger      log.Logger
+	config      Config
+	db          *sql.DB
+	emit        plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -57,17 +64,22 @@ func (e *Extractor) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the extractor
+func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
+	return utils.BuildConfig(configMap, &Config{})
+}
+
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	if err = utils.BuildConfig(configMap, &e.Config); err != nil {
+	if err = utils.BuildConfig(configMap, &e.config); err != nil {
 		return plugins.InvalidConfigError{}
 	}
 
 	// build excluded database list
-	e.ExcludedDbs = extutils.BuildExcludedDBs(defaultDBList)
+	e.buildExcludedDBs()
 
 	// create client
-	if e.DB, err = sql.Open("mysql", e.Config.ConnectionURL); err != nil {
+	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
 	}
 
@@ -77,10 +89,10 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 // Extract extracts the data from the MySQL server
 // and collected through the emitter
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	defer e.DB.Close()
-	e.Emit = emit
+	defer e.db.Close()
+	e.emit = emit
 
-	res, err := e.DB.Query("SHOW DATABASES;")
+	res, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch databases")
 	}
@@ -103,16 +115,16 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 // Extract tables from a given database
 func (e *Extractor) extractTables(database string) (err error) {
 	// skip if database is default
-	if extutils.IsExcludedDB(database, e.ExcludedDbs) {
+	if e.isExcludedDB(database) {
 		return
 	}
 
 	// extract tables
-	_, err = e.DB.Exec(fmt.Sprintf("USE %s;", database))
+	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
 		return errors.Wrapf(err, "failed to iterate over %s", database)
 	}
-	rows, err := e.DB.Query("SHOW TABLES;")
+	rows, err := e.db.Query("SHOW TABLES;")
 	if err != nil {
 		return errors.Wrapf(err, "failed to show tables of %s", database)
 	}
@@ -140,7 +152,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	}
 
 	// push table to channel
-	e.Emit(models.NewRecord(&assetsv1beta1.Table{
+	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", database, tableName),
 			Name: tableName,
@@ -160,7 +172,7 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC`
-	rows, err := e.DB.Query(query, tableName)
+	rows, err := e.db.Query(query, tableName)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute query")
 		return
@@ -178,12 +190,33 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 			Name:        fieldName,
 			DataType:    dataType,
 			Description: fieldDesc,
-			IsNullable:  extutils.IsNullable(isNullableString),
+			IsNullable:  e.isNullable(isNullableString),
 			Length:      int64(length),
 		})
 	}
 
 	return
+}
+
+// buildExcludedDBs builds the list of excluded databases
+func (e *Extractor) buildExcludedDBs() {
+	excludedMap := make(map[string]bool)
+	for _, db := range defaultDBList {
+		excludedMap[db] = true
+	}
+
+	e.excludedDbs = excludedMap
+}
+
+// isExcludedDB checks if the given db is in the list of excluded databases
+func (e *Extractor) isExcludedDB(database string) bool {
+	_, ok := e.excludedDbs[database]
+	return ok
+}
+
+// isNullable checks if the given string is null or not
+func (e *Extractor) isNullable(value string) bool {
+	return value == "YES"
 }
 
 // init register the extractor to the catalog
