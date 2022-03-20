@@ -29,6 +29,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 		pathToConfig string
 		success      = 0
 		failures     = 0
+		configFile   string
 	)
 
 	cmd := &cobra.Command{
@@ -56,6 +57,13 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if configFile != "" {
+				var err error
+				cfg, err = config.LoadFromPath(configFile)
+				if err != nil {
+					return err
+				}
+			}
 
 			cs := term.NewColorScheme()
 			runner := agent.NewAgent(agent.Config{
@@ -123,6 +131,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 	}
 
 	cmd.Flags().StringVar(&pathToConfig, "var", "", "Path to Config file with env variables for recipe")
+	cmd.Flags().StringVarP(&configFile, "config", "c", "./meteor.yaml", "file path for agent level config")
 
 	return cmd
 }

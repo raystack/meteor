@@ -29,3 +29,15 @@ func Load() (cfg Config, err error) {
 
 	return
 }
+
+func LoadFromPath(configFile string) (cfg Config, err error) {
+	err = config.
+		NewLoader(config.WithFile(configFile)).
+		Load(&cfg)
+	if errors.As(err, &config.ConfigFileNotFoundError{}) {
+		log.Println(err)
+		err = nil
+	}
+
+	return
+}
