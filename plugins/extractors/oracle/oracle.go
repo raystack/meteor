@@ -12,6 +12,8 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	sqlutils "github.com/odpf/meteor/plugins/utils"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -86,13 +88,17 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	// Get DB name
-	database, err := e.getDatabaseName(e.db)
+	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "select ora_database_name from dual")
 	if err != nil {
-		e.logger.Error("failed to get the database name", "error", err)
 		return
 	}
+	database := dbs[0]
 
-	tables, err := e.getTables(e.db, database, userName)
+	tableQuery := fmt.Sprintf(`SELECT object_name 
+ 		FROM all_objects
+		WHERE object_type = 'TABLE'
+		AND upper(owner) = upper('%s')`, userName)
+	tables, err := sqlutils.FetchTablesInDB(e.db, database, tableQuery)
 	if err != nil {
 		e.logger.Error("failed to get tables, skipping database", "error", err)
 		// continue
@@ -125,44 +131,6 @@ func (e *Extractor) getUserName(db *sql.DB) (userName string, err error) {
 		}
 	}
 	return userName, err
-}
-
-func (e *Extractor) getDatabaseName(db *sql.DB) (database string, err error) {
-	sqlStr := `select ora_database_name from dual`
-
-	rows, err := db.Query(sqlStr)
-	if err != nil {
-		return
-	}
-	for rows.Next() {
-		err = rows.Scan(&database)
-		if err != nil {
-			return
-		}
-	}
-	return database, err
-}
-
-func (e *Extractor) getTables(db *sql.DB, dbName string, userName string) (list []string, err error) {
-	sqlStr := `SELECT object_name 
- 		FROM all_objects
-		WHERE object_type = 'TABLE'
-		AND upper(owner) = upper('%s')`
-
-	rows, err := db.Query(fmt.Sprintf(sqlStr, userName))
-	if err != nil {
-		return
-	}
-	for rows.Next() {
-		var table string
-		err = rows.Scan(&table)
-		if err != nil {
-			return
-		}
-		list = append(list, table)
-	}
-
-	return list, err
 }
 
 // Prepares the list of tables and the attached metadata
