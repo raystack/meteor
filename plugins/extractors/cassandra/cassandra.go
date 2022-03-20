@@ -13,6 +13,8 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	sqlutils "github.com/odpf/meteor/plugins/utils"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -85,7 +87,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.buildExcludedKeyspaces()
+	e.excludedKeyspaces = sqlutils.BuildBoolMap(defaultKeyspaceList)
 
 	// connect to cassandra
 	cluster := gocql.NewCluster(e.config.Host)
@@ -200,15 +202,6 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 	}
 
 	return
-}
-
-// buildExcludedKeyspaces builds the list of excluded keyspaces
-func (e *Extractor) buildExcludedKeyspaces() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultKeyspaceList {
-		excludedMap[db] = true
-	}
-	e.excludedKeyspaces = excludedMap
 }
 
 // isExcludedKeyspace checks if the given db is in the list of excluded keyspaces
