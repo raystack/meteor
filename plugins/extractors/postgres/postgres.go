@@ -6,6 +6,7 @@ import (
 	_ "embed" // // used to print the embedded assets
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -31,6 +32,7 @@ var defaultDBList = []string{"information_schema", "root", "postgres"}
 // Config holds the set of configuration options for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	Exclude       string `mapstructure:"exclude"`
 }
 
 var sampleConfig = `
@@ -81,7 +83,8 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 	}
 
 	// build excluded database list
-	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
+	excludeList := append(defaultDBList, strings.Split(e.config.Exclude, ",")...)
+	e.excludedDbs = sqlutils.BuildBoolMap(excludeList)
 
 	// Create database connection
 	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
