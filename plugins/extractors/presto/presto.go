@@ -5,17 +5,21 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+
+	sqlutils "github.com/odpf/meteor/plugins/utils"
+
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	_ "github.com/prestodb/presto-go-client/presto" // presto driver
-	"net/url"
-	"strings"
 )
 
 //go:embed README.md
@@ -33,9 +37,10 @@ exclude_catalog: "memory,system,tpcds,tpch"`
 
 // Extractor manages the extraction of data
 type Extractor struct {
-	logger log.Logger
-	config Config
-	client *sql.DB
+	logger          log.Logger
+	config          Config
+	client          *sql.DB
+	excludedCatalog map[string]bool
 
 	// These below values are used to recreate a connection for each catalog
 	host     string
@@ -72,6 +77,11 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 		return plugins.InvalidConfigError{}
 	}
 
+	// build excluded catalog list
+	var excludeList []string
+	excludeList = append(excludeList, strings.Split(e.config.Exclude, ",")...)
+	e.excludedCatalog = sqlutils.BuildBoolMap(excludeList)
+
 	// create presto client
 	if e.client, err = sql.Open("presto", e.config.ConnectionURL); err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
@@ -100,12 +110,15 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 			continue
 		}
 
-		dbs, err := e.getDatabases(db, catalog)
+		dbQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
+
+		dbs, err := sqlutils.FetchDBs(db, e.logger, dbQuery)
 		if err != nil {
 			return fmt.Errorf("failed to extract tables from %s: %w", catalog, err)
 		}
 		for _, database := range dbs {
-			tables, err := e.getTables(db, catalog, database)
+			showTablesQuery := fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database)
+			tables, err := sqlutils.FetchTablesInDB(db, database, showTablesQuery)
 			if err != nil {
 				e.logger.Error("failed to get tables, skipping database", "catalog", catalog, "error", err)
 				continue
@@ -133,58 +146,15 @@ func (e *Extractor) getCatalogs() (list []string, err error) {
 		return nil, fmt.Errorf("failed to get the list of catalogs: %w", err)
 	}
 
-	var excludeList []string
-	excludeList = append(excludeList, strings.Split(e.config.Exclude, ",")...)
-
 	for catalogs.Next() {
 		var catalog string
 		if err = catalogs.Scan(&catalog); err != nil {
 			return nil, fmt.Errorf("failed to scan schema from %s: %w", catalog, err)
 		}
-		if exclude(excludeList, catalog) {
+		if e.isExcludedCatalog(catalog) {
 			continue
 		}
 		list = append(list, catalog)
-	}
-
-	return list, err
-}
-
-// getDatabases prepares the list of databases
-func (e *Extractor) getDatabases(db *sql.DB, catalog string) (list []string, err error) {
-	// Get list of databases
-	showSchemasQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
-	dbs, err := db.Query(showSchemasQuery)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the list of schemas from %s: %w", catalog, err)
-	}
-
-	for dbs.Next() {
-		var database string
-		if err = dbs.Scan(&database); err != nil {
-			return nil, fmt.Errorf("failed to scan %s.%s: %w", catalog, database, err)
-		}
-		list = append(list, database)
-	}
-
-	return list, nil
-}
-
-// getTables extracts tables from a given database
-func (e *Extractor) getTables(db *sql.DB, catalog string, database string) (list []string, err error) {
-	showTablesQuery := fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database)
-	rows, err := db.Query(showTablesQuery)
-	if err != nil {
-		return nil, fmt.Errorf("failed to show tables for %s: %w", database, err)
-	}
-
-	// process each rows
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return nil, err
-		}
-		list = append(list, tableName)
 	}
 
 	return list, err
@@ -272,15 +242,10 @@ func (e *Extractor) extractConnectionComponents(connectionURL string) (err error
 	return
 }
 
-// Exclude checks if the catalog is in the ignored catalogs
-func exclude(names []string, catalog string) bool {
-	for _, b := range names {
-		if b == catalog {
-			return true
-		}
-	}
-
-	return false
+// checks if the catalog is in the ignored catalogs
+func (e *Extractor) isExcludedCatalog(catalog string) bool {
+	_, ok := e.excludedCatalog[catalog]
+	return ok
 }
 
 // Register the extractor to catalog
