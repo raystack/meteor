@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed" // used to print the embedded assets
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql" // used to register the mariadb driver
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
@@ -16,6 +17,7 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	sqlutils "github.com/odpf/meteor/plugins/utils"
 )
 
 //go:embed README.md
@@ -75,7 +77,7 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
 
 	// create mariadb client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -91,17 +93,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	e.emit = emit
 
 	// Get list of databases
-	dbs, err := e.db.Query("SHOW DATABASES;")
+	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
-		return errors.Wrapf(err, "failed to get the list of databases")
+		return err
 	}
 
 	// Iterate through all tables and databases
-	for dbs.Next() {
-		var database string
-		if err := dbs.Scan(&database); err != nil {
-			return errors.Wrapf(err, "failed to scan: %s", database)
-		}
+	for _, database := range dbs {
 		if err := e.extractTables(database); err != nil {
 			return errors.Wrapf(err, "failed to extract tables from %s", database)
 		}
@@ -121,19 +119,12 @@ func (e *Extractor) extractTables(database string) (err error) {
 	if err != nil {
 		return errors.Wrapf(err, "failed to execute USE query on %s", database)
 	}
-	rows, err := e.db.Query("SHOW TABLES;")
-	if err != nil {
-		return errors.Wrapf(err, "failed to show tables for %s", database)
-	}
 
-	// process each rows
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return err
-		}
+	// get list of tables
+	tables, err := sqlutils.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
-			return err
+			return errors.Wrap(err, "failed to process table")
 		}
 	}
 	return
@@ -189,15 +180,6 @@ func (e *Extractor) extractColumns(tableName string) (result []*facetsv1beta1.Co
 		})
 	}
 	return result, nil
-}
-
-// buildExcludedDBs builds a list of databases to exclude
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-	e.excludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the database is in the excluded list
