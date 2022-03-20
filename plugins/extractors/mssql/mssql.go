@@ -16,6 +16,8 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 
+	sqlutils "github.com/odpf/meteor/plugins/utils"
+
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
@@ -78,7 +80,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
 
 	// create client
 	if e.db, err = sql.Open("mssql", e.config.ConnectionURL); err != nil {
@@ -94,47 +96,26 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.db.Close()
 	e.emit = emit
 
-	res, err := e.db.Query("SELECT name FROM sys.databases;")
+	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "SELECT name FROM sys.databases;")
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch databases")
+		return err
 	}
-	for res.Next() {
-		var database string
-		if err := res.Scan(&database); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", database)
+	for _, database := range dbs {
+		if e.isExcludedDB(database) {
+			continue
 		}
 
-		if err := e.extractTables(database); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", database)
-		}
-	}
-
-	return
-}
-
-// extractTables extract tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
-	// skip if database is excluded
-	if e.isExcludedDB(database) {
-		return
-	}
-
-	// extract tables
-	rows, err := e.db.Query(
-		fmt.Sprintf(`SELECT TABLE_NAME FROM %s.INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';`, database))
-	if err != nil {
-		return
-	}
-
-	// process each rows
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", tableName)
+		tableQuery := fmt.Sprintf(`SELECT TABLE_NAME FROM %s.INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';`, database)
+		tables, err := sqlutils.FetchTablesInDB(e.db, database, tableQuery)
+		if err != nil {
+			e.logger.Error("failed to get tables, skipping database", "error", err)
+			continue
 		}
 
-		if err := e.processTable(database, tableName); err != nil {
-			return errors.Wrap(err, "failed to process Table")
+		for _, tableName := range tables {
+			if err := e.processTable(database, tableName); err != nil {
+				return errors.Wrap(err, "failed to process Table")
+			}
 		}
 	}
 
@@ -192,16 +173,6 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*facetsv1b
 	}
 
 	return
-}
-
-// isExcludedDB checks if the given db is in the list of excluded databases
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.excludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases
