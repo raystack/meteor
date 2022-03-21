@@ -16,7 +16,7 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
-	sqlutils "github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins/sqlutil"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -84,7 +84,7 @@ func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (er
 
 	// build excluded database list
 	excludeList := append(defaultDBList, strings.Split(e.config.Exclude, ",")...)
-	e.excludedDbs = sqlutils.BuildBoolMap(excludeList)
+	e.excludedDbs = sqlutil.BuildBoolMap(excludeList)
 
 	// Create database connection
 	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
@@ -105,7 +105,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.client.Close()
 
 	// Get list of databases
-	dbs, err := sqlutils.FetchDBs(e.client, e.logger, "SELECT datname FROM pg_database WHERE datistemplate = false;")
+	dbs, err := sqlutil.FetchDBs(e.client, e.logger, "SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch databases")
 	}
@@ -135,7 +135,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
-		tables, err := sqlutils.FetchTablesInDB(db, database, query)
+		tables, err := sqlutil.FetchTablesInDB(db, database, query)
 		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue

@@ -1,4 +1,4 @@
-package utils
+package sqlutil
 
 import (
 	"database/sql"

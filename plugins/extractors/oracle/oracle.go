@@ -12,7 +12,7 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
-	sqlutils "github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins/sqlutil"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -88,7 +88,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	// Get DB name
-	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "select ora_database_name from dual")
+	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "select ora_database_name from dual")
 	if err != nil {
 		return
 	}
@@ -98,7 +98,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
  		FROM all_objects
 		WHERE object_type = 'TABLE'
 		AND upper(owner) = upper('%s')`, userName)
-	tables, err := sqlutils.FetchTablesInDB(e.db, database, tableQuery)
+	tables, err := sqlutil.FetchTablesInDB(e.db, database, tableQuery)
 	if err != nil {
 		e.logger.Error("failed to get tables, skipping database", "error", err)
 		// continue

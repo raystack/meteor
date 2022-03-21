@@ -16,7 +16,7 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
 	"github.com/odpf/meteor/plugins"
-	sqlutils "github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -77,7 +77,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
+	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -93,7 +93,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.db.Close()
 	e.emit = emit
 
-	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
+	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (e *Extractor) extractTables(database string) (err error) {
 	}
 
 	// get list of tables
-	tables, err := sqlutils.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")

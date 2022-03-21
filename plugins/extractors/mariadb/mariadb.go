@@ -17,7 +17,7 @@ import (
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
-	sqlutils "github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins/sqlutil"
 )
 
 //go:embed README.md
@@ -77,7 +77,7 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	}
 
 	// build excluded database list
-	e.excludedDbs = sqlutils.BuildBoolMap(defaultDBList)
+	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create mariadb client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -93,7 +93,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	e.emit = emit
 
 	// Get list of databases
-	dbs, err := sqlutils.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
+	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (e *Extractor) extractTables(database string) (err error) {
 	}
 
 	// get list of tables
-	tables, err := sqlutils.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")

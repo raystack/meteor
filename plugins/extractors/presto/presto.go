@@ -13,7 +13,7 @@ import (
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
-	sqlutils "github.com/odpf/meteor/plugins/utils"
+	"github.com/odpf/meteor/plugins/sqlutil"
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -80,7 +80,7 @@ func (e *Extractor) Init(_ context.Context, configMap map[string]interface{}) (e
 	// build excluded catalog list
 	var excludeList []string
 	excludeList = append(excludeList, strings.Split(e.config.Exclude, ",")...)
-	e.excludedCatalog = sqlutils.BuildBoolMap(excludeList)
+	e.excludedCatalog = sqlutil.BuildBoolMap(excludeList)
 
 	// create presto client
 	if e.client, err = sql.Open("presto", e.config.ConnectionURL); err != nil {
@@ -112,13 +112,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 		dbQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
 
-		dbs, err := sqlutils.FetchDBs(db, e.logger, dbQuery)
+		dbs, err := sqlutil.FetchDBs(db, e.logger, dbQuery)
 		if err != nil {
 			return fmt.Errorf("failed to extract tables from %s: %w", catalog, err)
 		}
 		for _, database := range dbs {
 			showTablesQuery := fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database)
-			tables, err := sqlutils.FetchTablesInDB(db, database, showTablesQuery)
+			tables, err := sqlutil.FetchTablesInDB(db, database, showTablesQuery)
 			if err != nil {
 				e.logger.Error("failed to get tables, skipping database", "catalog", catalog, "error", err)
 				continue
