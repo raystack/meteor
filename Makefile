@@ -15,6 +15,9 @@ build-dev:
 clean:
 	rm -rf dist/
 
+copy-config:
+	cp ./config/meteor.yaml.sample ./meteor.yaml
+
 test:
 	go test ./... -coverprofile=coverage.out
 
