@@ -16,6 +16,7 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -76,7 +77,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -92,18 +93,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	defer e.db.Close()
 	e.emit = emit
 
-	res, err := e.db.Query("SHOW DATABASES;")
+	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch databases")
+		return err
 	}
-	for res.Next() {
-		var database string
-		if err := res.Scan(&database); err != nil {
-			e.logger.Error("failed to connect, skipping database", "error", err)
-			continue
-		}
 
-		if err := e.extractTables(database); err != nil {
+	for _, db := range dbs {
+		err := e.extractTables(db)
+		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
@@ -119,23 +116,15 @@ func (e *Extractor) extractTables(database string) (err error) {
 		return
 	}
 
-	// extract tables
+	// set database
 	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
 		return errors.Wrapf(err, "failed to iterate over %s", database)
 	}
-	rows, err := e.db.Query("SHOW TABLES;")
-	if err != nil {
-		return errors.Wrapf(err, "failed to show tables of %s", database)
-	}
 
-	// process each rows
-	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", tableName)
-		}
-
+	// get list of tables
+	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")
 		}
@@ -196,16 +185,6 @@ func (e *Extractor) extractColumns(tableName string) (columns []*facetsv1beta1.C
 	}
 
 	return
-}
-
-// buildExcludedDBs builds the list of excluded databases
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.excludedDbs = excludedMap
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases
