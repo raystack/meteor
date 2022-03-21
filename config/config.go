@@ -18,22 +18,17 @@ type Config struct {
 	StopOnSinkError             bool   `mapstructure:"STOP_ON_SINK_ERROR" default:"false"`
 }
 
-func Load() (cfg Config, err error) {
-	err = config.
-		NewLoader(config.WithPath("./")).
-		Load(&cfg)
-	if errors.As(err, &config.ConfigFileNotFoundError{}) {
-		log.Println(err)
-		err = nil
+func Load(configFile string) (cfg Config, err error) {
+	if configFile != "" {
+		err = config.
+			NewLoader(config.WithPath("./")).
+			Load(&cfg)
+	} else {
+		err = config.
+			NewLoader(config.WithFile(configFile)).
+			Load(&cfg)
 	}
 
-	return
-}
-
-func LoadFromPath(configFile string) (cfg Config, err error) {
-	err = config.
-		NewLoader(config.WithFile(configFile)).
-		Load(&cfg)
 	if errors.As(err, &config.ConfigFileNotFoundError{}) {
 		log.Println(err)
 		err = nil

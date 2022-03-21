@@ -23,7 +23,7 @@ const (
 )
 
 func main() {
-	cfg, err := config.Load()
+	cfg, err := config.Load("")
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())
 		os.Exit(1)

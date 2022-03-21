@@ -59,7 +59,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if configFile != "" {
 				var err error
-				cfg, err = config.LoadFromPath(configFile)
+				cfg, err = config.Load(configFile)
 				if err != nil {
 					return err
 				}
