@@ -19,15 +19,9 @@ type Config struct {
 }
 
 func Load(configFile string) (cfg Config, err error) {
-	if configFile != "" {
-		err = config.
-			NewLoader(config.WithPath("./")).
-			Load(&cfg)
-	} else {
-		err = config.
-			NewLoader(config.WithFile(configFile)).
-			Load(&cfg)
-	}
+	err = config.
+		NewLoader(config.WithFile(configFile)).
+		Load(&cfg)
 
 	if errors.As(err, &config.ConfigFileNotFoundError{}) {
 		log.Println(err)

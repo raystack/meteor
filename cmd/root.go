@@ -17,7 +17,7 @@ const exitError = 1
 
 // New adds all child commands to the root command and sets flags appropriately.
 func New() *cobra.Command {
-	cfg, err := config.Load("")
+	cfg, err := config.Load("./meteor.yaml")
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())
 		os.Exit(1)
