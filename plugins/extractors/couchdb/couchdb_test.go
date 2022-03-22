@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package couchdb_test
 
