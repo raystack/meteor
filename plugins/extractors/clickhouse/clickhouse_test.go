@@ -32,7 +32,7 @@ const (
 	user       = "meteor_test_user"
 	pass       = "pass"
 	globalhost = "%"
-	port       = "9000"
+	port       = "8200"
 )
 
 var (
@@ -47,14 +47,14 @@ func TestMain(m *testing.M) {
 	}
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository:   "yandex/clickhouse-server",
-		Tag:          "21.7.4-alpine",
-		ExposedPorts: []string{"9000", port},
+		Repository:   "clickhouse/clickhouse-server",
+		Tag:          "22.2",
+		ExposedPorts: []string{"8200", port},
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.xml:rw", pwd),
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9000": {
+			"8200": {
 				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
