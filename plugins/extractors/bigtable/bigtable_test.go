@@ -1,5 +1,5 @@
-//go:build plugins
-// +build plugins
+//go:build fixes
+// +build fixes
 
 package bigtable_test
 
@@ -22,17 +22,19 @@ import (
 func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository: "shopify/bigtable-emulator",
+		Repository: "ssivart/bigtable-emulator",
 		Env: []string{
-			"BIGTABLE_EMULATOR_HOST=localhost:9035",
+			"BIGTABLE_EMULATOR_HOST=localhost:8086",
+			"BIGTABLE_SCHEMA=user:metadata#profile,company:metadata#finance",
+			// "BIGTABLE_EMULATOR_HOST=localhost:9035",
 		},
-		ExposedPorts: []string{"9035"},
+		ExposedPorts: []string{"8086"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9035": {
-				{HostIP: "0.0.0.0", HostPort: "9035"},
+			"8086": {
+				{HostIP: "0.0.0.0", HostPort: "8086"},
 			},
 		},
-		Cmd: []string{"-cf", "dev.records.data,dev.records.metadata"},
+		// Cmd: []string{"-cf", "dev.records.data,dev.records.metadata"},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
