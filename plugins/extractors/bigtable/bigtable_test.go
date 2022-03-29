@@ -23,6 +23,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "ssivart/bigtable-emulator",
+		Tag:        "v2021.08",
 		Env: []string{
 			"BIGTABLE_EMULATOR_HOST=localhost:8086",
 			"BIGTABLE_SCHEMA=user:metadata#profile,company:metadata#finance",
