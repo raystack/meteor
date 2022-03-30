@@ -1,5 +1,5 @@
-//go:build fixes
-// +build fixes
+//go:build plugins
+// +build plugins
 
 package kafka_test
 
@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	brokerHost = "localhost:9090"
+	brokerHost = "localhost:9093"
 )
 
 func TestMain(m *testing.M) {
@@ -41,10 +41,10 @@ func TestMain(m *testing.M) {
 		Env: []string{
 			"KRAFT_CONTAINER_HOST_NAME=1",
 		},
-		ExposedPorts: []string{"9090"},
+		ExposedPorts: []string{"9093"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9090": {
-				{HostIP: "localhost", HostPort: "9090"},
+			"9093": {
+				{HostIP: "localhost", HostPort: "9093"},
 			},
 		},
 	}
@@ -54,10 +54,9 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			return
 		}
-		// fmt.Println(conn.LocalAddr())
 		broker, err = conn.Controller()
 		if err != nil {
-			// conn.Close()
+			conn.Close()
 			return
 		}
 

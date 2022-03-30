@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package clickhouse_test
 
@@ -32,7 +32,7 @@ const (
 	user       = "meteor_test_user"
 	pass       = "pass"
 	globalhost = "%"
-	port       = "8200"
+	port       = "9000"
 )
 
 var (
@@ -47,14 +47,14 @@ func TestMain(m *testing.M) {
 	}
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository:   "clickhouse/clickhouse-server",
-		Tag:          "22.2",
-		ExposedPorts: []string{"8200", port},
+		Repository:   "yandex/clickhouse-server",
+		Tag:          "21.7.4-alpine",
+		ExposedPorts: []string{"9000", port},
 		Mounts: []string{
-			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.xml:rw", pwd),
+			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.d/user.xml:rw", pwd),
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"8200": {
+			"9000": {
 				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
