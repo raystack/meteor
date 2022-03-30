@@ -31,7 +31,7 @@ import (
 const (
 	user           = "admin"
 	pass           = "admin"
-	port           = "8080"
+	port           = "8088"
 	provider       = "db"
 	dashboardTitle = "random dashboard"
 	mockChart      = "random chart"
