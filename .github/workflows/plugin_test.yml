@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix-plugins-test
   workflow_dispatch:
 
 jobs:

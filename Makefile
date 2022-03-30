@@ -28,9 +28,6 @@ test-plugins:
 	@echo " > Testing plugins with tag 'plugins'"
 	go test ./plugins... -tags=plugins -count=1
 
-test-fixes:
-	go test ./plugins... -tags=fixes -count=1
-
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
 	@echo " > generating protobuf"

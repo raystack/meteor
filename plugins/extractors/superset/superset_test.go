@@ -31,7 +31,7 @@ import (
 const (
 	user           = "admin"
 	pass           = "admin"
-	port           = "8088"
+	port           = "8080"
 	provider       = "db"
 	dashboardTitle = "random dashboard"
 	mockChart      = "random chart"
@@ -61,10 +61,10 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "apache/superset",
 		Tag:          "latest",
-		ExposedPorts: []string{"8088"},
+		ExposedPorts: []string{"8080"},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"8088": {
-				{HostIP: "0.0.0.0", HostPort: "8088"},
+			"8080": {
+				{HostIP: "0.0.0.0", HostPort: "8080"},
 			},
 		},
 	}
