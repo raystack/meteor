@@ -28,6 +28,6 @@ func TestInit(t *testing.T) {
 			"project_id": "",
 		})
 
-		assert.EqualError(t, err, "invalid extractor config")
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
 }
