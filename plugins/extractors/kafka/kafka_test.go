@@ -1,3 +1,6 @@
+//go:build fixes
+// +build fixes
+
 package kafka_test
 
 import (
