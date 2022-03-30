@@ -1,5 +1,5 @@
-//go:build fixes
-// +build fixes
+//go:build integration
+// +build integration
 
 package bigtable_test
 
