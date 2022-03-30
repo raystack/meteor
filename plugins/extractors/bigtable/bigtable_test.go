@@ -5,17 +5,12 @@ package bigtable_test
 
 import (
 	"context"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/odpf/meteor/test/utils"
 
-	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"
 	bt "github.com/odpf/meteor/plugins/extractors/bigtable"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 )
 
