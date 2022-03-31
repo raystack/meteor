@@ -54,6 +54,13 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			return
 		}
+
+		// healthcheck
+		brokerList, err := conn.Brokers()
+		if err != nil {
+			return
+		}
+
 		broker, err = conn.Controller()
 		if err != nil {
 			conn.Close()
