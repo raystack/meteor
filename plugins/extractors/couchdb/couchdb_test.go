@@ -6,7 +6,6 @@ package couchdb_test
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -124,7 +123,6 @@ func setup() (err error) {
 		// DB already created
 		if kivik.StatusCode(err) == http.StatusPreconditionFailed {
 			err = nil
-			return
 		}
 		if err != nil {
 			return
@@ -142,7 +140,7 @@ func setup() (err error) {
 func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
 	for _, query := range queries {
 		_, err := db.Put(context.TODO(), query["_id"].(string), query)
-		if err != nil && err != io.EOF {
+		if err != nil {
 			return err
 		}
 	}
