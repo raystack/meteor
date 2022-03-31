@@ -140,6 +140,9 @@ func setup() (err error) {
 func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
 	for _, query := range queries {
 		_, err := db.Put(context.TODO(), query["_id"].(string), query)
+		if kivik.StatusCode(err) == http.StatusConflict {
+			err = nil
+		}
 		if err != nil {
 			return err
 		}
