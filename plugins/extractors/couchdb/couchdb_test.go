@@ -38,6 +38,10 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "docker.io/bitnami/couchdb",
@@ -46,7 +50,10 @@ func TestMain(m *testing.M) {
 			"COUCHDB_USER=" + user,
 			"COUCHDB_PASSWORD=" + pass,
 		},
-		ExposedPorts: []string{"4369", "5984", port},
+		Mounts: []string{
+			fmt.Sprintf("%s/localConfig:/opt/bitnami/couchdb/etc/local.d:rw", pwd),
+		},
+		ExposedPorts: []string{port},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"5984": {
 				{HostIP: "0.0.0.0", HostPort: "5984"},
@@ -57,7 +64,7 @@ func TestMain(m *testing.M) {
 	retryFn := func(resource *dockertest.Resource) (err error) {
 		client, err = kivik.New("couch", fmt.Sprintf("http://%s:%s@%s/", user, pass, host))
 		if err != nil {
-			return err
+			return
 		}
 		_, err = client.Ping(context.TODO())
 		return
