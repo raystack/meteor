@@ -5,6 +5,7 @@ package kafka_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 
@@ -58,6 +59,10 @@ func TestMain(m *testing.M) {
 		// healthcheck
 		brokerList, err := conn.Brokers()
 		if err != nil {
+			return
+		}
+		if len(brokerList) == 0 {
+			err = errors.New("not ready")
 			return
 		}
 
