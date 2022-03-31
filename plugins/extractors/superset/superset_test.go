@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package superset_test
 
@@ -24,14 +24,13 @@ import (
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
 	user           = "admin"
 	pass           = "admin"
-	port           = "8080"
+	port           = "9999"
 	provider       = "db"
 	dashboardTitle = "random dashboard"
 	mockChart      = "random chart"
@@ -53,18 +52,25 @@ type responseToken struct {
 }
 
 type securityToken struct {
-	CsrfToken string `json:"csrf_token"`
+	CsrfToken string `json:"result"`
 }
 
 func TestMain(m *testing.M) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository:   "apache/superset",
-		Tag:          "latest",
-		ExposedPorts: []string{"8080"},
+		Tag:          "6b136c2bc9a6c9756e5319b045e3c42da06243cb",
+		ExposedPorts: []string{"8088"},
+		Mounts: []string{
+			fmt.Sprintf("%s/localConfig:/app/pythonpath:rw", pwd),
+		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
-			"8080": {
-				{HostIP: "0.0.0.0", HostPort: "8080"},
+			"8088": {
+				{HostIP: "0.0.0.0", HostPort: port},
 			},
 		},
 	}
@@ -74,13 +80,44 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			return
 		}
-		body, err := io.ReadAll(res.Body)
-		if err := res.Body.Close(); err != nil {
-			return err
-		}
 		if res.StatusCode != http.StatusOK {
-			return errors.Wrapf(err, "Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+			err = fmt.Errorf("Response failed with status code: %d", res.StatusCode)
+			return
 		}
+
+		var stdout bytes.Buffer
+		_, err = resource.Exec(
+			[]string{
+				"superset", "fab", "create-admin",
+				"--username", user,
+				"--firstname", "Superset",
+				"--lastname", "Admin",
+				"--email", "admin@superset.com",
+				"--password", pass,
+			},
+			dockertest.ExecOptions{StdOut: &stdout},
+		)
+
+		_, err = resource.Exec(
+			[]string{
+				"superset", "db", "upgrade",
+			},
+			dockertest.ExecOptions{StdOut: &stdout},
+		)
+
+		_, err = resource.Exec(
+			[]string{
+				"superset", "load_examples", "--load-test-data",
+			},
+			dockertest.ExecOptions{StdOut: &stdout},
+		)
+
+		_, err = resource.Exec(
+			[]string{
+				"superset", "init",
+			},
+			dockertest.ExecOptions{StdOut: &stdout},
+		)
 		return
 	}
 
@@ -89,6 +126,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if err := setup(); err != nil {
 		log.Fatal(err)
 	}
@@ -134,22 +172,17 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		var urns []string
-		fmt.Println(emitter.Get())
 		for _, record := range emitter.Get() {
 			dashboard := record.Data().(*assetsv1beta1.Dashboard)
 			urns = append(urns, dashboard.Resource.Urn)
 		}
-		assert.Equal(t, 10, len(urns))
+		assert.Equal(t, 4, len(urns))
 	})
 }
 
 // setup sets up the test environment
 func setup() (err error) {
 	err = checkUser()
-	if err != nil {
-		return
-	}
-	err = addDashboard()
 	if err != nil {
 		return
 	}
@@ -187,53 +220,16 @@ func setCsrfToken() (err error) {
 	return
 }
 
-// addDashboard adds a dashboard to the database
-func addDashboard() (err error) {
-	type responseID struct {
-		ID int `json:"id"`
-	}
-	payload := map[string]interface{}{
-		"dashboard_title": dashboardTitle,
-	}
-	var data responseID
-	if err = makeRequest("POST", host+"/api/v1/dashboard", payload, &data); err != nil {
-		return
-	}
-	dashboardID = data.ID
-	if err = addChart(dashboardID); err != nil {
-		return
-	}
-	return
-}
-
-// addChart adds a chart to the dashboard
-func addChart(id int) (err error) {
-	payload := map[string]interface{}{
-		"dashboards": id,
-		"slice_name": mockChart,
-	}
-	type response struct {
-		ID int `json:"id"`
-	}
-	var data response
-	err = makeRequest("POST", host+"/api/v1/chart/", payload, &data)
-	if err != nil {
-		return
-	}
-	chartID = data.ID
-	return
-}
-
 // makeRequest helper function to avoid rewriting a request
 func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
-		return errors.Wrap(err, "failed to encode the payload JSON")
+		return fmt.Errorf("failed to encode the payload JSON: %w", err)
 	}
 	body := bytes.NewBuffer(jsonifyPayload)
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return errors.Wrap(err, "failed to create request")
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 	var bearer = "Bearer " + accessToken
 	req.Header.Set("Content-Type", "application/json")
@@ -243,17 +239,22 @@ func makeRequest(method, url string, payload interface{}, data interface{}) (err
 
 	res, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate response")
+		return fmt.Errorf("failed to generate response: %w", err)
 	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		bodyString := string(bodyBytes)
+		return fmt.Errorf("response failed with status code: %d and body: %s", res.StatusCode, bodyString)
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 	if err = json.Unmarshal(b, &data); err != nil {
-		return errors.Wrapf(err, "failed to parse: %s", string(b))
+		return fmt.Errorf("failed to parse: %s, err: %w", string(b), err)
 	}
 	return
 }
