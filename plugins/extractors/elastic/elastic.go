@@ -134,6 +134,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			Resource: &commonv1beta1.Resource{
 				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
 				Name: indexName,
+				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: columns,

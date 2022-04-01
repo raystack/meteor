@@ -173,6 +173,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 			Urn:     fmt.Sprintf("%s.%s", database, tableName),
 			Name:    tableName,
 			Service: "Snowflake",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

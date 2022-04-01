@@ -131,6 +131,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err e
 						Urn:     fmt.Sprintf("%s.%s.%s", e.config.ProjectID, instance, table),
 						Name:    table,
 						Service: "bigtable",
+						Type:    "table",
 					},
 					Properties: &facetsv1beta1.Properties{
 						Attributes: utils.TryParseMapToProto(map[string]interface{}{

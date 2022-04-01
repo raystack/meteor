@@ -204,6 +204,7 @@ func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigqu
 		Resource: &commonv1beta1.Resource{
 			Urn:         tableURN,
 			Name:        t.TableID,
+			Type:        "table",
 			Description: md.Description,
 			Service:     "bigquery",
 		},

@@ -142,6 +142,7 @@ func (e *Extractor) processTable(ctx context.Context, dbName string, docID strin
 		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", dbName, docID),
 			Name: docID,
+			Type: "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

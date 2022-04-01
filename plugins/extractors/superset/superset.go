@@ -121,6 +121,7 @@ func (e *Extractor) buildDashboard(id int) (data *assetsv1beta1.Dashboard, err e
 			Name:    dashboard.DashboardTitle,
 			Service: "superset",
 			Url:     dashboard.URL,
+			Type:    "dashboard",
 		},
 		Charts: chart,
 	}

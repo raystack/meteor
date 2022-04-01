@@ -119,6 +119,7 @@ func (e *Extractor) buildTable(filePath string) (table *assetsv1beta1.Table, err
 			Urn:     fileName,
 			Name:    fileName,
 			Service: "csv",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: e.buildColumns(content),

@@ -157,6 +157,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 			Urn:     fmt.Sprintf("%s.%s", dbName, tableName),
 			Name:    tableName,
 			Service: "Oracle",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
