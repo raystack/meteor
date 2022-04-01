@@ -29,8 +29,9 @@ var (
 
 // sample metadata
 var (
-	columbusType = "my-type"
-	url          = fmt.Sprintf("%s/v1beta1/types/%s/records", host, columbusType)
+	//columbusType = "my-type"
+	url = fmt.Sprintf("%s/v1beta1/assets", host)
+	//url          = fmt.Sprintf("%s/v1beta1/types/%s/records", host, columbusType)
 )
 
 func TestInit(t *testing.T) {
@@ -41,7 +42,6 @@ func TestInit(t *testing.T) {
 			},
 			{
 				"host": host,
-				"type": "",
 			},
 		}
 		for i, config := range invalidConfigs {
@@ -57,19 +57,20 @@ func TestInit(t *testing.T) {
 
 func TestSink(t *testing.T) {
 	t.Run("should return error if columbus host returns error", func(t *testing.T) {
-		columbusError := `{"reason":"no such type: \"my-type\""}`
-		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no such type: \\\"my-type\\\"\"}"
+		//columbusError := `{"reason":"no such type: \"my-type\""}`
+		columbusError := `{"reason":"no asset found"}`
+		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no asset found\"}"
 
 		// setup mock client
-		url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
-		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPut, url, []columbus.Record{})
+		url := fmt.Sprintf("%s/v1beta1/assets", host)
+		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, []columbus.Record{})
 		client.SetupResponse(404, columbusError)
 		ctx := context.TODO()
 
 		columbusSink := columbus.New(client, testUtils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
-			"type": "my-type",
+			//"type": "my-type",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -83,15 +84,15 @@ func TestSink(t *testing.T) {
 	t.Run("should return RetryError if columbus returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
-				url := fmt.Sprintf("%s/v1beta1/types/my-type/records", host)
-				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPut, url, []columbus.Record{})
+				url := fmt.Sprintf("%s/v1beta1/assets", host)
+				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, []columbus.Record{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
 				columbusSink := columbus.New(client, testUtils.Logger)
 				err := columbusSink.Init(ctx, map[string]interface{}{
 					"host": host,
-					"type": "my-type",
+					//"type": "my-type",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -121,12 +122,14 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+				},
 			},
 		},
 		{
@@ -150,20 +153,29 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 				"labels": map[string]string{
 					"foo": "$properties.attributes.attrB",
 					"bar": "$properties.labels.labelA",
 				},
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
-				Labels: map[string]string{
-					"foo": "valueAttrB",
-					"bar": "valueLabelA",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+					"labels": map[string]string{
+						"foo": "valueAttrB",
+						"bar": "valueLabelA",
+					},
 				},
+				//Urn:     "my-topic-urn",
+				//Name:    "my-topic",
+				//Service: "kafka",
+				//Labels: map[string]string{
+				//	"foo": "valueAttrB",
+				//	"bar": "valueLabelA",
+				//},
 			},
 		},
 		{
@@ -177,32 +189,39 @@ func TestSink(t *testing.T) {
 				Lineage: &facetsv1beta1.Lineage{
 					Upstreams: []*commonv1beta1.Resource{
 						{
-							Urn:  "urn-1",
-							Type: "type-a",
+							Urn:     "urn-1",
+							Type:    "type-a",
+							Service: "kafka",
 						},
 						{
-							Urn:  "urn-2",
-							Type: "type-b",
+							Urn:     "urn-2",
+							Type:    "type-b",
+							Service: "bigquery",
 						},
 					},
 				},
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+				},
+
 				Upstreams: []columbus.LineageRecord{
 					{
-						Urn:  "urn-1",
-						Type: "type-a",
+						Urn:     "urn-1",
+						Type:    "type-a",
+						Service: "kafka",
 					},
 					{
-						Urn:  "urn-2",
-						Type: "type-b",
+						Urn:     "urn-2",
+						Type:    "type-b",
+						Service: "bigquery",
 					},
 				},
 			},
@@ -218,32 +237,38 @@ func TestSink(t *testing.T) {
 				Lineage: &facetsv1beta1.Lineage{
 					Downstreams: []*commonv1beta1.Resource{
 						{
-							Urn:  "urn-1",
-							Type: "type-a",
+							Urn:     "urn-1",
+							Type:    "type-a",
+							Service: "kafka",
 						},
 						{
-							Urn:  "urn-2",
-							Type: "type-b",
+							Urn:     "urn-2",
+							Type:    "type-b",
+							Service: "bigquery",
 						},
 					},
 				},
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+				},
 				Downstreams: []columbus.LineageRecord{
 					{
-						Urn:  "urn-1",
-						Type: "type-a",
+						Urn:     "urn-1",
+						Type:    "type-a",
+						Service: "kafka",
 					},
 					{
-						Urn:  "urn-2",
-						Type: "type-b",
+						Urn:     "urn-2",
+						Type:    "type-b",
+						Service: "bigquery",
 					},
 				},
 			},
@@ -281,30 +306,32 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
-				Owners: []columbus.Owner{
-					{
-						URN:   "urn-1",
-						Name:  "owner-a",
-						Role:  "role-a",
-						Email: "email-1",
-					},
-					{
-						URN:   "urn-2",
-						Name:  "owner-b",
-						Role:  "role-b",
-						Email: "email-2",
-					},
-					{
-						URN:   "urn-3",
-						Name:  "owner-c",
-						Role:  "role-c",
-						Email: "email-3",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+					"owners": []columbus.Owner{
+						{
+							URN:   "urn-1",
+							Name:  "owner-a",
+							Role:  "role-a",
+							Email: "email-1",
+						},
+						{
+							URN:   "urn-2",
+							Name:  "owner-b",
+							Role:  "role-b",
+							Email: "email-2",
+						},
+						{
+							URN:   "urn-3",
+							Name:  "owner-c",
+							Role:  "role-c",
+							Email: "email-3",
+						},
 					},
 				},
 			},
@@ -320,26 +347,32 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				"type": columbusType,
+				//"type": columbusType,
 				"headers": map[string]string{
 					"Key1": "value11, value12",
 					"Key2": "value2",
 				},
 			},
 			expected: columbus.Record{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
+				Asset: map[string]interface{}{
+					"urn":     "my-topic-urn",
+					"name":    "my-topic",
+					"service": "kafka",
+				},
 			},
 		},
 	}
 
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
-			tc.expected.Data = tc.data
+			for _, val := range tc.expected.Asset {
+				val = tc.data
+			}
+
+			//tc.expected.Asset = tc.data
 			payload := []columbus.Record{tc.expected}
 
-			client := newMockHTTPClient(tc.config, http.MethodPut, url, payload)
+			client := newMockHTTPClient(tc.config, http.MethodPatch, url, payload)
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
 

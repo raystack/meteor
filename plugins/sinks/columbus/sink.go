@@ -22,8 +22,8 @@ import (
 var summary string
 
 type Config struct {
-	Host    string            `mapstructure:"host" validate:"required"`
-	Type    string            `mapstructure:"type" validate:"required"`
+	Host string `mapstructure:"host" validate:"required"`
+	//Type    string            `mapstructure:"type" validate:"required"`
 	Headers map[string]string `mapstructure:"headers"`
 	Labels  map[string]string `mapstructure:"labels"`
 }
@@ -102,8 +102,8 @@ func (s *Sink) send(record Record) (err error) {
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1beta1/types/%s/records", s.config.Host, s.config.Type)
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
+	url := fmt.Sprintf("%s/v1beta1/assets", s.config.Host)
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
 	}
@@ -148,12 +148,14 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 	owners := s.buildOwners(metadata)
 	resource := metadata.GetResource()
 	record := Record{
-		Urn:         resource.GetUrn(),
-		Name:        resource.GetName(),
-		Service:     resource.GetService(),
-		Data:        metadata,
-		Labels:      labels,
-		Owners:      owners,
+		Asset: map[string]interface{}{
+			"urn":     resource.GetUrn(),
+			"name":    resource.GetName(),
+			"service": resource.GetService(),
+			"data":    metadata,
+			"labels":  labels,
+			"owners":  owners,
+		},
 		Upstreams:   upstreams,
 		Downstreams: downstreams,
 	}
@@ -174,14 +176,16 @@ func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []
 
 	for _, upstream := range lineage.Upstreams {
 		upstreams = append(upstreams, LineageRecord{
-			Urn:  upstream.Urn,
-			Type: upstream.Type,
+			Urn:     upstream.Urn,
+			Type:    upstream.Type,
+			Service: upstream.Service,
 		})
 	}
 	for _, downstream := range lineage.Downstreams {
 		downstreams = append(downstreams, LineageRecord{
-			Urn:  downstream.Urn,
-			Type: downstream.Type,
+			Urn:     downstream.Urn,
+			Type:    downstream.Type,
+			Service: downstream.Service,
 		})
 	}
 
@@ -210,6 +214,19 @@ func (s *Sink) buildOwners(metadata models.Metadata) (owners []Owner) {
 	}
 	return
 }
+
+//func (s *Sink) buildAsset(metadata models.Metadata) {
+//	assetModel, modelHasAsset := metadata.(models.AssetMetadata)
+//
+//	if !modelHasAsset {
+//		return
+//	}
+//
+//	assetsResource := assetModel.GetResource()
+//	if assetsResource == nil {
+//		return
+//	}
+//}
 
 func (s *Sink) buildLabels(metadata models.Metadata) (labels map[string]string, err error) {
 	if s.config.Labels == nil {
