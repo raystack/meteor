@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package couchdb_test
 
@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"testing"
@@ -38,6 +39,10 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "docker.io/bitnami/couchdb",
@@ -46,7 +51,10 @@ func TestMain(m *testing.M) {
 			"COUCHDB_USER=" + user,
 			"COUCHDB_PASSWORD=" + pass,
 		},
-		ExposedPorts: []string{"4369", "5984", port},
+		Mounts: []string{
+			fmt.Sprintf("%s/localConfig:/opt/bitnami/couchdb/etc/local.d:rw", pwd),
+		},
+		ExposedPorts: []string{port},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"5984": {
 				{HostIP: "0.0.0.0", HostPort: "5984"},
@@ -57,16 +65,13 @@ func TestMain(m *testing.M) {
 	retryFn := func(resource *dockertest.Resource) (err error) {
 		client, err = kivik.New("couch", fmt.Sprintf("http://%s:%s@%s/", user, pass, host))
 		if err != nil {
-			return err
+			return
 		}
-		_, err = client.Ping(context.TODO())
+		err = setup()
 		return
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
-		log.Fatal(err)
-	}
-	if err := setup(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -115,6 +120,10 @@ func setup() (err error) {
 	for _, database := range dbs {
 		// create database
 		err = client.CreateDB(context.TODO(), database)
+		// DB already created
+		if kivik.StatusCode(err) == http.StatusPreconditionFailed {
+			err = nil
+		}
 		if err != nil {
 			return
 		}
@@ -131,6 +140,9 @@ func setup() (err error) {
 func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
 	for _, query := range queries {
 		_, err := db.Put(context.TODO(), query["_id"].(string), query)
+		if kivik.StatusCode(err) == http.StatusConflict {
+			err = nil
+		}
 		if err != nil {
 			return err
 		}

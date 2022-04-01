@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package clickhouse_test
 
@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 		Tag:          "21.7.4-alpine",
 		ExposedPorts: []string{"9000", port},
 		Mounts: []string{
-			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.xml:rw", pwd),
+			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.d/user.xml:rw", pwd),
 		},
 		PortBindings: map[docker.Port][]docker.PortBinding{
 			"9000": {

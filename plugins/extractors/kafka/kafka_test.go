@@ -1,10 +1,11 @@
-//go:build integration
-// +build integration
+//go:build plugins
+// +build plugins
 
 package kafka_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 
@@ -54,6 +55,17 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			return
 		}
+
+		// healthcheck
+		brokerList, err := conn.Brokers()
+		if err != nil {
+			return
+		}
+		if len(brokerList) == 0 {
+			err = errors.New("not ready")
+			return
+		}
+
 		broker, err = conn.Controller()
 		if err != nil {
 			conn.Close()
