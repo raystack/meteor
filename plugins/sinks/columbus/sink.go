@@ -97,7 +97,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 func (s *Sink) Close() (err error) { return }
 
 func (s *Sink) send(record Record) (err error) {
-	payloadBytes, err := json.Marshal([]Record{record})
+	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
 	}
