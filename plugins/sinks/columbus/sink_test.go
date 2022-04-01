@@ -44,7 +44,6 @@ func TestInit(t *testing.T) {
 				columbusSink := columbus.New(newMockHTTPClient(config, http.MethodGet, url, []columbus.Record{}), testUtils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
-				fmt.Println("Err:", err)
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
 		}

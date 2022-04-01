@@ -18,7 +18,3 @@ type LineageMetadata interface {
 type OwnershipMetadata interface {
 	GetOwnership() *facetsv1beta1.Ownership
 }
-
-type AssetMetadata interface {
-	GetResource() *commonv1beta1.Resource
-}
