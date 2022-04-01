@@ -33,7 +33,7 @@ host: https://columbus.com
 headers:
 	Columbus-User-Email: meteor@odpf.io
 	X-Other-Header: value1, value2
-# The labels 
+# The labels to pass as payload label of the patch api
 labels:
 	myCustom: $properties.attributes.myCustomField
 	sampleLabel: $properties.labels.sampleLabelField
