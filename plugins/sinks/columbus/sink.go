@@ -6,37 +6,38 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 //go:embed README.md
 var summary string
 
 type Config struct {
-	Host string `mapstructure:"host" validate:"required"`
-	//Type    string            `mapstructure:"type" validate:"required"`
+	Host    string            `mapstructure:"host" validate:"required"`
 	Headers map[string]string `mapstructure:"headers"`
 	Labels  map[string]string `mapstructure:"labels"`
 }
 
 var sampleConfig = `
-# The hostnmame of the columbus service
+# The hostname of the columbus service
 host: https://columbus.com
-# The type of the data to send
-type: sample-columbus-type
 # Additional HTTP headers send to columbus, multiple headers value are separated by a comma
 headers:
 	Columbus-User-Email: meteor@odpf.io
-	X-Other-Header: value1, value2`
+	X-Other-Header: value1, value2
+# The labels 
+labels:
+	myCustom: $properties.attributes.myCustomField
+	sampleLabel: $properties.labels.sampleLabelField
+`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -148,13 +149,15 @@ func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
 	owners := s.buildOwners(metadata)
 	resource := metadata.GetResource()
 	record := Record{
-		Asset: map[string]interface{}{
-			"urn":     resource.GetUrn(),
-			"name":    resource.GetName(),
-			"service": resource.GetService(),
-			"data":    metadata,
-			"labels":  labels,
-			"owners":  owners,
+		Asset: Asset{
+			URN:         resource.GetUrn(),
+			Type:        resource.GetType(),
+			Name:        resource.GetName(),
+			Service:     resource.GetService(),
+			Description: resource.GetDescription(),
+			Owners:      owners,
+			Data:        metadata,
+			Labels:      labels,
 		},
 		Upstreams:   upstreams,
 		Downstreams: downstreams,
@@ -176,14 +179,14 @@ func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []
 
 	for _, upstream := range lineage.Upstreams {
 		upstreams = append(upstreams, LineageRecord{
-			Urn:     upstream.Urn,
+			URN:     upstream.Urn,
 			Type:    upstream.Type,
 			Service: upstream.Service,
 		})
 	}
 	for _, downstream := range lineage.Downstreams {
 		downstreams = append(downstreams, LineageRecord{
-			Urn:     downstream.Urn,
+			URN:     downstream.Urn,
 			Type:    downstream.Type,
 			Service: downstream.Service,
 		})
@@ -214,19 +217,6 @@ func (s *Sink) buildOwners(metadata models.Metadata) (owners []Owner) {
 	}
 	return
 }
-
-//func (s *Sink) buildAsset(metadata models.Metadata) {
-//	assetModel, modelHasAsset := metadata.(models.AssetMetadata)
-//
-//	if !modelHasAsset {
-//		return
-//	}
-//
-//	assetsResource := assetModel.GetResource()
-//	if assetsResource == nil {
-//		return
-//	}
-//}
 
 func (s *Sink) buildLabels(metadata models.Metadata) (labels map[string]string, err error) {
 	if s.config.Labels == nil {

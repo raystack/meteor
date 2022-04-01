@@ -9,7 +9,6 @@ sinks:
   name: columbus
   config:
     host: https://columbus.com
-    type: sample-columbus-type
     headers:
       Columbus-User-Email: meteor@odpf.io
       Header-1: value11,value12

@@ -29,9 +29,7 @@ var (
 
 // sample metadata
 var (
-	//columbusType = "my-type"
 	url = fmt.Sprintf("%s/v1beta1/assets", host)
-	//url          = fmt.Sprintf("%s/v1beta1/types/%s/records", host, columbusType)
 )
 
 func TestInit(t *testing.T) {
@@ -40,15 +38,13 @@ func TestInit(t *testing.T) {
 			{
 				"host": "",
 			},
-			{
-				"host": host,
-			},
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
 				columbusSink := columbus.New(newMockHTTPClient(config, http.MethodGet, url, []columbus.Record{}), testUtils.Logger)
 				err := columbusSink.Init(context.TODO(), config)
 
+				fmt.Println("Err:", err)
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
 		}
@@ -57,7 +53,6 @@ func TestInit(t *testing.T) {
 
 func TestSink(t *testing.T) {
 	t.Run("should return error if columbus host returns error", func(t *testing.T) {
-		//columbusError := `{"reason":"no such type: \"my-type\""}`
 		columbusError := `{"reason":"no asset found"}`
 		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no asset found\"}"
 
@@ -70,7 +65,6 @@ func TestSink(t *testing.T) {
 		columbusSink := columbus.New(client, testUtils.Logger)
 		err := columbusSink.Init(ctx, map[string]interface{}{
 			"host": host,
-			//"type": "my-type",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -92,7 +86,6 @@ func TestSink(t *testing.T) {
 				columbusSink := columbus.New(client, testUtils.Logger)
 				err := columbusSink.Init(ctx, map[string]interface{}{
 					"host": host,
-					//"type": "my-type",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -115,20 +108,23 @@ func TestSink(t *testing.T) {
 			description: "should create the right request to columbus",
 			data: &assetsv1beta1.User{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 			},
 		},
@@ -136,9 +132,11 @@ func TestSink(t *testing.T) {
 			description: "should build columbus labels if labels is defined in config",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 				Properties: &facetsv1beta1.Properties{
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{
@@ -153,38 +151,34 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 				"labels": map[string]string{
 					"foo": "$properties.attributes.attrB",
 					"bar": "$properties.labels.labelA",
 				},
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
-					"labels": map[string]string{
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
+					Labels: map[string]string{
 						"foo": "valueAttrB",
 						"bar": "valueLabelA",
 					},
 				},
-				//Urn:     "my-topic-urn",
-				//Name:    "my-topic",
-				//Service: "kafka",
-				//Labels: map[string]string{
-				//	"foo": "valueAttrB",
-				//	"bar": "valueLabelA",
-				//},
 			},
 		},
 		{
 			description: "should send upstreams if data has upstreams",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 				Lineage: &facetsv1beta1.Lineage{
 					Upstreams: []*commonv1beta1.Resource{
@@ -203,23 +197,23 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
-
 				Upstreams: []columbus.LineageRecord{
 					{
-						Urn:     "urn-1",
+						URN:     "urn-1",
 						Type:    "type-a",
 						Service: "kafka",
 					},
 					{
-						Urn:     "urn-2",
+						URN:     "urn-2",
 						Type:    "type-b",
 						Service: "bigquery",
 					},
@@ -230,9 +224,11 @@ func TestSink(t *testing.T) {
 			description: "should send downstreams if data has downstreams",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 				Lineage: &facetsv1beta1.Lineage{
 					Downstreams: []*commonv1beta1.Resource{
@@ -251,22 +247,23 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 				Downstreams: []columbus.LineageRecord{
 					{
-						Urn:     "urn-1",
+						URN:     "urn-1",
 						Type:    "type-a",
 						Service: "kafka",
 					},
 					{
-						Urn:     "urn-2",
+						URN:     "urn-2",
 						Type:    "type-b",
 						Service: "bigquery",
 					},
@@ -277,9 +274,11 @@ func TestSink(t *testing.T) {
 			description: "should send owners if data has ownership",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 				Ownership: &facetsv1beta1.Ownership{
 					Owners: []*facetsv1beta1.Owner{
@@ -306,14 +305,15 @@ func TestSink(t *testing.T) {
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
-					"owners": []columbus.Owner{
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
+					Owners: []columbus.Owner{
 						{
 							URN:   "urn-1",
 							Name:  "owner-a",
@@ -340,24 +340,27 @@ func TestSink(t *testing.T) {
 			description: "should send headers if get populated in config",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
-					Urn:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
+					Urn:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 			},
 			config: map[string]interface{}{
 				"host": host,
-				//"type": columbusType,
 				"headers": map[string]string{
 					"Key1": "value11, value12",
 					"Key2": "value2",
 				},
 			},
 			expected: columbus.Record{
-				Asset: map[string]interface{}{
-					"urn":     "my-topic-urn",
-					"name":    "my-topic",
-					"service": "kafka",
+				Asset: columbus.Asset{
+					URN:         "my-topic-urn",
+					Name:        "my-topic",
+					Service:     "kafka",
+					Type:        "topic",
+					Description: "topic information",
 				},
 			},
 		},
@@ -365,11 +368,7 @@ func TestSink(t *testing.T) {
 
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
-			for _, val := range tc.expected.Asset {
-				val = tc.data
-			}
-
-			//tc.expected.Asset = tc.data
+			tc.expected.Asset.Data = tc.data
 			payload := []columbus.Record{tc.expected}
 
 			client := newMockHTTPClient(tc.config, http.MethodPatch, url, payload)
