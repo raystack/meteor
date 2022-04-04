@@ -96,7 +96,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record Record) (err error) {
+func (s *Sink) send(record RequestPayload) (err error) {
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
@@ -139,16 +139,16 @@ func (s *Sink) send(record Record) (err error) {
 	}
 }
 
-func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
+func (s *Sink) buildColumbusPayload(metadata models.Metadata) (RequestPayload, error) {
 	labels, err := s.buildLabels(metadata)
 	if err != nil {
-		return Record{}, errors.Wrap(err, "failed to build labels")
+		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
 	}
 
 	upstreams, downstreams := s.buildLineage(metadata)
 	owners := s.buildOwners(metadata)
 	resource := metadata.GetResource()
-	record := Record{
+	record := RequestPayload{
 		Asset: Asset{
 			URN:         resource.GetUrn(),
 			Type:        resource.GetType(),

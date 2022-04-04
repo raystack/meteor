@@ -1,6 +1,6 @@
 package columbus
 
-type Record struct {
+type RequestPayload struct {
 	Asset       Asset           `json:"asset"`
 	Upstreams   []LineageRecord `json:"upstreams"`
 	Downstreams []LineageRecord `json:"downstreams"`
