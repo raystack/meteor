@@ -168,6 +168,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 			Urn:     models.TableURN("postgres", e.host, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

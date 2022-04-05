@@ -174,6 +174,7 @@ func (e *Extractor) processTable(db *sql.DB, catalog string, database string, ta
 			Urn:     fmt.Sprintf("%s.%s.%s", catalog, database, tableName),
 			Name:    tableName,
 			Service: "presto",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

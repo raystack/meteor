@@ -189,6 +189,7 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 		Resource: &commonv1beta1.Resource{
 			Urn:     models.TableURN("redshift", e.config.AWSRegion, dbName, tableName),
 			Name:    tableName,
+			Type:    "table",
 			Service: "redshift",
 		},
 		Schema: &facetsv1beta1.Columns{

@@ -143,6 +143,7 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 			Urn:     fmt.Sprintf("%s/%s", projectID, b.Name),
 			Name:    b.Name,
 			Service: metadataSource,
+			Type:    "bucket",
 		},
 		Location:    b.Location,
 		StorageType: b.StorageClass,

@@ -168,6 +168,7 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", keyspace, tableName),
 			Name: tableName,
+			Type: "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

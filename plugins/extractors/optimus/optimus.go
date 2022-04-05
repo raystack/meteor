@@ -145,6 +145,7 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 			Name:        jobSpec.Name,
 			Service:     service,
 			Description: jobSpec.Description,
+			Type:        "job",
 		},
 		Ownership: &facetsv1beta1.Ownership{
 			Owners: []*facetsv1beta1.Owner{

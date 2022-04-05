@@ -104,6 +104,7 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 		Resource: &commonv1beta1.Resource{
 			Urn:         fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
 			Name:        dashboard.Meta.Slug,
+			Type:        "dashboard",
 			Service:     "grafana",
 			Url:         dashboard.Meta.URL,
 			Description: dashboard.Dashboard.Description,

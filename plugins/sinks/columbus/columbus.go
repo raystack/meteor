@@ -1,20 +1,26 @@
 package columbus
 
-type Record struct {
-	Urn         string            `json:"urn"`
+type RequestPayload struct {
+	Asset       Asset           `json:"asset"`
+	Upstreams   []LineageRecord `json:"upstreams"`
+	Downstreams []LineageRecord `json:"downstreams"`
+}
+
+type Asset struct {
+	URN         string            `json:"urn"`
+	Type        string            `json:"type"`
 	Name        string            `json:"name"`
 	Service     string            `json:"service"`
-	Upstreams   []LineageRecord   `json:"upstreams"`
-	Downstreams []LineageRecord   `json:"downstreams"`
-	Owners      []Owner           `json:"owners"`
 	Description string            `json:"description"`
+	Owners      []Owner           `json:"owners"`
 	Data        interface{}       `json:"data"`
 	Labels      map[string]string `json:"labels"`
 }
 
 type LineageRecord struct {
-	Urn  string `json:"urn"`
-	Type string `json:"type"`
+	URN     string `json:"urn"`
+	Type    string `json:"type"`
+	Service string `json:"service"`
 }
 
 type Owner struct {

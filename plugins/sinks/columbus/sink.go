@@ -6,16 +6,15 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"io/ioutil"
+	"net/http"
+	"strings"
 )
 
 //go:embed README.md
@@ -23,20 +22,22 @@ var summary string
 
 type Config struct {
 	Host    string            `mapstructure:"host" validate:"required"`
-	Type    string            `mapstructure:"type" validate:"required"`
 	Headers map[string]string `mapstructure:"headers"`
 	Labels  map[string]string `mapstructure:"labels"`
 }
 
 var sampleConfig = `
-# The hostnmame of the columbus service
+# The hostname of the columbus service
 host: https://columbus.com
-# The type of the data to send
-type: sample-columbus-type
 # Additional HTTP headers send to columbus, multiple headers value are separated by a comma
 headers:
 	Columbus-User-Email: meteor@odpf.io
-	X-Other-Header: value1, value2`
+	X-Other-Header: value1, value2
+# The labels to pass as payload label of the patch api
+labels:
+	myCustom: $properties.attributes.myCustomField
+	sampleLabel: $properties.labels.sampleLabelField
+`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -95,15 +96,15 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record Record) (err error) {
-	payloadBytes, err := json.Marshal([]Record{record})
+func (s *Sink) send(record RequestPayload) (err error) {
+	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1beta1/types/%s/records", s.config.Host, s.config.Type)
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
+	url := fmt.Sprintf("%s/v1beta1/assets", s.config.Host)
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
 	}
@@ -138,22 +139,26 @@ func (s *Sink) send(record Record) (err error) {
 	}
 }
 
-func (s *Sink) buildColumbusPayload(metadata models.Metadata) (Record, error) {
+func (s *Sink) buildColumbusPayload(metadata models.Metadata) (RequestPayload, error) {
 	labels, err := s.buildLabels(metadata)
 	if err != nil {
-		return Record{}, errors.Wrap(err, "failed to build labels")
+		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
 	}
 
 	upstreams, downstreams := s.buildLineage(metadata)
 	owners := s.buildOwners(metadata)
 	resource := metadata.GetResource()
-	record := Record{
-		Urn:         resource.GetUrn(),
-		Name:        resource.GetName(),
-		Service:     resource.GetService(),
-		Data:        metadata,
-		Labels:      labels,
-		Owners:      owners,
+	record := RequestPayload{
+		Asset: Asset{
+			URN:         resource.GetUrn(),
+			Type:        resource.GetType(),
+			Name:        resource.GetName(),
+			Service:     resource.GetService(),
+			Description: resource.GetDescription(),
+			Owners:      owners,
+			Data:        metadata,
+			Labels:      labels,
+		},
 		Upstreams:   upstreams,
 		Downstreams: downstreams,
 	}
@@ -174,14 +179,16 @@ func (s *Sink) buildLineage(metadata models.Metadata) (upstreams, downstreams []
 
 	for _, upstream := range lineage.Upstreams {
 		upstreams = append(upstreams, LineageRecord{
-			Urn:  upstream.Urn,
-			Type: upstream.Type,
+			URN:     upstream.Urn,
+			Type:    upstream.Type,
+			Service: upstream.Service,
 		})
 	}
 	for _, downstream := range lineage.Downstreams {
 		downstreams = append(downstreams, LineageRecord{
-			Urn:  downstream.Urn,
-			Type: downstream.Type,
+			URN:     downstream.Urn,
+			Type:    downstream.Type,
+			Service: downstream.Service,
 		})
 	}
 

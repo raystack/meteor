@@ -127,6 +127,7 @@ func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assetsv1beta1
 			Urn:     fmt.Sprintf("kafka::%s/%s", e.config.Label, topic),
 			Name:    topic,
 			Service: "kafka",
+			Type:    "topic",
 		},
 		Profile: &assetsv1beta1.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),

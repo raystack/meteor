@@ -144,6 +144,7 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		Resource: &commonv1beta1.Resource{
 			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
 			Name: collectionName,
+			Type: "table",
 		},
 		Profile: &assetsv1beta1.TableProfile{
 			TotalRows: totalRows,
