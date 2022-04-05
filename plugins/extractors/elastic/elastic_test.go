@@ -195,6 +195,7 @@ func getExpectedVal() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  "elasticsearch.index1",
 				Name: "index1",
+				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
@@ -216,6 +217,7 @@ func getExpectedVal() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  "elasticsearch.index2",
 				Name: "index2",
+				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{

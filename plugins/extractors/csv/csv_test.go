@@ -50,6 +50,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "test.csv",
 					Name:    "test.csv",
 					Service: "csv",
+					Type:    "table",
 				},
 				Schema: &facetsv1beta1.Columns{
 					Columns: []*facetsv1beta1.Column{
@@ -84,6 +85,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "test-2.csv",
 					Name:    "test-2.csv",
 					Service: "csv",
+					Type:    "table",
 				},
 				Schema: &facetsv1beta1.Columns{
 					Columns: []*facetsv1beta1.Column{
@@ -98,6 +100,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "test.csv",
 					Name:    "test.csv",
 					Service: "csv",
+					Type:    "table",
 				},
 				Schema: &facetsv1beta1.Columns{
 					Columns: []*facetsv1beta1.Column{

@@ -160,6 +160,7 @@ func getExpected() []models.Record {
 				Urn:     "XE.EMPLOYEE",
 				Name:    "EMPLOYEE",
 				Service: "Oracle",
+				Type:    "table",
 			},
 			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 3,
@@ -190,6 +191,7 @@ func getExpected() []models.Record {
 				Urn:     "XE.DEPARTMENT",
 				Name:    "DEPARTMENT",
 				Service: "Oracle",
+				Type:    "table",
 			},
 			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 4,

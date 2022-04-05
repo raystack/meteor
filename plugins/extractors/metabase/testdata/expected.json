@@ -3,6 +3,7 @@
         "urn": "metabase::https://my-metabase.com/dashboard/1",
         "name": "Main",
         "service": "metabase",
+        "type": "dashboard",
         "description": "HELPFUL DESCRIPTION"
     },
     "properties": {

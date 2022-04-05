@@ -165,6 +165,7 @@ func getExpected() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".connections",
 				Name: "connections",
+				Type: "table",
 			},
 			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 3,
@@ -174,6 +175,7 @@ func getExpected() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".posts",
 				Name: "posts",
+				Type: "table",
 			},
 			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 2,
@@ -183,6 +185,7 @@ func getExpected() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  testDB + ".stats",
 				Name: "stats",
+				Type: "table",
 			},
 			Profile: &assetsv1beta1.TableProfile{
 				TotalRows: 1,

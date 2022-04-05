@@ -65,6 +65,7 @@ func TestExtract(t *testing.T) {
 					Service:     "grafana",
 					Url:         fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
 					Description: "",
+					Type:        "dashboard",
 				},
 				Charts: []*assetsv1beta1.Chart{
 					{
@@ -88,6 +89,7 @@ func TestExtract(t *testing.T) {
 					Service:     "grafana",
 					Url:         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
 					Description: "this is description for testing",
+					Type:        "dashboard",
 				},
 				Charts: []*assetsv1beta1.Chart{
 					{

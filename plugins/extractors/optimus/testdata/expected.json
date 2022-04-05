@@ -1,6 +1,7 @@
 [{
         "resource": {
             "urn": "optimus::optimus:80/project-A.namespace-A.job-A",
+            "type": "job",
             "name": "job-A",
             "service": "optimus",
             "description": "sample description for job-A"
@@ -52,6 +53,7 @@
             "urn": "optimus::optimus:80/project-A.namespace-A.job-B",
             "name": "job-B",
             "service": "optimus",
+            "type": "job",
             "description": "sample description for job-B"
         },
         "ownership": {

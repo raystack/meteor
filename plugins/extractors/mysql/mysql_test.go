@@ -154,6 +154,7 @@ func getExpected() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.applicant",
 				Name: "applicant",
+				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
@@ -185,6 +186,7 @@ func getExpected() []models.Record {
 			Resource: &commonv1beta1.Resource{
 				Urn:  "mockdata_meteor_metadata_test.jobs",
 				Name: "jobs",
+				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
