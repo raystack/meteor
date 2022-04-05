@@ -3,7 +3,8 @@
         "resource": {
             "urn": "tableau::https://server.tableau.com/workbook/d74564cf-931c-2df2-fd8f-8b974fbc0b14",
             "name": "Regional",
-            "service": "tableau"
+            "service": "tableau",
+            "type": "dashboard"
         },
         "charts": [
             {
@@ -275,6 +276,7 @@
             "urn": "tableau::https://server.tableau.com/workbook/e1f0aab7-e3ff-8727-8461-4d4294e220f0",
             "name": "Superstore",
             "service": "tableau",
+            "type": "dashboard",
             "description": "A sample superstore"
         },
         "charts": [
@@ -751,7 +753,8 @@
         "resource": {
             "urn": "tableau::https://server.tableau.com/workbook/d7db01c0-b311-6f47-31bf-ad1c42e67629",
             "name": "InMail Engagement",
-            "service": "tableau"
+            "service": "tableau",
+            "type": "dashboard"
         },
         "charts": [
             {

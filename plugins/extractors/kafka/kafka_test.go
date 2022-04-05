@@ -129,6 +129,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-1",
 					Name:    "meteor-test-topic-1",
 					Service: "kafka",
+					Type:    "topic",
 				},
 				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
@@ -139,6 +140,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-2",
 					Name:    "meteor-test-topic-2",
 					Service: "kafka",
+					Type:    "topic",
 				},
 				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
@@ -149,6 +151,7 @@ func TestExtract(t *testing.T) {
 					Urn:     "kafka::my-kafka-cluster/meteor-test-topic-3",
 					Name:    "meteor-test-topic-3",
 					Service: "kafka",
+					Type:    "topic",
 				},
 				Profile: &assetsv1beta1.TopicProfile{
 					NumberOfPartitions: 1,
