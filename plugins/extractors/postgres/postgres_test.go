@@ -10,8 +10,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/models"
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/test/utils"
+	ut "github.com/odpf/meteor/utils"
 
 	"database/sql"
 
@@ -99,13 +103,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		var urns []string
-		for _, record := range emitter.Get() {
-			table := record.Data().(*assetsv1beta1.Table)
-			urns = append(urns, table.Resource.Urn)
-
-		}
-		assert.Equal(t, []string{"postgres::localhost:5438/test_db/article", "postgres::localhost:5438/test_db/post"}, urns)
+		assert.Equal(t, getExpected(), emitter.Get())
 	})
 }
 
@@ -144,4 +142,77 @@ func execute(db *sql.DB, queries []string) (err error) {
 		}
 	}
 	return
+}
+
+func getExpected() []models.Record {
+	return []models.Record{
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
+				Urn:     "postgres::localhost:5438/test_db/article",
+				Name:    "article",
+				Service: "postgres",
+				Type:    "table",
+			},
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
+					{
+						Name:       "id",
+						DataType:   "bigint",
+						IsNullable: false,
+						Length:     0,
+					},
+					{
+						Name:       "name",
+						DataType:   "character varying",
+						IsNullable: false,
+						Length:     20,
+					},
+				},
+			},
+			Properties: &facetsv1beta1.Properties{
+				Attributes: ut.TryParseMapToProto(map[string]interface{}{
+					"grants": []interface{}{
+						map[string]interface{}{
+							"user":            "test_user",
+							"privilege_types": "INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER",
+						},
+					},
+				}),
+			},
+		}),
+		models.NewRecord(&assetsv1beta1.Table{
+			Resource: &commonv1beta1.Resource{
+				Urn:     "postgres::localhost:5438/test_db/post",
+				Name:    "post",
+				Service: "postgres",
+				Type:    "table",
+			},
+			Schema: &facetsv1beta1.Columns{
+				Columns: []*facetsv1beta1.Column{
+					{
+						Name:       "id",
+						DataType:   "bigint",
+						IsNullable: false,
+						Length:     0,
+					},
+					{
+						Name:       "title",
+						DataType:   "character varying",
+						IsNullable: false,
+						Length:     20,
+					},
+				},
+			},
+			Properties: &facetsv1beta1.Properties{
+				Attributes: ut.TryParseMapToProto(map[string]interface{}{
+					"grants": []interface{}{
+						map[string]interface{}{
+							"user":            "test_user",
+							"privilege_types": "INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER",
+						},
+					},
+				}),
+			},
+		}),
+	}
 }
