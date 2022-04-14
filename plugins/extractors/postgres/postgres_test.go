@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package postgres_test
 
 import (
@@ -174,7 +171,7 @@ func getExpected() []models.Record {
 					"grants": []interface{}{
 						map[string]interface{}{
 							"user":            "test_user",
-							"privilege_types": "INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER",
+							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 						},
 					},
 				}),
@@ -208,7 +205,7 @@ func getExpected() []models.Record {
 					"grants": []interface{}{
 						map[string]interface{}{
 							"user":            "test_user",
-							"privilege_types": "INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER",
+							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 						},
 					},
 				}),

@@ -238,7 +238,7 @@ func (e *Extractor) userPrivilegesInfo(db *sql.DB, dbName string, tableName stri
 
 		usrs = append(usrs, map[string]interface{}{
 			"user":            grantee,
-			"privilege_types": privilege_type,
+			"privilege_types": utils.ConvertStringListToInterface(strings.Split(privilege_type, ",")),
 		})
 	}
 	grants := map[string]interface{}{

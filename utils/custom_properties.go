@@ -65,6 +65,14 @@ func appendCustomFields(metadata models.Metadata, customFields map[string]interf
 	return properties, err
 }
 
+func ConvertStringListToInterface(s []string) []interface{} {
+	out := make([]interface{}, len(s))
+	for i, v := range s {
+		out[i] = v
+	}
+	return out
+}
+
 func parseToMap(src *structpb.Struct) map[string]interface{} {
 	if src == nil {
 		return nil
