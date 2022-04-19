@@ -1,4 +1,4 @@
-package columbus
+package compass
 
 import (
 	"bytes"
@@ -27,11 +27,11 @@ type Config struct {
 }
 
 var sampleConfig = `
-# The hostname of the columbus service
-host: https://columbus.com
-# Additional HTTP headers send to columbus, multiple headers value are separated by a comma
+# The hostname of the compass service
+host: https://compass.com
+# Additional HTTP headers send to compass, multiple headers value are separated by a comma
 headers:
-	Columbus-User-Email: meteor@odpf.io
+	Compass-User-Email: meteor@odpf.io
 	X-Other-Header: value1, value2
 # The labels to pass as payload label of the patch api
 labels:
@@ -56,7 +56,7 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 
 func (s *Sink) Info() plugins.Info {
 	return plugins.Info{
-		Description:  "Send metadata to columbus http service",
+		Description:  "Send metadata to compass http service",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
 		Tags:         []string{"http", "sink"},
@@ -78,17 +78,17 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
-		s.logger.Info("sinking record to columbus", "record", metadata.GetResource().Urn)
+		s.logger.Info("sinking record to compass", "record", metadata.GetResource().Urn)
 
-		columbusPayload, err := s.buildColumbusPayload(metadata)
+		compassPayload, err := s.buildCompassPayload(metadata)
 		if err != nil {
-			return errors.Wrap(err, "failed to build columbus payload")
+			return errors.Wrap(err, "failed to build compass payload")
 		}
-		if err = s.send(columbusPayload); err != nil {
+		if err = s.send(compassPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 
-		s.logger.Info("successfully sinked record to columbus", "record", metadata.GetResource().Urn)
+		s.logger.Info("successfully sinked record to compass", "record", metadata.GetResource().Urn)
 	}
 
 	return
@@ -129,7 +129,7 @@ func (s *Sink) send(record RequestPayload) (err error) {
 	if err != nil {
 		return
 	}
-	err = fmt.Errorf("columbus returns %d: %v", res.StatusCode, string(bodyBytes))
+	err = fmt.Errorf("compass returns %d: %v", res.StatusCode, string(bodyBytes))
 
 	switch code := res.StatusCode; {
 	case code >= 500:
@@ -139,7 +139,7 @@ func (s *Sink) send(record RequestPayload) (err error) {
 	}
 }
 
-func (s *Sink) buildColumbusPayload(metadata models.Metadata) (RequestPayload, error) {
+func (s *Sink) buildCompassPayload(metadata models.Metadata) (RequestPayload, error) {
 	labels, err := s.buildLabels(metadata)
 	if err != nil {
 		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
@@ -299,7 +299,7 @@ func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, metadat
 }
 
 func init() {
-	if err := registry.Sinks.Register("columbus", func() plugins.Syncer {
+	if err := registry.Sinks.Register("compass", func() plugins.Syncer {
 		return New(&http.Client{}, plugins.GetLog())
 	}); err != nil {
 		panic(err)

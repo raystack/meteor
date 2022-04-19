@@ -1,4 +1,4 @@
-package columbus_test
+package compass_test
 
 import (
 	"bytes"
@@ -19,12 +19,12 @@ import (
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/sinks/columbus"
+	"github.com/odpf/meteor/plugins/sinks/compass"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	host = "http://columbus.com"
+	host = "http://compass.com"
 )
 
 // sample metadata
@@ -41,8 +41,8 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				columbusSink := columbus.New(newMockHTTPClient(config, http.MethodPatch, url, columbus.RequestPayload{}), testUtils.Logger)
-				err := columbusSink.Init(context.TODO(), config)
+				compassSink := compass.New(newMockHTTPClient(config, http.MethodPatch, url, compass.RequestPayload{}), testUtils.Logger)
+				err := compassSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
 			})
@@ -51,18 +51,18 @@ func TestInit(t *testing.T) {
 }
 
 func TestSink(t *testing.T) {
-	t.Run("should return error if columbus host returns error", func(t *testing.T) {
-		columbusError := `{"reason":"no asset found"}`
-		errMessage := "error sending data: columbus returns 404: {\"reason\":\"no asset found\"}"
+	t.Run("should return error if compass host returns error", func(t *testing.T) {
+		compassError := `{"reason":"no asset found"}`
+		errMessage := "error sending data: compass returns 404: {\"reason\":\"no asset found\"}"
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1beta1/assets", host)
-		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, columbus.RequestPayload{})
-		client.SetupResponse(404, columbusError)
+		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, compass.RequestPayload{})
+		client.SetupResponse(404, compassError)
 		ctx := context.TODO()
 
-		columbusSink := columbus.New(client, testUtils.Logger)
-		err := columbusSink.Init(ctx, map[string]interface{}{
+		compassSink := compass.New(client, testUtils.Logger)
+		err := compassSink.Init(ctx, map[string]interface{}{
 			"host": host,
 		})
 		if err != nil {
@@ -70,20 +70,20 @@ func TestSink(t *testing.T) {
 		}
 
 		data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
-		err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
 	})
 
-	t.Run("should return RetryError if columbus returns certain status code", func(t *testing.T) {
+	t.Run("should return RetryError if compass returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
 				url := fmt.Sprintf("%s/v1beta1/assets", host)
-				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, columbus.RequestPayload{})
+				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, compass.RequestPayload{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
-				columbusSink := columbus.New(client, testUtils.Logger)
-				err := columbusSink.Init(ctx, map[string]interface{}{
+				compassSink := compass.New(client, testUtils.Logger)
+				err := compassSink.Init(ctx, map[string]interface{}{
 					"host": host,
 				})
 				if err != nil {
@@ -91,7 +91,7 @@ func TestSink(t *testing.T) {
 				}
 
 				data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
-				err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
 		}
@@ -101,10 +101,10 @@ func TestSink(t *testing.T) {
 		description string
 		data        models.Metadata
 		config      map[string]interface{}
-		expected    columbus.RequestPayload
+		expected    compass.RequestPayload
 	}{
 		{
-			description: "should create the right request to columbus",
+			description: "should create the right request to compass",
 			data: &assetsv1beta1.User{
 				Resource: &commonv1beta1.Resource{
 					Urn:         "my-topic-urn",
@@ -117,8 +117,8 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host": host,
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
@@ -128,7 +128,7 @@ func TestSink(t *testing.T) {
 			},
 		},
 		{
-			description: "should build columbus labels if labels is defined in config",
+			description: "should build compass labels if labels is defined in config",
 			data: &assetsv1beta1.Topic{
 				Resource: &commonv1beta1.Resource{
 					Urn:         "my-topic-urn",
@@ -155,8 +155,8 @@ func TestSink(t *testing.T) {
 					"bar": "$properties.labels.labelA",
 				},
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
@@ -197,15 +197,15 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host": host,
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
 				},
-				Upstreams: []columbus.LineageRecord{
+				Upstreams: []compass.LineageRecord{
 					{
 						URN:     "urn-1",
 						Type:    "type-a",
@@ -247,15 +247,15 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host": host,
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
 				},
-				Downstreams: []columbus.LineageRecord{
+				Downstreams: []compass.LineageRecord{
 					{
 						URN:     "urn-1",
 						Type:    "type-a",
@@ -305,14 +305,14 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host": host,
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
-					Owners: []columbus.Owner{
+					Owners: []compass.Owner{
 						{
 							URN:   "urn-1",
 							Name:  "owner-a",
@@ -353,8 +353,8 @@ func TestSink(t *testing.T) {
 					"Key2": "value2",
 				},
 			},
-			expected: columbus.RequestPayload{
-				Asset: columbus.Asset{
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
 					URN:         "my-topic-urn",
 					Name:        "my-topic",
 					Service:     "kafka",
@@ -368,7 +368,7 @@ func TestSink(t *testing.T) {
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
 			tc.expected.Asset.Data = tc.data
-			payload := columbus.RequestPayload{
+			payload := compass.RequestPayload{
 				Asset:       tc.expected.Asset,
 				Upstreams:   tc.expected.Upstreams,
 				Downstreams: tc.expected.Downstreams,
@@ -378,13 +378,13 @@ func TestSink(t *testing.T) {
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
 
-			columbusSink := columbus.New(client, testUtils.Logger)
-			err := columbusSink.Init(ctx, tc.config)
+			compassSink := compass.New(client, testUtils.Logger)
+			err := compassSink.Init(ctx, tc.config)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = columbusSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
+			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
 			assert.NoError(t, err)
 
 			client.Assert(t)
@@ -396,13 +396,13 @@ type mockHTTPClient struct {
 	URL            string
 	Method         string
 	Headers        map[string]string
-	RequestPayload columbus.RequestPayload
+	RequestPayload compass.RequestPayload
 	ResponseJSON   string
 	ResponseStatus int
 	req            *http.Request
 }
 
-func newMockHTTPClient(config map[string]interface{}, method, url string, payload columbus.RequestPayload) *mockHTTPClient {
+func newMockHTTPClient(config map[string]interface{}, method, url string, payload compass.RequestPayload) *mockHTTPClient {
 	headersMap := map[string]string{}
 	if headersItf, ok := config["headers"]; ok {
 		headersMap = headersItf.(map[string]string)

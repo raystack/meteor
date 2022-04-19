@@ -38,7 +38,7 @@ func InfoSinkCmd() *cobra.Command {
 			The list of supported sinks is available via the 'meteor list sinks' command.`),
 		Example: heredoc.Doc(`
 			$ meteor info sink console
-			$ meteor info sink columbus
+			$ meteor info sink compass
 		`),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{

@@ -19,7 +19,7 @@ After making the necessary changes to the source, and sinks as per your local se
 $ meteor new recipe sample -e <name-of-extractor> -s <single-or-multiple-sinks> -p <name-of-processors>
 
 # command to generate recipe with multiple sinks
-$ meteor new recipe sample -e bigquery -s columbus,kafka
+$ meteor new recipe sample -e bigquery -s compass,kafka
 
 # for the tour you can use a single console sink
 # extracor(-e) as postgres, sink(-s) and enrich processor(-p)

@@ -12,6 +12,6 @@ The tour takes you through how you can use meteor as an end user and is a great 
 - You are required to have atleast one Database, Dashboard or any other Data source and their proper credentials ready.
   For e.g. Postgres, MySQL, MSSQL, MongoDB, GitHub, etc.
 
-- For sink we will be using console, if you are planning to use columbus or Kafka please make necessary changes accordingly.
+- For sink we will be using console, if you are planning to use compass or Kafka please make necessary changes accordingly.
 
 Once done with the pre-requisites Get started with [Installation](./0_installation.md).
