@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	// used to register the postgres driver
 	_ "github.com/lib/pq"
@@ -163,6 +164,11 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 		return result, nil
 	}
 
+	usrPrivilegeInfo, err := e.userPrivilegesInfo(db, dbName, tableName)
+	if err != nil {
+		return result, nil
+	}
+
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
 			Urn:     models.TableURN("postgres", e.host, dbName, tableName),
@@ -172,6 +178,9 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,
+		},
+		Properties: &facetsv1beta1.Properties{
+			Attributes: usrPrivilegeInfo,
 		},
 	}
 
@@ -204,6 +213,39 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, dbName string, tableName strin
 		})
 	}
 	return result, nil
+}
+
+func (e *Extractor) userPrivilegesInfo(db *sql.DB, dbName string, tableName string) (result *structpb.Struct, err error) {
+	query := `SELECT grantee, string_agg(privilege_type, ',') 
+	FROM information_schema.role_table_grants 
+	WHERE table_name='%s' AND table_catalog='%s'
+	GROUP BY grantee;`
+
+	rows, err := db.Query(fmt.Sprintf(query, tableName, dbName))
+	if err != nil {
+		err = errors.Wrap(err, "failed to fetch data from query")
+		return
+	}
+
+	var usrs []interface{}
+	for rows.Next() {
+		var grantee, privilege_type string
+
+		if err = rows.Scan(&grantee, &privilege_type); err != nil {
+			e.logger.Error("failed to get fields", "error", err)
+			continue
+		}
+
+		usrs = append(usrs, map[string]interface{}{
+			"user":            grantee,
+			"privilege_types": ConvertStringListToInterface(strings.Split(privilege_type, ",")),
+		})
+	}
+	grants := map[string]interface{}{
+		"grants": usrs,
+	}
+	result = utils.TryParseMapToProto(grants)
+	return
 }
 
 // Convert nullable string to a boolean
@@ -247,4 +289,12 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+func ConvertStringListToInterface(s []string) []interface{} {
+	out := make([]interface{}, len(s))
+	for i, v := range s {
+		out[i] = v
+	}
+	return out
 }
