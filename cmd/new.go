@@ -51,10 +51,10 @@ func NewRecipeCmd() *cobra.Command {
 			$ meteor new recipe sample -e bigquery -s console
 
 			# generate recipe with multiple sinks
-			$ meteor new recipe sample -e bigquery -s columbus,kafka -p enrich
+			$ meteor new recipe sample -e bigquery -s compass,kafka -p enrich
 
 			# store recipe to a file
-			$ meteor new recipe sample -e bigquery -s columbus > recipe.yaml
+			$ meteor new recipe sample -e bigquery -s compass > recipe.yaml
 		`),
 		Annotations: map[string]string{
 			"group:core": "true",

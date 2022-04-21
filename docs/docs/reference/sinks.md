@@ -13,20 +13,20 @@ sinks:
  - name: console
 ```
 
-## Columbus
+## Compass
 
-`columbus`
+`compass`
 
-Upload metadata to a given `type` in [Columbus](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/columbus/README.md). Request will be send via HTTP to given host.
+Upload metadata to a given `type` in [Compass](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/compass/README.md). Request will be send via HTTP to given host.
 
-### Sample usage of columbus sink
+### Sample usage of compass sink
 
 ```yaml
 sinks:
- - name: columbus
+ - name: compass
    config:
-     host: https://columbus.com
-     type: sample-columbus-type
+     host: https://compass.com
+     type: sample-compass-type
      mapping:
        new_fieldname: "json_field_name"
        id: "resource.urn"
@@ -35,4 +35,4 @@ sinks:
 
 _**Notes**_
 
-Columbus' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Columbus. Supports getting value from nested fields.
+Compass' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Compass. Supports getting value from nested fields.

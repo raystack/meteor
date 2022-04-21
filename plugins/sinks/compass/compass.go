@@ -1,4 +1,4 @@
-package columbus
+package compass
 
 type RequestPayload struct {
 	Asset       Asset           `json:"asset"`

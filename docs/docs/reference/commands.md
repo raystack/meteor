@@ -67,11 +67,11 @@ You can create a sample recipe usin the gen command.
 $ meteor gen recipe sample -e bigquery -s console
 
 # generate recipe with multiple sinks
-$ meteor gen recipe sample -e bigquery -s columbus,kafka
+$ meteor gen recipe sample -e bigquery -s compass,kafka
 
 # extracor(-e) as postgres, multiple sinks(-s) and enrich processor(-p)
 # save the generated recipe to a recipe.yaml
-meteor gen recipe sample -e postgres -s columbus,kafka -p enrich > recipe.yaml
+meteor gen recipe sample -e postgres -s compass,kafka -p enrich > recipe.yaml
 ```
 
 ## Linting recipes

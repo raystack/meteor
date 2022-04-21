@@ -190,7 +190,7 @@ export default function Home() {
                     content: (
                       <div>
                         Meteor supports sink plugins to send metadata to a variety of
-                        third party APIs and catalog services, including Columbus, HTTP, BigQuery,
+                        third party APIs and catalog services, including Compass, HTTP, BigQuery,
                         Kafka, and many others.
                       </div>
                     ),
