@@ -43,10 +43,11 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249
-	github.com/odpf/optimus v0.0.5-rc.1.0.20220106085648-02efc17c1c8d
+	github.com/odpf/optimus v0.2.1-rc.1
 	github.com/odpf/salt v0.0.0-20220123093403-faac19525416
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/ory/dockertest/v3 v3.7.0
+	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c
 	github.com/schollz/progressbar/v3 v3.8.5

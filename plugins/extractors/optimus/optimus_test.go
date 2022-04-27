@@ -71,7 +71,10 @@ func TestExtract(t *testing.T) {
 }
 
 type mockClient struct {
-	pb.RuntimeServiceClient
+	pb.NamespaceServiceClient
+	pb.ProjectServiceClient
+	pb.JobSpecificationServiceClient
+	pb.JobRunServiceClient
 	mock.Mock
 }
 

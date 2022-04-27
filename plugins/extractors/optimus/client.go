@@ -21,7 +21,10 @@ const (
 )
 
 type Client interface {
-	pb.RuntimeServiceClient
+	pb.NamespaceServiceClient
+	pb.ProjectServiceClient
+	pb.JobSpecificationServiceClient
+	pb.JobRunServiceClient
 	Connect(ctx context.Context, host string) error
 	Close() error
 }
@@ -31,7 +34,10 @@ func newClient() Client {
 }
 
 type client struct {
-	pb.RuntimeServiceClient
+	pb.NamespaceServiceClient
+	pb.ProjectServiceClient
+	pb.JobSpecificationServiceClient
+	pb.JobRunServiceClient
 	conn *grpc.ClientConn
 }
 
@@ -44,7 +50,10 @@ func (c *client) Connect(ctx context.Context, host string) (err error) {
 		return
 	}
 
-	c.RuntimeServiceClient = pb.NewRuntimeServiceClient(c.conn)
+	c.NamespaceServiceClient = pb.NewNamespaceServiceClient(c.conn)
+	c.ProjectServiceClient = pb.NewProjectServiceClient(c.conn)
+	c.JobSpecificationServiceClient = pb.NewJobSpecificationServiceClient(c.conn)
+	c.JobRunServiceClient = pb.NewJobRunServiceClient(c.conn)
 
 	return
 }
