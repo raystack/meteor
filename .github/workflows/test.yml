@@ -15,3 +15,9 @@ jobs:
         run: go mod tidy
       - name: Run Test
         run: make test
+      - name: Install goveralls and send coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          go get github.com/mattn/goveralls
+          goveralls -coverprofile=coverage.txt -service=github
