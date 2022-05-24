@@ -20,4 +20,4 @@ jobs:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           go get github.com/mattn/goveralls
-          goveralls -coverprofile=coverage.txt -service=github
+          goveralls -coverprofile=coverage.out -service=github
