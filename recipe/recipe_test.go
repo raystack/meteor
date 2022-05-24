@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testLog = log.NewLogrus(log.LogrusWithLevel("test"))
+var testLog = log.NewLogrus(log.LogrusWithLevel("info"))
 
 // TestRecipeGetLine tests recipe by line number
 func TestRecipeGetLine(t *testing.T) {
