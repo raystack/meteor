@@ -3,13 +3,13 @@ package recipe
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
 
 	"github.com/odpf/meteor/generator"
+	"github.com/odpf/salt/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,14 +31,14 @@ func NewReader(pathToConfig string) *Reader {
 }
 
 //  Read loads the list of recipes from a give file or directory path.
-func (r *Reader) Read(path string) (recipes []Recipe, err error) {
+func (r *Reader) Read(lg log.Logger, path string) (recipes []Recipe, err error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
-		recipes, err = r.readDir(path)
+		recipes, err = r.readDir(lg, path)
 		if err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	return
 }
 
-func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
+func (r *Reader) readDir(lg log.Logger, path string) (recipes []Recipe, err error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return
@@ -99,7 +99,7 @@ func (r *Reader) readDir(path string) (recipes []Recipe, err error) {
 	for _, entry := range entries {
 		recipe, err := r.readFile(filepath.Join(path, entry.Name()))
 		if err != nil {
-			continue
+			lg.Error(err.Error())
 		}
 
 		recipes = append(recipes, recipe)
@@ -112,5 +112,5 @@ func validateRecipeVersion(receivedVersion, expectedVersion string) (err error) 
 	if strings.Compare(receivedVersion, expectedVersion) == 0 {
 		return
 	}
-	return fmt.Errorf("received recipe version %s does not match to the expected version %s", receivedVersion, expectedVersion)
+	return ErrInvalidRecipeVersion
 }
