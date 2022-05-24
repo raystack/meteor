@@ -3,7 +3,7 @@
 ![test workflow](https://github.com/odpf/meteor/actions/workflows/test.yml/badge.svg)
 ![build workflow](https://github.com/odpf/meteor/actions/workflows/build.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/odpf/meteor)](https://goreportcard.com/report/github.com/odpf/meteor)
-[![Coverage Status](https://coveralls.io/repos/github/odpf/meteor/badge.svg)](https://coveralls.io/github/odpf/meteor?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/odpf/meteor/badge.svg?branch=main)](https://coveralls.io/github/odpf/meteor?branch=main)
 [![Version](https://img.shields.io/github/v/release/odpf/meteor?logo=semantic-release)](Version)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](LICENSE)
 
