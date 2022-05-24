@@ -19,7 +19,7 @@ copy-config:
 	cp ./config/meteor.yaml.sample ./meteor.yaml
 
 test:
-	go test ./... -race -coverprofile=coverage.out
+	go test ./... -coverprofile=coverage.out
 
 test-coverage: test
 	go tool cover -html=coverage.out
