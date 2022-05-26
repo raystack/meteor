@@ -97,9 +97,10 @@ func (r *Reader) readDir(lg log.Logger, path string) (recipes []Recipe, err erro
 	}
 
 	for _, entry := range entries {
-		recipe, err := r.readFile(filepath.Join(path, entry.Name()))
+		x := filepath.Join(path, entry.Name())
+		recipe, err := r.readFile(x)
 		if err != nil {
-			lg.Error(err.Error())
+			lg.Warn("skipping file", "path", x, "err", err.Error())
 		}
 
 		recipes = append(recipes, recipe)
