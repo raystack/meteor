@@ -16,6 +16,7 @@ import (
 // Reader is a struct that reads recipe files.
 type Reader struct {
 	data map[string]string
+	log  log.Logger
 }
 
 var (
@@ -23,22 +24,22 @@ var (
 )
 
 // NewReader returns a new Reader.
-func NewReader(pathToConfig string) *Reader {
+func NewReader(lg log.Logger, pathToConfig string) *Reader {
 	reader := &Reader{}
 	reader.data = populateData(pathToConfig)
-
+	reader.log = lg
 	return reader
 }
 
 //  Read loads the list of recipes from a give file or directory path.
-func (r *Reader) Read(lg log.Logger, path string) (recipes []Recipe, err error) {
+func (r *Reader) Read(path string) (recipes []Recipe, err error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
-		recipes, err = r.readDir(lg, path)
+		recipes, err = r.readDir(r.log, path)
 		if err != nil {
 			return nil, err
 		}
