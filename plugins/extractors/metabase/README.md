@@ -7,6 +7,7 @@ source:
   name: metabase
   config:
     host: http://localhost:3000
+    instance_label: my-metabase
     username: meteor_tester
     password: meteor_pass_1234
 ```
@@ -16,14 +17,16 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `host` | `string` | `http://localhost:4002` | The host at which metabase is running | *required* |
-| `username` | `string` | `meteor_tester` | Username/email to access the metabase| *required* |
-| `password` | `string` | `meteor_pass_1234` | Password for the metabase | *required* |
+| `instance_label` | `string` | `my-metabase` | Instance alias, the value will be used as part of the urn component | *required* |
+| `username` | `string` | `meteor_tester` | Username/email to access the metabase| *optional* |
+| `password` | `string` | `meteor_pass_1234` | Password for the metabase | *optional* |
+| `session_id` | `string` | `meteor_pass_1234` | Use existing session ID from metabase to create requests. (this will ignore username and password) | *optional* |
 
 ## Outputs
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `metabase.dashboard_name` |
+| `resource.urn` | `metabase::my-metabase/dashboard/5123` |
 | `resource.name` | `dashboard_name` |
 | `resource.service` | `metabase` |
 | `description` | `table description` |
@@ -33,9 +36,9 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `urn` | `metabase.dashboard_name.card_name` |
+| `urn` | `metabase::my-metabase/card/9123` |
 | `source` | `metabase` |
-| `dashboard_urn` | `metabase.dashboard_name` |
+| `dashboard_urn` | `metabase::my-metabase/dashboard/5123` |
 | `dashboard_source` | `metabase` |
 
 ## Contributing

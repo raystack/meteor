@@ -37,10 +37,11 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
 		config := map[string]interface{}{
-			"username":   "user",
-			"host":       "sample-host",
-			"password":   "sample-password",
-			"session_id": "sample-session",
+			"username":       "user",
+			"host":           "sample-host",
+			"instance_label": "my-metabase",
+			"password":       "sample-password",
+			"session_id":     "sample-session",
 		}
 
 		client := new(mockClient)
@@ -69,9 +70,10 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		extr := metabase.New(client, plugins.GetLog())
 		err := extr.Init(context.TODO(), map[string]interface{}{
-			"host":     host,
-			"username": "test-user",
-			"password": "test-pass",
+			"host":           host,
+			"username":       "test-user",
+			"password":       "test-pass",
+			"instance_label": "my-metabase",
 		})
 		if err != nil {
 			t.Fatal(err)
