@@ -59,7 +59,7 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 				Logger:           lg,
 			})
 
-			recipes, err := recipe.NewReader("").Read(args[0])
+			recipes, err := recipe.NewReader(lg, "").Read(args[0])
 			if err != nil {
 				return err
 			}

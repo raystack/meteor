@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/recipe"
+	"github.com/odpf/salt/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var testLog = log.NewLogrus(log.LogrusWithLevel("info"))
+
 // TestRecipeGetLine tests recipe by line number
 func TestRecipeGetLine(t *testing.T) {
-	reader := recipe.NewReader("")
+	reader := recipe.NewReader(testLog, "")
 	r, err := reader.Read("./testdata/recipe-read-line.yaml")
 	require.NoError(t, err)
 	require.Len(t, r, 1)
@@ -58,7 +61,7 @@ func TestRecipeGetLine(t *testing.T) {
 
 // TestRecipeGetLineBySrcTypeTag tests recipe source with tag `type` by line number
 func TestRecipeGetLineBySrcTypeTag(t *testing.T) {
-	reader := recipe.NewReader("")
+	reader := recipe.NewReader(testLog, "")
 	r, err := reader.Read("./testdata/src- typeTag-recipe-read-line.yaml")
 	require.NoError(t, err)
 	require.Len(t, r, 1)
