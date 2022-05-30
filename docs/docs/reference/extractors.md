@@ -41,6 +41,7 @@ Meteor currently support metadata extraction on these data sources. To perform e
 | Type                                                                                     | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
 |:-----------------------------------------------------------------------------------------|:------|:---------|:---------|:------|:---------|:-------------|:---------|:------------|:-------|:-------|
 | [`github`](https://github.com/odpf/meteor/tree/main/plugins/extractors/github/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ☐           | ☐      | ☐      |
+| [`shield`](https://github.com/odpf/meteor/tree/main/plugins/extractors/shield/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ✅           | ✅      | ☐      |
 
 ### Bucket
 
