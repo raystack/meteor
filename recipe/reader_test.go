@@ -292,6 +292,9 @@ func TestReaderRead(t *testing.T) {
 
 		_, err = reader.Read("./testdata/incorrect-version.yaml")
 		errors.Is(err, recipe.ErrInvalidRecipeVersion)
+
+		_, err = reader.Read("./testdata/dir_2") // error is logged in case of a directory
+		assert.Nil(t, err)
 	})
 }
 
