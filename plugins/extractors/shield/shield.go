@@ -97,14 +97,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 				Type:        "user",
 				Description: user.GetSlug(),
 			},
-			Email:        user.GetEmail(),
-			Username:     user.GetId(),
-			FullName:     user.GetName(),
-			DisplayName:  "",
-			Title:        "",
-			Status:       "active",
-			ManagerEmail: "",
-			Profiles:     nil,
+			Email:    user.GetEmail(),
+			Username: user.GetId(),
+			FullName: user.GetName(),
+			Status:   "active",
 			Memberships: []*assetsv1beta1.Membership{
 				{
 					GroupUrn: fmt.Sprintf("%s:%s", grp.Group.GetName(), grp.Group.GetId()),
@@ -115,7 +111,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 				CreateTime: user.GetCreatedAt(),
 				UpdateTime: user.GetUpdatedAt(),
 			},
-			Event: nil,
 		}))
 	}
 

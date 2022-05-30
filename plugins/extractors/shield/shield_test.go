@@ -143,13 +143,8 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		Id: "user-A",
 	}, mock.Anything).Return(&sh.GetRoleResponse{
 		Role: &sh.Role{
-			Id:        "user-A",
-			Name:      "role-A",
-			Types:     nil,
-			Namespace: nil,
-			Metadata:  nil,
-			CreatedAt: nil,
-			UpdatedAt: nil,
+			Id:   "user-A",
+			Name: "role-A",
 		},
 	}, nil).Once()
 
@@ -157,13 +152,8 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		Id: "user-B",
 	}, mock.Anything).Return(&sh.GetRoleResponse{
 		Role: &sh.Role{
-			Id:        "user-B",
-			Name:      "role-B",
-			Types:     nil,
-			Namespace: nil,
-			Metadata:  nil,
-			CreatedAt: nil,
-			UpdatedAt: nil,
+			Id:   "user-B",
+			Name: "role-B",
 		},
 	}, nil).Once()
 
@@ -171,13 +161,8 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		Id: "user-A",
 	}, mock.Anything).Return(&sh.GetGroupResponse{
 		Group: &sh.Group{
-			Id:        "grpId-A",
-			Name:      "grpname-A",
-			Slug:      "",
-			OrgId:     "",
-			Metadata:  nil,
-			CreatedAt: nil,
-			UpdatedAt: nil,
+			Id:   "grpId-A",
+			Name: "grpname-A",
 		},
 	}, nil).Once()
 
@@ -185,13 +170,8 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		Id: "user-B",
 	}, mock.Anything).Return(&sh.GetGroupResponse{
 		Group: &sh.Group{
-			Id:        "grpId-B",
-			Name:      "grpname-B",
-			Slug:      "",
-			OrgId:     "",
-			Metadata:  nil,
-			CreatedAt: nil,
-			UpdatedAt: nil,
+			Id:   "grpId-B",
+			Name: "grpname-B",
 		},
 	}, nil).Once()
 }
