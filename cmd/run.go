@@ -81,7 +81,7 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			recipes, err := recipe.NewReader(pathToConfig).Read(args[0])
+			recipes, err := recipe.NewReader(lg, pathToConfig).Read(args[0])
 			if err != nil {
 				return err
 			}

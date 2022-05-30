@@ -17,14 +17,14 @@ var (
 
 func TestReaderRead(t *testing.T) {
 	t.Run("should return error if file is not found", func(t *testing.T) {
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 
 		_, err := reader.Read("./wrong-path.yaml")
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return error if recipe is not parsed correctly", func(t *testing.T) {
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 
 		_, err := reader.Read("./testdata/wrong-format.txt")
 		assert.NotNil(t, err)
@@ -32,7 +32,7 @@ func TestReaderRead(t *testing.T) {
 
 	t.Run("should return recipe from a path given in parameter", func(t *testing.T) {
 		t.Run("where recipe has a name", func(t *testing.T) {
-			reader := recipe.NewReader(emptyConfigPath)
+			reader := recipe.NewReader(testLog, emptyConfigPath)
 
 			recipes, err := reader.Read("./testdata/testdir/test-recipe.yaml")
 			if err != nil {
@@ -62,7 +62,7 @@ func TestReaderRead(t *testing.T) {
 		})
 
 		t.Run("where recipe does not have a name", func(t *testing.T) {
-			reader := recipe.NewReader(emptyConfigPath)
+			reader := recipe.NewReader(testLog, emptyConfigPath)
 
 			recipes, err := reader.Read("./testdata/testdir/test-recipe-no-name.yaml")
 			if err != nil {
@@ -101,7 +101,7 @@ func TestReaderRead(t *testing.T) {
 			os.Unsetenv("METEOR_SOURCE_PASSWORD")
 		}()
 
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 		recipes, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
 		if err != nil {
 			t.Fatal(err)
@@ -137,13 +137,13 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should return error if directory is not found", func(t *testing.T) {
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 		_, err := reader.Read("./testdata/wrong-dir")
 		assert.NotNil(t, err)
 	})
 
 	t.Run("should return error if path is not a directory", func(t *testing.T) {
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 		_, err := reader.Read("./testdata/wrong-format.txt")
 		assert.NotNil(t, err)
 	})
@@ -156,7 +156,7 @@ func TestReaderRead(t *testing.T) {
 			os.Unsetenv("METEOR_SOURCE_PASSWORD")
 		}()
 
-		reader := recipe.NewReader(emptyConfigPath)
+		reader := recipe.NewReader(testLog, emptyConfigPath)
 		results, err := reader.Read("./testdata/testdir")
 		if err != nil {
 			t.Fatal(err)
@@ -224,7 +224,7 @@ func TestReaderRead(t *testing.T) {
 
 	// Testing populateData() with various environment configs!!
 	t.Run("should read config file in current directory", func(t *testing.T) {
-		reader := recipe.NewReader("sample_config.yaml")
+		reader := recipe.NewReader(testLog, "sample_config.yaml")
 		results, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
 		if err != nil {
 			t.Fatal(err)
@@ -255,7 +255,7 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should read config file in other directory", func(t *testing.T) {
-		reader := recipe.NewReader("testdata/config2.yaml")
+		reader := recipe.NewReader(testLog, "testdata/config2.yaml")
 		results, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
 		if err != nil {
 			t.Fatal(err)
@@ -286,12 +286,15 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should return error if version is missing/incorrect", func(t *testing.T) {
-		reader := recipe.NewReader("testdata/config2.yaml")
+		reader := recipe.NewReader(testLog, "testdata/config2.yaml")
 		_, err := reader.Read("./testdata/missing-version.yaml")
 		errors.Is(err, recipe.ErrInvalidRecipeVersion)
 
 		_, err = reader.Read("./testdata/incorrect-version.yaml")
 		errors.Is(err, recipe.ErrInvalidRecipeVersion)
+
+		_, err = reader.Read("./testdata/dir_2") // error is logged in case of a directory
+		assert.Nil(t, err)
 	})
 }
 
