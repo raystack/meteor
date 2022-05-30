@@ -64,7 +64,19 @@ func TestFactoryRegister(t *testing.T) {
 		}
 		assert.Equal(t, mocks.NewExtractor(), mock2)  // Same type
 		assert.True(t, mocks.NewExtractor() != mock2) // Different instance
+
+		err = factory.Register("mock1", newExtractor(mocks.NewExtractor())) //error for duplicate extractor
+		assert.Error(t, err)
 	})
+}
+
+func TestFactoryList(t *testing.T) {
+	t.Run("return empty list for a new extractor factory", func(t *testing.T) {
+		factory := registry.NewExtractorFactory()
+		list := factory.List()
+		assert.Empty(t, list)
+	})
+
 }
 
 func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
