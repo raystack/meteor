@@ -33,8 +33,8 @@ password: meteor_pass_1234`
 type Config struct {
 	Host          string `mapstructure:"host" validate:"required"`
 	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
-	Username      string `mapstructure:"username" validate:"required"`
-	Password      string `mapstructure:"password" validate:"required"`
+	Username      string `mapstructure:"username" validate:"required_without=SessionID"`
+	Password      string `mapstructure:"password"`
 	SessionID     string `mapstructure:"session_id"`
 }
 

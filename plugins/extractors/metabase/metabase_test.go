@@ -28,8 +28,8 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		client := new(mockClient)
 		config := map[string]interface{}{
-			"username": "user",
-			"host":     "",
+			"host":           "sample-host",
+			"instance_label": "my-metabase",
 		}
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
 
@@ -37,15 +37,27 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
 		config := map[string]interface{}{
-			"username":       "user",
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
+			"username":       "user",
 			"password":       "sample-password",
+		}
+
+		client := new(mockClient)
+		client.On("Authenticate", "sample-host", "user", "sample-password", "").Return(nil)
+
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
+		assert.NoError(t, err)
+	})
+	t.Run("should allow session_id to replace username and password", func(t *testing.T) {
+		config := map[string]interface{}{
+			"host":           "sample-host",
+			"instance_label": "my-metabase",
 			"session_id":     "sample-session",
 		}
 
 		client := new(mockClient)
-		client.On("Authenticate", "sample-host", "user", "sample-password", "sample-session").Return(nil)
+		client.On("Authenticate", "sample-host", "", "", "sample-session").Return(nil)
 
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
 		assert.NoError(t, err)
