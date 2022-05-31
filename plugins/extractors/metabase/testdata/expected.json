@@ -1,6 +1,6 @@
 [{
     "resource": {
-        "urn": "metabase::https://my-metabase.com/dashboard/1",
+        "urn": "metabase::my-metabase/dashboard/1",
         "name": "Main",
         "service": "metabase",
         "type": "dashboard",
@@ -39,8 +39,8 @@
     },
     "charts": [
         {
-            "urn": "metabase::https://my-metabase.com/card/1",
-            "dashboard_urn": "metabase::https://my-metabase.com/dashboard/1",
+            "urn": "metabase::my-metabase/card/1",
+            "dashboard_urn": "metabase::my-metabase/dashboard/1",
             "source": "metabase",
             "name": "Orders, Filtered by Quantity",
             "description": "HELPFUL CHART DESC",
@@ -67,8 +67,8 @@
             }
         },
         {
-            "urn": "metabase::https://my-metabase.com/card/2",
-            "dashboard_urn": "metabase::https://my-metabase.com/dashboard/1",
+            "urn": "metabase::my-metabase/card/2",
+            "dashboard_urn": "metabase::my-metabase/dashboard/1",
             "source": "metabase",
             "name": "Exceptional Users",
             "description": "This shows only exceptional users.",
@@ -95,8 +95,8 @@
             }
         },
         {
-            "urn": "metabase::https://my-metabase.com/card/3",
-            "dashboard_urn": "metabase::https://my-metabase.com/dashboard/1",
+            "urn": "metabase::my-metabase/card/3",
+            "dashboard_urn": "metabase::my-metabase/dashboard/1",
             "source": "metabase",
             "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
             "description": "Users, Average of Total Followers",
@@ -123,7 +123,7 @@
             }
         },
         {
-            "dashboard_urn": "metabase::https://my-metabase.com/dashboard/1",
+            "dashboard_urn": "metabase::my-metabase/dashboard/1",
             "lineage": {
                 "upstreams": [
                     {
@@ -152,7 +152,7 @@
                 }
             },
             "source": "metabase",
-            "urn": "metabase::https://my-metabase.com/card/4"
+            "urn": "metabase::my-metabase/card/4"
         }
     ],
     "timestamps": {

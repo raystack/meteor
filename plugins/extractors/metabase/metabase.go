@@ -25,15 +25,17 @@ var summary string
 
 var sampleConfig = `
 host: http://localhost:3000
+instance_label: my-metabase
 user_id: meteor_tester
 password: meteor_pass_1234`
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	Host      string `mapstructure:"host" validate:"required"`
-	Username  string `mapstructure:"username" validate:"required"`
-	Password  string `mapstructure:"password" validate:"required"`
-	SessionID string `mapstructure:"session_id"`
+	Host          string `mapstructure:"host" validate:"required"`
+	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
+	Username      string `mapstructure:"username" validate:"required_without=SessionID"`
+	Password      string `mapstructure:"password"`
+	SessionID     string `mapstructure:"session_id"`
 }
 
 // Extractor manages the extraction of data
@@ -108,7 +110,7 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assetsv1beta1.Dashboard, 
 		return
 	}
 
-	dashboardUrn := models.DashboardURN("metabase", e.config.Host, fmt.Sprintf("dashboard/%d", dashboard.ID))
+	dashboardUrn := models.DashboardURN("metabase", e.config.InstanceLabel, fmt.Sprintf("dashboard/%d", dashboard.ID))
 	charts := e.buildCharts(dashboardUrn, dashboard)
 	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
@@ -160,7 +162,7 @@ func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assetsv1b
 	}
 
 	return &assetsv1beta1.Chart{
-		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.Host, card.ID),
+		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
 		DashboardUrn: dashboardUrn,
 		Source:       "metabase",
 		Name:         card.Name,
