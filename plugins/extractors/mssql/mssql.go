@@ -36,10 +36,12 @@ var defaultDBList = []string{
 // Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
 }
 
 var sampleConfig = `
-connection_url: "sqlserver://admin:pass123@localhost:3306/"`
+connection_url: "sqlserver://admin:pass123@localhost:3306/"
+instance_label: my-mssql`
 
 // Extractor manages the extraction of data from the database
 type Extractor struct {
@@ -132,7 +134,7 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  fmt.Sprintf("%s.%s", database, tableName),
+			Urn:  models.TableURN("mssql", e.config.InstanceLabel, database, tableName),
 			Name: tableName,
 			Type: "table",
 		},

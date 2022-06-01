@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package mssql_test
 
 import (
@@ -96,6 +93,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"connection_url": fmt.Sprintf("sqlserver://%s:%s@%s/", user, pass, host),
+			"instance_label": "my-mssql",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -146,7 +144,7 @@ func getExpected() []models.Record {
 	return []models.Record{
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "mockdata_meteor_metadata_test.applicant",
+				Urn:  "mssql::my-mssql/mockdata_meteor_metadata_test/applicant",
 				Name: "applicant",
 				Type: "table",
 			},
@@ -175,7 +173,7 @@ func getExpected() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "mockdata_meteor_metadata_test.jobs",
+				Urn:  "mssql::my-mssql/mockdata_meteor_metadata_test/jobs",
 				Name: "jobs",
 				Type: "table",
 			},
