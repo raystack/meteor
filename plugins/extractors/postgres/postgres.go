@@ -34,6 +34,7 @@ var defaultDBList = []string{"information_schema", "root", "postgres"}
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 	Exclude       string `mapstructure:"exclude"`
+	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
 }
 
 var sampleConfig = `
@@ -171,7 +172,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("postgres", e.host, dbName, tableName),
+			Urn:     models.TableURN("postgres", e.config.InstanceLabel, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
 			Type:    "table",
