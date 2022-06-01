@@ -7,6 +7,7 @@ source:
   name: mysql
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
+    instance_url: my-mysql
 ```
 
 ## Inputs
@@ -14,12 +15,13 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mysql server | *required* |
+| `instance_label` | `string` | `my-mysql` | Instance alias, the value will be used as part of the urn component | *required* |
 
 ## Outputs
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
+| `resource.urn` | `mysql::my-mysql/my_database/my_table` |
 | `resource.name` | `my_table` |
 | `resource.service` | `mysql` |
 | `description` | `table description` |
