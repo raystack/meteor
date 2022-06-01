@@ -52,11 +52,12 @@ func TestExtract(t *testing.T) {
 				Transport: r,
 			}))
 		err = extr.Init(ctx, map[string]interface{}{
-			"host":     host,
-			"version":  version,
-			"sitename": sitename,
-			"username": username,
-			"password": password,
+			"host":           host,
+			"version":        version,
+			"instance_label": "my-tableau",
+			"sitename":       sitename,
+			"username":       username,
+			"password":       password,
 		})
 		if err != nil {
 			t.Fatal(err)
