@@ -39,7 +39,8 @@ type Config struct {
 
 var sampleConfig = `
 connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disable"
-exclude: testDB,secondaryDB`
+exclude: testDB,secondaryDB
+instance_label: my-postgres`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {

@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package mysql_test
 
 import (
