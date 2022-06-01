@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package sqlparser
 
 import (
