@@ -14,6 +14,29 @@ import (
 )
 
 func TestFromTemplate(t *testing.T) {
+	t.Run("should throw error for invalid template path", func(t *testing.T) {
+		templatePath := "./testdata/template.yaml"
+		outputDir := "./test/temp"
+		bytes, err := ioutil.ReadFile("./testdata/generator/data-3.yaml")
+		if err != nil {
+			fmt.Println(fmt.Errorf("error reading data: %w", err))
+			return
+		}
+
+		var data []recipe.TemplateData
+		if err := yaml.Unmarshal(bytes, &data); err != nil {
+			fmt.Println(fmt.Errorf("error parsing data: %w", err))
+			return
+		}
+
+		err = recipe.FromTemplate(recipe.TemplateConfig{
+			TemplateFilePath: templatePath,
+			OutputDirPath:    outputDir,
+			Data:             data,
+		})
+		assert.Error(t, err)
+	})
+
 	t.Run("should output recipe files using template to output directory", func(t *testing.T) {
 		templatePath := "./testdata/generator/template.yaml"
 		outputDir := "./testdata/generator/temp"
