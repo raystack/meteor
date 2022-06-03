@@ -97,6 +97,83 @@ func TestSink(t *testing.T) {
 		}
 	})
 
+	t.Run("should return error for various invalid labels", func(t *testing.T) {
+		testData := &assetsv1beta1.User{
+			Resource: &commonv1beta1.Resource{
+				Urn:         "my-topic-urn",
+				Name:        "my-topic",
+				Service:     "kafka",
+				Type:        "topic",
+				Description: "topic information",
+			},
+			Properties: &facetsv1beta1.Properties{
+				Attributes: utils.TryParseMapToProto(map[string]interface{}{
+					"attrA": "valueAttrA",
+					"attrB": "valueAttrB",
+				}),
+				Labels: map[string]string{
+					"labelA": "valueLabelA",
+					"labelB": "valueLabelB",
+				},
+			},
+		}
+		testPayload := compass.RequestPayload{
+			Asset: compass.Asset{
+				URN:         "my-topic-urn",
+				Name:        "my-topic",
+				Service:     "kafka",
+				Type:        "topic",
+				Description: "topic information",
+			},
+		}
+		invalidConfigs := []map[string]interface{}{
+			{
+				"host": host,
+				"labels": map[string]string{
+					"foo": "$properties.attributes",
+				},
+			},
+			{
+				"host": host,
+				"labels": map[string]string{
+					"foo": "$properties.attributes.12",
+				},
+			},
+			{
+				"host": host,
+				"labels": map[string]string{
+					"foo": "$properties.attributes.attrC",
+				},
+			},
+			{
+				"host": host,
+				"labels": map[string]string{
+					"foo": "$invalid.attributes.attrC",
+				},
+			},
+			{
+				"host": host,
+				"labels": map[string]string{
+					"bar": "$properties.labels.labelC",
+				},
+			},
+		}
+		for _, c := range invalidConfigs {
+			client := newMockHTTPClient(c, http.MethodPatch, url, testPayload)
+			client.SetupResponse(200, "")
+			ctx := context.TODO()
+			compassSink := compass.New(client, testUtils.Logger)
+			err := compassSink.Init(ctx, c)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(testData)})
+			assert.Error(t, err)
+			fmt.Println(err)
+		}
+
+	})
+
 	successTestCases := []struct {
 		description string
 		data        models.Metadata

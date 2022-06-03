@@ -2,11 +2,18 @@ package metrics_test
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"testing"
+
+	"github.com/odpf/meteor/test/utils"
 
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/metrics"
 	"github.com/odpf/meteor/recipe"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -24,6 +31,47 @@ func (c *mockStatsdClient) IncrementByValue(name string, val int) {
 
 func (c *mockStatsdClient) Increment(name string) {
 	c.Called(name)
+}
+
+var port = "8125"
+
+func TestMain(m *testing.M) {
+	// setup test
+	opts := dockertest.RunOptions{
+		Repository: "statsd/statsd",
+		Tag:        "latest",
+		Env: []string{
+			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
+		},
+		ExposedPorts: []string{"8125", port},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"8125": {
+				{HostIP: "0.0.0.0", HostPort: port},
+			},
+		},
+	}
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	retryFn := func(resource *dockertest.Resource) (err error) {
+		c, err := metrics.NewStatsdClient("127.0.0.1:" + port)
+		if err != nil {
+			return
+		}
+		c.Open()
+		return
+	}
+	purgeFn, err := utils.CreateContainer(opts, retryFn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// run tests
+	code := m.Run()
+
+	// clean tests
+	if err := purgeFn(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
 }
 
 func TestStatsdMonitorRecordRun(t *testing.T) {
@@ -115,5 +163,16 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
 		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true})
+	})
+}
+
+func TestNewStatsClient(t *testing.T) {
+	t.Run("should return error for invalid address", func(t *testing.T) {
+		_, err := metrics.NewStatsdClient("127.0.0.1")
+		assert.Error(t, err)
+	})
+	t.Run("should return error for invalid port", func(t *testing.T) {
+		_, err := metrics.NewStatsdClient("127.0.0.1:81A5")
+		assert.Error(t, err)
 	})
 }

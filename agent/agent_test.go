@@ -776,6 +776,91 @@ func TestAgentRunMultiple(t *testing.T) {
 	})
 }
 
+func TestValidate(t *testing.T) {
+	t.Run("should return error if plugins in recipe not found in Factory", func(t *testing.T) {
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: registry.NewExtractorFactory(),
+			ProcessorFactory: registry.NewProcessorFactory(),
+			SinkFactory:      registry.NewSinkFactory(),
+			Logger:           utils.Logger,
+		})
+		var expectedErrs []error
+		errs := r.Validate(validRecipe)
+		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "test-extractor"})
+		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: "test-sink"})
+		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: "test-processor"})
+		assert.Equal(t, 3, len(errs))
+		assert.Equal(t, expectedErrs, errs)
+	})
+	t.Run("", func(t *testing.T) {
+		var invalidRecipe = recipe.Recipe{
+			Name: "sample",
+			Source: recipe.PluginRecipe{
+				Name: "test-extractor",
+				Config: map[string]interface{}{
+					"proc-foo": "proc-bar",
+				},
+			},
+			Processors: []recipe.PluginRecipe{
+				{
+					Name: "test-processor",
+					Config: map[string]interface{}{
+						"proc-foo": "proc-bar",
+					},
+				},
+			},
+			Sinks: []recipe.PluginRecipe{
+				{
+					Name: "test-sink",
+					Config: map[string]interface{}{
+						"url": "http://localhost:3000/data",
+					},
+				},
+			},
+		}
+
+		extr := mocks.NewExtractor()
+		err := plugins.InvalidConfigError{}
+		extr.On("Validate", invalidRecipe.Source.Config).Return(err).Once()
+		ef := registry.NewExtractorFactory()
+		if err := ef.Register("test-extractor", newExtractor(extr)); err != nil {
+			t.Fatal(err)
+		}
+
+		proc := mocks.NewProcessor()
+		proc.On("Validate", invalidRecipe.Processors[0].Config).Return(err).Once()
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		if err := pf.Register("test-processor", newProcessor(proc)); err != nil {
+			t.Fatal(err)
+		}
+
+		sink := mocks.NewSink()
+		sink.On("Validate", invalidRecipe.Sinks[0].Config).Return(err).Once()
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		if err := sf.Register("test-sink", newSink(sink)); err != nil {
+			t.Fatal(err)
+		}
+
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: ef,
+			ProcessorFactory: pf,
+			SinkFactory:      sf,
+			Logger:           utils.Logger,
+			Monitor:          newMockMonitor(),
+		})
+
+		var expectedErrs []error
+		errs := r.Validate(invalidRecipe)
+		assert.Equal(t, 3, len(errs))
+		expectedErrs = append(expectedErrs, enrichInvalidConfigError(err, invalidRecipe.Source.Name, plugins.PluginTypeExtractor))
+		expectedErrs = append(expectedErrs, enrichInvalidConfigError(err, invalidRecipe.Sinks[0].Name, plugins.PluginTypeSink))
+		expectedErrs = append(expectedErrs, enrichInvalidConfigError(err, invalidRecipe.Processors[0].Name, plugins.PluginTypeProcessor))
+		assert.Equal(t, expectedErrs, errs)
+	})
+}
+
 func newExtractor(extr plugins.Extractor) func() plugins.Extractor {
 	return func() plugins.Extractor {
 		return extr
@@ -820,4 +905,17 @@ type panicProcessor struct {
 
 func (p *panicProcessor) Process(_ context.Context, _ models.Record) (dst models.Record, err error) {
 	panic("panicking")
+}
+
+// enrichInvalidConfigError enrich the error with plugin information
+func enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
+	if errors.As(err, &plugins.InvalidConfigError{}) {
+		icErr := err.(plugins.InvalidConfigError)
+		icErr.PluginName = pluginName
+		icErr.Type = pluginType
+
+		return icErr
+	}
+
+	return err
 }
