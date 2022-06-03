@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFactoryGet(t *testing.T) {
+func TestExtractorFactoryGet(t *testing.T) {
 	t.Run("should return not found error if extractor does not exist", func(t *testing.T) {
 		name := "wrong-name"
 
@@ -39,7 +39,7 @@ func TestFactoryGet(t *testing.T) {
 	})
 }
 
-func TestFactoryRegister(t *testing.T) {
+func TestExtractorFactoryRegister(t *testing.T) {
 	t.Run("should add extractor factory with given key", func(t *testing.T) {
 		factory := registry.Extractors
 		err := factory.Register("mock1", newExtractor(mocks.NewExtractor()))
@@ -70,13 +70,35 @@ func TestFactoryRegister(t *testing.T) {
 	})
 }
 
-func TestFactoryList(t *testing.T) {
-	t.Run("return empty list for a new extractor factory", func(t *testing.T) {
+func TestExtractorFactoryList(t *testing.T) {
+	t.Run("return list for a extractor factory", func(t *testing.T) {
 		factory := registry.NewExtractorFactory()
+		extr := mocks.NewExtractor()
+		mockInfo := plugins.Info{
+			Description: "Mock Extractor 1",
+		}
+		extr.On("Info").Return(mockInfo, nil).Once()
+		defer extr.AssertExpectations(t)
+		err := factory.Register("mock1", newExtractor(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
 		list := factory.List()
-		assert.Empty(t, list)
+		assert.Equal(t, mockInfo, list["mock1"])
 	})
+}
 
+func TestExtractorFactoryInfo(t *testing.T) {
+	t.Run("return error for a extractor not found", func(t *testing.T) {
+		factory := registry.NewExtractorFactory()
+		extr := mocks.NewExtractor()
+		err := factory.Register("mock1", newExtractor(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
+		_, err = factory.Info("mock")
+		assert.Equal(t, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "mock"}, err)
+	})
 }
 
 func newExtractor(extr plugins.Extractor) func() plugins.Extractor {

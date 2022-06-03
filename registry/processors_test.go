@@ -71,12 +71,34 @@ func TestProcessorFactoryRegister(t *testing.T) {
 }
 
 func TestProcessorFactoryList(t *testing.T) {
-	t.Run("return empty list for a new processor factory", func(t *testing.T) {
+	t.Run("return list for a processor factory", func(t *testing.T) {
 		factory := registry.NewProcessorFactory()
+		extr := mocks.NewProcessor()
+		mockInfo := plugins.Info{
+			Description: "Mock Processor 1",
+		}
+		extr.On("Info").Return(mockInfo, nil).Once()
+		defer extr.AssertExpectations(t)
+		err := factory.Register("mock1", newProcessor(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
 		list := factory.List()
-		assert.Empty(t, list)
+		assert.Equal(t, mockInfo, list["mock1"])
 	})
+}
 
+func TestProcessorFactoryInfo(t *testing.T) {
+	t.Run("return error for a processor not found", func(t *testing.T) {
+		factory := registry.NewProcessorFactory()
+		extr := mocks.NewProcessor()
+		err := factory.Register("mock1", newProcessor(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
+		_, err = factory.Info("mock")
+		assert.Equal(t, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: "mock"}, err)
+	})
 }
 
 func newProcessor(extr plugins.Processor) func() plugins.Processor {

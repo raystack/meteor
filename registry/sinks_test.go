@@ -71,12 +71,34 @@ func TestSinkFactoryRegister(t *testing.T) {
 }
 
 func TestSinkFactoryList(t *testing.T) {
-	t.Run("return empty list for a new sink factory", func(t *testing.T) {
+	t.Run("return list for a sink factory", func(t *testing.T) {
 		factory := registry.NewSinkFactory()
+		extr := mocks.NewSink()
+		mockInfo := plugins.Info{
+			Description: "Mock Sink 1",
+		}
+		extr.On("Info").Return(mockInfo, nil).Once()
+		defer extr.AssertExpectations(t)
+		err := factory.Register("mock1", newSink(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
 		list := factory.List()
-		assert.Empty(t, list)
+		assert.Equal(t, mockInfo, list["mock1"])
 	})
+}
 
+func TestSinkFactoryInfo(t *testing.T) {
+	t.Run("return error for a sink not found", func(t *testing.T) {
+		factory := registry.NewSinkFactory()
+		extr := mocks.NewSink()
+		err := factory.Register("mock1", newSink(extr))
+		if err != nil {
+			t.Error(err.Error())
+		}
+		_, err = factory.Info("mock")
+		assert.Equal(t, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: "mock"}, err)
+	})
 }
 
 func newSink(extr plugins.Syncer) func() plugins.Syncer {
