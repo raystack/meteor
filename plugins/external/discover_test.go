@@ -6,11 +6,15 @@ package plugins
 import (
 	"testing"
 
+	"github.com/odpf/meteor/registry"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDiscoverPlugins(t *testing.T) {
 	// TODO: add test
+	factory := registry.NewProcessorFactory()
+	_, err := DiscoverPlugins(factory)
+	assert.Nil(t, err)
 }
 
 // once we already setup a test for DiscoverPlugins this test will not be needed
