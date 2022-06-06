@@ -26,7 +26,7 @@ type Config struct {
 const advancedFilterTemplate = `protoPayload.methodName="jobservice.jobcompleted" AND ` +
 	`resource.type="bigquery_resource" AND NOT ` +
 	`protoPayload.serviceData.jobCompletedEvent.job.jobConfiguration.query.query:(INFORMATION_SCHEMA OR __TABLES__) AND ` +
-	`timestamp >= "%s" AND timestamp < "%s"`
+	`timestamp >= "%s" AND timestamp < "%s" AND %s`
 
 type AuditLog struct {
 	logger log.Logger
@@ -68,10 +68,15 @@ func (l *AuditLog) createClient(ctx context.Context) (client *logadmin.Client, e
 	return
 }
 
-func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err error) {
+func (l *AuditLog) Collect(ctx context.Context, tableID string) (tableStats *TableStats, err error) {
+	if l.client == nil {
+		err = errors.New("auditlog client is nil")
+		return
+	}
+
 	tableStats = NewTableStats()
 
-	filter := l.buildFilter()
+	filter := l.buildFilter(tableID)
 	it := l.client.Entries(ctx,
 		logadmin.ProjectIDs(l.config.UsageProjectIDs),
 		logadmin.Filter(filter))
@@ -91,7 +96,7 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 
 		logData, errF := parsePayload(entry.Payload)
 		if errF != nil {
-			l.logger.Warn("error parsing LogEntry payload", "err", errF, "payload", entry.Payload)
+			l.logger.Warn("error parsing LogEntry payload", "err", errF)
 			continue
 		}
 
@@ -103,7 +108,7 @@ func (l *AuditLog) Collect(ctx context.Context) (tableStats *TableStats, err err
 	return
 }
 
-func (l *AuditLog) buildFilter() string {
+func (l *AuditLog) buildFilter(tableID string) string {
 
 	timeNow := time.Now().UTC()
 	dayDuration := time.Duration(24*l.config.UsagePeriodInDay) * time.Hour
@@ -112,7 +117,7 @@ func (l *AuditLog) buildFilter() string {
 	timeNowFormatted := timeNow.Format(time.RFC3339)
 	timeFromFormatted := timeFrom.Format(time.RFC3339)
 
-	return fmt.Sprintf(advancedFilterTemplate, timeFromFormatted, timeNowFormatted)
+	return fmt.Sprintf(advancedFilterTemplate, timeFromFormatted, timeNowFormatted, tableID)
 }
 
 func parsePayload(payload interface{}) (ld *LogData, err error) {
