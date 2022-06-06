@@ -103,13 +103,15 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	if e.config.IsCollectTableUsage {
-		errL := e.galClient.Init(ctx, auditlog.Config{
-			ProjectID:           e.config.ProjectID,
-			ServiceAccountJSON:  e.config.ServiceAccountJSON,
-			IsCollectTableUsage: e.config.IsCollectTableUsage,
-			UsagePeriodInDay:    e.config.UsagePeriodInDay,
-			UsageProjectIDs:     e.config.UsageProjectIDs,
-		})
+		errL := e.galClient.Init(ctx,
+			auditlog.InitWithConfig(auditlog.Config{
+				ProjectID:           e.config.ProjectID,
+				ServiceAccountJSON:  e.config.ServiceAccountJSON,
+				IsCollectTableUsage: e.config.IsCollectTableUsage,
+				UsagePeriodInDay:    e.config.UsagePeriodInDay,
+				UsageProjectIDs:     e.config.UsageProjectIDs,
+			}),
+		)
 		if errL != nil {
 			e.logger.Error("failed to create google audit log client", "err", errL)
 		}

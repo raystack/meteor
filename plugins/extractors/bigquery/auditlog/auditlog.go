@@ -40,17 +40,22 @@ func New(logger log.Logger) *AuditLog {
 	}
 }
 
-func (l *AuditLog) Init(ctx context.Context, cfg Config) (err error) {
-	if len(cfg.UsageProjectIDs) == 0 {
-		cfg.UsageProjectIDs = []string{cfg.ProjectID}
-	}
-	l.config = cfg
-	l.client, err = l.createClient(ctx)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create logadmin client")
-		return
+func (l *AuditLog) Init(ctx context.Context, opts ...InitOption) (err error) {
+	for _, opt := range opts {
+		opt(l)
 	}
 
+	if len(l.config.UsageProjectIDs) == 0 {
+		l.config.UsageProjectIDs = []string{l.config.ProjectID}
+	}
+
+	if l.client == nil {
+		l.client, err = l.createClient(ctx)
+		if err != nil {
+			err = errors.Wrap(err, "failed to create logadmin client")
+			return
+		}
+	}
 	return
 }
 
@@ -130,7 +135,7 @@ func parsePayload(payload interface{}) (ld *LogData, err error) {
 	}
 
 	if errPB := getAuditData(pl, ad); errPB != nil {
-		err = errors.Wrap(err, "failed to get audit data from metadata")
+		err = errors.Wrap(errPB, "failed to get audit data from metadata")
 		return
 	}
 
