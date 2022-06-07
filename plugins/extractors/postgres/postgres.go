@@ -34,11 +34,13 @@ var defaultDBList = []string{"information_schema", "root", "postgres"}
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 	Exclude       string `mapstructure:"exclude"`
+	Identifier    string `mapstructure:"identifier" validate:"required"`
 }
 
 var sampleConfig = `
 connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disable"
-exclude: testDB,secondaryDB`
+exclude: testDB,secondaryDB
+identifier: my-postgres`
 
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
@@ -171,7 +173,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("postgres", e.host, dbName, tableName),
+			Urn:     models.TableURN("postgres", e.config.Identifier, dbName, tableName),
 			Name:    tableName,
 			Service: "postgres",
 			Type:    "table",

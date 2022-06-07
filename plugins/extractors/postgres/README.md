@@ -14,6 +14,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
+| `identifier` | `string` | `my-postgres` | Instance alias, the value will be used as part of the urn component | *required* |
 | `connection_url` | `string` | `postgres://admin:pass123@localhost:3306/testDB?sslmode=disable` | URL to access the postgres server | *required* |
 | `exclude` | `string` | `primaryDB,secondaryDB` | This is a comma separated db list | *optional* |
 
@@ -21,7 +22,7 @@ source:
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `postgres::localhost:3306/my_database/my_table` |
+| `resource.urn` | `postgres::my-postgres/my_database/my_table` |
 | `resource.name` | `my_table` |
 | `resource.service` | `postgres` |
 | `description` | `table description` |

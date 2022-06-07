@@ -94,6 +94,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"connection_url": fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", user, pass, host),
+			"identifier":     "my-postgres",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -148,7 +149,7 @@ func getExpected() []models.Record {
 	return []models.Record{
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:     "postgres::localhost:5438/test_db/article",
+				Urn:     "postgres::my-postgres/test_db/article",
 				Name:    "article",
 				Service: "postgres",
 				Type:    "table",
@@ -182,7 +183,7 @@ func getExpected() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:     "postgres::localhost:5438/test_db/post",
+				Urn:     "postgres::my-postgres/test_db/post",
 				Name:    "post",
 				Service: "postgres",
 				Type:    "table",

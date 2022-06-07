@@ -7,19 +7,21 @@ source:
   name: mssql
   config:
     connection_url: sqlserver://admin:pass123@localhost:3306/
+    identifier: my-mssql
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
+| `identifier` | `string` | `my-mssql` | Instance alias, the value will be used as part of the urn component | *required* |
 | `connection_url` | `string` | `sqlserver://admin:pass123@localhost:3306/` | URL to access the mssql server | *required* |
 
 ## Outputs
 
 | Field | Sample Value |
 | :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
+| `resource.urn` | `mssql::my-mssql/my_database/my_table` |
 | `resource.name` | `my_table` |
 | `resource.service` | `mssql` |
 | `description` | `table description` |
