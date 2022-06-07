@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"cloud.google.com/go/logging/logadmin"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
@@ -15,29 +16,51 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	t.Run("should return error if failed to init client", func(t *testing.T) {
+	t.Run("should return error if config is wrong to init client", func(t *testing.T) {
 		la := New(utils.Logger)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		err := la.Init(ctx, Config{
-			ProjectID:          "---",
-			ServiceAccountJSON: "---",
-		})
+		err := la.Init(ctx,
+			InitWithConfig(Config{
+				ProjectID:          "---",
+				ServiceAccountJSON: "---",
+			}),
+		)
 
 		assert.EqualError(t, err, "failed to create logadmin client: client is nil, failed initiating client")
 	})
 
-	t.Run("should not return error if init client is success", func(t *testing.T) {
+	t.Run("should not return error invalid config if config is not wrong", func(t *testing.T) {
 		la := New(utils.Logger)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		err := la.Init(ctx, Config{})
+		err := la.Init(ctx)
 
 		assert.NotEqual(t, plugins.InvalidConfigError{}, err)
 	})
+
+	t.Run("should return no error init succeed", func(t *testing.T) {
+		la := New(utils.Logger)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err := la.Init(ctx, InitWithClient(&logadmin.Client{}))
+
+		assert.Nil(t, err)
+	})
 }
 
-func TestGetAuditData(t *testing.T) {
+func TestBuildFilter(t *testing.T) {
+	var (
+		la      = &AuditLog{}
+		tableID = "table-id"
+	)
+
+	filterQuery := la.buildFilter(tableID)
+
+	assert.Contains(t, filterQuery, tableID)
+}
+
+func TestParsePayload(t *testing.T) {
 	t.Run("should parse with service data if service data exists", func(t *testing.T) {
 		loggingData, err := anypb.New(&loggingpb.AuditData{
 			JobCompletedEvent: &loggingpb.JobCompletedEvent{
@@ -62,37 +85,48 @@ func TestGetAuditData(t *testing.T) {
 			ServiceData: loggingData,
 		}
 
-		auditData := &loggingpb.AuditData{}
-		err = getAuditData(auditLog, auditData)
+		ld, err := parsePayload(auditLog)
+
 		assert.Nil(t, err)
-		assert.NotNil(t, auditData)
-		assert.NotEmpty(t, auditData)
+		assert.NotNil(t, ld.AuditData)
+		assert.NotEmpty(t, ld.AuditData)
 	})
 
 	t.Run("should parse with metadata if service data not exists and metadata exist", func(t *testing.T) {
 		loggingData, err := structpb.NewStruct(map[string]interface{}{
-			"jobCompletedEvent": nil,
+			"jobCompletedEvent": map[string]interface{}{
+				"event_name": "name",
+				"job": map[string]interface{}{
+					"job_statistics": map[string]interface{}{
+						"referenced_tables": []interface{}{map[string]interface{}{
+							"project_id": "project_id",
+						}},
+					},
+					"job_status": map[string]interface{}{
+						"state": "DONE",
+					},
+				},
+			},
 		})
-
 		require.Nil(t, err)
 
 		auditLog := &auditpb.AuditLog{
 			Metadata: loggingData,
 		}
 
-		auditData := &loggingpb.AuditData{}
-		err = getAuditData(auditLog, auditData)
+		ld, err := parsePayload(auditLog)
+
 		assert.Nil(t, err)
-		assert.NotNil(t, auditData)
-		assert.NotEmpty(t, auditData)
+		assert.NotNil(t, ld.AuditData)
+		assert.NotEmpty(t, ld.AuditData)
 	})
 
 	t.Run("should return error if neither service data nor metadata field exist", func(t *testing.T) {
 		auditLog := &auditpb.AuditLog{}
 
-		auditData := &loggingpb.AuditData{}
-		err := getAuditData(auditLog, auditData)
-		assert.EqualError(t, err, "metadata field is nil")
-		assert.Empty(t, auditData)
+		ld, err := parsePayload(auditLog)
+
+		assert.EqualError(t, err, "failed to get audit data from metadata: metadata field is nil")
+		assert.Nil(t, ld)
 	})
 }

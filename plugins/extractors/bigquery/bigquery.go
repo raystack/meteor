@@ -61,11 +61,10 @@ usage_period_in_day: 7`
 
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
-	logger     log.Logger
-	client     *bigquery.Client
-	config     Config
-	galClient  *auditlog.AuditLog
-	tableStats *auditlog.TableStats
+	logger    log.Logger
+	client    *bigquery.Client
+	config    Config
+	galClient *auditlog.AuditLog
 }
 
 func New(logger log.Logger) *Extractor {
@@ -104,13 +103,15 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 	}
 
 	if e.config.IsCollectTableUsage {
-		errL := e.galClient.Init(ctx, auditlog.Config{
-			ProjectID:           e.config.ProjectID,
-			ServiceAccountJSON:  e.config.ServiceAccountJSON,
-			IsCollectTableUsage: e.config.IsCollectTableUsage,
-			UsagePeriodInDay:    e.config.UsagePeriodInDay,
-			UsageProjectIDs:     e.config.UsageProjectIDs,
-		})
+		errL := e.galClient.Init(ctx,
+			auditlog.InitWithConfig(auditlog.Config{
+				ProjectID:           e.config.ProjectID,
+				ServiceAccountJSON:  e.config.ServiceAccountJSON,
+				IsCollectTableUsage: e.config.IsCollectTableUsage,
+				UsagePeriodInDay:    e.config.UsagePeriodInDay,
+				UsageProjectIDs:     e.config.UsageProjectIDs,
+			}),
+		)
 		if errL != nil {
 			e.logger.Error("failed to create google audit log client", "err", errL)
 		}
@@ -121,14 +122,6 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 
 // Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	if e.config.IsCollectTableUsage {
-		// Fetch and extract logs first to build a map
-		ts, errL := e.galClient.Collect(ctx)
-		e.tableStats = ts
-		if errL != nil {
-			e.logger.Warn("error populating table stats usage", "error", errL)
-		}
-	}
 
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
@@ -181,10 +174,20 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 
 // Build the bigquery table metadata
 func (e *Extractor) buildTable(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) *assetsv1beta1.Table {
+	var tableStats *auditlog.TableStats
+	if e.config.IsCollectTableUsage {
+		// Fetch and extract logs first to build a map
+		var errL error
+		tableStats, errL = e.galClient.Collect(ctx, t.TableID)
+		if errL != nil {
+			e.logger.Warn("error populating table stats usage", "error", errL)
+		}
+	}
+
 	tableFQN := t.FullyQualifiedName()
 	tableURN := models.TableURN("bigquery", t.ProjectID, t.DatasetID, t.TableID)
 
-	tableProfile := e.buildTableProfile(tableURN)
+	tableProfile := e.buildTableProfile(tableURN, tableStats)
 
 	var partitionField string
 	if md.TimePartitioning != nil {
