@@ -105,7 +105,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	var indexes []string
 	for x.Next() {
 		indexName := x.Key().String()
-		// fmt.Println(indexName)
 		indexes = append(indexes, indexName)
 	}
 	sort.Strings(indexes)
