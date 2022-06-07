@@ -14,7 +14,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `instance_label` | `string` | `my-postgres` | Instance alias, the value will be used as part of the urn component | *required* |
+| `identifier` | `string` | `my-postgres` | Instance alias, the value will be used as part of the urn component | *required* |
 | `connection_url` | `string` | `postgres://admin:pass123@localhost:3306/testDB?sslmode=disable` | URL to access the postgres server | *required* |
 | `exclude` | `string` | `primaryDB,secondaryDB` | This is a comma separated db list | *optional* |
 

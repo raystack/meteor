@@ -15,7 +15,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mysql server | *required* |
-| `instance_label` | `string` | `my-mysql` | Instance alias, the value will be used as part of the urn component | *required* |
+| `identifier` | `string` | `my-mysql` | Instance alias, the value will be used as part of the urn component | *required* |
 
 ## Outputs
 

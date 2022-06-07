@@ -7,14 +7,14 @@ source:
   name: mssql
   config:
     connection_url: sqlserver://admin:pass123@localhost:3306/
-    instance_label: my-mssql
+    identifier: my-mssql
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `instance_label` | `string` | `my-mssql` | Instance alias, the value will be used as part of the urn component | *required* |
+| `identifier` | `string` | `my-mssql` | Instance alias, the value will be used as part of the urn component | *required* |
 | `connection_url` | `string` | `sqlserver://admin:pass123@localhost:3306/` | URL to access the mssql server | *required* |
 
 ## Outputs

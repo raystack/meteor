@@ -96,7 +96,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
-			"instance_label": "my-mysql",
+			"identifier":     "my-mysql",
 		})
 		if err != nil {
 			t.Fatal(err)

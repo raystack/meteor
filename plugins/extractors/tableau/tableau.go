@@ -24,7 +24,7 @@ var summary string
 var sampleConfig = `
 host: https://server.tableau.com
 version: 3.12
-instance_label: my-tableau
+identifier: my-tableau
 username: meteor_user
 password: xxxxxxxxxx
 sitename: testdev550928
@@ -32,12 +32,12 @@ sitename: testdev550928
 
 // Config that holds a set of configuration for tableau extractor
 type Config struct {
-	Host          string `mapstructure:"host" validate:"required"`
-	Version       string `mapstructure:"version" validate:"required"` // float as string
-	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
-	Username      string `mapstructure:"username" validate:"required"`
-	Password      string `mapstructure:"password" validate:"required"`
-	Sitename      string `mapstructure:"sitename"`
+	Host       string `mapstructure:"host" validate:"required"`
+	Version    string `mapstructure:"version" validate:"required"` // float as string
+	Identifier string `mapstructure:"identifier" validate:"required"`
+	Username   string `mapstructure:"username" validate:"required"`
+	Password   string `mapstructure:"password" validate:"required"`
+	Sitename   string `mapstructure:"sitename"`
 }
 
 // Extractor manages the extraction of data
@@ -131,7 +131,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard, err error) {
 	lineages := e.buildLineage(wb.UpstreamTables)
-	dashboardURN := models.DashboardURN("tableau", e.config.InstanceLabel, fmt.Sprintf("workbook/%s", wb.ID))
+	dashboardURN := models.DashboardURN("tableau", e.config.Identifier, fmt.Sprintf("workbook/%s", wb.ID))
 	data = &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{
 			Urn:         dashboardURN,
@@ -172,7 +172,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard,
 
 func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *facetsv1beta1.Lineage) (charts []*assetsv1beta1.Chart) {
 	for _, sh := range wb.Sheets {
-		chartURN := models.DashboardURN("tableau", e.config.InstanceLabel, fmt.Sprintf("sheet/%s", sh.ID))
+		chartURN := models.DashboardURN("tableau", e.config.Identifier, fmt.Sprintf("sheet/%s", sh.ID))
 		charts = append(charts, &assetsv1beta1.Chart{
 			Urn:          chartURN,
 			Name:         sh.Name,

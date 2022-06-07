@@ -96,7 +96,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"connection_url": fmt.Sprintf("sqlserver://%s:%s@%s/", user, pass, host),
-			"instance_label": "my-mssql",
+			"identifier":     "my-mssql",
 		})
 		if err != nil {
 			t.Fatal(err)

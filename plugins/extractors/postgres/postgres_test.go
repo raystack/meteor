@@ -94,7 +94,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, map[string]interface{}{
 			"connection_url": fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", user, pass, host),
-			"instance_label": "my-postgres",
+			"identifier":     "my-postgres",
 		})
 		if err != nil {
 			t.Fatal(err)
