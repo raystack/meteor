@@ -108,8 +108,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		indexes = append(indexes, indexName)
 	}
 	sort.Strings(indexes)
-	for _, index := range indexes {
-		docProperties, err1 := e.listIndexInfo(index)
+	for _, indexName := range indexes {
+		docProperties, err1 := e.listIndexInfo(indexName)
 		if err1 != nil {
 			err = err1
 			return
@@ -127,7 +127,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			})
 		}
 		countRes, err1 := e.client.Search(
-			e.client.Search.WithIndex(index),
+			e.client.Search.WithIndex(indexName),
 		)
 		if err1 != nil {
 			err = err1
@@ -143,8 +143,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 		emit(models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", index),
-				Name: index,
+				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
+				Name: indexName,
 				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
