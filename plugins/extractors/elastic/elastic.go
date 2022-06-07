@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/pkg/errors"
 
@@ -101,22 +102,33 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		return
 	}
 	x := reflect.ValueOf(r["indices"]).MapRange()
+	var indexes []string
 	for x.Next() {
 		indexName := x.Key().String()
-		docProperties, err1 := e.listIndexInfo(x.Key().String())
+		// fmt.Println(indexName)
+		indexes = append(indexes, indexName)
+	}
+	sort.Strings(indexes)
+	for _, index := range indexes {
+		docProperties, err1 := e.listIndexInfo(index)
 		if err1 != nil {
 			err = err1
 			return
 		}
 		var columns []*facetsv1beta1.Column
+		var columNames []string
 		for i := range docProperties {
+			columNames = append(columNames, i)
+		}
+		sort.Strings(columNames)
+		for _, i := range columNames {
 			columns = append(columns, &facetsv1beta1.Column{
 				Name:     i,
 				DataType: docProperties[i].(map[string]interface{})["type"].(string),
 			})
 		}
 		countRes, err1 := e.client.Search(
-			e.client.Search.WithIndex(x.Key().String()),
+			e.client.Search.WithIndex(index),
 		)
 		if err1 != nil {
 			err = err1
@@ -132,8 +144,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 		emit(models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
-				Name: indexName,
+				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", index),
+				Name: index,
 				Type: "table",
 			},
 			Schema: &facetsv1beta1.Columns{
