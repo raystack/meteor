@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package elastic_test
 
 import (
@@ -111,27 +114,20 @@ func TestInit(t *testing.T) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
-		for i := 0; i < 1000; i++ {
-			extr := newExtractor()
-			err := extr.Init(ctx, map[string]interface{}{
-				"host":     host,
-				"user":     user,
-				"password": pass,
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			emitter := mocks.NewEmitter()
-			err = extr.Extract(ctx, emitter.Push)
-			assert.NoError(t, err)
-			x := emitter.Get()
-			fmt.Println(i)
-			if x[0].Data().GetResource().Name == "index2" {
-				fmt.Println(i, "fails mismatchindex")
-			}
-			assert.Equal(t, getExpectedVal(), x)
+		extr := newExtractor()
+		err := extr.Init(ctx, map[string]interface{}{
+			"host":     host,
+			"user":     user,
+			"password": pass,
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+		assert.Equal(t, getExpectedVal(), emitter.Get())
 	})
 }
 
@@ -241,13 +237,3 @@ func getExpectedVal() []models.Record {
 		}),
 	}
 }
-
-// func sortByIndex(data []models.Record) []models.Record {
-// 	var sortedData []models.Record
-// 	if data[0].Data().GetResource().Name == "index2" {
-// 		sortedData = append(sortedData, data[1])
-// 		sortedData = append(sortedData, data[0])
-// 		fmt.Println("switch")
-// 	}
-// 	return sortedData
-// }
