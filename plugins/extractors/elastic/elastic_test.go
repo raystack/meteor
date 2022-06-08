@@ -127,7 +127,7 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
-		assert.Equal(t, getExpectedVal(), emitter.Get())
+		matchRecords(t, getExpectedVal(), emitter.Get())
 	})
 }
 
@@ -236,4 +236,14 @@ func getExpectedVal() []models.Record {
 			},
 		}),
 	}
+}
+
+func matchRecords(t *testing.T, expected, actual []models.Record) {
+	if actual[0].Data().GetResource().Name == "index2" {
+		//swap index order
+		temp := actual[0]
+		actual[0] = actual[1]
+		actual[1] = temp
+	}
+	assert.Equal(t, expected, actual)
 }

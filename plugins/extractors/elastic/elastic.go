@@ -107,7 +107,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		indexName := x.Key().String()
 		indexes = append(indexes, indexName)
 	}
-	sort.Strings(indexes)
 	for _, indexName := range indexes {
 		docProperties, err1 := e.listIndexInfo(indexName)
 		if err1 != nil {
