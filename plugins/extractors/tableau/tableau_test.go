@@ -36,6 +36,17 @@ func TestInit(t *testing.T) {
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
+	t.Run("should return no error for valid config", func(t *testing.T) {
+		err := tableau.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
+			"host":       host,
+			"version":    version,
+			"identifier": "my-tableau",
+			"sitename":   sitename,
+			"site_id":    "xxxxxxxxx",
+			"auth_token": "xxxxxxxxx",
+		})
+		assert.NoError(t, err)
+	})
 }
 
 func TestExtract(t *testing.T) {
