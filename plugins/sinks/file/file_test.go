@@ -14,7 +14,16 @@ import (
 )
 
 var validConfig = map[string]interface{}{
-	"path": "sample.json",
+	"path": "./test-dir/sample.json",
+}
+
+func TestValidate(t *testing.T) {
+	t.Run("should return error on invalid config", func(t *testing.T) {
+		invalidConfig := map[string]interface{}{}
+		fileSink := f.New()
+		err := fileSink.Validate(invalidConfig)
+		assert.Error(t, err)
+	})
 }
 
 func TestInit(t *testing.T) {
@@ -49,22 +58,34 @@ func TestInit(t *testing.T) {
 
 func TestMain(t *testing.T) {
 	t.Run("sink test", func(t *testing.T) {
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), validConfig)
-		assert.NoError(t, err)
-		err = fileSink.Sink(context.TODO(), getExpectedVal())
-		assert.NoError(t, err)
+		assert.NoError(t, sinkValidSetup(t, validConfig))
 	})
 	t.Run("sink test", func(t *testing.T) {
-		yamlConf := map[string]interface{}{
-			"path": "sample.yaml",
+		config := map[string]interface{}{
+			"path": "./test-dir/sample.yaml",
 		}
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), yamlConf)
-		assert.NoError(t, err)
-		err = fileSink.Sink(context.TODO(), getExpectedVal())
-		assert.NoError(t, err)
+		assert.NoError(t, sinkValidSetup(t, config))
+
 	})
+	t.Run("should return error for invalid directory in yaml", func(t *testing.T) {
+		config := map[string]interface{}{
+			"path": "./test-dir/some-dir/sample.yaml",
+		}
+		assert.Error(t, sinkValidSetup(t, config))
+	})
+	t.Run("should return error for invalid directory in json", func(t *testing.T) {
+		config := map[string]interface{}{
+			"path": "./test-dir/some-dir/sample.json",
+		}
+		assert.Error(t, sinkValidSetup(t, config))
+	})
+}
+
+func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
+	fileSink := f.New()
+	err := fileSink.Init(context.TODO(), config)
+	assert.NoError(t, err)
+	return fileSink.Sink(context.TODO(), getExpectedVal())
 }
 
 func getExpectedVal() []models.Record {

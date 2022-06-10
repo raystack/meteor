@@ -91,7 +91,6 @@ func (s *Sink) jsonOut(data []models.Metadata) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(jsnBy))
 	return nil
 }
 
@@ -104,7 +103,6 @@ func (s *Sink) yamlOut(data []models.Metadata) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(ymlByte))
 	return nil
 }
 
