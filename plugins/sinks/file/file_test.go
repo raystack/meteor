@@ -2,6 +2,7 @@ package file_test
 
 import (
 	"context"
+	_ "embed"
 	"testing"
 
 	"github.com/odpf/meteor/models"
@@ -12,6 +13,9 @@ import (
 	f "github.com/odpf/meteor/plugins/sinks/file"
 	"github.com/stretchr/testify/assert"
 )
+
+//go:embed README.md
+var summary string
 
 var validConfig = map[string]interface{}{
 	"path": "./test-dir/sample.json",
@@ -79,6 +83,11 @@ func TestMain(t *testing.T) {
 		}
 		assert.Error(t, sinkValidSetup(t, config))
 	})
+}
+
+func TestInfo(t *testing.T) {
+	info := f.New().Info()
+	assert.Equal(t, summary, info.Summary)
 }
 
 func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
