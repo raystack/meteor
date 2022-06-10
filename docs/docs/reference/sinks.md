@@ -43,9 +43,7 @@ Sinks metadata to a file in `json/yaml` format as per the config defined.
 sinks:
     name: file
     config:
-        format: "yaml/json"
-        filename: "postgres_server"
-        output-dir: path/to/folder
+        path: "./dir/sample.yaml"
 ```
 
 _**Notes**_

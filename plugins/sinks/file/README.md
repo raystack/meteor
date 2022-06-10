@@ -8,18 +8,14 @@ Sinks metadata to a file in `json/yaml` format as per the config defined.
 sinks:
     name: file
     config:
-        format: "yaml/json"
-        filename: "postgres_server"
-        output-dir: path/to/folder
+        path: "./dir/sample.yaml"
 ```
 
 ## Config Defination
 
-| Key | Value | Example | Description |  Default  | |
-| :-- | :---- | :------ | :---------- | :-- | :-- |
-|`format` | `string` | `yaml` | Define the format of file, currently supports yaml and json | `json` | *optional* |
-|`filename` | `string` | `sample-name` | Define the filename for output | `NA` | *required*|
-|`output` | `string` | `dataDir/d1/` | Path to output directory | `./` | *optional*|
+| Key | Value | Example | Description |  |
+| :-- | :---- | :------ | :---------- | :-- |
+|`path` | `string` | `./dir/sample.yaml` | path to output file, directory should exist, file should be either yaml or json  | *required*|
 
 ## Contributing
 
