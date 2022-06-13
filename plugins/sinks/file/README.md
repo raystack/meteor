@@ -16,7 +16,7 @@ sinks:
 
 | Key | Value | Example | Description |  |
 | :-- | :---- | :------ | :---------- | :-- |
-|`path` | `string` | `./dir/sample.yaml` | path to output file, directory should exist  | *required*|
+|`path` | `string` | `./dir/sample.yaml` | absolute or relative path from binary to output file, directory should exist| *required*|
 | `format` | `string` | `yaml` | data format for the output file | *required* |
 
 ## Contributing
