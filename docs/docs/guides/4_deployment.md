@@ -1,6 +1,6 @@
 # Deployment
 
-After we are done with running and veryfing that the recipes works with the data-source and sink you have mentioned.
+After we are done with running and verifying that the recipes works with the data-source and sink you have mentioned.
 You may want to automate the process of metadata collection on some regular basis as a cron job.
 One can setup user for the same.
 

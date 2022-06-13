@@ -5,7 +5,7 @@ Before getting started we expect you went through the [prerequisites](./introduc
 Meteor follows a plugin driven approach and hence includes basically three kinds of plugins for the metadata orchestration: extractors (source), processors, and sinks (destination).
 Some details on these 3 are:
 
-- **Extractors** are the set of plugins that are source of our metadata and include databases, dashboards, users, etc.
+- **Extractors** are the set of plugins that are the source of our metadata and include databases, dashboards, users, etc.
 
 - **Processors** are the set of plugins that perform the enrichment or data processing for the metadata after extraction.
 

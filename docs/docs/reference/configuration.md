@@ -1,6 +1,6 @@
 # Configuration
 
-This page contains reference for all the application configurations for Meteor.
+This page contains references for all the application configurations for Meteor.
 
 ## Table of Contents
 
