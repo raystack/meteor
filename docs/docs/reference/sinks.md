@@ -33,6 +33,20 @@ sinks:
        displayName: "resource.name"
 ```
 
+## File
+
+`file`
+
+Sinks metadata to a file in `json/yaml` format as per the config defined.
+
+```yaml
+sinks:
+    name: file
+    config:
+        path: "./dir/sample.yaml"
+        format: "yaml"
+```
+
 _**Notes**_
 
 Compass' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Compass. Supports getting value from nested fields.

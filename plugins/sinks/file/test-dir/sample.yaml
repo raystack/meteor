@@ -1,0 +1,72 @@
+- resource:
+    urn: elasticsearch.index1
+    name: index1
+    service: ""
+    type: table
+    url: ""
+    description: ""
+  profile:
+    totalrows: 1
+    partitionkey: ""
+    partitionvalue: ""
+    usagecount: 0
+    joins: []
+    filters: []
+  schema:
+    columns:
+        - name: SomeInt
+          description: ""
+          datatype: long
+          isnullable: false
+          length: 0
+          profile: null
+          properties: null
+        - name: SomeStr
+          description: ""
+          datatype: text
+          isnullable: false
+          length: 0
+          profile: null
+          properties: null
+  preview: null
+  ownership: null
+  lineage: null
+  properties: null
+  timestamps: null
+  event: null
+- resource:
+    urn: elasticsearch.index2
+    name: index2
+    service: ""
+    type: table
+    url: ""
+    description: ""
+  profile:
+    totalrows: 1
+    partitionkey: ""
+    partitionvalue: ""
+    usagecount: 0
+    joins: []
+    filters: []
+  schema:
+    columns:
+        - name: SomeInt
+          description: ""
+          datatype: long
+          isnullable: false
+          length: 0
+          profile: null
+          properties: null
+        - name: SomeStr
+          description: ""
+          datatype: text
+          isnullable: false
+          length: 0
+          profile: null
+          properties: null
+  preview: null
+  ownership: null
+  lineage: null
+  properties: null
+  timestamps: null
+  event: null
