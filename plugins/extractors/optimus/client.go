@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	service                    = "optimus"
-	GRPCMaxClientSendSize      = 45 << 20 // 45MB
-	GRPCMaxClientRecvSize      = 45 << 20 // 45MB
-	GRPCMaxRetry          uint = 3
+	service                      = "optimus"
+	GRPCMaxClientSendSizeMB      = 45
+	GRPCMaxClientRecvSizeMB      = 45
+	GRPCMaxRetry            uint = 3
 )
 
 type Client interface {
@@ -25,7 +25,7 @@ type Client interface {
 	pb.ProjectServiceClient
 	pb.JobSpecificationServiceClient
 	pb.JobRunServiceClient
-	Connect(ctx context.Context, host string) error
+	Connect(ctx context.Context, host string, maxSizeInMB int) error
 	Close() error
 }
 
@@ -41,11 +41,11 @@ type client struct {
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string) (err error) {
+func (c *client) Connect(ctx context.Context, host string, maxSizeInMB int) (err error) {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
+	if c.conn, err = c.createConnection(dialTimeoutCtx, host, maxSizeInMB); err != nil {
 		err = errors.Wrap(err, "error creating connection")
 		return
 	}
@@ -62,7 +62,11 @@ func (c *client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *client) createConnection(ctx context.Context, host string) (*grpc.ClientConn, error) {
+func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB int) (*grpc.ClientConn, error) {
+	if maxSizeInMB <= 0 {
+		maxSizeInMB = GRPCMaxClientRecvSizeMB
+	}
+
 	retryOpts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(100 * time.Millisecond)),
 		grpc_retry.WithMax(GRPCMaxRetry),
@@ -72,8 +76,8 @@ func (c *client) createConnection(ctx context.Context, host string) (*grpc.Clien
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSize),
-			grpc.MaxCallRecvMsgSize(GRPCMaxClientRecvSize),
+			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSizeMB<<20),
+			grpc.MaxCallRecvMsgSize(maxSizeInMB<<20),
 		),
 		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
 			grpc_retry.UnaryClientInterceptor(retryOpts...),
