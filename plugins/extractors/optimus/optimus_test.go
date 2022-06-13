@@ -38,7 +38,7 @@ func TestInit(t *testing.T) {
 		ctx := context.TODO()
 
 		client := new(mockClient)
-		client.On("Connect", ctx, validConfig["host"]).Return(nil)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(nil)
 		defer client.AssertExpectations(t)
 
 		extr := optimus.New(testutils.Logger, client)
@@ -78,8 +78,8 @@ type mockClient struct {
 	mock.Mock
 }
 
-func (c *mockClient) Connect(ctx context.Context, host string) (err error) {
-	args := c.Called(ctx, host)
+func (c *mockClient) Connect(ctx context.Context, host string, maxSizeInMB int) (err error) {
+	args := c.Called(ctx, host, maxSizeInMB)
 
 	return args.Error(0)
 }
@@ -118,7 +118,7 @@ func (c *mockClient) GetJobTask(
 }
 
 func setupExtractExpectation(ctx context.Context, client *mockClient) {
-	client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
+	client.On("Connect", ctx, validConfig["host"], 0).Return(nil).Once()
 
 	client.On("ListProjects", ctx, &pb.ListProjectsRequest{}, mock.Anything).Return(&pb.ListProjectsResponse{
 		Projects: []*pb.ProjectSpecification{

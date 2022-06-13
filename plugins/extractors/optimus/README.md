@@ -14,6 +14,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `host` | `string` | `optimus.com:80` | Optimus' GRPC host | *required* |
+| `max_size_in_mb` | `int` | `45` | Max megabytes for GRPC client to receive message. Default to 45. |  |
 
 ## Outputs
 

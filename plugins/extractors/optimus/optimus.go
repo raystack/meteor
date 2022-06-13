@@ -23,7 +23,8 @@ var summary string
 
 // Config holds the set of configuration for the bigquery extractor
 type Config struct {
-	Host string `mapstructure:"host" validate:"required"`
+	Host        string `mapstructure:"host" validate:"required"`
+	MaxSizeInMB int    `mapstructure:"max_size_in_mb"`
 }
 
 var sampleConfig = `
@@ -64,7 +65,7 @@ func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) 
 		return plugins.InvalidConfigError{}
 	}
 
-	if err := e.client.Connect(ctx, e.config.Host); err != nil {
+	if err := e.client.Connect(ctx, e.config.Host, e.config.MaxSizeInMB); err != nil {
 		return errors.Wrap(err, "error connecting to host")
 	}
 
