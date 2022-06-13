@@ -9,13 +9,15 @@ sinks:
     name: file
     config:
         path: "./dir/sample.yaml"
+        format: "yaml"
 ```
 
 ## Config Defination
 
 | Key | Value | Example | Description |  |
 | :-- | :---- | :------ | :---------- | :-- |
-|`path` | `string` | `./dir/sample.yaml` | path to output file, directory should exist, file should be either yaml or json  | *required*|
+|`path` | `string` | `./dir/sample.yaml` | path to output file, directory should exist  | *required*|
+| `format` | `string` | `yaml` | data format for the output file | *required* |
 
 ## Contributing
 

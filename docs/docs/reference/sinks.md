@@ -44,6 +44,7 @@ sinks:
     name: file
     config:
         path: "./dir/sample.yaml"
+        format: "yaml"
 ```
 
 _**Notes**_

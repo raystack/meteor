@@ -18,7 +18,8 @@ import (
 var summary string
 
 var validConfig = map[string]interface{}{
-	"path": "./test-dir/sample.json",
+	"path":   "./test-dir/sample.json",
+	"format": "json",
 }
 
 func TestValidate(t *testing.T) {
@@ -39,20 +40,22 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should return error on filename missing", func(t *testing.T) {
 		invalidConfig := map[string]interface{}{
-			"path": "./some-dir",
+			"path":   "./some-dir",
+			"format": "json",
 		}
 		fileSink := f.New()
 		err := fileSink.Init(context.TODO(), invalidConfig)
 		assert.Error(t, err)
 	})
-	t.Run("should return error on invalid file format extension", func(t *testing.T) {
-		invalidConfig := map[string]interface{}{
-			"path": "./sample.txt",
-		}
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), invalidConfig)
-		assert.Error(t, err)
-	})
+	// t.Run("should return error on invalid file format extension", func(t *testing.T) {
+	// 	invalidConfig := map[string]interface{}{
+	// 		"path":   "./sample.txt",
+	// 		"format": "json",
+	// 	}
+	// 	fileSink := f.New()
+	// 	err := fileSink.Init(context.TODO(), invalidConfig)
+	// 	assert.Error(t, err)
+	// })
 	t.Run("should return no error on valid config", func(t *testing.T) {
 		fileSink := f.New()
 		err := fileSink.Init(context.TODO(), validConfig)
@@ -61,25 +64,28 @@ func TestInit(t *testing.T) {
 }
 
 func TestMain(t *testing.T) {
-	t.Run("sink test", func(t *testing.T) {
+	t.Run("should return no error with for valid json config", func(t *testing.T) {
 		assert.NoError(t, sinkValidSetup(t, validConfig))
 	})
-	t.Run("sink test", func(t *testing.T) {
+	t.Run("should return no error with for valid yaml config", func(t *testing.T) {
 		config := map[string]interface{}{
-			"path": "./test-dir/sample.yaml",
+			"path":   "./test-dir/sample.yaml",
+			"format": "yaml",
 		}
 		assert.NoError(t, sinkValidSetup(t, config))
 
 	})
 	t.Run("should return error for invalid directory in yaml", func(t *testing.T) {
 		config := map[string]interface{}{
-			"path": "./test-dir/some-dir/sample.yaml",
+			"path":   "./test-dir/some-dir/sample.yaml",
+			"format": "yaml",
 		}
 		assert.Error(t, sinkValidSetup(t, config))
 	})
 	t.Run("should return error for invalid directory in json", func(t *testing.T) {
 		config := map[string]interface{}{
-			"path": "./test-dir/some-dir/sample.json",
+			"path":   "./test-dir/some-dir/sample.json",
+			"format": "json",
 		}
 		assert.Error(t, sinkValidSetup(t, config))
 	})

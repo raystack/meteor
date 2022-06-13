@@ -20,11 +20,13 @@ import (
 var summary string
 
 type Config struct {
-	Path string `mapstructure:"path" validate:"required"`
+	Path   string `mapstructure:"path" validate:"required"`
+	Format string `mapstructure:"format" validate:"required"`
 }
 
 var sampleConfig = `
 path: ./dir/some-dir/postgres_food_app_data.json
+format: json
 `
 
 type Sink struct {
@@ -39,7 +41,7 @@ func New() plugins.Syncer {
 
 func (s *Sink) Info() plugins.Info {
 	return plugins.Info{
-		Description:  "save output to file",
+		Description:  "save output to a file",
 		SampleConfig: sampleConfig,
 		Summary:      summary,
 		Tags:         []string{"file", "json", "yaml", "sink"},
@@ -55,9 +57,10 @@ func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err err
 		return plugins.InvalidConfigError{Type: "sink", PluginName: "file"}
 	}
 
-	if err := s.splitPath(s.config.Path); err != nil {
+	if err := s.validateFilePath(s.config.Path); err != nil {
 		return err
 	}
+	s.format = s.config.Format
 	return
 }
 
@@ -106,17 +109,13 @@ func (s *Sink) yamlOut(data []models.Metadata) error {
 	return nil
 }
 
-func (s *Sink) splitPath(path string) error {
+func (s *Sink) validateFilePath(path string) error {
 	dirs := strings.Split(path, "/")
 	filename := dirs[len(dirs)-1]
 	format := strings.Split(filename, ".")
 	if len(format) != 2 {
 		return fmt.Errorf("invalid filename")
 	}
-	if format[1] != "json" && format[1] != "yaml" && format[1] != "yml" {
-		return fmt.Errorf("invalid file format, only json/yaml are valid")
-	}
-	s.format = format[1]
 	return nil
 }
 
