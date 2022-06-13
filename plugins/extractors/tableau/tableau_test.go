@@ -36,7 +36,28 @@ func TestInit(t *testing.T) {
 
 		assert.Equal(t, plugins.InvalidConfigError{}, err)
 	})
-	t.Run("should return no error for valid config", func(t *testing.T) {
+	t.Run("should return error for password missing with username", func(t *testing.T) {
+		err := tableau.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
+			"host":       host,
+			"version":    version,
+			"identifier": "my-tableau",
+			"sitename":   sitename,
+			"username":   username,
+		})
+
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
+	})
+	t.Run("should return error for site_id and auth_token missing", func(t *testing.T) {
+		err := tableau.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
+			"host":       host,
+			"version":    version,
+			"identifier": "my-tableau",
+			"sitename":   sitename,
+		})
+
+		assert.Equal(t, plugins.InvalidConfigError{}, err)
+	})
+	t.Run("should return no error for config with site_id and auth_token without username", func(t *testing.T) {
 		err := tableau.New(testutils.Logger).Init(context.TODO(), map[string]interface{}{
 			"host":       host,
 			"version":    version,
