@@ -1,6 +1,6 @@
 # Extractors
 
-Meteor currently support metadata extraction on these data sources. To perform extraction on any of these you need to create a recipe file with instructions as mentioned [here](../concepts/recipe.md). In the `sample-recipe.yaml` add `source` information such as `type` from the table below and `config` for that particular extractor can be found by visiting the link in `type` field.
+Meteor currently supports metadata extraction on these data sources. To perform extraction on any of these you need to create a recipe file with instructions as mentioned [here](../concepts/recipe.md). In the `sample-recipe.yaml` add `source` information such as `type` from the table below and `config` for that particular extractor can be found by visiting the link in the `type` field.
 
 ## Extractors Feature Matrix
 

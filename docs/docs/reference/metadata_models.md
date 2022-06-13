@@ -9,27 +9,27 @@ We are currently using the following metadata models:
   Currently, Meteor provides a metadata extractor for the buckets mentioned [here](../reference/extractors.md)
 
 - [Dashboard](https://github.com/odpf/proton/blob/main/odpf/assets/dashboard.proto):
-  Dashboards are essential part of data analysis and are used to track, analyse and visualization.
+  Dashboards are an essential part of data analysis and are used to track, analyze and visualize.
   These Dashboard metadata model includes some basic fields like `urn` and `source`, etc and a list of `Chart`.
   There are multiple dashboards that are essential for Data Analysis such as metabase, grafana, tableau, etc.
-  Please refer the list of Dashboards meteor currently supports [here](../reference/extractors.md).
+  Please refer to the list of Dashboards meteor currently supports [here](../reference/extractors.md).
 
 - [Chart](https://github.com/odpf/proton/blob/main/odpf/assets/chart.proto):
-  Charts are included in all the Dashboard and are result of certain queries in a Dashboard.
+  Charts are included in all the Dashboard and are the result of certain queries in a Dashboard.
   Information about them includes the information of the query and few similar details.
 
 - [User](https://github.com/odpf/proton/blob/main/odpf/assets/user.proto):
   This metadata model is used for defining the output of extraction on Users accounts.
-  Some of these source can be GitHub, Workday, Google Suite, LDAP.
-  Please refer the list of user meteor currently supports [here](../reference/extractors.md).
+  Some of these sources can be GitHub, Workday, Google Suite, LDAP.
+  Please refer to the list of user meteor currently supports [here](../reference/extractors.md).
 
 - [Table](https://github.com/odpf/proton/blob/main/odpf/assets/table.proto):
   This metadata model is being used by extractors based around `databases` or for the ones that store data in tabular format.
-  It contains various fields that includes `schema` of the table and other access related information.
+  It contains various fields that include `schema` of the table and other access related information.
 
 - [Job](https://github.com/odpf/proton/blob/main/odpf/assets/job.proto):
   Most of the data is being streamed as queues by kafka or other stack in DE pipeline.
-  And hence Job is a metadata model build for this purpose.
+  And hence Job is a metadata model built for this purpose.
 
 `Proto` has been used to define these metadata models.
 To check their implementation please refer [here](https://github.com/odpf/proton/tree/main/odpf/assets).

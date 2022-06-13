@@ -1,6 +1,6 @@
 # Processor
 
-A recipe can have none or many processors registered, depending upon the way user want metadata to processed. A processor is basically a function that:
+A recipe can have none or many processors registered, depending upon the way the user wants metadata to be processed. A processor is basically a function that:
 
 * expects a list of data
 * processes the list

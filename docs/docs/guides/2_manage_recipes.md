@@ -1,6 +1,6 @@
 # Recipes - Creation and linting
 
-A recipe is a set of instructions and configurations defined by user, and in Meteor they are used to define how a particular job will be performed.
+A recipe is a set of instructions and configurations defined by the user, and in Meteor they are used to define how a particular job will be performed.
 Thus, for the entire set of orchestration all you will need to provide will be recipe\(s\) for all the jobs you want meteor to do.
 
 Read more about the concepts of Recipe [here](../concepts/recipe.md).
@@ -9,7 +9,7 @@ A sample recipe can be generated using the `meteor new` command mentioned [below
 
 One can also generate multiple recipes with similar configurations using the `meteor gen` command mentioned [below](#generating-multiple-recipes-from-a-template).
 
-After making the necessary changes to the source, and sinks as per your local setup, you can validate the sample-recipe using steps mentioed [here](#linting-recipes).
+After making the necessary changes to the source, and sinks as per your local setup, you can validate the sample-recipe using steps mentioned [here](#linting-recipes).
 
 ## Generating new Sample recipe\(s\)
 
@@ -22,7 +22,7 @@ $ meteor new recipe sample -e <name-of-extractor> -s <single-or-multiple-sinks> 
 $ meteor new recipe sample -e bigquery -s compass,kafka
 
 # for the tour you can use a single console sink
-# extracor(-e) as postgres, sink(-s) and enrich processor(-p)
+# extractor(-e) as postgres, sink(-s) and enrich processor(-p)
 # save the generated recipe to a recipe.yaml
 $ meteor new recipe sample -e postgres -s console -p enrich > recipe.yaml
 

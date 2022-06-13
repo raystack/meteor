@@ -1,6 +1,6 @@
 # Sink
 
-`sinks` are used to define the medium of consuming the metadata being extracted. You need to specify **atleast one** sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same job. The given examples shows you its correct usage if your sink is `http` and `kafka`.
+`sinks` are used to define the medium of consuming the metadata being extracted. You need to specify **at least one** sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same job. The given examples show you its correct usage if your sink is `http` and `kafka`.
 
 ## Writing `sinks` part of your recipe
 
@@ -60,9 +60,9 @@ By default, metadata would be serialized into JSON format before sinking. To sen
 
 ## Custom Sink
 
-Meteor has built-in sinks like Kafka and HTTP which users can just utilise directly. We will also allow creating custom sinks for DRY purposes.
+Meteor has built-in sinks like Kafka and HTTP which users can just use directly. We will also allow creating custom sinks for DRY purposes.
 
-It will be useful if you can find yourself sinking multiple metadata source to one place.
+It will be useful if you can find yourself sinking multiple metadata sources to one place.
 
 ### Sample Custom Sink
 

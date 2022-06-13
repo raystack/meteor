@@ -2,13 +2,13 @@
 
 Meteor currently supports the following commands and these can be utilised after the installation:
 
-* completion: generate the autocompletion script for the specified shell
+* completion: generate the auto completion script for the specified shell
 
 * [gen](#creating-sample-recipes): The recipe will be printed on standard output.
 Specify recipe name with the first argument without extension.
-Use commma to separate multiple sinks and processors.
+Use comma to separate multiple sinks and processors.
 
-* [help](#get-help-on-commands-when-stuck): to help user with meteor.
+* [help](#get-help-on-commands-when-stuck): to help the user with meteor.
 
 * [info](#getting-information-about-plugins): Info command is used to get suitable information about various plugins.
 Specify the type of plugin as extractor, sink or processor.
@@ -19,7 +19,7 @@ Helps in avoiding any failure during running the meteor due to invalid recipe fo
 
 * [list](#listing-all-the-plugins): used to state all the plugins of a certain type.
 
-* [run](#running-recipes): the command is used for running the metadata extraction as per the instructions in recipe.
+* [run](#running-recipes): the command is used for running the metadata extraction as per the instructions in the recipe.
 Can be used to run a single recipe, a directory of recipes or all the recipes in the current directory.
 
 ## Listing all the plugins
@@ -59,7 +59,7 @@ $ meteor info extractor postgres
 ## Generating Sample recipe\(s\)
 
 Since recipe is the main resource of Meteor, we first need to create it before anything else.
-You can create a sample recipe usin the gen command.
+You can create a sample recipe using the gen command.
 
 ```bash
 # generate a sample recipe
@@ -69,7 +69,7 @@ $ meteor gen recipe sample -e bigquery -s console
 # generate recipe with multiple sinks
 $ meteor gen recipe sample -e bigquery -s compass,kafka
 
-# extracor(-e) as postgres, multiple sinks(-s) and enrich processor(-p)
+# extractor(-e) as postgres, multiple sinks(-s) and enrich processor(-p)
 # save the generated recipe to a recipe.yaml
 meteor gen recipe sample -e postgres -s compass,kafka -p enrich > recipe.yaml
 ```
