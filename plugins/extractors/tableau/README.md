@@ -25,10 +25,10 @@ source:
 | `version` | `string` | `3.12`     | The version of [Tableau REST API](https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api_concepts_versions.htm), tested with 3.12 | *required* |
 | `identifier` | `string` | `my-tableau` | Instance alias, the value will be used as part of the urn component | *required* |
 | `username` | `string` | `meteor_user` | Username/email to access the tableau | *optional with auth_token and site_id* |
-| `password` | `string` | `xxxxxxxxxx` | Password for the tableau | *optional with auth_token and site_id* |
+| `password` | `string` | `xxxxxxxxxx` | Password for the tableau | *optional with auth_token and site_id, required with username* |
 | `sitename` | `string` | `testdev550928` | The name of your tableau site, it will point to the default one if you leave it empty | *not required* |
-| `auth_token` | `string` | `xxxxxxxxxx` | use auth_token to access tableau without username and password | *optional* |
-| `site_id` | `string` | `xxxxxxxxx` | Add a site_id along with auth_token | *optional* |
+| `auth_token` | `string` | `xxxxxxxxxx` | use auth_token to access tableau without username and password | *optional, required without username* |
+| `site_id` | `string` | `xxxxxxxxx` | Add a site_id along with auth_token | *optional, required without username* |
 
 ## Outputs
 
