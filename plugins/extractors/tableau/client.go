@@ -137,7 +137,11 @@ func (c *client) Init(ctx context.Context, cfg Config) (err error) {
 	if c.httpClient == nil {
 		c.httpClient = &http.Client{}
 	}
-
+	if c.config.AuthToken != "" && c.config.SiteID != "" {
+		c.authToken = c.config.AuthToken
+		c.siteID = c.config.SiteID
+		return nil
+	}
 	c.authToken, c.siteID, err = c.getAuthToken()
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch auth token")

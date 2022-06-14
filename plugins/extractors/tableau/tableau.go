@@ -35,8 +35,10 @@ type Config struct {
 	Host       string `mapstructure:"host" validate:"required"`
 	Version    string `mapstructure:"version" validate:"required"` // float as string
 	Identifier string `mapstructure:"identifier" validate:"required"`
-	Username   string `mapstructure:"username" validate:"required"`
-	Password   string `mapstructure:"password" validate:"required"`
+	Username   string `mapstructure:"username"`
+	Password   string `mapstructure:"password" validate:"required_with=Username"`
+	AuthToken  string `mapstructure:"auth_token" validate:"required_without=Username"`
+	SiteID     string `mapstructure:"site_id" validate:"required_without=Username"`
 	Sitename   string `mapstructure:"sitename"`
 }
 
