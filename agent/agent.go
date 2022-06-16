@@ -141,14 +141,13 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		}
 	}
 
-	var sinks []plugins.Syncer
 	for _, sr := range recipe.Sinks {
 		sink, err := r.setupSink(ctx, sr, stream, recipe)
 		if err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
-		sinks = append(sinks, sink)
+		defer sink.Close()
 	}
 
 	// to gather total number of records extracted
@@ -182,11 +181,6 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 
 	// start listening.
 	// this process is blocking
-	defer func() {
-		for _, sink := range sinks {
-			sink.Close()
-		}
-	}()
 	if err := stream.broadcast(); err != nil {
 		run.Error = errors.Wrap(err, "failed to broadcast stream")
 	}
