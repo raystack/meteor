@@ -1,19 +1,17 @@
 package stencil
 
 type RequestPayload struct {
-	Schema        Schema `json:"asset"`
-	Compatibility string `json:"compatibility"`
+	Schema Schema `json:"schema"`
 }
 
 type Schema struct {
-	URN         string            `json:"urn"`
-	Type        string            `json:"type"`
-	Name        string            `json:"name"`
-	Service     string            `json:"service"`
-	Description string            `json:"description"`
-	Data        interface{}       `json:"data"`
-	Labels      map[string]string `json:"labels"`
-	Owners      []Owner           `json:"owners"`
+	URN         string      `json:"urn"`
+	Type        string      `json:"type"`
+	Name        string      `json:"name"`
+	Service     string      `json:"service"`
+	Description string      `json:"description"`
+	Data        interface{} `json:"data"`
+	Owners      []Owner     `json:"owners"`
 }
 
 type Owner struct {

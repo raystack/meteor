@@ -14,15 +14,17 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 //go:embed README.md
 var summary string
 
 type Config struct {
-	URL         string `mapstructure:"URL" validate:"required"`
-	NamespaceID string `mapstructure:"namespaceId"`
-	SchemaID    string `mapstructure:"schemaId"`
+	Host        string            `mapstructure:"host" validate:"required"`
+	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
+	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
+	Headers     map[string]string `mapstructure:"headers"`
 }
 
 var sampleConfig = ``
@@ -91,13 +93,19 @@ func (s *Sink) send(record RequestPayload) (err error) {
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", s.config.URL, s.config.NamespaceID, s.config.SchemaID)
+	url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", s.config.Host, s.config.NamespaceID, s.config.SchemaID)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
 	}
 
-	req.Header.Set("Content-Type", "application/octet-stream")
+	for hdrKey, hdrVal := range s.config.Headers {
+		hdrVals := strings.Split(hdrVal, ",")
+		for _, val := range hdrVals {
+			req.Header.Add(hdrKey, val)
+		}
+	}
+
 	res, err := s.client.Do(req)
 	if err != nil {
 		return
@@ -169,6 +177,3 @@ func init() {
 		panic(err)
 	}
 }
-
-// Notes:
-///v1beta1/namespaces/{namespaceId}/schemas/{schemaId} (patch) ?
