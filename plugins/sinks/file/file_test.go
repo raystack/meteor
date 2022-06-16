@@ -100,7 +100,9 @@ func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
 	fileSink := f.New()
 	err := fileSink.Init(context.TODO(), config)
 	assert.NoError(t, err)
-	return fileSink.Sink(context.TODO(), getExpectedVal())
+	err = fileSink.Sink(context.TODO(), getExpectedVal())
+	assert.NoError(t, err)
+	return fileSink.Close()
 }
 
 func getExpectedVal() []models.Record {

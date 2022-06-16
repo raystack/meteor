@@ -141,11 +141,14 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		}
 	}
 
+	var sinks []plugins.Syncer
 	for _, sr := range recipe.Sinks {
-		if err := r.setupSink(ctx, sr, stream, recipe); err != nil {
+		sink, err := r.setupSink(ctx, sr, stream, recipe)
+		if err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
+		sinks = append(sinks, sink)
 	}
 
 	// to gather total number of records extracted
@@ -179,6 +182,11 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 
 	// start listening.
 	// this process is blocking
+	defer func() {
+		for _, sink := range sinks {
+			sink.Close()
+		}
+	}()
 	if err := stream.broadcast(); err != nil {
 		run.Error = errors.Wrap(err, "failed to broadcast stream")
 	}
@@ -233,13 +241,12 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
-	var sink plugins.Syncer
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (sink plugins.Syncer, err error) {
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
-		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+		return nil, errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
 	}
 	if err = sink.Init(ctx, sr.Config); err != nil {
-		return errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+		return nil, errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
 	}
 
 	retryNotification := func(e error, d time.Duration) {

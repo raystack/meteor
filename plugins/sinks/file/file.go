@@ -28,6 +28,7 @@ var sampleConfig = `
 path: ./dir/some-dir/postgres_food_app_data.json
 format: json
 `
+var data []models.Metadata
 
 type Sink struct {
 	logger log.Logger
@@ -65,10 +66,13 @@ func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err err
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	var data []models.Metadata
 	for _, record := range batch {
 		data = append(data, record.Data())
 	}
+	return nil
+}
+
+func (s *Sink) Close() (err error) {
 	if s.format == "json" {
 		err := s.jsonOut(data)
 		if err != nil {
@@ -82,8 +86,6 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	}
 	return nil
 }
-
-func (s *Sink) Close() (err error) { return }
 
 func (s *Sink) jsonOut(data []models.Metadata) error {
 	jsnBy, err := json.MarshalIndent(data, "", "    ")
