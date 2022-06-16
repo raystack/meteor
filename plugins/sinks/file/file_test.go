@@ -47,15 +47,6 @@ func TestInit(t *testing.T) {
 		err := fileSink.Init(context.TODO(), invalidConfig)
 		assert.Error(t, err)
 	})
-	// t.Run("should return error on invalid file format extension", func(t *testing.T) {
-	// 	invalidConfig := map[string]interface{}{
-	// 		"path":   "./sample.txt",
-	// 		"format": "json",
-	// 	}
-	// 	fileSink := f.New()
-	// 	err := fileSink.Init(context.TODO(), invalidConfig)
-	// 	assert.Error(t, err)
-	// })
 	t.Run("should return no error on valid config", func(t *testing.T) {
 		fileSink := f.New()
 		err := fileSink.Init(context.TODO(), validConfig)
@@ -100,7 +91,9 @@ func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
 	fileSink := f.New()
 	err := fileSink.Init(context.TODO(), config)
 	assert.NoError(t, err)
-	return fileSink.Sink(context.TODO(), getExpectedVal())
+	err = fileSink.Sink(context.TODO(), getExpectedVal())
+	assert.NoError(t, err)
+	return fileSink.Close()
 }
 
 func getExpectedVal() []models.Record {
