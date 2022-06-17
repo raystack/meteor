@@ -60,7 +60,7 @@ func (m *StatsdMonitor) RecordSink(run agent.Run, sink agent.RunSink) {
 		fmt.Sprintf(
 			"%s.%s,name=%s,success=%s,source=%s,sink=%s",
 			m.prefix,
-			runMetricName,
+			"sinkStatus",
 			run.Recipe.Name,
 			successText,
 			run.Recipe.Source.Name,
