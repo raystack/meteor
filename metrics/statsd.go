@@ -45,6 +45,28 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 		m.createMetricName(runRecordCountMetricName, run.Recipe, run.Success, run.RecordCount),
 		run.RecordCount,
 	)
+	for _, sink := range run.Sinks {
+		m.RecordSink(run, sink)
+	}
+}
+
+// RecordSink records a individual sinks behavior in a run
+func (m *StatsdMonitor) RecordSink(run agent.Run, sink agent.RunSink) {
+	var successText = "false"
+	if sink.Success {
+		successText = "true"
+	}
+	m.client.Increment(
+		fmt.Sprintf(
+			"%s.%s,name=%s,success=%s,source=%s,sink=%s",
+			m.prefix,
+			runMetricName,
+			run.Recipe.Name,
+			successText,
+			run.Recipe.Source.Name,
+			sink.Recipe.Name,
+		),
+	)
 }
 
 // createMetricName creates a metric name for a given recipe and success

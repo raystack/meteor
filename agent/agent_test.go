@@ -768,10 +768,18 @@ func TestAgentRunMultiple(t *testing.T) {
 		})
 		runs := r.RunMultiple(ctx, recipeList)
 
+		sinks := []agent.RunSink{
+			{
+				Error:   nil,
+				Success: true,
+				Recipe:  validRecipe2.Sinks[0],
+			},
+		}
+
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe, RecordCount: len(data), Success: true},
-			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
+			{Recipe: validRecipe, RecordCount: len(data), Success: true, Sinks: sinks},
+			{Recipe: validRecipe2, RecordCount: len(data), Success: true, Sinks: sinks},
 		}, runs)
 	})
 }
