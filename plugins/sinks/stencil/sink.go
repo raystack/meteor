@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/odpf/meteor/models"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -25,6 +26,7 @@ type Config struct {
 	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
 	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
 	Headers     map[string]string `mapstructure:"headers"`
+	Format      string            `mapstructure:"format"`
 }
 
 var sampleConfig = ``
@@ -66,11 +68,17 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+
 	for _, record := range batch {
 		metadata := record.Data()
-		s.logger.Info("sinking record to stencil", "record", metadata.GetResource().Urn)
 
-		stencilPayload, err := s.buildStencilPayload(metadata)
+		table, ok := metadata.(*assetsv1beta1.Table)
+		if !ok {
+			continue
+		}
+		s.logger.Info("sinking record to stencil", "record", table.GetResource().Urn)
+
+		stencilPayload, err := s.buildStencilPayload(table)
 		if err != nil {
 			return errors.Wrap(err, "failed to build stencil payload")
 		}
@@ -78,7 +86,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 			return errors.Wrap(err, "error sending data")
 		}
 
-		s.logger.Info("successfully sinked record to stencil", "record", metadata.GetResource().Urn)
+		s.logger.Info("successfully sinked record to stencil", "record", table.GetResource().Urn)
 	}
 
 	return
@@ -86,7 +94,15 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record RequestPayload) (err error) {
+func (s *Sink) send(record JsonSchema) (err error) {
+	//parse, err := avro.Parse(`{}`)
+	//if err != nil {
+	//	return err
+	//}
+	//marshal, err := avro.Marshal(parse, record)
+	//if err != nil {
+	//	return err
+	//}
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
@@ -129,42 +145,39 @@ func (s *Sink) send(record RequestPayload) (err error) {
 	}
 }
 
-func (s *Sink) buildStencilPayload(metadata models.Metadata) (RequestPayload, error) {
-	resource := metadata.GetResource()
-	owners := s.buildOwners(metadata)
-	record := RequestPayload{
-		Schema: Schema{
-			URN:         resource.GetUrn(),
-			Type:        resource.GetType(),
-			Name:        resource.GetName(),
-			Service:     resource.GetService(),
-			Description: resource.GetDescription(),
-			Data:        metadata,
-			Owners:      owners,
-		},
+func (s *Sink) buildStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
+	resource := table.GetResource()
+	columns := s.buildColumns(table)
+
+	record := JsonSchema{
+		Id:          fmt.Sprintf("%s/%s.%s.json", s.config.Host, s.config.NamespaceID, s.config.SchemaID),
+		Schema:      "https://json-schema.org/draft/2020-12/schema",
+		Title:       resource.GetName(),
+		Type:        resource.GetType(),
+		Columns:     columns,
+		URN:         resource.GetUrn(),
+		Service:     resource.GetService(),
+		Description: resource.GetDescription(),
 	}
 
 	return record, nil
 }
 
-func (s *Sink) buildOwners(metadata models.Metadata) (owners []Owner) {
-	om, modelHasOwnership := metadata.(models.OwnershipMetadata)
-
-	if !modelHasOwnership {
+func (s *Sink) buildColumns(table *assetsv1beta1.Table) (columns []Columns) {
+	schema := table.GetSchema()
+	if schema == nil {
 		return
 	}
 
-	ownership := om.GetOwnership()
-	if ownership == nil {
-		return
-	}
-
-	for _, ownerProto := range ownership.GetOwners() {
-		owners = append(owners, Owner{
-			URN:   ownerProto.Urn,
-			Name:  ownerProto.Name,
-			Role:  ownerProto.Role,
-			Email: ownerProto.Email,
+	for _, column := range schema.GetColumns() {
+		columns = append(columns, Columns{
+			Profile:     column.Profile.String(),
+			Name:        column.Name,
+			Properties:  column.Properties.String(),
+			Description: column.Description,
+			Length:      column.Length,
+			IsNullable:  column.IsNullable,
+			DataType:    column.DataType,
 		})
 	}
 	return
