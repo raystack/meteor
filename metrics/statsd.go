@@ -12,10 +12,11 @@ import (
 	"github.com/odpf/meteor/recipe"
 )
 
-var (
+const (
 	runDurationMetricName    = "runDuration"
 	runRecordCountMetricName = "runRecordCount"
 	runMetricName            = "run"
+	sinkMetricName           = "sinkStatus"
 )
 
 // StatsdMonitor represents the statsd monitor.
@@ -52,17 +53,13 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 
 // RecordSink records a individual sinks behavior in a run
 func (m *StatsdMonitor) RecordSink(run agent.Run, sink agent.RunSink) {
-	var successText = "false"
-	if sink.Success {
-		successText = "true"
-	}
 	m.client.Increment(
 		fmt.Sprintf(
-			"%s.%s,name=%s,success=%s,source=%s,sink=%s",
+			"%s.%s,name=%s,success=%t,source=%s,sink=%s",
 			m.prefix,
-			"sinkStatus",
+			sinkMetricName,
 			run.Recipe.Name,
-			successText,
+			sink.Success,
 			run.Recipe.Source.Name,
 			sink.Recipe.Name,
 		),
