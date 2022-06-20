@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/hamba/avro"
 	"github.com/odpf/meteor/models"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
@@ -67,6 +68,19 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 	return
 }
 
+//func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, error) {
+//	switch s.config.Format {
+//	case "avro":
+//		record, err := s.buildAvroStencilPayload(table)
+//		return JsonSchema{}, record, err
+//	case "protobuf":
+//
+//	default:
+//		record, err := s.buildJsonStencilPayload(table)
+//		return record, AvroSchema{}, err
+//	}
+//}
+
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 	for _, record := range batch {
@@ -78,7 +92,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		}
 		s.logger.Info("sinking record to stencil", "record", table.GetResource().Urn)
 
-		stencilPayload, err := s.buildStencilPayload(table)
+		stencilPayload, err := s.buildJsonStencilPayload(table)
 		if err != nil {
 			return errors.Wrap(err, "failed to build stencil payload")
 		}
@@ -95,14 +109,45 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 func (s *Sink) Close() (err error) { return }
 
 func (s *Sink) send(record JsonSchema) (err error) {
-	//parse, err := avro.Parse(`{}`)
-	//if err != nil {
-	//	return err
-	//}
-	//marshal, err := avro.Marshal(parse, record)
-	//if err != nil {
-	//	return err
-	//}
+	//record = s.SelectFormat()
+	dependentSchema :=
+		`{
+			"type": "table",
+			"name": "simple",
+			"namespace": "org.hamba.avro",
+			"fields" : [
+				{"name": "title", "type": "long"},
+				{"name": "urn", "type": "long"},
+				{"name": "service", "type": "long"},
+				{"name": "description", "type": "long"}
+				{"name": "columns", "type": {
+					type: "record",
+					name: "columns",
+					fields: [
+						{name: "profile", type: "string"},
+						{name: "name", type: "string"},
+						{name: "properties", type: "string"},
+						{name: "description", type: "string"},
+						{name: "length", type: "int64"},
+						{name: "is_nullable", type: "boolean"},
+						{name: "datatype", type: "string"}
+					]
+				}}
+			]
+		}`
+
+	// for avro schema
+	parse, err := avro.Parse(dependentSchema)
+	if err != nil {
+		return err
+	}
+
+	marshal, err := avro.Marshal(parse, record)
+	if err != nil {
+		return err
+	}
+
+	// for json schema
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
@@ -145,9 +190,9 @@ func (s *Sink) send(record JsonSchema) (err error) {
 	}
 }
 
-func (s *Sink) buildStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
+func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
-	columns := s.buildColumns(table)
+	columns := s.buildJsonColumns(table)
 
 	record := JsonSchema{
 		Id:          fmt.Sprintf("%s/%s.%s.json", s.config.Host, s.config.NamespaceID, s.config.SchemaID),
@@ -163,7 +208,7 @@ func (s *Sink) buildStencilPayload(table *assetsv1beta1.Table) (JsonSchema, erro
 	return record, nil
 }
 
-func (s *Sink) buildColumns(table *assetsv1beta1.Table) (columns []Columns) {
+func (s *Sink) buildJsonColumns(table *assetsv1beta1.Table) (columns []Columns) {
 	schema := table.GetSchema()
 	if schema == nil {
 		return
@@ -171,6 +216,41 @@ func (s *Sink) buildColumns(table *assetsv1beta1.Table) (columns []Columns) {
 
 	for _, column := range schema.GetColumns() {
 		columns = append(columns, Columns{
+			Profile:     column.Profile.String(),
+			Name:        column.Name,
+			Properties:  column.Properties.String(),
+			Description: column.Description,
+			Length:      column.Length,
+			IsNullable:  column.IsNullable,
+			DataType:    column.DataType,
+		})
+	}
+	return
+}
+
+func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
+	resource := table.GetResource()
+	columns := s.buildAvroColumns(table)
+
+	record := AvroSchema{
+		Title:       resource.GetName(),
+		Columns:     columns,
+		URN:         resource.GetUrn(),
+		Service:     resource.GetService(),
+		Description: resource.GetDescription(),
+	}
+
+	return record, nil
+}
+
+func (s *Sink) buildAvroColumns(table *assetsv1beta1.Table) (columns []AvroColumns) {
+	schema := table.GetSchema()
+	if schema == nil {
+		return
+	}
+
+	for _, column := range schema.GetColumns() {
+		columns = append(columns, AvroColumns{
 			Profile:     column.Profile.String(),
 			Name:        column.Name,
 			Properties:  column.Properties.String(),

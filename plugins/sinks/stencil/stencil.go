@@ -17,6 +17,24 @@ type Columns struct {
 	Properties  string `json:"properties"`
 	Description string `json:"description"`
 	Length      int64  `json:"length"`
-	IsNullable  bool   `json:"isNullable"`
+	IsNullable  bool   `json:"is_nullable"`
 	DataType    string `json:"dataType"`
+}
+
+type AvroSchema struct {
+	Title       string        `avro:"title"`
+	Columns     []AvroColumns `avro:"columns"`
+	URN         string        `avro:"urn"`
+	Service     string        `avro:"service"`
+	Description string        `avro:"description"`
+}
+
+type AvroColumns struct {
+	Profile     string `avro:"profile"`
+	Name        string `avro:"name"`
+	Properties  string `avro:"properties"`
+	Description string `avro:"description"`
+	Length      int64  `avro:"length"`
+	IsNullable  bool   `avro:"is_nullable"`
+	DataType    string `avro:"dataType"`
 }
