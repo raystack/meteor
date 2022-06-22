@@ -101,30 +101,22 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		return
 	}
 	x := reflect.ValueOf(r["indices"]).MapRange()
-	var indexes []string
 	for x.Next() {
 		indexName := x.Key().String()
-		indexes = append(indexes, indexName)
-	}
-	for _, indexName := range indexes {
-		docProperties, err1 := e.listIndexInfo(indexName)
+		docProperties, err1 := e.listIndexInfo(x.Key().String())
 		if err1 != nil {
 			err = err1
 			return
 		}
 		var columns []*facetsv1beta1.Column
-		var columNames []string
 		for i := range docProperties {
-			columNames = append(columNames, i)
-		}
-		for _, i := range columNames {
 			columns = append(columns, &facetsv1beta1.Column{
 				Name:     i,
 				DataType: docProperties[i].(map[string]interface{})["type"].(string),
 			})
 		}
 		countRes, err1 := e.client.Search(
-			e.client.Search.WithIndex(indexName),
+			e.client.Search.WithIndex(x.Key().String()),
 		)
 		if err1 != nil {
 			err = err1
