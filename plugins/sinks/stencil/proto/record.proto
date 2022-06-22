@@ -1,0 +1,22 @@
+syntax = "proto3";
+package stencil;
+
+option go_package = "github.com/odpf/meteor/plugins/sinks/stencil;stencil";
+
+message ProtoSchema {
+  string title = 1;
+  repeated Columns columns = 2;
+  string urn = 3;
+  string service = 4;
+  string description = 5;
+}
+
+message Columns {
+  string profile = 1;
+  string name = 2;
+  string properties = 3;
+  string description = 4;
+  int64 length = 5;
+  bool isNullable = 6;
+  string dataType = 7;
+}

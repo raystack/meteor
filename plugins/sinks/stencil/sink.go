@@ -10,10 +10,12 @@ import (
 	"github.com/odpf/meteor/models"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sinks/stencil/pb/github.com/odpf/meteor/plugins/sinks/stencil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -68,18 +70,19 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 	return
 }
 
-//func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, error) {
-//	switch s.config.Format {
-//	case "avro":
-//		record, err := s.buildAvroStencilPayload(table)
-//		return JsonSchema{}, record, err
-//	case "protobuf":
-//
-//	default:
-//		record, err := s.buildJsonStencilPayload(table)
-//		return record, AvroSchema{}, err
-//	}
-//}
+func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, stencil.ProtoSchema, error) {
+	switch s.config.Format {
+	case "avro":
+		record, err := s.buildAvroStencilPayload(table)
+		return JsonSchema{}, record, stencil.ProtoSchema{}, err
+	case "protobuf":
+		record, err := s.buildProtoStencilPayload(table)
+		return JsonSchema{}, AvroSchema{}, record, err
+	default:
+		record, err := s.buildJsonStencilPayload(table)
+		return record, AvroSchema{}, stencil.ProtoSchema{}, err
+	}
+}
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
@@ -153,6 +156,13 @@ func (s *Sink) send(record JsonSchema) (err error) {
 		return
 	}
 
+	//for proto
+	protoData := &stencil.ProtoSchema{}
+	protoByte, err := proto.Marshal(protoData)
+	if err != nil {
+		return err
+	}
+
 	// send request
 	url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", s.config.Host, s.config.NamespaceID, s.config.SchemaID)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
@@ -200,7 +210,7 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 		Title:       resource.GetName(),
 		Type:        resource.GetType(),
 		Columns:     columns,
-		URN:         resource.GetUrn(),
+		Urn:         resource.GetUrn(),
 		Service:     resource.GetService(),
 		Description: resource.GetDescription(),
 	}
@@ -235,7 +245,7 @@ func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, 
 	record := AvroSchema{
 		Title:       resource.GetName(),
 		Columns:     columns,
-		URN:         resource.GetUrn(),
+		Urn:         resource.GetUrn(),
 		Service:     resource.GetService(),
 		Description: resource.GetDescription(),
 	}
@@ -251,6 +261,41 @@ func (s *Sink) buildAvroColumns(table *assetsv1beta1.Table) (columns []AvroColum
 
 	for _, column := range schema.GetColumns() {
 		columns = append(columns, AvroColumns{
+			Profile:     column.Profile.String(),
+			Name:        column.Name,
+			Properties:  column.Properties.String(),
+			Description: column.Description,
+			Length:      column.Length,
+			IsNullable:  column.IsNullable,
+			DataType:    column.DataType,
+		})
+	}
+	return
+}
+
+func (s *Sink) buildProtoStencilPayload(table *assetsv1beta1.Table) (stencil.ProtoSchema, error) {
+	resource := table.GetResource()
+	columns := s.buildProtoColumns(table)
+
+	record := stencil.ProtoSchema{
+		Title:       resource.GetName(),
+		Columns:     columns,
+		Urn:         resource.GetUrn(),
+		Service:     resource.GetService(),
+		Description: resource.GetDescription(),
+	}
+
+	return record, nil
+}
+
+func (s *Sink) buildProtoColumns(table *assetsv1beta1.Table) (columns []*stencil.Columns) {
+	schema := table.GetSchema()
+	if schema == nil {
+		return
+	}
+
+	for _, column := range schema.GetColumns() {
+		columns = append(columns, &stencil.Columns{
 			Profile:     column.Profile.String(),
 			Name:        column.Name,
 			Properties:  column.Properties.String(),

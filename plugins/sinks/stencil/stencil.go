@@ -6,7 +6,7 @@ type JsonSchema struct {
 	Title       string    `json:"title"`
 	Type        string    `json:"type"`
 	Columns     []Columns `json:"columns"`
-	URN         string    `json:"urn"`
+	Urn         string    `json:"urn"`
 	Service     string    `json:"service"`
 	Description string    `json:"description"`
 }
@@ -24,7 +24,7 @@ type Columns struct {
 type AvroSchema struct {
 	Title       string        `avro:"title"`
 	Columns     []AvroColumns `avro:"columns"`
-	URN         string        `avro:"urn"`
+	Urn         string        `avro:"urn"`
 	Service     string        `avro:"service"`
 	Description string        `avro:"description"`
 }
