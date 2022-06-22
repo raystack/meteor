@@ -26,8 +26,8 @@ type Config struct {
 }
 
 var sampleConfig = `
-path: ./dir/some-dir/postgres_food_app_data.json
-format: json
+path: ./output-filename.txt
+format: ndjson
 `
 
 type Sink struct {
@@ -95,7 +95,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 }
 
 func (s *Sink) Close() (err error) {
-	return s.File.Close()
+	return nil
 }
 
 func (s *Sink) ndjsonOut(data []models.Metadata) error {
