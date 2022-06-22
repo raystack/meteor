@@ -6,18 +6,16 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/hamba/avro"
 	"github.com/odpf/meteor/models"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/sinks/stencil/pb/github.com/odpf/meteor/plugins/sinks/stencil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -70,20 +68,6 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 	return
 }
 
-func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, *stencil.ProtoSchema, error) {
-	switch s.config.Format {
-	case "avro":
-		record, err := s.buildAvroStencilPayload(table)
-		return JsonSchema{}, record, &stencil.ProtoSchema{}, err
-	case "protobuf":
-		record, err := s.buildProtoStencilPayload(table)
-		return JsonSchema{}, AvroSchema{}, &record, err
-	default:
-		record, err := s.buildJsonStencilPayload(table)
-		return record, AvroSchema{}, &stencil.ProtoSchema{}, err
-	}
-}
-
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 	for _, record := range batch {
@@ -99,7 +83,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "failed to build stencil payload")
 		}
-		if err = s.send(stencilPayload, table); err != nil {
+		if err = s.send(stencilPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 
@@ -111,76 +95,12 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record JsonSchema, table *assetsv1beta1.Table) (err error) {
-	var payloadBytes []byte
+func (s *Sink) send(record JsonSchema) (err error) {
 
-	switch s.config.Format {
-	case "avro":
-		dependentSchema :=
-			`{
-			"type": "table",
-			"name": "simple",
-			"namespace": "org.hamba.avro",
-			"fields" : [
-				{"name": "title", "type": "long"},
-				{"name": "urn", "type": "long"},
-				{"name": "service", "type": "long"},
-				{"name": "description", "type": "long"}
-				{"name": "columns", "type": {
-					type: "record",
-					name: "columns",
-					fields: [
-						{name: "profile", type: "string"},
-						{name: "name", type: "string"},
-						{name: "properties", type: "string"},
-						{name: "description", type: "string"},
-						{name: "length", type: "int64"},
-						{name: "is_nullable", type: "boolean"},
-						{name: "datatype", type: "string"}
-					]
-				}}
-			]
-		}`
-
-		// for avro schema format
-		parse, err := avro.Parse(dependentSchema)
-		if err != nil {
-			return err
-		}
-
-		_, avroRecord, _, err := s.selectFormat(table)
-		if err != nil {
-			return err
-		}
-
-		payloadBytes, err = avro.Marshal(parse, avroRecord)
-		if err != nil {
-			return err
-		}
-
-	case "protobuf":
-		//for proto schema format
-		_, _, protoRecord, err := s.selectFormat(table)
-		if err != nil {
-			return err
-		}
-
-		payloadBytes, err = proto.Marshal(protoRecord)
-		if err != nil {
-			return err
-		}
-
-	default:
-		// for json schema format
-		jsonRecord, _, _, err := s.selectFormat(table)
-		if err != nil {
-			return err
-		}
-
-		payloadBytes, err = json.Marshal(jsonRecord)
-		if err != nil {
-			return
-		}
+	// for json schema format
+	payloadBytes, err := json.Marshal(record)
+	if err != nil {
+		return
 	}
 
 	// send request
@@ -222,109 +142,73 @@ func (s *Sink) send(record JsonSchema, table *assetsv1beta1.Table) (err error) {
 
 func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
-	columns := s.buildJsonColumns(table)
+	properties := s.buildJsonProperties(table)
 
 	record := JsonSchema{
-		Id:          fmt.Sprintf("%s/%s.%s.json", s.config.Host, s.config.NamespaceID, s.config.SchemaID),
-		Schema:      "https://json-schema.org/draft/2020-12/schema",
-		Title:       resource.GetName(),
-		Type:        resource.GetType(),
-		Columns:     columns,
-		Urn:         resource.GetUrn(),
-		Service:     resource.GetService(),
-		Description: resource.GetDescription(),
+		Id:         fmt.Sprintf("%s/%s.%s.json", s.config.Host, s.config.NamespaceID, s.config.SchemaID),
+		Schema:     "https://json-schema.org/draft/2020-12/schema",
+		Title:      resource.GetName(),
+		Type:       JsonType(resource.GetType()),
+		Properties: properties,
 	}
 
 	return record, nil
 }
 
-func (s *Sink) buildJsonColumns(table *assetsv1beta1.Table) (columns []Columns) {
-	schema := table.GetSchema()
-	if schema == nil {
+func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (properties []map[string]Property) {
+	columns := table.GetSchema().GetColumns()
+	if columns == nil {
 		return
 	}
 
-	for _, column := range schema.GetColumns() {
-		columns = append(columns, Columns{
-			Profile:     column.Profile.String(),
-			Name:        column.Name,
-			Properties:  column.Properties.String(),
-			Description: column.Description,
-			Length:      column.Length,
-			IsNullable:  column.IsNullable,
-			DataType:    column.DataType,
-		})
-	}
-	return
-}
+	for _, column := range columns {
+		var dataType JsonType
+		columnRecord := make(map[string]Property)
 
-func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
-	resource := table.GetResource()
-	columns := s.buildAvroColumns(table)
+		switch column.DataType {
+		case "varchar", "text", "char":
+			dataType = JsonTypeString
+		case "bigint", "int", "tinyint":
+			dataType = JsonTypeNumber
+		case "array":
+			dataType = JsonTypeArray
+		case "object":
+			dataType = JsonTypeObject
+		default:
+			dataType = JsonTypeString
+		}
 
-	record := AvroSchema{
-		Title:       resource.GetName(),
-		Columns:     columns,
-		Urn:         resource.GetUrn(),
-		Service:     resource.GetService(),
-		Description: resource.GetDescription(),
-	}
-
-	return record, nil
-}
-
-func (s *Sink) buildAvroColumns(table *assetsv1beta1.Table) (columns []AvroColumns) {
-	schema := table.GetSchema()
-	if schema == nil {
-		return
-	}
-
-	for _, column := range schema.GetColumns() {
-		columns = append(columns, AvroColumns{
-			Profile:     column.Profile.String(),
-			Name:        column.Name,
-			Properties:  column.Properties.String(),
-			Description: column.Description,
-			Length:      column.Length,
-			IsNullable:  column.IsNullable,
-			DataType:    column.DataType,
-		})
-	}
-	return
-}
-
-func (s *Sink) buildProtoStencilPayload(table *assetsv1beta1.Table) (stencil.ProtoSchema, error) {
-	resource := table.GetResource()
-	columns := s.buildProtoColumns(table)
-
-	record := stencil.ProtoSchema{
-		Title:       resource.GetName(),
-		Columns:     columns,
-		Urn:         resource.GetUrn(),
-		Service:     resource.GetService(),
-		Description: resource.GetDescription(),
+		columnRecord[column.Profile.String()] = Property{
+			Type:        JsonTypeString,
+			Description: "",
+		}
+		columnRecord[column.Name] = Property{
+			Type:        JsonTypeString,
+			Description: "",
+		}
+		//columnRecord[column.Properties.String()] = Property{
+		//	Type:        "",
+		//	Description: "",
+		//}
+		columnRecord[column.Description] = Property{
+			Type:        JsonTypeString,
+			Description: "",
+		}
+		columnRecord[strconv.Itoa(int(column.Length))] = Property{
+			Type:        JsonTypeNumber,
+			Description: "",
+		}
+		columnRecord[strconv.FormatBool(column.IsNullable)] = Property{
+			Type:        JsonTypeBoolean,
+			Description: "",
+		}
+		columnRecord[column.DataType] = Property{
+			Type:        dataType,
+			Description: "",
+		}
+		properties = append(properties, columnRecord)
 	}
 
-	return record, nil
-}
-
-func (s *Sink) buildProtoColumns(table *assetsv1beta1.Table) (columns []*stencil.Columns) {
-	schema := table.GetSchema()
-	if schema == nil {
-		return
-	}
-
-	for _, column := range schema.GetColumns() {
-		columns = append(columns, &stencil.Columns{
-			Profile:     column.Profile.String(),
-			Name:        column.Name,
-			Properties:  column.Properties.String(),
-			Description: column.Description,
-			Length:      column.Length,
-			IsNullable:  column.IsNullable,
-			DataType:    column.DataType,
-		})
-	}
 	return
 }
 

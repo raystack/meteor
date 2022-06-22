@@ -1,40 +1,24 @@
 package stencil
 
+type JsonType string
+
+const (
+	JsonTypeObject  JsonType = "object"
+	JsonTypeString  JsonType = "string"
+	JsonTypeNumber  JsonType = "integer"
+	JsonTypeArray   JsonType = "array"
+	JsonTypeBoolean JsonType = "bool"
+)
+
 type JsonSchema struct {
-	Id          string    `json:"$id"`
-	Schema      string    `json:"$schema"`
-	Title       string    `json:"title"`
-	Type        string    `json:"type"`
-	Columns     []Columns `json:"columns"`
-	Urn         string    `json:"urn"`
-	Service     string    `json:"service"`
-	Description string    `json:"description"`
+	Id         string                `json:"$id"`
+	Schema     string                `json:"$schema"`
+	Title      string                `json:"title"`
+	Type       JsonType              `json:"type"`
+	Properties []map[string]Property `json:"properties"`
 }
 
-type Columns struct {
-	Profile     string `json:"profile"`
-	Name        string `json:"name"`
-	Properties  string `json:"properties"`
-	Description string `json:"description"`
-	Length      int64  `json:"length"`
-	IsNullable  bool   `json:"is_nullable"`
-	DataType    string `json:"dataType"`
-}
-
-type AvroSchema struct {
-	Title       string        `avro:"title"`
-	Columns     []AvroColumns `avro:"columns"`
-	Urn         string        `avro:"urn"`
-	Service     string        `avro:"service"`
-	Description string        `avro:"description"`
-}
-
-type AvroColumns struct {
-	Profile     string `avro:"profile"`
-	Name        string `avro:"name"`
-	Properties  string `avro:"properties"`
-	Description string `avro:"description"`
-	Length      int64  `avro:"length"`
-	IsNullable  bool   `avro:"is_nullable"`
-	DataType    string `avro:"dataType"`
+type Property struct {
+	Type        JsonType `json:"type"`
+	Description string   `json:"description"`
 }
