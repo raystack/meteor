@@ -95,7 +95,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 }
 
 func (s *Sink) Close() (err error) {
-	return nil
+	return s.File.Close()
 }
 
 func (s *Sink) ndjsonOut(data []models.Metadata) error {
