@@ -29,7 +29,7 @@ type Config struct {
 	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
 	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
 	Headers     map[string]string `mapstructure:"headers"`
-	Format      string            `mapstructure:"format"`
+	Format      string            `mapstructure:"format" `
 }
 
 var sampleConfig = ``
@@ -70,17 +70,17 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 	return
 }
 
-func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, stencil.ProtoSchema, error) {
+func (s *Sink) selectFormat(table *assetsv1beta1.Table) (JsonSchema, AvroSchema, *stencil.ProtoSchema, error) {
 	switch s.config.Format {
 	case "avro":
 		record, err := s.buildAvroStencilPayload(table)
-		return JsonSchema{}, record, stencil.ProtoSchema{}, err
+		return JsonSchema{}, record, &stencil.ProtoSchema{}, err
 	case "protobuf":
 		record, err := s.buildProtoStencilPayload(table)
-		return JsonSchema{}, AvroSchema{}, record, err
+		return JsonSchema{}, AvroSchema{}, &record, err
 	default:
 		record, err := s.buildJsonStencilPayload(table)
-		return record, AvroSchema{}, stencil.ProtoSchema{}, err
+		return record, AvroSchema{}, &stencil.ProtoSchema{}, err
 	}
 }
 
@@ -99,7 +99,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "failed to build stencil payload")
 		}
-		if err = s.send(stencilPayload); err != nil {
+		if err = s.send(stencilPayload, table); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 
@@ -111,10 +111,13 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record JsonSchema) (err error) {
-	//record = s.SelectFormat()
-	dependentSchema :=
-		`{
+func (s *Sink) send(record JsonSchema, table *assetsv1beta1.Table) (err error) {
+	var payloadBytes []byte
+
+	switch s.config.Format {
+	case "avro":
+		dependentSchema :=
+			`{
 			"type": "table",
 			"name": "simple",
 			"namespace": "org.hamba.avro",
@@ -139,28 +142,45 @@ func (s *Sink) send(record JsonSchema) (err error) {
 			]
 		}`
 
-	// for avro schema
-	parse, err := avro.Parse(dependentSchema)
-	if err != nil {
-		return err
-	}
+		// for avro schema format
+		parse, err := avro.Parse(dependentSchema)
+		if err != nil {
+			return err
+		}
 
-	marshal, err := avro.Marshal(parse, record)
-	if err != nil {
-		return err
-	}
+		_, avroRecord, _, err := s.selectFormat(table)
+		if err != nil {
+			return err
+		}
 
-	// for json schema
-	payloadBytes, err := json.Marshal(record)
-	if err != nil {
-		return
-	}
+		payloadBytes, err = avro.Marshal(parse, avroRecord)
+		if err != nil {
+			return err
+		}
 
-	//for proto
-	protoData := &stencil.ProtoSchema{}
-	protoByte, err := proto.Marshal(protoData)
-	if err != nil {
-		return err
+	case "protobuf":
+		//for proto schema format
+		_, _, protoRecord, err := s.selectFormat(table)
+		if err != nil {
+			return err
+		}
+
+		payloadBytes, err = proto.Marshal(protoRecord)
+		if err != nil {
+			return err
+		}
+
+	default:
+		// for json schema format
+		jsonRecord, _, _, err := s.selectFormat(table)
+		if err != nil {
+			return err
+		}
+
+		payloadBytes, err = json.Marshal(jsonRecord)
+		if err != nil {
+			return
+		}
 	}
 
 	// send request
