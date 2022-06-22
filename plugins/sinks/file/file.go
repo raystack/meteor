@@ -20,8 +20,9 @@ import (
 var summary string
 
 type Config struct {
-	Path   string `mapstructure:"path" validate:"required"`
-	Format string `mapstructure:"format" validate:"required"`
+	Overwrite bool   `mapstructure:"overwrite" default:"true"`
+	Path      string `mapstructure:"path" validate:"required"`
+	Format    string `mapstructure:"format" validate:"required"`
 }
 
 var sampleConfig = `
@@ -62,12 +63,15 @@ func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err err
 		return err
 	}
 
-	s.File, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE, 0755)
+	s.format = s.config.Format
+	if s.config.Overwrite {
+		s.File, err = os.Create(s.config.Path)
+		return err
+	}
+	s.File, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return err
 	}
-
-	s.format = s.config.Format
 	return
 }
 
@@ -113,13 +117,7 @@ func (s *Sink) yamlOut(data []models.Metadata) error {
 }
 
 func (s *Sink) writeBytes(b []byte) error {
-	var filebyte []byte
-	_, err := s.File.Read(filebyte)
-	if err != nil {
-		return err
-	}
-	filebyte = append(filebyte, b...)
-	_, err = s.File.Write(filebyte)
+	_, err := s.File.Write(b)
 	if err != nil {
 		return err
 	}
