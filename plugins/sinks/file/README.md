@@ -1,6 +1,6 @@
 # file
 
-Sinks metadata to a file in `json/yaml` format as per the config defined.
+Sinks metadata to a file in `ndjson/yaml` format as per the config defined.
 
 ## Usage
 

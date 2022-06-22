@@ -1,0 +1,2 @@
+{"resource":{"urn":"elasticsearch.index1","name":"index1","type":"table"},"profile":{"total_rows":1},"schema":{"columns":[{"name":"SomeInt","data_type":"long"},{"name":"SomeStr","data_type":"text"}]}}
+{"resource":{"urn":"elasticsearch.index2","name":"index2","type":"table"},"profile":{"total_rows":1},"schema":{"columns":[{"name":"SomeInt","data_type":"long"},{"name":"SomeStr","data_type":"text"}]}}
