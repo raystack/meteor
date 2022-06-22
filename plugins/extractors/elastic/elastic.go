@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/pkg/errors"
 
@@ -118,7 +117,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		for i := range docProperties {
 			columNames = append(columNames, i)
 		}
-		sort.Strings(columNames)
 		for _, i := range columNames {
 			columns = append(columns, &facetsv1beta1.Column{
 				Name:     i,

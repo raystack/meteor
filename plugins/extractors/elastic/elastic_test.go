@@ -133,17 +133,14 @@ func TestExtract(t *testing.T) {
 
 type MeteorMockElasticDocs struct {
 	SomeStr string
-	SomeInt int
 }
 
 func setup() (err error) {
 	doc1 := MeteorMockElasticDocs{}
 	doc1.SomeStr = "Value1"
-	doc1.SomeInt = 1
 
 	doc2 := MeteorMockElasticDocs{}
 	doc2.SomeStr = "Value2"
-	doc2.SomeInt = 2
 	docStr1 := jsonStruct(doc1)
 	docStr2 := jsonStruct(doc2)
 	err = populateElasticSearch("index1", "1", docStr1)
@@ -175,7 +172,6 @@ func populateElasticSearch(index string, id string, data string) error {
 func jsonStruct(doc MeteorMockElasticDocs) string {
 	docStruct := &MeteorMockElasticDocs{
 		SomeStr: doc.SomeStr,
-		SomeInt: doc.SomeInt,
 	}
 	b, err := json.Marshal(docStruct)
 	if err != nil {
@@ -200,10 +196,6 @@ func getExpectedVal() []models.Record {
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
 					{
-						Name:     "SomeInt",
-						DataType: "long",
-					},
-					{
 						Name:     "SomeStr",
 						DataType: "text",
 					},
@@ -221,10 +213,6 @@ func getExpectedVal() []models.Record {
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
-					{
-						Name:     "SomeInt",
-						DataType: "long",
-					},
 					{
 						Name:     "SomeStr",
 						DataType: "text",
