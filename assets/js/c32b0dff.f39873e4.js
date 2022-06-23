@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkmeteor=self.webpackChunkmeteor||[]).push([[428],{2209:function(e){e.exports=JSON.parse('{"permalink":"/meteor/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"previousPage":null,"nextPage":null,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);

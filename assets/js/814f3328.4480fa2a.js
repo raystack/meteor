@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkmeteor=self.webpackChunkmeteor||[]).push([[535],{5641:function(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Introducing Meteor","permalink":"/meteor/blog/introducing-meteor"}]}')}}]);
