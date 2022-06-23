@@ -16,7 +16,7 @@ const (
 	runDurationMetricName    = "runDuration"
 	runRecordCountMetricName = "runRecordCount"
 	runMetricName            = "run"
-	sinkMetricName           = "sinkStatus"
+	pluginRunMetricName      = "runPlugin"
 )
 
 // StatsdMonitor represents the statsd monitor.
@@ -48,17 +48,17 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	)
 }
 
-// RecordSink records a individual sinks behavior in a run
-func (m *StatsdMonitor) RecordSink(recipeName, sourceName string, sink agent.PluginRun) {
+// RecordPlugin records a individual plugin behavior in a run
+func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
 	m.client.Increment(
 		fmt.Sprintf(
-			"%s.%s,name=%s,success=%t,source=%s,sink=%s",
+			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
 			m.prefix,
-			sinkMetricName,
+			pluginRunMetricName,
 			recipeName,
-			sink.Success,
-			sourceName,
-			sink.Name,
+			pluginName,
+			pluginType,
+			success,
 		),
 	)
 }

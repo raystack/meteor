@@ -166,7 +166,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	})
 }
 
-func TestStatsdMonitorRecordSink(t *testing.T) {
+func TestStatsdMonitorRecordPlugin(t *testing.T) {
 	statsdPrefix := "testprefix"
 
 	t.Run("should create metrics with the correct name and value", func(t *testing.T) {
@@ -180,13 +180,13 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 			},
 		}
 		incrementMetric := fmt.Sprintf(
-			"%s.%s,name=%s,success=%s,source=%s,sink=%s",
+			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
 			statsdPrefix,
-			"sinkStatus",
+			"runPlugin",
 			recipe.Name,
-			"false",
-			recipe.Source.Name,
 			recipe.Sinks[0].Name,
+			"sink",
+			false,
 		)
 
 		client := new(mockStatsdClient)
@@ -194,7 +194,7 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordSink(recipe.Name, recipe.Source.Name, agent.PluginRun{Name: recipe.Sinks[0].Name, PluginType: "sink", Success: false})
+		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", false)
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -208,13 +208,13 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 			},
 		}
 		incrementMetric := fmt.Sprintf(
-			"%s.%s,name=%s,success=%s,source=%s,sink=%s",
+			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
 			statsdPrefix,
-			"sinkStatus",
+			"runPlugin",
 			recipe.Name,
-			"true",
-			recipe.Source.Name,
 			recipe.Sinks[0].Name,
+			"sink",
+			true,
 		)
 
 		client := new(mockStatsdClient)
@@ -222,7 +222,7 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordSink(recipe.Name, recipe.Source.Name, agent.PluginRun{Name: recipe.Sinks[0].Name, PluginType: "sink", Success: true})
+		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", true)
 	})
 }
 

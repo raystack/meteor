@@ -235,7 +235,8 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 
 func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
-	sinkRun := PluginRun{Name: sr.Name, PluginType: "sink"}
+	success := true
+	pluginType := "sink"
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
 	}
@@ -254,20 +255,19 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			err := sink.Sink(ctx, records)
 			return err
 		}, retryNotification)
+		success = err == nil
+		r.monitor.RecordPlugin(recipe.Name, sr.Name, pluginType, success)
 
 		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {
-			sinkRun.Success = false
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
-			r.monitor.RecordSink(recipe.Name, recipe.Source.Name, sinkRun)
 			if !r.stopOnSinkError {
 				err = nil
 			}
 			return err
 		}
 		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
-		sinkRun.Success = true
-		r.monitor.RecordSink(recipe.Name, recipe.Source.Name, sinkRun)
+
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
 		return err

@@ -14,12 +14,6 @@ const (
 	TaskTypeSink TaskType = "sink"
 )
 
-type PluginRun struct {
-	Name       string `json:"name"`
-	PluginType string `json:"plugin_type"`
-	Success    bool   `json:"success"`
-}
-
 // Run contains the json data
 type Run struct {
 	Recipe       recipe.Recipe `json:"recipe"`
