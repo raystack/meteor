@@ -142,13 +142,10 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	}
 
 	for _, sr := range recipe.Sinks {
-		var sink RunSink
-		sink.Recipe = sr
-		if err := r.setupSink(ctx, sr, stream, recipe, &sink); err != nil {
+		if err := r.setupSink(ctx, sr, stream, recipe); err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
-		run.Sinks = append(run.Sinks, sink)
 	}
 
 	// to gather total number of records extracted
@@ -184,10 +181,6 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	// this process is blocking
 	if err := stream.broadcast(); err != nil {
 		run.Error = errors.Wrap(err, "failed to broadcast stream")
-	}
-
-	for i := range run.Sinks {
-		run.Sinks[i].Success = run.Sinks[i].Error == nil
 	}
 
 	// code will reach here stream.Listen() is done.
@@ -240,8 +233,9 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe, sk *RunSink) (err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
 	var sink plugins.Syncer
+	sinkRun := PluginRun{Name: sr.Name, PluginType: "sink"}
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
 		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
 	}
@@ -263,15 +257,17 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 
 		// error (after exhausted retries) will just be skipped and logged
 		if err != nil {
-			sk.Error = err
+			sinkRun.Success = false
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
+			r.monitor.RecordSink(recipe.Name, recipe.Source.Name, sinkRun)
 			if !r.stopOnSinkError {
 				err = nil
 			}
 			return err
 		}
 		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
-
+		sinkRun.Success = true
+		r.monitor.RecordSink(recipe.Name, recipe.Source.Name, sinkRun)
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
 		return err
@@ -279,7 +275,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 
 	stream.onClose(func() {
 		if err = sink.Close(); err != nil {
-			sk.Error = err
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
 		}
 	})

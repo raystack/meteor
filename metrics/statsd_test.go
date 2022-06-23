@@ -194,7 +194,7 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordSink(agent.Run{Recipe: recipe, Success: false}, agent.RunSink{Recipe: recipe.Sinks[0], Success: false})
+		monitor.RecordSink(recipe.Name, recipe.Source.Name, agent.PluginRun{Name: recipe.Sinks[0].Name, PluginType: "sink", Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestStatsdMonitorRecordSink(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordSink(agent.Run{Recipe: recipe, Success: false}, agent.RunSink{Recipe: recipe.Sinks[0], Success: true})
+		monitor.RecordSink(recipe.Name, recipe.Source.Name, agent.PluginRun{Name: recipe.Sinks[0].Name, PluginType: "sink", Success: true})
 	})
 }
 

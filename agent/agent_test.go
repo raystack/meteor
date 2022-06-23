@@ -484,6 +484,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordSink", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("agent.PluginRun"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -588,6 +589,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordSink", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("agent.PluginRun"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -645,6 +647,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordSink", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("agent.PluginRun"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -700,6 +703,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordSink", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("agent.PluginRun"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -757,6 +761,7 @@ func TestAgentRunMultiple(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run"))
+		monitor.On("RecordSink", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("agent.PluginRun"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -768,18 +773,10 @@ func TestAgentRunMultiple(t *testing.T) {
 		})
 		runs := r.RunMultiple(ctx, recipeList)
 
-		sinks := []agent.RunSink{
-			{
-				Error:   nil,
-				Success: true,
-				Recipe:  validRecipe2.Sinks[0],
-			},
-		}
-
 		assert.Len(t, runs, len(recipeList))
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe, RecordCount: len(data), Success: true, Sinks: sinks},
-			{Recipe: validRecipe2, RecordCount: len(data), Success: true, Sinks: sinks},
+			{Recipe: validRecipe, RecordCount: len(data), Success: true},
+			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
 		}, runs)
 	})
 }
@@ -897,6 +894,10 @@ func newMockMonitor() *mockMonitor {
 
 func (m *mockMonitor) RecordRun(run agent.Run) {
 	m.Called(run)
+}
+
+func (m *mockMonitor) RecordSink(recipeName, sourceName string, sinkRun agent.PluginRun) {
+	m.Called(recipeName, sourceName, sinkRun)
 }
 
 type panicExtractor struct {

@@ -14,10 +14,10 @@ const (
 	TaskTypeSink TaskType = "sink"
 )
 
-type RunSink struct {
-	Error   error               `json:"error"`
-	Success bool                `json:"success"`
-	Recipe  recipe.PluginRecipe `json:"recipe"`
+type PluginRun struct {
+	Name       string `json:"name"`
+	PluginType string `json:"plugin_type"`
+	Success    bool   `json:"success"`
 }
 
 // Run contains the json data
@@ -27,5 +27,4 @@ type Run struct {
 	DurationInMs int           `json:"duration_in_ms"`
 	RecordCount  int           `json:"record_count"`
 	Success      bool          `json:"success"`
-	Sinks        []RunSink     `json:"sink"`
 }
