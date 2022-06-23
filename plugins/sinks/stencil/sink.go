@@ -174,17 +174,19 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (properties []map
 			dataType = JsonTypeArray
 		case "object":
 			dataType = JsonTypeObject
+		case "bool", "boolean":
+			dataType = JsonTypeBoolean
 		default:
 			dataType = JsonTypeString
 		}
 
 		columnRecord[column.Profile.String()] = Property{
 			Type:        JsonTypeString,
-			Description: "",
+			Description: "The profile of the column",
 		}
 		columnRecord[column.Name] = Property{
 			Type:        JsonTypeString,
-			Description: "",
+			Description: "The name of the column",
 		}
 		//columnRecord[column.Properties.String()] = Property{
 		//	Type:        "",
@@ -192,19 +194,19 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (properties []map
 		//}
 		columnRecord[column.Description] = Property{
 			Type:        JsonTypeString,
-			Description: "",
+			Description: "The description of the column",
 		}
 		columnRecord[strconv.Itoa(int(column.Length))] = Property{
 			Type:        JsonTypeNumber,
-			Description: "",
+			Description: "The length of the column",
 		}
 		columnRecord[strconv.FormatBool(column.IsNullable)] = Property{
 			Type:        JsonTypeBoolean,
-			Description: "",
+			Description: "The format of the column",
 		}
 		columnRecord[column.DataType] = Property{
 			Type:        dataType,
-			Description: "",
+			Description: "The type of the column",
 		}
 		properties = append(properties, columnRecord)
 	}
