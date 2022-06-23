@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/odpf/meteor/models"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -15,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -155,60 +155,45 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 	return record, nil
 }
 
-func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (properties []map[string]Property) {
+func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (columnRecord map[string]Property) {
 	columns := table.GetSchema().GetColumns()
 	if columns == nil {
 		return
 	}
 
 	for _, column := range columns {
-		var dataType JsonType
-		columnRecord := make(map[string]Property)
+		dataType := s.typeToJsonSchemaType(table, column)
+		columnType := []JsonType{dataType}
 
+		if column.IsNullable {
+			columnType = []JsonType{dataType, JsonTypeNull}
+		}
+
+		columnRecord[column.Name] = Property{
+			Type:        columnType,
+			Description: column.GetDescription(),
+		}
+	}
+
+	return
+}
+
+func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType JsonType) {
+	if table.GetResource().GetService() == "bigquery" {
 		switch column.DataType {
-		case "varchar", "text", "char":
+		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = JsonTypeString
-		case "bigint", "int", "tinyint":
+		case "INT64", "NUMERIC", "FLOAT64", "INT", "FLOAT", "BIGNUMERIC":
 			dataType = JsonTypeNumber
-		case "array":
+		case "BYTES":
 			dataType = JsonTypeArray
-		case "object":
-			dataType = JsonTypeObject
-		case "bool", "boolean":
+		case "BOOLEAN":
 			dataType = JsonTypeBoolean
+		case "RECORD":
+			dataType = JsonTypeObject
 		default:
 			dataType = JsonTypeString
 		}
-
-		columnRecord[column.Profile.String()] = Property{
-			Type:        JsonTypeString,
-			Description: "The profile of the column",
-		}
-		columnRecord[column.Name] = Property{
-			Type:        JsonTypeString,
-			Description: "The name of the column",
-		}
-		//columnRecord[column.Properties.String()] = Property{
-		//	Type:        "",
-		//	Description: "",
-		//}
-		columnRecord[column.Description] = Property{
-			Type:        JsonTypeString,
-			Description: "The description of the column",
-		}
-		columnRecord[strconv.Itoa(int(column.Length))] = Property{
-			Type:        JsonTypeNumber,
-			Description: "The length of the column",
-		}
-		columnRecord[strconv.FormatBool(column.IsNullable)] = Property{
-			Type:        JsonTypeBoolean,
-			Description: "The format of the column",
-		}
-		columnRecord[column.DataType] = Property{
-			Type:        dataType,
-			Description: "The type of the column",
-		}
-		properties = append(properties, columnRecord)
 	}
 
 	return
