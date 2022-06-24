@@ -157,7 +157,7 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 
 func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (columnRecord map[string]Property) {
 	columns := table.GetSchema().GetColumns()
-	if columns == nil {
+	if len(columns) > 0 {
 		return
 	}
 
@@ -179,7 +179,9 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (columnRecord map
 }
 
 func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType JsonType) {
-	if table.GetResource().GetService() == "bigquery" {
+	service := table.GetResource().GetService()
+
+	if service == "bigquery" {
 		switch column.DataType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = JsonTypeString
@@ -191,6 +193,20 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 			dataType = JsonTypeBoolean
 		case "RECORD":
 			dataType = JsonTypeObject
+		default:
+			dataType = JsonTypeString
+		}
+	}
+	if service == "postgres" {
+		switch column.DataType {
+		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
+			dataType = JsonTypeNumber
+		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":
+			dataType = JsonTypeString
+		case "boolean":
+			dataType = JsonTypeBoolean
+		case "bytea", "integer[]", "character[]", "text[]":
+			dataType = JsonTypeArray
 		default:
 			dataType = JsonTypeString
 		}
