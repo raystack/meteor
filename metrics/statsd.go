@@ -52,7 +52,7 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
 	m.client.Increment(
 		fmt.Sprintf(
-			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
+			"%s.%s,recipe_name=%s,plugin_name=%s,type=%s,success=%t",
 			m.prefix,
 			pluginRunMetricName,
 			recipeName,
