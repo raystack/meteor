@@ -180,7 +180,7 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 			},
 		}
 		incrementMetric := fmt.Sprintf(
-			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
+			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
 			statsdPrefix,
 			"runPlugin",
 			recipe.Name,
@@ -208,7 +208,7 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 			},
 		}
 		incrementMetric := fmt.Sprintf(
-			"%s.%s,name=%s,plugin_name=%s,plugin_type=%s,success=%t",
+			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
 			statsdPrefix,
 			"runPlugin",
 			recipe.Name,

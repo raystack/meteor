@@ -1,6 +1,6 @@
 # file
 
-Sinks metadata to a file in `json/yaml` format as per the config defined.
+Sinks metadata to a file in `ndjson/yaml` format as per the config defined.
 
 ## Usage
 
@@ -10,6 +10,7 @@ sinks:
     config:
         path: "./dir/sample.yaml"
         format: "yaml"
+        overwrite: false
 ```
 
 ## Config Defination
@@ -18,6 +19,7 @@ sinks:
 | :-- | :---- | :------ | :---------- | :-- |
 |`path` | `string` | `./dir/sample.yaml` | absolute or relative path from binary to output file, directory should exist| *required*|
 | `format` | `string` | `yaml` | data format for the output file | *required* |
+| `overwrite` | `bool` | `false` | to choose whether data should be overwritten or appended in case file exists, default is `true` | *optional* |
 
 ## Contributing
 

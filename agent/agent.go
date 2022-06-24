@@ -142,7 +142,8 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	}
 
 	for _, sr := range recipe.Sinks {
-		if err := r.setupSink(ctx, sr, stream, recipe); err != nil {
+		err := r.setupSink(ctx, sr, stream, recipe)
+		if err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
@@ -273,6 +274,8 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return err
 	}, defaultBatchSize)
 
+	//TODO: the sink closes even though some records remain unpublished
+	//TODO: once fixed, file sink's Close needs to close *File
 	stream.onClose(func() {
 		if err = sink.Close(); err != nil {
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
