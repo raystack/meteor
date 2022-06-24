@@ -484,6 +484,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -588,6 +589,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -645,6 +647,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -700,6 +703,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -757,6 +761,7 @@ func TestAgentRunMultiple(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", mock.AnythingOfType("agent.Run"))
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
 		defer monitor.AssertExpectations(t)
 
 		r := agent.NewAgent(agent.Config{
@@ -889,6 +894,10 @@ func newMockMonitor() *mockMonitor {
 
 func (m *mockMonitor) RecordRun(run agent.Run) {
 	m.Called(run)
+}
+
+func (m *mockMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
+	m.Called(recipeName, pluginName, pluginType, success)
 }
 
 type panicExtractor struct {

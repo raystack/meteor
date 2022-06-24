@@ -95,6 +95,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 }
 
 func (s *Sink) Close() (err error) {
+	// return s.File.Close()
 	return nil
 }
 

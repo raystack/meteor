@@ -12,10 +12,11 @@ import (
 	"github.com/odpf/meteor/recipe"
 )
 
-var (
+const (
 	runDurationMetricName    = "runDuration"
 	runRecordCountMetricName = "runRecordCount"
 	runMetricName            = "run"
+	pluginRunMetricName      = "runPlugin"
 )
 
 // StatsdMonitor represents the statsd monitor.
@@ -44,6 +45,21 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 	m.client.IncrementByValue(
 		m.createMetricName(runRecordCountMetricName, run.Recipe, run.Success, run.RecordCount),
 		run.RecordCount,
+	)
+}
+
+// RecordPlugin records a individual plugin behavior in a run
+func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
+	m.client.Increment(
+		fmt.Sprintf(
+			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
+			m.prefix,
+			pluginRunMetricName,
+			recipeName,
+			pluginName,
+			pluginType,
+			success,
+		),
 	)
 }
 

@@ -142,12 +142,11 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	}
 
 	for _, sr := range recipe.Sinks {
-		sink, err := r.setupSink(ctx, sr, stream, recipe)
+		err := r.setupSink(ctx, sr, stream, recipe)
 		if err != nil {
 			run.Error = errors.Wrap(err, "failed to setup sink")
 			return
 		}
-		defer sink.Close()
 	}
 
 	// to gather total number of records extracted
@@ -235,14 +234,15 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 	return
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (sink plugins.Syncer, err error) {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) (err error) {
+	var sink plugins.Syncer
+
 	if sink, err = r.sinkFactory.Get(sr.Name); err != nil {
-		return nil, errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
 	}
 	if err = sink.Init(ctx, sr.Config); err != nil {
-		return nil, errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+		return errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
 	}
-
 	retryNotification := func(e error, d time.Duration) {
 		r.logger.Info(
 			fmt.Sprintf("retrying sink in %d", d),
@@ -255,21 +255,28 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			return err
 		}, retryNotification)
 
-		// error (after exhausted retries) will just be skipped and logged
+		var success bool
 		if err != nil {
+			// once it reaches here, it means that the retry has been exhausted and still got error
+			success = false
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
-			if !r.stopOnSinkError {
-				err = nil
-			}
-			return err
+		} else {
+			success = true
+			r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 		}
-		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
 
+		r.monitor.RecordPlugin(recipe.Name, sr.Name, "sink", success)
+
+		if !r.stopOnSinkError {
+			err = nil
+		}
 		// TODO: create a new error to signal stopping stream.
 		// returning nil so stream wont stop.
 		return err
 	}, defaultBatchSize)
 
+	//TODO: the sink closes even though some records remain unpublished
+	//TODO: once fixed, file sink's Close needs to close *File
 	stream.onClose(func() {
 		if err = sink.Close(); err != nil {
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)

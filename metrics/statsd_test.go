@@ -166,6 +166,66 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 	})
 }
 
+func TestStatsdMonitorRecordPlugin(t *testing.T) {
+	statsdPrefix := "testprefix"
+
+	t.Run("should create metrics with the correct name and value", func(t *testing.T) {
+		recipe := recipe.Recipe{
+			Name: "test-recipe",
+			Source: recipe.PluginRecipe{
+				Name: "mysql",
+			},
+			Sinks: []recipe.PluginRecipe{
+				{Name: "test-sink"},
+			},
+		}
+		incrementMetric := fmt.Sprintf(
+			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
+			statsdPrefix,
+			"runPlugin",
+			recipe.Name,
+			recipe.Sinks[0].Name,
+			"sink",
+			false,
+		)
+
+		client := new(mockStatsdClient)
+		client.On("Increment", incrementMetric)
+		defer client.AssertExpectations(t)
+
+		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
+		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", false)
+	})
+
+	t.Run("should set success field to true on success", func(t *testing.T) {
+		recipe := recipe.Recipe{
+			Name: "test-recipe",
+			Source: recipe.PluginRecipe{
+				Name: "bigquery",
+			},
+			Sinks: []recipe.PluginRecipe{
+				{Name: "test-sink"},
+			},
+		}
+		incrementMetric := fmt.Sprintf(
+			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
+			statsdPrefix,
+			"runPlugin",
+			recipe.Name,
+			recipe.Sinks[0].Name,
+			"sink",
+			true,
+		)
+
+		client := new(mockStatsdClient)
+		client.On("Increment", incrementMetric)
+		defer client.AssertExpectations(t)
+
+		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
+		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", true)
+	})
+}
+
 func TestNewStatsClient(t *testing.T) {
 	t.Run("should return error for invalid address", func(t *testing.T) {
 		_, err := metrics.NewStatsdClient("127.0.0.1")
