@@ -3,9 +3,8 @@ package file
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/odpf/meteor/models"
@@ -13,6 +12,7 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	ndjson "github.com/scizorman/go-ndjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,19 +20,21 @@ import (
 var summary string
 
 type Config struct {
-	Path   string `mapstructure:"path" validate:"required"`
-	Format string `mapstructure:"format" validate:"required"`
+	Overwrite bool   `mapstructure:"overwrite" default:"true"`
+	Path      string `mapstructure:"path" validate:"required"`
+	Format    string `mapstructure:"format" validate:"required"`
 }
 
 var sampleConfig = `
-path: ./dir/some-dir/postgres_food_app_data.json
-format: json
+path: ./output-filename.txt
+format: ndjson
 `
 
 type Sink struct {
 	logger log.Logger
 	config Config
 	format string
+	File   *os.File
 }
 
 func New() plugins.Syncer {
@@ -60,7 +62,16 @@ func (s *Sink) Init(ctx context.Context, config map[string]interface{}) (err err
 	if err := s.validateFilePath(s.config.Path); err != nil {
 		return err
 	}
+
 	s.format = s.config.Format
+	if s.config.Overwrite {
+		s.File, err = os.Create(s.config.Path)
+		return err
+	}
+	s.File, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		return err
+	}
 	return
 }
 
@@ -69,8 +80,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		data = append(data, record.Data())
 	}
-	if s.format == "json" {
-		err := s.jsonOut(data)
+	if s.format == "ndjson" {
+		err := s.ndjsonOut(data)
 		if err != nil {
 			return err
 		}
@@ -83,18 +94,17 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return nil
 }
 
-func (s *Sink) Close() (err error) { return }
-
-func (s *Sink) jsonOut(data []models.Metadata) error {
-	jsnBy, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(s.config.Path, jsnBy, 0644)
-	if err != nil {
-		return err
-	}
+func (s *Sink) Close() (err error) {
 	return nil
+}
+
+func (s *Sink) ndjsonOut(data []models.Metadata) error {
+	jsnBy, err := ndjson.Marshal(data)
+	if err != nil {
+		return err
+	}
+	err = s.writeBytes(jsnBy)
+	return err
 }
 
 func (s *Sink) yamlOut(data []models.Metadata) error {
@@ -102,7 +112,12 @@ func (s *Sink) yamlOut(data []models.Metadata) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(s.config.Path, ymlByte, 0644)
+	err = s.writeBytes(ymlByte)
+	return err
+}
+
+func (s *Sink) writeBytes(b []byte) error {
+	_, err := s.File.Write(b)
 	if err != nil {
 		return err
 	}
