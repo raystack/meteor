@@ -27,7 +27,6 @@ type Config struct {
 	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
 	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
 	Headers     map[string]string `mapstructure:"headers"`
-	Format      string            `mapstructure:"format" `
 }
 
 var sampleConfig = ``
@@ -155,14 +154,19 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 	return record, nil
 }
 
-func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (columnRecord map[string]Property) {
+func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
+	fmt.Println("aya kya")
 	columns := table.GetSchema().GetColumns()
-	if len(columns) > 0 {
-		return
+	if columns == nil {
+		fmt.Println("idhr aya kya")
+		return nil
 	}
+	columnRecord := make(map[string]Property)
 
 	for _, column := range columns {
+		fmt.Println("column m aya kya")
 		dataType := s.typeToJsonSchemaType(table, column)
+		fmt.Println("datatype", dataType)
 		columnType := []JsonType{dataType}
 
 		if column.IsNullable {
@@ -173,15 +177,20 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) (columnRecord map
 			Type:        columnType,
 			Description: column.GetDescription(),
 		}
-	}
+		fmt.Println("col record", columnRecord)
 
-	return
+	}
+	fmt.Println("col record", columnRecord)
+
+	return columnRecord
 }
 
 func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType JsonType) {
+	fmt.Println("schema m aya kya")
 	service := table.GetResource().GetService()
 
 	if service == "bigquery" {
+		fmt.Println("bigquery m aya kya")
 		switch column.DataType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = JsonTypeString
@@ -211,6 +220,7 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 			dataType = JsonTypeString
 		}
 	}
+	fmt.Println("schema se gya kya")
 
 	return
 }

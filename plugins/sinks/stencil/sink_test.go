@@ -43,7 +43,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				stencilSink := stencil.New(newMockHTTPClient(config, http.MethodPost, url, stencil.RequestPayload{}), testUtils.Logger)
+				stencilSink := stencil.New(newMockHTTPClient(config, http.MethodPost, url, stencil.JsonSchema{}), testUtils.Logger)
 				err := stencilSink.Init(context.TODO(), config)
 
 				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
@@ -59,7 +59,7 @@ func TestSink(t *testing.T) {
 		errMessage := "error sending data: stencil returns 404: {\"code\": 0,\"message\": \"string\",\"details\": [{\"typeUrl\": \"string\",\"value\": \"string\"}]}"
 		// setup mock client
 		url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, schemaID)
-		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.RequestPayload{})
+		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.JsonSchema{})
 		client.SetupResponse(404, stencilError)
 		ctx := context.TODO()
 
@@ -73,7 +73,7 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
+		data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{}}
 		err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
 	})
@@ -82,7 +82,7 @@ func TestSink(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
 				url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, schemaID)
-				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.RequestPayload{})
+				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.JsonSchema{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
@@ -96,7 +96,7 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				data := &assetsv1beta1.Topic{Resource: &commonv1beta1.Resource{}}
+				data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{}}
 				err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
@@ -105,65 +105,37 @@ func TestSink(t *testing.T) {
 
 	successTestCases := []struct {
 		description string
-		data        models.Metadata
+		data        *assetsv1beta1.Table
 		config      map[string]interface{}
-		expected    stencil.RequestPayload
+		expected    stencil.JsonSchema
 	}{
 		{
 			description: "should create the right request to stencil",
-			data: &assetsv1beta1.User{
+			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Urn:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
+					Name:    "stencil",
+					Type:    "table",
+					Service: "bigquery",
 				},
-			},
-			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-			},
-			expected: stencil.RequestPayload{
-				Schema: stencil.Schema{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-				},
-			},
-		},
-		{
-			description: "should send owners if data has ownership",
-			data: &assetsv1beta1.Topic{
-				Resource: &commonv1beta1.Resource{
-					Urn:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-				},
-				Ownership: &facetsv1beta1.Ownership{
-					Owners: []*facetsv1beta1.Owner{
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
 						{
-							Urn:   "urn-1",
-							Name:  "owner-a",
-							Role:  "role-a",
-							Email: "email-1",
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "INT",
+							IsNullable:  true,
 						},
 						{
-							Urn:   "urn-2",
-							Name:  "owner-b",
-							Role:  "role-b",
-							Email: "email-2",
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "STRING",
+							IsNullable:  false,
 						},
 						{
-							Urn:   "urn-3",
-							Name:  "owner-c",
-							Role:  "role-c",
-							Email: "email-3",
+							Name:        "description",
+							Description: "It is the description",
+							DataType:    "STRING",
+							IsNullable:  true,
 						},
 					},
 				},
@@ -173,73 +145,107 @@ func TestSink(t *testing.T) {
 				"namespaceId": namespaceID,
 				"schemaId":    schemaID,
 			},
-			expected: stencil.RequestPayload{
-				Schema: stencil.Schema{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Owners: []stencil.Owner{
-						{
-							URN:   "urn-1",
-							Name:  "owner-a",
-							Role:  "role-a",
-							Email: "email-1",
-						},
-						{
-							URN:   "urn-2",
-							Name:  "owner-b",
-							Role:  "role-b",
-							Email: "email-2",
-						},
-						{
-							URN:   "urn-3",
-							Name:  "owner-c",
-							Role:  "role-c",
-							Email: "email-3",
-						},
+			expected: stencil.JsonSchema{
+				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Schema: "https://json-schema.org/draft/2020-12/schema",
+				Title:  "stencil",
+				Type:   "table",
+				Properties: map[string]stencil.Property{
+					"id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
+						Description: "It is the ID",
+					},
+					"user_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString},
+						Description: "It is the user ID",
+					},
+					"description": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
+						Description: "It is the description",
 					},
 				},
 			},
 		},
-		{
-			description: "should send headers if get populated in config",
-			data: &assetsv1beta1.Topic{
-				Resource: &commonv1beta1.Resource{
-					Urn:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-				},
-			},
-			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"headers": map[string]string{
-					"Key1": "value11, value12",
-					"Key2": "value2",
-				},
-			},
-			expected: stencil.RequestPayload{
-				Schema: stencil.Schema{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-				},
-			},
-		},
+		//{
+		//	description: "should send owners if data has ownership",
+		//	data: &assetsv1beta1.Table{
+		//		Resource: &commonv1beta1.Resource{
+		//			Name: "stencil",
+		//			Type: "table",
+		//		},
+		//		Profile: nil,
+		//		Schema: &facetsv1beta1.Columns{
+		//			Columns: []*facetsv1beta1.Column{
+		//				{
+		//					Name:        "",
+		//					Description: "",
+		//					DataType:    "",
+		//					IsNullable:  false,
+		//				},
+		//			},
+		//		},
+		//		Properties: nil,
+		//	},
+		//	config: map[string]interface{}{
+		//		"host":        host,
+		//		"namespaceId": namespaceID,
+		//		"schemaId":    schemaID,
+		//	},
+		//	expected: stencil.JsonSchema{
+		//		Id:         "",
+		//		Schema:     "",
+		//		Title:      "",
+		//		Type:       "",
+		//		Properties: nil,
+		//	},
+		//},
+		//{
+		//	description: "should send headers if get populated in config",
+		//	data: &assetsv1beta1.Table{
+		//		Resource: &commonv1beta1.Resource{
+		//			Name: "stencil",
+		//			Type: "table",
+		//		},
+		//		Profile: nil,
+		//		Schema: &facetsv1beta1.Columns{
+		//			Columns: []*facetsv1beta1.Column{
+		//				{
+		//					Name:        "",
+		//					Description: "",
+		//					DataType:    "",
+		//					IsNullable:  false,
+		//				},
+		//			},
+		//		},
+		//		Properties: nil,
+		//	},
+		//	config: map[string]interface{}{
+		//		"host":        host,
+		//		"namespaceId": namespaceID,
+		//		"schemaId":    schemaID,
+		//		"headers": map[string]string{
+		//			"Key1": "value11, value12",
+		//			"Key2": "value2",
+		//		},
+		//	},
+		//	expected: stencil.JsonSchema{
+		//		Id:         "",
+		//		Schema:     "",
+		//		Title:      "",
+		//		Type:       "",
+		//		Properties: nil,
+		//	},
+		//},
 	}
 
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
-			tc.expected.Schema.Data = tc.data
-			payload := stencil.RequestPayload{
-				Schema: tc.expected.Schema,
+			payload := stencil.JsonSchema{
+				Id:         tc.expected.Id,
+				Schema:     tc.expected.Schema,
+				Title:      tc.expected.Title,
+				Type:       tc.expected.Type,
+				Properties: tc.expected.Properties,
 			}
 
 			client := newMockHTTPClient(tc.config, http.MethodPost, url, payload)
@@ -265,13 +271,13 @@ type mockHTTPClient struct {
 	URL            string
 	Method         string
 	Headers        map[string]string
-	RequestPayload stencil.RequestPayload
+	RequestPayload stencil.JsonSchema
 	ResponseJSON   string
 	ResponseStatus int
 	req            *http.Request
 }
 
-func newMockHTTPClient(config map[string]interface{}, method, url string, payload stencil.RequestPayload) *mockHTTPClient {
+func newMockHTTPClient(config map[string]interface{}, method, url string, payload stencil.JsonSchema) *mockHTTPClient {
 	headersMap := map[string]string{}
 	if headersItf, ok := config["headers"]; ok {
 		headersMap = headersItf.(map[string]string)
