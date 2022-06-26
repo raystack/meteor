@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	host        = "http://stencil.com"
+	host        = "https://stencil.com"
 	namespaceID = "test-namespace"
 	schemaID    = "schema-name"
 )
@@ -110,7 +110,7 @@ func TestSink(t *testing.T) {
 		expected    stencil.JsonSchema
 	}{
 		{
-			description: "should create the right request to stencil",
+			description: "should create the right request to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
 					Name:    "stencil",
@@ -166,76 +166,124 @@ func TestSink(t *testing.T) {
 				},
 			},
 		},
-		//{
-		//	description: "should send owners if data has ownership",
-		//	data: &assetsv1beta1.Table{
-		//		Resource: &commonv1beta1.Resource{
-		//			Name: "stencil",
-		//			Type: "table",
-		//		},
-		//		Profile: nil,
-		//		Schema: &facetsv1beta1.Columns{
-		//			Columns: []*facetsv1beta1.Column{
-		//				{
-		//					Name:        "",
-		//					Description: "",
-		//					DataType:    "",
-		//					IsNullable:  false,
-		//				},
-		//			},
-		//		},
-		//		Properties: nil,
-		//	},
-		//	config: map[string]interface{}{
-		//		"host":        host,
-		//		"namespaceId": namespaceID,
-		//		"schemaId":    schemaID,
-		//	},
-		//	expected: stencil.JsonSchema{
-		//		Id:         "",
-		//		Schema:     "",
-		//		Title:      "",
-		//		Type:       "",
-		//		Properties: nil,
-		//	},
-		//},
-		//{
-		//	description: "should send headers if get populated in config",
-		//	data: &assetsv1beta1.Table{
-		//		Resource: &commonv1beta1.Resource{
-		//			Name: "stencil",
-		//			Type: "table",
-		//		},
-		//		Profile: nil,
-		//		Schema: &facetsv1beta1.Columns{
-		//			Columns: []*facetsv1beta1.Column{
-		//				{
-		//					Name:        "",
-		//					Description: "",
-		//					DataType:    "",
-		//					IsNullable:  false,
-		//				},
-		//			},
-		//		},
-		//		Properties: nil,
-		//	},
-		//	config: map[string]interface{}{
-		//		"host":        host,
-		//		"namespaceId": namespaceID,
-		//		"schemaId":    schemaID,
-		//		"headers": map[string]string{
-		//			"Key1": "value11, value12",
-		//			"Key2": "value2",
-		//		},
-		//	},
-		//	expected: stencil.JsonSchema{
-		//		Id:         "",
-		//		Schema:     "",
-		//		Title:      "",
-		//		Type:       "",
-		//		Properties: nil,
-		//	},
-		//},
+		{
+			description: "should create the right request to stencil when postgres is the service",
+			data: &assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
+					Name:    "stencil",
+					Type:    "table",
+					Service: "postgres",
+				},
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "integer",
+							IsNullable:  true,
+						},
+						{
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "varchar",
+							IsNullable:  false,
+						},
+						{
+							Name:        "description",
+							Description: "It is the description",
+							DataType:    "varchar",
+							IsNullable:  true,
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host":        host,
+				"namespaceId": namespaceID,
+				"schemaId":    schemaID,
+			},
+			expected: stencil.JsonSchema{
+				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Schema: "https://json-schema.org/draft/2020-12/schema",
+				Title:  "stencil",
+				Type:   "table",
+				Properties: map[string]stencil.Property{
+					"id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
+						Description: "It is the ID",
+					},
+					"user_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString},
+						Description: "It is the user ID",
+					},
+					"description": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
+						Description: "It is the description",
+					},
+				},
+			},
+		},
+		{
+			description: "should send headers if get populated in config",
+			data: &assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
+					Name:    "stencil",
+					Type:    "table",
+					Service: "bigquery",
+				},
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "INT",
+							IsNullable:  true,
+						},
+						{
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "STRING",
+							IsNullable:  false,
+						},
+						{
+							Name:        "description",
+							Description: "It is the description",
+							DataType:    "STRING",
+							IsNullable:  true,
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host":        host,
+				"namespaceId": namespaceID,
+				"schemaId":    schemaID,
+				"headers": map[string]string{
+					"Key1": "value11, value12",
+					"Key2": "value2",
+				},
+			},
+			expected: stencil.JsonSchema{
+				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Schema: "https://json-schema.org/draft/2020-12/schema",
+				Title:  "stencil",
+				Type:   "table",
+				Properties: map[string]stencil.Property{
+					"id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
+						Description: "It is the ID",
+					},
+					"user_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString},
+						Description: "It is the user ID",
+					},
+					"description": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
+						Description: "It is the description",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range successTestCases {
@@ -264,7 +312,6 @@ func TestSink(t *testing.T) {
 			client.Assert(t)
 		})
 	}
-
 }
 
 type mockHTTPClient struct {

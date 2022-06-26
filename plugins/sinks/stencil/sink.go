@@ -29,7 +29,18 @@ type Config struct {
 	Headers     map[string]string `mapstructure:"headers"`
 }
 
-var sampleConfig = ``
+var sampleConfig = `
+# The hostname of the stencil service
+host: https://stencil.com
+# The namespace ID of the stencil service
+namespaceId: jsonSet
+# The schema ID which will be created in the above mentioned namespace
+namespaceId: schemaName
+# Additional HTTP headers send to stencil, multiple headers value are separated by a comma
+headers:
+	Stencil-User-Name: meteor
+	X-Other-Header: value1, value2
+`
 
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -41,11 +52,13 @@ type Sink struct {
 	logger log.Logger
 }
 
+// New returns a pointer to an initialized Sink Object
 func New(c httpClient, logger log.Logger) plugins.Syncer {
 	sink := &Sink{client: c, logger: logger}
 	return sink
 }
 
+// Info returns the brief information about the sink
 func (s *Sink) Info() plugins.Info {
 	return plugins.Info{
 		Description:  "Send metadata to stencil http service",
@@ -55,11 +68,13 @@ func (s *Sink) Info() plugins.Info {
 	}
 }
 
+// Validate validates the configuration of the sink
 func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
 	return utils.BuildConfig(configMap, &Config{})
 }
 
-func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
+// Init initializes the sink
+func (s *Sink) Init(_ context.Context, configMap map[string]interface{}) (err error) {
 	if err = utils.BuildConfig(configMap, &s.config); err != nil {
 		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
 	}
@@ -67,7 +82,8 @@ func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err 
 	return
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+// Sink helps to sink record to stencil
+func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
 
 	for _, record := range batch {
 		metadata := record.Data()
@@ -92,8 +108,10 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return
 }
 
+// Close will be called once after everything is done
 func (s *Sink) Close() (err error) { return }
 
+// send helps to pass data to stencil
 func (s *Sink) send(record JsonSchema) (err error) {
 
 	// for json schema format
@@ -139,6 +157,7 @@ func (s *Sink) send(record JsonSchema) (err error) {
 	}
 }
 
+// buildJsonStencilPayload build Json stencil payload
 func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
 	properties := s.buildJsonProperties(table)
@@ -154,19 +173,16 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 	return record, nil
 }
 
+// buildJsonProperties builds the Json schema properties
 func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
-	fmt.Println("aya kya")
 	columns := table.GetSchema().GetColumns()
 	if columns == nil {
-		fmt.Println("idhr aya kya")
 		return nil
 	}
 	columnRecord := make(map[string]Property)
 
 	for _, column := range columns {
-		fmt.Println("column m aya kya")
 		dataType := s.typeToJsonSchemaType(table, column)
-		fmt.Println("datatype", dataType)
 		columnType := []JsonType{dataType}
 
 		if column.IsNullable {
@@ -177,20 +193,16 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Proper
 			Type:        columnType,
 			Description: column.GetDescription(),
 		}
-		fmt.Println("col record", columnRecord)
-
 	}
-	fmt.Println("col record", columnRecord)
 
 	return columnRecord
 }
 
+// typeToJsonSchemaType converts particular service type to Json type
 func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType JsonType) {
-	fmt.Println("schema m aya kya")
 	service := table.GetResource().GetService()
 
 	if service == "bigquery" {
-		fmt.Println("bigquery m aya kya")
 		switch column.DataType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = JsonTypeString
@@ -220,11 +232,11 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 			dataType = JsonTypeString
 		}
 	}
-	fmt.Println("schema se gya kya")
 
 	return
 }
 
+// init register the sink to the catalog
 func init() {
 	if err := registry.Sinks.Register("stencil", func() plugins.Syncer {
 		return New(&http.Client{}, plugins.GetLog())
