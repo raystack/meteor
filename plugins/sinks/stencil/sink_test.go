@@ -113,7 +113,7 @@ func TestSink(t *testing.T) {
 		expected    stencil.JsonSchema
 	}{
 		{
-			description: "should create the right request to stencil when bigquery is the service",
+			description: "should create the right request from json schema to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
 					Name:    "stencil",
@@ -135,10 +135,33 @@ func TestSink(t *testing.T) {
 							IsNullable:  false,
 						},
 						{
+							Name:        "email_id",
+							Description: "It is the email ID",
+							IsNullable:  true,
+						},
+						{
 							Name:        "description",
 							Description: "It is the description",
 							DataType:    "STRING",
 							IsNullable:  true,
+						},
+						{
+							Name:        "is_active",
+							Description: "It shows user regularity",
+							DataType:    "BOOLEAN",
+							IsNullable:  false,
+						},
+						{
+							Name:        "address",
+							Description: "It shows user address",
+							DataType:    "RECORD",
+							IsNullable:  false,
+						},
+						{
+							Name:        "range",
+							Description: "It is the range",
+							DataType:    "BYTES",
+							IsNullable:  false,
 						},
 					},
 				},
@@ -163,15 +186,31 @@ func TestSink(t *testing.T) {
 						Type:        []stencil.JsonType{stencil.JsonTypeString},
 						Description: "It is the user ID",
 					},
+					"email_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
+						Description: "It is the email ID",
+					},
 					"description": {
 						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
 						Description: "It is the description",
+					},
+					"is_active": {
+						Type:        []stencil.JsonType{stencil.JsonTypeBoolean},
+						Description: "It shows user regularity",
+					},
+					"address": {
+						Type:        []stencil.JsonType{stencil.JsonTypeObject},
+						Description: "It shows user address",
+					},
+					"range": {
+						Type:        []stencil.JsonType{stencil.JsonTypeArray},
+						Description: "It is the range",
 					},
 				},
 			},
 		},
 		{
-			description: "should create the right request to stencil when postgres is the service",
+			description: "should create the right request from json schema to stencil when postgres is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
 					Name:    "stencil",
@@ -193,10 +232,27 @@ func TestSink(t *testing.T) {
 							IsNullable:  false,
 						},
 						{
+							Name:        "email_id",
+							Description: "It is the email ID",
+							IsNullable:  true,
+						},
+						{
 							Name:        "description",
 							Description: "It is the description",
 							DataType:    "varchar",
 							IsNullable:  true,
+						},
+						{
+							Name:        "is_active",
+							Description: "It shows user regularity",
+							DataType:    "boolean",
+							IsNullable:  false,
+						},
+						{
+							Name:        "range",
+							Description: "It is the range",
+							DataType:    "bytea",
+							IsNullable:  false,
 						},
 					},
 				},
@@ -221,9 +277,21 @@ func TestSink(t *testing.T) {
 						Type:        []stencil.JsonType{stencil.JsonTypeString},
 						Description: "It is the user ID",
 					},
+					"email_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
+						Description: "It is the email ID",
+					},
 					"description": {
 						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
 						Description: "It is the description",
+					},
+					"is_active": {
+						Type:        []stencil.JsonType{stencil.JsonTypeBoolean},
+						Description: "It shows user regularity",
+					},
+					"range": {
+						Type:        []stencil.JsonType{stencil.JsonTypeArray},
+						Description: "It is the range",
 					},
 				},
 			},
@@ -326,7 +394,7 @@ func TestSink(t *testing.T) {
 		expected    stencil.AvroSchema
 	}{
 		{
-			description: "should create the right request to stencil when bigquery is the service",
+			description: "should create the right request from avro schema to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
 					Name:    "stencil",
@@ -350,8 +418,25 @@ func TestSink(t *testing.T) {
 						{
 							Name:        "description",
 							Description: "It is the description",
-							DataType:    "STRING",
 							IsNullable:  true,
+						},
+						{
+							Name:        "is_active",
+							Description: "It shows user regularity",
+							DataType:    "BOOLEAN",
+							IsNullable:  false,
+						},
+						{
+							Name:        "address",
+							Description: "It shows user address",
+							DataType:    "RECORD",
+							IsNullable:  false,
+						},
+						{
+							Name:        "range",
+							Description: "It is the range",
+							DataType:    "BYTES",
+							IsNullable:  false,
 						},
 					},
 				},
@@ -378,6 +463,94 @@ func TestSink(t *testing.T) {
 					{
 						Name: "description",
 						Type: []stencil.AvroType{stencil.AvroTypeString, stencil.AvroTypeNull},
+					},
+					{
+						Name: "is_active",
+						Type: []stencil.AvroType{stencil.AvroTypeBoolean},
+					},
+					{
+						Name: "address",
+						Type: []stencil.AvroType{stencil.AvroTypeRecord},
+					},
+					{
+						Name: "range",
+						Type: []stencil.AvroType{stencil.AvroTypeBytes},
+					},
+				},
+			},
+		},
+		{
+			description: "should create the right request to stencil when postgres is the service",
+			data: &assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
+					Name:    "stencil",
+					Type:    "table",
+					Service: "postgres",
+				},
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "integer",
+							IsNullable:  true,
+						},
+						{
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "varchar",
+							IsNullable:  false,
+						},
+						{
+							Name:        "description",
+							Description: "It is the description",
+							IsNullable:  true,
+						},
+						{
+							Name:        "is_active",
+							Description: "It shows user regularity",
+							DataType:    "boolean",
+							IsNullable:  false,
+						},
+						{
+							Name:        "range",
+							Description: "It is the range",
+							DataType:    "bytea",
+							IsNullable:  false,
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host":        host,
+				"namespaceId": namespaceID,
+				"schemaId":    schemaID,
+				"format":      "avro",
+			},
+			expected: stencil.AvroSchema{
+				Type:      "record",
+				Namespace: namespaceID,
+				Name:      "stencil",
+				Fields: []stencil.Fields{
+					{
+						Name: "id",
+						Type: []stencil.AvroType{stencil.AvroTypeInteger, stencil.AvroTypeNull},
+					},
+					{
+						Name: "user_id",
+						Type: []stencil.AvroType{stencil.AvroTypeString},
+					},
+					{
+						Name: "description",
+						Type: []stencil.AvroType{stencil.AvroTypeString, stencil.AvroTypeNull},
+					},
+					{
+						Name: "is_active",
+						Type: []stencil.AvroType{stencil.AvroTypeBoolean},
+					},
+					{
+						Name: "range",
+						Type: []stencil.AvroType{stencil.AvroTypeArray},
 					},
 				},
 			},
