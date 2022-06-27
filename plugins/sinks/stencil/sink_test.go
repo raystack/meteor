@@ -39,6 +39,7 @@ func TestInit(t *testing.T) {
 				"host":        "",
 				"namespaceId": "",
 				"schemaId":    "",
+				"format":      "",
 			},
 		}
 		for i, config := range invalidConfigs {
@@ -68,6 +69,7 @@ func TestSink(t *testing.T) {
 			"host":        host,
 			"namespaceId": namespaceID,
 			"schemaId":    schemaID,
+			"format":      "json",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -91,6 +93,7 @@ func TestSink(t *testing.T) {
 					"host":        host,
 					"namespaceId": namespaceID,
 					"schemaId":    schemaID,
+					"format":      "json",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -103,7 +106,7 @@ func TestSink(t *testing.T) {
 		}
 	})
 
-	successTestCases := []struct {
+	successJsonTestCases := []struct {
 		description string
 		data        *assetsv1beta1.Table
 		config      map[string]interface{}
@@ -144,6 +147,7 @@ func TestSink(t *testing.T) {
 				"host":        host,
 				"namespaceId": namespaceID,
 				"schemaId":    schemaID,
+				"format":      "json",
 			},
 			expected: stencil.JsonSchema{
 				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
@@ -201,6 +205,7 @@ func TestSink(t *testing.T) {
 				"host":        host,
 				"namespaceId": namespaceID,
 				"schemaId":    schemaID,
+				"format":      "json",
 			},
 			expected: stencil.JsonSchema{
 				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
@@ -258,6 +263,7 @@ func TestSink(t *testing.T) {
 				"host":        host,
 				"namespaceId": namespaceID,
 				"schemaId":    schemaID,
+				"format":      "json",
 				"headers": map[string]string{
 					"Key1": "value11, value12",
 					"Key2": "value2",
@@ -286,7 +292,7 @@ func TestSink(t *testing.T) {
 		},
 	}
 
-	for _, tc := range successTestCases {
+	for _, tc := range successJsonTestCases {
 		t.Run(tc.description, func(t *testing.T) {
 			payload := stencil.JsonSchema{
 				Id:         tc.expected.Id,
@@ -312,19 +318,110 @@ func TestSink(t *testing.T) {
 			client.Assert(t)
 		})
 	}
+
+	successAvroTestCases := []struct {
+		description string
+		data        *assetsv1beta1.Table
+		config      map[string]interface{}
+		expected    stencil.AvroSchema
+	}{
+		{
+			description: "should create the right request to stencil when bigquery is the service",
+			data: &assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
+					Name:    "stencil",
+					Type:    "table",
+					Service: "bigquery",
+				},
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "INT",
+							IsNullable:  true,
+						},
+						{
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "STRING",
+							IsNullable:  false,
+						},
+						{
+							Name:        "description",
+							Description: "It is the description",
+							DataType:    "STRING",
+							IsNullable:  true,
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host":        host,
+				"namespaceId": namespaceID,
+				"schemaId":    schemaID,
+				"format":      "avro",
+			},
+			expected: stencil.AvroSchema{
+				Type:      "record",
+				Namespace: namespaceID,
+				Name:      "stencil",
+				Fields: []stencil.Fields{
+					{
+						Name: "id",
+						Type: []stencil.AvroType{stencil.AvroTypeInteger, stencil.AvroTypeNull},
+					},
+					{
+						Name: "user_id",
+						Type: []stencil.AvroType{stencil.AvroTypeString},
+					},
+					{
+						Name: "description",
+						Type: []stencil.AvroType{stencil.AvroTypeString, stencil.AvroTypeNull},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range successAvroTestCases {
+		t.Run(tc.description, func(t *testing.T) {
+			payload := stencil.AvroSchema{
+				Type:      tc.expected.Type,
+				Namespace: tc.expected.Namespace,
+				Name:      tc.expected.Name,
+				Fields:    tc.expected.Fields,
+			}
+
+			client := newMockHTTPClient(tc.config, http.MethodPost, url, payload)
+			client.SetupResponse(200, "")
+			ctx := context.TODO()
+
+			stencilSink := stencil.New(client, testUtils.Logger)
+			err := stencilSink.Init(ctx, tc.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
+			assert.NoError(t, err)
+
+			client.Assert(t)
+		})
+	}
 }
 
 type mockHTTPClient struct {
 	URL            string
 	Method         string
 	Headers        map[string]string
-	RequestPayload stencil.JsonSchema
+	RequestPayload interface{}
 	ResponseJSON   string
 	ResponseStatus int
 	req            *http.Request
 }
 
-func newMockHTTPClient(config map[string]interface{}, method, url string, payload stencil.JsonSchema) *mockHTTPClient {
+func newMockHTTPClient(config map[string]interface{}, method, url string, payload interface{}) *mockHTTPClient {
 	headersMap := map[string]string{}
 	if headersItf, ok := config["headers"]; ok {
 		headersMap = headersItf.(map[string]string)

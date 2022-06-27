@@ -22,11 +22,13 @@ import (
 //go:embed README.md
 var summary string
 
+// Config holds the set of configuration options for the sink
 type Config struct {
 	Host        string            `mapstructure:"host" validate:"required"`
 	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
 	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
 	Headers     map[string]string `mapstructure:"headers"`
+	Format      string            `mapstructure:"format" validate:"required"`
 }
 
 var sampleConfig = `
@@ -40,12 +42,17 @@ namespaceId: schemaName
 headers:
 	Stencil-User-Name: meteor
 	X-Other-Header: value1, value2
+# The schema format in which data will sink to stencil
+format: 
+	format: avro
 `
 
+// httpClient holds the set of methods require for creating request
 type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// Sink manages the sinking of data to Stencil
 type Sink struct {
 	client httpClient
 	config Config
@@ -84,6 +91,7 @@ func (s *Sink) Init(_ context.Context, configMap map[string]interface{}) (err er
 
 // Sink helps to sink record to stencil
 func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
+	var stencilPayload interface{}
 
 	for _, record := range batch {
 		metadata := record.Data()
@@ -94,7 +102,13 @@ func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
 		}
 		s.logger.Info("sinking record to stencil", "record", table.GetResource().Urn)
 
-		stencilPayload, err := s.buildJsonStencilPayload(table)
+		switch s.config.Format {
+		case "avro":
+			stencilPayload, err = s.buildAvroStencilPayload(table)
+		case "json":
+			stencilPayload, err = s.buildJsonStencilPayload(table)
+		}
+
 		if err != nil {
 			return errors.Wrap(err, "failed to build stencil payload")
 		}
@@ -112,9 +126,8 @@ func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
 func (s *Sink) Close() (err error) { return }
 
 // send helps to pass data to stencil
-func (s *Sink) send(record JsonSchema) (err error) {
+func (s *Sink) send(record interface{}) (err error) {
 
-	// for json schema format
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return
@@ -157,7 +170,7 @@ func (s *Sink) send(record JsonSchema) (err error) {
 	}
 }
 
-// buildJsonStencilPayload build Json stencil payload
+// buildJsonStencilPayload build json stencil payload
 func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
 	properties := s.buildJsonProperties(table)
@@ -173,7 +186,7 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 	return record, nil
 }
 
-// buildJsonProperties builds the Json schema properties
+// buildJsonProperties builds the json schema properties
 func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
 	columns := table.GetSchema().GetColumns()
 	if len(columns) == 0 {
@@ -230,6 +243,85 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 			dataType = JsonTypeArray
 		default:
 			dataType = JsonTypeString
+		}
+	}
+
+	return
+}
+
+// buildAvroStencilPayload build Json stencil payload
+func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
+	resource := table.GetResource()
+	fields := s.buildAvroFields(table)
+
+	record := AvroSchema{
+		Type:      "record",             // Identifies the JSON field type. For Avro schemas, this must always be record when it is specified at the schema's top level.
+		Namespace: s.config.NamespaceID, // This identifies the namespace in which the object lives. Essentially, this is meant to be a URI that has meaning to you and your organization.
+		Name:      resource.GetName(),   // This is the schema name which, when combined with the namespace, uniquely identifies the schema within the store.
+		Fields:    fields,               // This is the actual schema definition.
+	}
+
+	return record, nil
+}
+
+// buildAvroFields builds the avro schema fields
+func (s *Sink) buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
+	columns := table.GetSchema().GetColumns()
+	if len(columns) == 0 {
+		return
+	}
+
+	for _, column := range columns {
+		dataType := s.typeToAvroSchemaType(table, column)
+		columnType := []AvroType{dataType}
+
+		if column.IsNullable {
+			columnType = []AvroType{dataType, AvroTypeNull}
+		}
+
+		fields = append(fields, Fields{
+			Name: column.Name,
+			Type: columnType,
+		})
+	}
+
+	return fields
+}
+
+// typeToAvroSchemaType converts particular service type to avro type
+func (s *Sink) typeToAvroSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType AvroType) {
+	service := table.GetResource().GetService()
+
+	if service == "bigquery" {
+		switch column.DataType {
+		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
+			dataType = AvroTypeString
+		case "INT64", "NUMERIC", "INT", "BIGNUMERIC":
+			dataType = AvroTypeInteger
+		case "FLOAT64", "FLOAT":
+			dataType = AvroTypeFloat
+		case "BYTES":
+			dataType = AvroTypeBytes
+		case "BOOLEAN":
+			dataType = AvroTypeBoolean
+		case "RECORD":
+			dataType = AvroTypeRecord
+		default:
+			dataType = AvroTypeString
+		}
+	}
+	if service == "postgres" {
+		switch column.DataType {
+		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
+			dataType = AvroTypeInteger
+		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":
+			dataType = AvroTypeString
+		case "boolean":
+			dataType = AvroTypeBoolean
+		case "bytea", "integer[]", "character[]", "text[]":
+			dataType = AvroTypeArray
+		default:
+			dataType = AvroTypeString
 		}
 	}
 
