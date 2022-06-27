@@ -176,7 +176,7 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 // buildJsonProperties builds the Json schema properties
 func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
 	columns := table.GetSchema().GetColumns()
-	if columns == nil {
+	if len(columns) == 0 {
 		return nil
 	}
 	columnRecord := make(map[string]Property)
