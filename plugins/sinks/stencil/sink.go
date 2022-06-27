@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/odpf/meteor/models"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -16,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 //go:embed README.md
@@ -24,27 +22,27 @@ var summary string
 
 // Config holds the set of configuration options for the sink
 type Config struct {
-	Host        string            `mapstructure:"host" validate:"required"`
-	NamespaceID string            `mapstructure:"namespaceId" validate:"required"`
-	SchemaID    string            `mapstructure:"schemaId" validate:"required"`
-	Headers     map[string]string `mapstructure:"headers"`
-	Format      string            `mapstructure:"format" validate:"required"`
+	Host         string `mapstructure:"host" validate:"required"`
+	NamespaceID  string `mapstructure:"namespace_id" validate:"required"`
+	SchemaID     string `mapstructure:"schema_id" validate:"required"`
+	Format       string `mapstructure:"format" validate:"oneof=json avro" default:"json"`
+	ChangeFormat bool   `mapstructure:"change_format"`
 }
 
 var sampleConfig = `
 # The hostname of the stencil service
 host: https://stencil.com
 # The namespace ID of the stencil service
-namespaceId: jsonSet
+namespace_id: myNamespace
 # The schema ID which will be created in the above mentioned namespace
-namespaceId: schemaName
-# Additional HTTP headers send to stencil, multiple headers value are separated by a comma
-headers:
-	Stencil-User-Name: meteor
-	X-Other-Header: value1, value2
+schema_id: mySchema
 # The schema format in which data will sink to stencil
 format: 
 	format: avro
+# If schema format needs to be changed. Suppose changing format from json to avro,
+provide below config value as true and schema format in format config.
+change_format: 
+	change_format: true
 `
 
 // httpClient holds the set of methods require for creating request
@@ -140,11 +138,15 @@ func (s *Sink) send(record interface{}) (err error) {
 		return
 	}
 
-	for hdrKey, hdrVal := range s.config.Headers {
-		hdrVals := strings.Split(hdrVal, ",")
-		for _, val := range hdrVals {
-			req.Header.Add(hdrKey, val)
+	if s.config.ChangeFormat {
+		var value string
+		switch s.config.Format {
+		case "avro":
+			value = "FORMAT_AVRO"
+		case "json":
+			value = "FORMAT_JSON"
 		}
+		req.Header.Add("X-Format", value)
 	}
 
 	res, err := s.client.Do(req)
@@ -173,29 +175,49 @@ func (s *Sink) send(record interface{}) (err error) {
 // buildJsonStencilPayload build json stencil payload
 func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
-	properties := s.buildJsonProperties(table)
+	properties := buildJsonProperties(table)
 
 	record := JsonSchema{
-		Id:         fmt.Sprintf("%s/%s.%s.json", s.config.Host, s.config.NamespaceID, s.config.SchemaID),
+		Id:         resource.GetUrn(),
 		Schema:     "https://json-schema.org/draft/2020-12/schema",
 		Title:      resource.GetName(),
-		Type:       JsonType(resource.GetType()),
+		Type:       "object",
 		Properties: properties,
 	}
 
 	return record, nil
 }
 
+// buildAvroStencilPayload build Json stencil payload
+func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
+	resource := table.GetResource()
+	fields := buildAvroFields(table)
+
+	record := AvroSchema{
+		Type:      "record",
+		Namespace: s.config.NamespaceID,
+		Name:      resource.GetName(),
+		Fields:    fields,
+	}
+
+	return record, nil
+}
+
 // buildJsonProperties builds the json schema properties
-func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
-	columns := table.GetSchema().GetColumns()
+func buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
+	columnRecord := make(map[string]Property)
+	service := table.GetResource().GetService()
+	schema := table.GetSchema()
+	if schema == nil {
+		return nil
+	}
+	columns := schema.GetColumns()
 	if len(columns) == 0 {
 		return nil
 	}
-	columnRecord := make(map[string]Property)
 
 	for _, column := range columns {
-		dataType := s.typeToJsonSchemaType(table, column)
+		dataType := typeToJsonSchemaType(service, column.DataType)
 		columnType := []JsonType{dataType}
 
 		if column.IsNullable {
@@ -212,11 +234,10 @@ func (s *Sink) buildJsonProperties(table *assetsv1beta1.Table) map[string]Proper
 }
 
 // typeToJsonSchemaType converts particular service type to Json type
-func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType JsonType) {
-	service := table.GetResource().GetService()
+func typeToJsonSchemaType(service string, columnType string) (dataType JsonType) {
 
 	if service == "bigquery" {
-		switch column.DataType {
+		switch columnType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = JsonTypeString
 		case "INT64", "NUMERIC", "FLOAT64", "INT", "FLOAT", "BIGNUMERIC":
@@ -232,7 +253,7 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 		}
 	}
 	if service == "postgres" {
-		switch column.DataType {
+		switch columnType {
 		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
 			dataType = JsonTypeNumber
 		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":
@@ -249,30 +270,20 @@ func (s *Sink) typeToJsonSchemaType(table *assetsv1beta1.Table, column *facetsv1
 	return
 }
 
-// buildAvroStencilPayload build Json stencil payload
-func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
-	resource := table.GetResource()
-	fields := s.buildAvroFields(table)
-
-	record := AvroSchema{
-		Type:      "record",             // Identifies the JSON field type. For Avro schemas, this must always be record when it is specified at the schema's top level.
-		Namespace: s.config.NamespaceID, // This identifies the namespace in which the object lives. Essentially, this is meant to be a URI that has meaning to you and your organization.
-		Name:      resource.GetName(),   // This is the schema name which, when combined with the namespace, uniquely identifies the schema within the store.
-		Fields:    fields,               // This is the actual schema definition.
-	}
-
-	return record, nil
-}
-
 // buildAvroFields builds the avro schema fields
-func (s *Sink) buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
-	columns := table.GetSchema().GetColumns()
+func buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
+	service := table.GetResource().GetService()
+	schema := table.GetSchema()
+	if schema == nil {
+		return
+	}
+	columns := schema.GetColumns()
 	if len(columns) == 0 {
 		return
 	}
 
 	for _, column := range columns {
-		dataType := s.typeToAvroSchemaType(table, column)
+		dataType := typeToAvroSchemaType(service, column.DataType)
 		columnType := []AvroType{dataType}
 
 		if column.IsNullable {
@@ -289,11 +300,10 @@ func (s *Sink) buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
 }
 
 // typeToAvroSchemaType converts particular service type to avro type
-func (s *Sink) typeToAvroSchemaType(table *assetsv1beta1.Table, column *facetsv1beta1.Column) (dataType AvroType) {
-	service := table.GetResource().GetService()
+func typeToAvroSchemaType(service string, columnType string) (dataType AvroType) {
 
 	if service == "bigquery" {
-		switch column.DataType {
+		switch columnType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
 			dataType = AvroTypeString
 		case "INT64", "NUMERIC", "INT", "BIGNUMERIC":
@@ -311,7 +321,7 @@ func (s *Sink) typeToAvroSchemaType(table *assetsv1beta1.Table, column *facetsv1
 		}
 	}
 	if service == "postgres" {
-		switch column.DataType {
+		switch columnType {
 		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
 			dataType = AvroTypeInteger
 		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":

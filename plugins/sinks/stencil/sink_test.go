@@ -13,7 +13,6 @@ import (
 	"github.com/odpf/meteor/plugins/sinks/stencil"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/odpf/meteor/plugins"
@@ -36,10 +35,10 @@ func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
 		invalidConfigs := []map[string]interface{}{
 			{
-				"host":        "",
-				"namespaceId": "",
-				"schemaId":    "",
-				"format":      "",
+				"host":         "",
+				"namespace_id": "",
+				"schema_id":    "",
+				"format":       "",
 			},
 		}
 		for i, config := range invalidConfigs {
@@ -66,10 +65,10 @@ func TestSink(t *testing.T) {
 
 		stencilSink := stencil.New(client, testUtils.Logger)
 		err := stencilSink.Init(ctx, map[string]interface{}{
-			"host":        host,
-			"namespaceId": namespaceID,
-			"schemaId":    schemaID,
-			"format":      "json",
+			"host":         host,
+			"namespace_id": namespaceID,
+			"schema_id":    schemaID,
+			"format":       "json",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -90,10 +89,10 @@ func TestSink(t *testing.T) {
 
 				stencilSink := stencil.New(client, testUtils.Logger)
 				err := stencilSink.Init(ctx, map[string]interface{}{
-					"host":        host,
-					"namespaceId": namespaceID,
-					"schemaId":    schemaID,
-					"format":      "json",
+					"host":         host,
+					"namespace_id": namespaceID,
+					"schema_id":    schemaID,
+					"format":       "json",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -116,8 +115,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request from json schema to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
+					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
 					Name:    "stencil",
-					Type:    "table",
 					Service: "bigquery",
 				},
 				Schema: &facetsv1beta1.Columns{
@@ -167,16 +166,16 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"format":      "json",
+				"host":         host,
+				"namespace_id": namespaceID,
+				"schema_id":    schemaID,
+				"format":       "json",
 			},
 			expected: stencil.JsonSchema{
 				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
 				Schema: "https://json-schema.org/draft/2020-12/schema",
 				Title:  "stencil",
-				Type:   "table",
+				Type:   "object",
 				Properties: map[string]stencil.Property{
 					"id": {
 						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
@@ -213,8 +212,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request from json schema to stencil when postgres is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
+					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
 					Name:    "stencil",
-					Type:    "table",
 					Service: "postgres",
 				},
 				Schema: &facetsv1beta1.Columns{
@@ -258,16 +257,16 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"format":      "json",
+				"host":         host,
+				"namespace_id": namespaceID,
+				"schema_id":    schemaID,
+				"format":       "json",
 			},
 			expected: stencil.JsonSchema{
 				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
 				Schema: "https://json-schema.org/draft/2020-12/schema",
 				Title:  "stencil",
-				Type:   "table",
+				Type:   "object",
 				Properties: map[string]stencil.Property{
 					"id": {
 						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
@@ -292,68 +291,6 @@ func TestSink(t *testing.T) {
 					"range": {
 						Type:        []stencil.JsonType{stencil.JsonTypeArray},
 						Description: "It is the range",
-					},
-				},
-			},
-		},
-		{
-			description: "should send headers if get populated in config",
-			data: &assetsv1beta1.Table{
-				Resource: &commonv1beta1.Resource{
-					Name:    "stencil",
-					Type:    "table",
-					Service: "bigquery",
-				},
-				Schema: &facetsv1beta1.Columns{
-					Columns: []*facetsv1beta1.Column{
-						{
-							Name:        "id",
-							Description: "It is the ID",
-							DataType:    "INT",
-							IsNullable:  true,
-						},
-						{
-							Name:        "user_id",
-							Description: "It is the user ID",
-							DataType:    "STRING",
-							IsNullable:  false,
-						},
-						{
-							Name:        "description",
-							Description: "It is the description",
-							DataType:    "STRING",
-							IsNullable:  true,
-						},
-					},
-				},
-			},
-			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"format":      "json",
-				"headers": map[string]string{
-					"Key1": "value11, value12",
-					"Key2": "value2",
-				},
-			},
-			expected: stencil.JsonSchema{
-				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
-				Schema: "https://json-schema.org/draft/2020-12/schema",
-				Title:  "stencil",
-				Type:   "table",
-				Properties: map[string]stencil.Property{
-					"id": {
-						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
-						Description: "It is the ID",
-					},
-					"user_id": {
-						Type:        []stencil.JsonType{stencil.JsonTypeString},
-						Description: "It is the user ID",
-					},
-					"description": {
-						Type:        []stencil.JsonType{stencil.JsonTypeString, stencil.JsonTypeNull},
-						Description: "It is the description",
 					},
 				},
 			},
@@ -442,10 +379,10 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"format":      "avro",
+				"host":         host,
+				"namespace_id": namespaceID,
+				"schema_id":    schemaID,
+				"format":       "avro",
 			},
 			expected: stencil.AvroSchema{
 				Type:      "record",
@@ -522,10 +459,10 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":        host,
-				"namespaceId": namespaceID,
-				"schemaId":    schemaID,
-				"format":      "avro",
+				"host":         host,
+				"namespace_id": namespaceID,
+				"schema_id":    schemaID,
+				"format":       "avro",
 			},
 			expected: stencil.AvroSchema{
 				Type:      "record",
@@ -640,11 +577,6 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 	)
 	assert.Equal(t, m.URL, actualURL)
 
-	headersMap := map[string]string{}
-	for hdrKey, hdrVals := range m.req.Header {
-		headersMap[hdrKey] = strings.Join(hdrVals, ",")
-	}
-	assert.Equal(t, m.Headers, headersMap)
 	var bodyBytes = []byte("")
 	if m.req.Body != nil {
 		var err error

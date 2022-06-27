@@ -28,7 +28,7 @@ type JsonSchema struct {
 	Id         string              `json:"$id"`
 	Schema     string              `json:"$schema"`
 	Title      string              `json:"title"`
-	Type       JsonType            `json:"type"`
+	Type       string              `json:"type"`
 	Properties map[string]Property `json:"properties"`
 }
 
