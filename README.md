@@ -55,42 +55,12 @@ $ meteor version
 
 Meteor’s CLI is fully featured but simple to use, even for those who have very limited experience working from the command line. Run `meteor --help` to see list of all available commands and instructions to use.
 
-```
+```sh
+# List of commands
 $ meteor --help
 
-Metadata collection tool.
-
-USAGE
-  meteor <command> <subcommand> [flags]
-
-CORE COMMANDS
-  gen         Generate recipes
-  info        Display plugin information
-  lint        Check for issues in recipes
-  list        List available plugins
-  new         Bootstrap new recipes
-  run         Execute recipes for metadata extraction
-
-ADDITIONAL COMMANDS
-  completion  Generate shell completion scripts
-  help        Help about any command
-  reference   Show command reference
-  version     Print meteor version information
-
-FLAGS
-  --help   Show help for command
-
-EXAMPLES
-  $ meteor list extractors
-  $ meteor run recipe.yaml
-  $ meteor gen recipe --extractor=date --sink console
-
-LEARN MORE
-  Use 'meteor <command> <subcommand> --help' for more information about a command.
-  Read the manual at https://odpf.github.io/meteor/
-
-FEEDBACK
-  Open an issue here https://github.com/odpf/meteor/issues
+# Print command reference
+$ meteor reference
 ```
 
 ## Running locally
