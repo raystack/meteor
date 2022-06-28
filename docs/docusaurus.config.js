@@ -21,17 +21,17 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/odpf/meteor/edit/master/docs/',
+          sidebarCollapsed: false,
         },
-        blog: {
-          showReadingTime: true,
-          editUrl:
-            'https://github.com/odpf/meteor/edit/master/docs/blog/',
-        },
+        blog: false,
         theme: {
           customCss: [
             require.resolve('./src/css/theme.css'),
             require.resolve('./src/css/custom.css')
           ],
+        },
+        gtag: {
+          trackingID: 'G-ZTPBZN6VK7',
         },
       }),
     ],
@@ -42,14 +42,11 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       colorMode: {
         defaultMode: 'light',
         respectPrefersColorScheme: true,
-        switchConfig: {
-          darkIcon: '☾',
-          lightIcon: '☀️',
-        },
       },
       navbar: {
         title: 'Meteor',
         logo: { src: 'img/logo.svg', },
+        hideOnScroll: true,
         items: [
           {
             type: 'doc',
@@ -57,7 +54,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             position: 'left',
             label: 'Docs',
           },
-          { to: '/blog', label: 'Blog', position: 'left' },
           { to: '/help', label: 'Help', position: 'left' },
           {
             href: 'https://bit.ly/2RzPbtn',
@@ -103,9 +99,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-      },
-      gtag: {
-        trackingID: 'G-ZTPBZN6VK7',
       },
       announcementBar: {
         id: 'star-repo',

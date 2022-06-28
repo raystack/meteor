@@ -170,6 +170,7 @@ html[data-theme="dark"] .header-slack-link:before {
 
 /* ************** FOOTER ************** */
 .footer {
+  display: none;
   margin-top: 3em;
   border-top: rgba(0, 0, 0, 0.05) 1px solid;
   background-color: var(--dark-bg-color);
