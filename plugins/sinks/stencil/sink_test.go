@@ -295,6 +295,55 @@ func TestSink(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "should return correct schema request with valid config",
+			data: &assetsv1beta1.Table{
+				Resource: &commonv1beta1.Resource{
+					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+					Name:    "stencil",
+					Service: "bigquery",
+				},
+				Schema: &facetsv1beta1.Columns{
+					Columns: []*facetsv1beta1.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "INT",
+							IsNullable:  true,
+						},
+						{
+							Name:        "user_id",
+							Description: "It is the user ID",
+							DataType:    "STRING",
+							IsNullable:  false,
+						},
+					},
+				},
+			},
+			config: map[string]interface{}{
+				"host":          host,
+				"namespace_id":  namespaceID,
+				"schema_id":     schemaID,
+				"format":        "json",
+				"change_format": true,
+			},
+			expected: stencil.JsonSchema{
+				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Schema: "https://json-schema.org/draft/2020-12/schema",
+				Title:  "stencil",
+				Type:   "object",
+				Properties: map[string]stencil.Property{
+					"id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
+						Description: "It is the ID",
+					},
+					"user_id": {
+						Type:        []stencil.JsonType{stencil.JsonTypeString},
+						Description: "It is the user ID",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range successJsonTestCases {
@@ -358,6 +407,12 @@ func TestSink(t *testing.T) {
 							IsNullable:  true,
 						},
 						{
+							Name:        "distance",
+							Description: "It is the user distance from source",
+							DataType:    "FLOAT",
+							IsNullable:  true,
+						},
+						{
 							Name:        "is_active",
 							Description: "It shows user regularity",
 							DataType:    "BOOLEAN",
@@ -400,6 +455,10 @@ func TestSink(t *testing.T) {
 					{
 						Name: "description",
 						Type: []stencil.AvroType{stencil.AvroTypeString, stencil.AvroTypeNull},
+					},
+					{
+						Name: "distance",
+						Type: []stencil.AvroType{stencil.AvroTypeFloat, stencil.AvroTypeNull},
 					},
 					{
 						Name: "is_active",
