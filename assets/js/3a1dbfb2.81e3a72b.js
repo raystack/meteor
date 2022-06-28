@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkmeteor=self.webpackChunkmeteor||[]).push([[220],{1145:e=>{e.exports=JSON.parse('{"allTagsPath":"/meteor/blog/tags","slug":"/meteor/blog/tags/odpf","name":"odpf","count":1,"permalink":"/meteor/blog/tags/odpf"}')}}]);
