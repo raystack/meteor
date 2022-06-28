@@ -3,6 +3,7 @@
  * bundles Infima by default. Infima is a CSS framework designed to
  * work well for content-centric websites.
  */
+ @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 /* You can override the default Infima variables here. */
 :root {
@@ -14,6 +15,8 @@
   --ifm-color-primary-lighter: #ce351e;
   --ifm-color-primary-lightest: #e0422a;
   --ifm-code-font-size: 95%;
+  --ifm-code-font-size: 90%;
+  --ifm-font-family-base: "Inter", sans-serif;
 }
 
 .docusaurus-highlight-code-line {
@@ -37,4 +40,38 @@ html[data-theme="dark"] {
   --main-bg-color: var(--ifm-color-primary);
   --light-bg-color: transparent;
   --dark-bg-color: #131313;
+}
+
+.menu {
+  font-size: 90%;
+}
+
+.menu__link--sublist-caret:after {
+  background: var(--ifm-menu-link-sublist-icon) 50% / 1rem 1rem;
+}
+
+.markdown h1 {
+  font-size: 2.5rem;
+}
+.markdown h2 {
+  font-size: 1.7rem;
+}
+
+.markdown h3 {
+  font-size: 1.4rem;
+}
+
+.theme-code-block{
+  box-shadow: none !important;
+}
+
+.pagination-nav__link{
+  border: 1px solid var(--ifm-color-emphasis-200)
+}
+.pagination-nav__sublabel{
+  font-size: 60%;
+}
+.pagination-nav__label{
+  font-size: 80%;
+  font-weight: normal;
 }
