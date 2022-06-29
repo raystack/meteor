@@ -434,10 +434,11 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":         host,
-				"namespace_id": namespaceID,
-				"schema_id":    schemaID,
-				"format":       "avro",
+				"host":          host,
+				"namespace_id":  namespaceID,
+				"schema_id":     schemaID,
+				"format":        "avro",
+				"change_format": true,
 			},
 			expected: stencil.AvroSchema{
 				Type:      "record",
