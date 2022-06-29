@@ -8,10 +8,24 @@ Stencil is a schema registry that provides schema management and validation dyna
 sinks:
   name: stencil
   config:
-    URL: https://stencil.com
-    namespaceId: test-namespace
-    schemaId: example
+    host: https://stencil.com
+    namespace_id: test-namespace
+    schema_id: example
+    format: json
+    change_format: false
 ```
+
+## Config Definition
+
+| Key | Value | Example | Description |  |
+| :-- | :---- | :------ | :---------- | :-- |
+|`host` | `string` | `https://stencil.com` | The hostname of the stencil service | *required*|
+| `namespace_id` | `string` | `myNamespace` | The namespace ID of the stencil service | *required* |
+|`schema_id` | `string` | `mySchmea` | The schema ID which will be created in the above-mentioned namespace | *required*|
+|`format` | `string` | `json` | The schema format in which data will sink to stencil | *optional*|
+|`change_format` | `bool` | `false` | If schema format needs to be changed. Suppose changing format from json to avro,
+provide below config value as true and schema format in format config. | *optional*|
+
 
 ## Contributing
 

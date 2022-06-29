@@ -47,6 +47,23 @@ sinks:
         format: "yaml"
 ```
 
+## Stencil
+
+`stencil`
+
+Upload metadata of a given schema `format` in the existing `namespace_id` present in [Stencil](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/stencil/README.md). Request will be sent via HTTP to a given host.
+
+```yaml
+sinks:
+  name: stencil
+  config:
+    host: https://stencil.com
+    namespace_id: myNamespace
+    schema_id: mySchema
+    format: json
+    change_format: false
+```
+
 _**Notes**_
 
 Compass' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Compass. Supports getting value from nested fields.
