@@ -24,16 +24,18 @@ var summary string
 
 // Config holds the set of configuration for the redash extractor
 type Config struct {
-	EndpointUrl string `mapstructure:"endpoint_url" validate:"required"`
-	ApiKey      string `mapstructure:"api_key" validate:"required"`
+	BaseURL string `mapstructure:"base_url" validate:"required"`
+	ApiKey  string `mapstructure:"api_key" validate:"required"`
 }
 
 var sampleConfig = `
-endpoint_url: https://redash.example.com
-api_key: `
+# Each endpoint is appended to your Redash base URL
+base_url: https://redash.example.com
+# Redash API calls support authentication with an API key.
+api_key: t33I8i8OFnVt3t9Bjj2RXr8nCBz0xyzVZ318Zwbj
+`
 
-// Extractor manages the extraction of data
-// from the redash server
+// Extractor manages the extraction of data from the redash server
 type Extractor struct {
 	config Config
 	logger log.Logger
@@ -81,6 +83,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to get dashboard list: %w", err)
 	}
+
 	for _, dashboard := range dashboards {
 		data, err := e.buildDashboard(dashboard)
 		if err != nil {
@@ -88,27 +91,24 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 		}
 		emit(models.NewRecord(data))
 	}
+
 	return
 }
 
 // buildDashboard builds a dashboard from redash server
 func (e *Extractor) buildDashboard(dashboard Results) (data *assetsv1beta1.Dashboard, err error) {
-	//var dashboard Dashboard
-	//chart, err := e.getChartsList(id)
-	//if err != nil {
-	//	err = errors.Wrap(err, "failed to get chart list")
-	//	return
-	//}
 	data = &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{
-			Urn:         fmt.Sprintf("redash.%s", dashboard.Name),
-			Name:        dashboard.Name,
+			Urn:         fmt.Sprintf("redash.%v", dashboard.Name),
+			Name:        dashboard.Slug,
 			Service:     "redash",
-			Url:         dashboard.Slug,
-			Description: fmt.Sprintf("ID: %v, version: %s", dashboard.ID, dashboard.Version),
+			Type:        "dashboard",
+			Url:         fmt.Sprintf("%s/%s", e.config.BaseURL, dashboard.Slug),
+			Description: fmt.Sprintf("ID: %v, version: %v", dashboard.Id, dashboard.Version),
 		},
 		Charts: nil,
 	}
+
 	return
 }
 
@@ -119,14 +119,11 @@ func (e *Extractor) getDashboardsList() (dashboards []Results, err error) {
 		Page     int       `json:"page"`
 		PageSize int       `json:"page_size"`
 		Results  []Results `json:"results"`
-
-		//Body       []Dashboard `json:"body"`
-		//StatusCode int         `json:"statusCode"`
-		//Results    []Results   `json:"results"`
 	}
+
 	var data response
 	if err = e.makeRequest("GET",
-		fmt.Sprintf("%s/api/dashboard", e.config.EndpointUrl), nil, &data); err != nil {
+		fmt.Sprintf("%s/api/dashboards", e.config.BaseURL), nil, &data); err != nil {
 		err = fmt.Errorf("failed to get dashboard: %w", err)
 		return
 	}
@@ -146,7 +143,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	var key = "Key " + e.config.ApiKey
+	var key = e.config.ApiKey
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Set("Authorization", key)
 	req.Header.Set("Referer", url)
@@ -177,6 +174,3 @@ func init() {
 		panic(err)
 	}
 }
-
-// API: https://github.com/getredash/redash/blob/5aa620d1ec7af09c8a1b590fc2a2adf4b6b78faa/redash/handlers/api.py
-//

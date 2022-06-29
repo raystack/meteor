@@ -29,6 +29,8 @@ Meteor currently supports metadata extraction on these data sources. To perform 
 | [`metabase`](https://github.com/odpf/meteor/tree/main/plugins/extractors/metabase/README.md) | ✅   | ✅     | ✗       | ✗    | ✗      |
 | [`superset`](https://github.com/odpf/meteor/tree/main/plugins/extractors/superset/README.md) | ✅   | ✅     | ✅       | ✗    | ✗      |
 | [`tableau`](https://github.com/odpf/meteor/tree/main/plugins/extractors/tableau/README.md)   | ✅   | ✅     | ✅       | ✗    | ✗      |
+| [`redash`](https://github.com/odpf/meteor/tree/main/plugins/extractors/redash/README.md)     | ✅   | ✗     | ✗       | ✗    | ✗      |
+
 
 ### Topic
 

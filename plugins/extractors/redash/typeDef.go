@@ -2,23 +2,22 @@ package redash
 
 import "time"
 
-// https://github1s.com/getredash/redash/blob/HEAD/redash/handlers/dashboards.py
-
 type Results struct {
-	Tags       []interface{} `json:"tags"`
-	IsArchived bool          `json:"is_archived"`
-	UpdatedAt  time.Time     `json:"updated_at"`
-	IsFavorite bool          `json:"is_favorite"`
-	User       User          `json:"user"`
-	Layout     []interface{} `json:"layout"`
-	IsDraft    bool          `json:"is_draft"`
-	ID         int           `json:"id"`
-	UserID     int           `json:"user_id"`
-	Name       string        `json:"name"`
-	CreatedAt  time.Time     `json:"created_at"`
-	Slug       string        `json:"slug"`
-	Version    int           `json:"version"`
-	Widgets    interface{}   `json:"widgets"`
+	Tags                    []interface{} `json:"tags"`
+	IsArchived              bool          `json:"is_archived"`
+	UpdatedAt               time.Time     `json:"updated_at"`
+	IsFavorite              bool          `json:"is_favorite"`
+	User                    User          `json:"user"`
+	Layout                  []interface{} `json:"layout"`
+	IsDraft                 bool          `json:"is_draft"`
+	Id                      int           `json:"id"`
+	UserId                  int           `json:"user_id"`
+	Name                    string        `json:"name"`
+	CreatedAt               time.Time     `json:"created_at"`
+	Slug                    string        `json:"slug"`
+	Version                 int           `json:"version"`
+	Widgets                 interface{}   `json:"widgets"`
+	DashboardFiltersEnabled bool          `json:"dashboard_filters_enabled"`
 }
 
 type User struct {
