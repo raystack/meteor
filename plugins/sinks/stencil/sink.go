@@ -22,11 +22,11 @@ var summary string
 
 // Config holds the set of configuration options for the sink
 type Config struct {
-	Host         string `mapstructure:"host" validate:"required"`
-	NamespaceID  string `mapstructure:"namespace_id" validate:"required"`
-	SchemaID     string `mapstructure:"schema_id" validate:"required"`
-	Format       string `mapstructure:"format" validate:"oneof=json avro" default:"json"`
-	ChangeFormat bool   `mapstructure:"change_format"`
+	Host             string `mapstructure:"host" validate:"required"`
+	NamespaceID      string `mapstructure:"namespace_id" validate:"required"`
+	SchemaID         string `mapstructure:"schema_id" validate:"required"`
+	Format           string `mapstructure:"format" validate:"oneof=json avro" default:"json"`
+	SendFormatHeader bool   `mapstructure:"send_format_header"`
 }
 
 var sampleConfig = `
@@ -41,8 +41,8 @@ format:
 	format: avro
 # If schema format needs to be changed. Suppose changing format from json to avro,
 provide below config value as true and schema format in format config.
-change_format: 
-	change_format: true
+send_format_header: 
+	send_format_header: true
 `
 
 // httpClient holds the set of methods require for creating request
@@ -138,7 +138,7 @@ func (s *Sink) send(record interface{}) (err error) {
 		return
 	}
 
-	if s.config.ChangeFormat {
+	if s.config.SendFormatHeader {
 		var value string
 		switch s.config.Format {
 		case "avro":
@@ -175,14 +175,14 @@ func (s *Sink) send(record interface{}) (err error) {
 // buildJsonStencilPayload build json stencil payload
 func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, error) {
 	resource := table.GetResource()
-	properties := buildJsonProperties(table)
+	jsonProperties := buildJsonProperties(table)
 
 	record := JsonSchema{
 		Id:         resource.GetUrn(),
 		Schema:     "https://json-schema.org/draft/2020-12/schema",
 		Title:      resource.GetName(),
-		Type:       "object",
-		Properties: properties,
+		Type:       JsonTypeObject,
+		Properties: jsonProperties,
 	}
 
 	return record, nil
@@ -191,21 +191,21 @@ func (s *Sink) buildJsonStencilPayload(table *assetsv1beta1.Table) (JsonSchema, 
 // buildAvroStencilPayload build Json stencil payload
 func (s *Sink) buildAvroStencilPayload(table *assetsv1beta1.Table) (AvroSchema, error) {
 	resource := table.GetResource()
-	fields := buildAvroFields(table)
+	avroFields := buildAvroFields(table)
 
 	record := AvroSchema{
 		Type:      "record",
 		Namespace: s.config.NamespaceID,
 		Name:      resource.GetName(),
-		Fields:    fields,
+		Fields:    avroFields,
 	}
 
 	return record, nil
 }
 
 // buildJsonProperties builds the json schema properties
-func buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
-	columnRecord := make(map[string]Property)
+func buildJsonProperties(table *assetsv1beta1.Table) map[string]JsonProperty {
+	columnRecord := make(map[string]JsonProperty)
 	service := table.GetResource().GetService()
 	schema := table.GetSchema()
 	if schema == nil {
@@ -221,10 +221,10 @@ func buildJsonProperties(table *assetsv1beta1.Table) map[string]Property {
 		columnType := []JsonType{dataType}
 
 		if column.IsNullable {
-			columnType = []JsonType{dataType, JsonTypeNull}
+			columnType = append(columnType, JsonTypeNull)
 		}
 
-		columnRecord[column.Name] = Property{
+		columnRecord[column.Name] = JsonProperty{
 			Type:        columnType,
 			Description: column.GetDescription(),
 		}
@@ -271,7 +271,7 @@ func typeToJsonSchemaType(service string, columnType string) (dataType JsonType)
 }
 
 // buildAvroFields builds the avro schema fields
-func buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
+func buildAvroFields(table *assetsv1beta1.Table) (fields []AvroFields) {
 	service := table.GetResource().GetService()
 	schema := table.GetSchema()
 	if schema == nil {
@@ -290,7 +290,7 @@ func buildAvroFields(table *assetsv1beta1.Table) (fields []Fields) {
 			columnType = []AvroType{dataType, AvroTypeNull}
 		}
 
-		fields = append(fields, Fields{
+		fields = append(fields, AvroFields{
 			Name: column.Name,
 			Type: columnType,
 		})

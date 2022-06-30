@@ -176,7 +176,7 @@ func TestSink(t *testing.T) {
 				Schema: "https://json-schema.org/draft/2020-12/schema",
 				Title:  "stencil",
 				Type:   "object",
-				Properties: map[string]stencil.Property{
+				Properties: map[string]stencil.JsonProperty{
 					"id": {
 						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
 						Description: "It is the ID",
@@ -267,7 +267,7 @@ func TestSink(t *testing.T) {
 				Schema: "https://json-schema.org/draft/2020-12/schema",
 				Title:  "stencil",
 				Type:   "object",
-				Properties: map[string]stencil.Property{
+				Properties: map[string]stencil.JsonProperty{
 					"id": {
 						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
 						Description: "It is the ID",
@@ -332,7 +332,7 @@ func TestSink(t *testing.T) {
 				Schema: "https://json-schema.org/draft/2020-12/schema",
 				Title:  "stencil",
 				Type:   "object",
-				Properties: map[string]stencil.Property{
+				Properties: map[string]stencil.JsonProperty{
 					"id": {
 						Type:        []stencil.JsonType{stencil.JsonTypeNumber, stencil.JsonTypeNull},
 						Description: "It is the ID",
@@ -444,7 +444,7 @@ func TestSink(t *testing.T) {
 				Type:      "record",
 				Namespace: namespaceID,
 				Name:      "stencil",
-				Fields: []stencil.Fields{
+				Fields: []stencil.AvroFields{
 					{
 						Name: "id",
 						Type: []stencil.AvroType{stencil.AvroTypeInteger, stencil.AvroTypeNull},
@@ -528,7 +528,7 @@ func TestSink(t *testing.T) {
 				Type:      "record",
 				Namespace: namespaceID,
 				Name:      "stencil",
-				Fields: []stencil.Fields{
+				Fields: []stencil.AvroFields{
 					{
 						Name: "id",
 						Type: []stencil.AvroType{stencil.AvroTypeInteger, stencil.AvroTypeNull},

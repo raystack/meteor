@@ -25,26 +25,26 @@ const (
 )
 
 type JsonSchema struct {
-	Id         string              `json:"$id"`
-	Schema     string              `json:"$schema"`
-	Title      string              `json:"title"`
-	Type       string              `json:"type"`
-	Properties map[string]Property `json:"properties"`
+	Id         string                  `json:"$id"`
+	Schema     string                  `json:"$schema"`
+	Title      string                  `json:"title"`
+	Type       JsonType                `json:"type"`
+	Properties map[string]JsonProperty `json:"properties"`
 }
 
-type Property struct {
+type JsonProperty struct {
 	Type        []JsonType `json:"type"`
 	Description string     `json:"description"`
 }
 
 type AvroSchema struct {
-	Type      string   `json:"type"`
-	Namespace string   `json:"namespace"`
-	Name      string   `json:"name"`
-	Fields    []Fields `json:"fields"`
+	Type      string       `json:"type"`
+	Namespace string       `json:"namespace"`
+	Name      string       `json:"name"`
+	Fields    []AvroFields `json:"fields"`
 }
 
-type Fields struct {
+type AvroFields struct {
 	Name string      `json:"name"`
 	Type interface{} `json:"type"`
 }

@@ -12,7 +12,7 @@ sinks:
     namespace_id: test-namespace
     schema_id: example
     format: json
-    change_format: false
+    send_format_header: false
 ```
 
 ## Config Definition
@@ -23,7 +23,7 @@ sinks:
 | `namespace_id` | `string` | `myNamespace` | The namespace ID of the stencil service | *required* |
 |`schema_id` | `string` | `mySchmea` | The schema ID which will be created in the above-mentioned namespace | *required*|
 |`format` | `string` | `json` | The schema format in which data will sink to stencil | *optional*|
-|`change_format` | `bool` | `false` | If schema format needs to be changed. Suppose changing format from json to avro,
+|`send_format_header` | `bool` | `false` | If schema format needs to be changed. Suppose changing format from json to avro,
 provide below config value as true and schema format in format config. | *optional*|
 
 

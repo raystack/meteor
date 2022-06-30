@@ -61,7 +61,7 @@ sinks:
     namespace_id: myNamespace
     schema_id: mySchema
     format: json
-    change_format: false
+    send_format_header: false
 ```
 
 _**Notes**_

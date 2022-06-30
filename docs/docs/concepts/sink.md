@@ -58,7 +58,7 @@ sinks:
     namespace_id: myNamespace
     schema_id: mySchema
     format: json
-    change_format: false
+    send_format_header: false
 ```
 
 Upload metadata of a given schema `format` in the existing `namespace_id` present in Stencil. Request will be sent via HTTP to a given host.
