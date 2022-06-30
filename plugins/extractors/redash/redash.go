@@ -6,6 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -97,16 +98,23 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 // buildDashboard builds a dashboard from redash server
 func (e *Extractor) buildDashboard(dashboard Results) (data *assetsv1beta1.Dashboard, err error) {
+	dashboardUrn := models.DashboardURN("redash", e.config.BaseURL, fmt.Sprintf("dashboard/%d", dashboard.Id))
+
 	data = &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{
-			Urn:         fmt.Sprintf("redash.%v", dashboard.Name),
-			Name:        dashboard.Slug,
-			Service:     "redash",
-			Type:        "dashboard",
-			Url:         fmt.Sprintf("%s/%s", e.config.BaseURL, dashboard.Slug),
-			Description: fmt.Sprintf("ID: %v, version: %v", dashboard.Id, dashboard.Version),
+			Urn:     dashboardUrn,
+			Name:    dashboard.Name,
+			Service: "redash",
+			Type:    "dashboard",
 		},
 		Charts: nil,
+		Properties: &facetsv1beta1.Properties{
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				"user_id": dashboard.UserId,
+				"version": dashboard.Version,
+				"slug":    dashboard.Slug,
+			}),
+		},
 	}
 
 	return

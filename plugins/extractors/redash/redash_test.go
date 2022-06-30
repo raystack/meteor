@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package redash_test
 
 import (
@@ -8,11 +5,13 @@ import (
 	"fmt"
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/redash"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/odpf/meteor/test/utils"
+	util "github.com/odpf/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -55,29 +54,38 @@ func TestInit(t *testing.T) {
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
-
 		expectedData := []models.Record{
 			models.NewRecord(&assetsv1beta1.Dashboard{
 				Resource: &commonv1beta1.Resource{
-					Urn:         "redash.firstDashboard",
-					Name:        "new-dashboard-copy",
-					Service:     "redash",
-					Type:        "dashboard",
-					Url:         fmt.Sprintf("%s/new-dashboard-copy", testServer.URL),
-					Description: "ID: 421, version: 1",
+					Urn:     fmt.Sprintf("redash::%s/dashboard/421", testServer.URL),
+					Name:    "firstDashboard",
+					Service: "redash",
+					Type:    "dashboard",
 				},
 				Charts: nil,
+				Properties: &facetsv1beta1.Properties{
+					Attributes: util.TryParseMapToProto(map[string]interface{}{
+						"user_id": 1,
+						"version": 1,
+						"slug":    "new-dashboard-copy",
+					}),
+				},
 			}),
 			models.NewRecord(&assetsv1beta1.Dashboard{
 				Resource: &commonv1beta1.Resource{
-					Urn:         "redash.secondDashboard",
-					Name:        "test-dashboard-updated",
-					Service:     "redash",
-					Type:        "dashboard",
-					Url:         fmt.Sprintf("%s/test-dashboard-updated", testServer.URL),
-					Description: "ID: 634, version: 2",
+					Urn:     fmt.Sprintf("redash::%s/dashboard/634", testServer.URL),
+					Name:    "secondDashboard",
+					Service: "redash",
+					Type:    "dashboard",
 				},
 				Charts: nil,
+				Properties: &facetsv1beta1.Properties{
+					Attributes: util.TryParseMapToProto(map[string]interface{}{
+						"user_id": 1,
+						"version": 2,
+						"slug":    "test-dashboard-updated",
+					}),
+				},
 			}),
 		}
 
@@ -145,7 +153,7 @@ func NewTestServer() *httptest.Server {
 					{
 						"tags": [],
 						"is_archived": false,
-						"updated_at": "2022-06-29T10:29:14.343Z",
+						"updated_at": "2022-06-29T10:29:26.865Z",
 						"is_favorite": false,
 						"user": {
 							"auth_type": "password",
@@ -170,7 +178,7 @@ func NewTestServer() *httptest.Server {
 						"id": 634,
 						"user_id": 1,
 						"name": "secondDashboard",
-						"created_at": "2022-06-29T10:29:14.343Z",
+						"created_at": "2022-06-29T10:29:26.865Z",
 						"slug": "test-dashboard-updated",
 						"version": 2,
 						"widgets": null,
