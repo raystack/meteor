@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins/sinks/stencil"
-	"io/ioutil"
-	"net/http"
-	"testing"
 
 	"github.com/odpf/meteor/plugins"
 	testUtils "github.com/odpf/meteor/test/utils"
@@ -23,12 +24,8 @@ import (
 var (
 	host        = "https://stencil.com"
 	namespaceID = "test-namespace"
-	schemaID    = "schema-name"
-)
-
-// sample metadata
-var (
-	url = fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, schemaID)
+	tableURN    = "test-table-urn"
+	url         = fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, tableURN)
 )
 
 func TestInit(t *testing.T) {
@@ -37,7 +34,6 @@ func TestInit(t *testing.T) {
 			{
 				"host":         "",
 				"namespace_id": "",
-				"schema_id":    "",
 				"format":       "",
 			},
 		}
@@ -58,7 +54,7 @@ func TestSink(t *testing.T) {
 
 		errMessage := "error sending data: stencil returns 404: {\"code\": 0,\"message\": \"string\",\"details\": [{\"typeUrl\": \"string\",\"value\": \"string\"}]}"
 		// setup mock client
-		url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, schemaID)
+		url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, tableURN)
 		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.JsonSchema{})
 		client.SetupResponse(404, stencilError)
 		ctx := context.TODO()
@@ -67,14 +63,13 @@ func TestSink(t *testing.T) {
 		err := stencilSink.Init(ctx, map[string]interface{}{
 			"host":         host,
 			"namespace_id": namespaceID,
-			"schema_id":    schemaID,
 			"format":       "json",
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{}}
+		data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{Urn: tableURN}}
 		err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, errMessage, err.Error())
 	})
@@ -82,7 +77,7 @@ func TestSink(t *testing.T) {
 	t.Run("should return RetryError if stencil returns certain status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
-				url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, schemaID)
+				url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", host, namespaceID, tableURN)
 				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPost, url, stencil.JsonSchema{})
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
@@ -91,14 +86,13 @@ func TestSink(t *testing.T) {
 				err := stencilSink.Init(ctx, map[string]interface{}{
 					"host":         host,
 					"namespace_id": namespaceID,
-					"schema_id":    schemaID,
 					"format":       "json",
 				})
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{}}
+				data := &assetsv1beta1.Table{Resource: &commonv1beta1.Resource{Urn: tableURN}}
 				err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
@@ -115,8 +109,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request from json schema to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
-					Name:    "stencil",
+					Urn:     tableURN,
+					Name:    "table-name",
 					Service: "bigquery",
 				},
 				Schema: &facetsv1beta1.Columns{
@@ -168,13 +162,12 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
-				"schema_id":    schemaID,
 				"format":       "json",
 			},
 			expected: stencil.JsonSchema{
-				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Id:     fmt.Sprintf("%s.json", tableURN),
 				Schema: "https://json-schema.org/draft/2020-12/schema",
-				Title:  "stencil",
+				Title:  "table-name",
 				Type:   "object",
 				Properties: map[string]stencil.JsonProperty{
 					"id": {
@@ -212,8 +205,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request from json schema to stencil when postgres is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
-					Name:    "stencil",
+					Urn:     tableURN,
+					Name:    "table-name",
 					Service: "postgres",
 				},
 				Schema: &facetsv1beta1.Columns{
@@ -259,13 +252,12 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
-				"schema_id":    schemaID,
 				"format":       "json",
 			},
 			expected: stencil.JsonSchema{
-				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Id:     fmt.Sprintf("%s.json", tableURN),
 				Schema: "https://json-schema.org/draft/2020-12/schema",
-				Title:  "stencil",
+				Title:  "table-name",
 				Type:   "object",
 				Properties: map[string]stencil.JsonProperty{
 					"id": {
@@ -299,8 +291,8 @@ func TestSink(t *testing.T) {
 			description: "should return correct schema request with valid config",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Urn:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
-					Name:    "stencil",
+					Urn:     tableURN,
+					Name:    "table-name",
 					Service: "bigquery",
 				},
 				Schema: &facetsv1beta1.Columns{
@@ -321,16 +313,14 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":          host,
-				"namespace_id":  namespaceID,
-				"schema_id":     schemaID,
-				"format":        "json",
-				"change_format": true,
+				"host":         host,
+				"namespace_id": namespaceID,
+				"format":       "json",
 			},
 			expected: stencil.JsonSchema{
-				Id:     fmt.Sprintf("%s/%s.%s.json", host, namespaceID, schemaID),
+				Id:     fmt.Sprintf("%s.json", tableURN),
 				Schema: "https://json-schema.org/draft/2020-12/schema",
-				Title:  "stencil",
+				Title:  "table-name",
 				Type:   "object",
 				Properties: map[string]stencil.JsonProperty{
 					"id": {
@@ -357,7 +347,7 @@ func TestSink(t *testing.T) {
 			}
 
 			client := newMockHTTPClient(tc.config, http.MethodPost, url, payload)
-			client.SetupResponse(200, "")
+			client.SetupResponse(http.StatusCreated, "")
 			ctx := context.TODO()
 
 			stencilSink := stencil.New(client, testUtils.Logger)
@@ -383,7 +373,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request from avro schema to stencil when bigquery is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Name:    "stencil",
+					Urn:     tableURN,
+					Name:    "table-name",
 					Type:    "table",
 					Service: "bigquery",
 				},
@@ -434,16 +425,14 @@ func TestSink(t *testing.T) {
 				},
 			},
 			config: map[string]interface{}{
-				"host":          host,
-				"namespace_id":  namespaceID,
-				"schema_id":     schemaID,
-				"format":        "avro",
-				"change_format": true,
+				"host":         host,
+				"namespace_id": namespaceID,
+				"format":       "avro",
 			},
 			expected: stencil.AvroSchema{
 				Type:      "record",
 				Namespace: namespaceID,
-				Name:      "stencil",
+				Name:      "table-name",
 				Fields: []stencil.AvroFields{
 					{
 						Name: "id",
@@ -480,7 +469,8 @@ func TestSink(t *testing.T) {
 			description: "should create the right request to stencil when postgres is the service",
 			data: &assetsv1beta1.Table{
 				Resource: &commonv1beta1.Resource{
-					Name:    "stencil",
+					Urn:     tableURN,
+					Name:    "table-name",
 					Type:    "table",
 					Service: "postgres",
 				},
@@ -521,13 +511,13 @@ func TestSink(t *testing.T) {
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
-				"schema_id":    schemaID,
+				"schema_id":    tableURN,
 				"format":       "avro",
 			},
 			expected: stencil.AvroSchema{
 				Type:      "record",
 				Namespace: namespaceID,
-				Name:      "stencil",
+				Name:      "table-name",
 				Fields: []stencil.AvroFields{
 					{
 						Name: "id",
@@ -564,7 +554,7 @@ func TestSink(t *testing.T) {
 			}
 
 			client := newMockHTTPClient(tc.config, http.MethodPost, url, payload)
-			client.SetupResponse(200, "")
+			client.SetupResponse(http.StatusCreated, "")
 			ctx := context.TODO()
 
 			stencilSink := stencil.New(client, testUtils.Logger)
