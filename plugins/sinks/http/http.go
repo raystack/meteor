@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,8 +22,10 @@ import (
 var summary string
 
 type Config struct {
-	URL     string            `mapstructure:"url" validate:"required"`
-	Headers map[string]string `mapstructure:"headers"`
+	URL          string            `mapstructure:"url" validate:"required"`
+	Headers      map[string]string `mapstructure:"headers"`
+	Method       string            `mapstructure:"method" default:"PATCH"`
+	Success_Code int               `mapstructure:"success_code" default:"200"`
 }
 
 var sampleConfig = `
@@ -58,14 +61,13 @@ func (s *Sink) Info() plugins.Info {
 }
 
 func (s *Sink) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return utils.BuildConfig(configMap, &s.config)
 }
 
 func (s *Sink) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	if err = utils.BuildConfig(configMap, &s.config); err != nil {
-		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink}
+	if err = s.Validate(configMap); err != nil {
+		return plugins.InvalidConfigError{Type: plugins.PluginTypeSink, PluginName: "http"}
 	}
-
 	return
 }
 
@@ -73,8 +75,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
 		metadata := record.Data()
 		s.logger.Info("sinking record to http", "record", metadata.GetResource().Urn)
-
-		payload, err := s.buildPayload(metadata)
+		payload, err := json.Marshal(metadata)
 		if err != nil {
 			return errors.Wrap(err, "failed to build http payload")
 		}
@@ -92,7 +93,7 @@ func (s *Sink) Close() (err error) { return }
 
 func (s *Sink) send(payloadBytes []byte) (err error) {
 	// send request
-	req, err := http.NewRequest(http.MethodPatch, s.config.URL, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest(s.config.Method, s.config.URL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return
 	}
@@ -108,7 +109,7 @@ func (s *Sink) send(payloadBytes []byte) (err error) {
 	if err != nil {
 		return
 	}
-	if res.StatusCode == 200 {
+	if res.StatusCode == s.config.Success_Code {
 		return
 	}
 
@@ -125,11 +126,6 @@ func (s *Sink) send(payloadBytes []byte) (err error) {
 	default:
 		return err
 	}
-}
-
-func (s *Sink) buildPayload(metadata models.Metadata) ([]byte, error) {
-	var payloadByte []byte
-	return payloadByte, nil
 }
 
 func init() {

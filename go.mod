@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.53
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
 	github.com/cenkalti/backoff/v4 v4.1.1
+	github.com/coreos/etcd v3.3.27+incompatible
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/dnaeon/go-vcr/v2 v2.0.1
 	github.com/elastic/go-elasticsearch v0.0.0
