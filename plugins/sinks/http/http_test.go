@@ -53,7 +53,6 @@ func TestSink(t *testing.T) {
 	t.Run("should return error for status code when not success", func(t *testing.T) {
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(404)
-			res.Write([]byte("body"))
 		}))
 		defer testServer.Close()
 
@@ -61,7 +60,12 @@ func TestSink(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer r.Stop()
+		defer func() {
+			err := r.Stop()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}()
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 		config := map[string]interface{}{
 			"success_code": success_code,
@@ -99,7 +103,6 @@ func TestSink(t *testing.T) {
 			t.Run(fmt.Sprintf("should retry for status code %d", code), func(t *testing.T) {
 				testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 					res.WriteHeader(code)
-					res.Write([]byte("body"))
 				}))
 				defer testServer.Close()
 
@@ -107,7 +110,12 @@ func TestSink(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer r.Stop()
+				defer func() {
+					err := r.Stop()
+					if err != nil {
+						t.Fatal(err)
+					}
+				}()
 				httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 				config := map[string]interface{}{
 					"success_code": success_code,
@@ -130,14 +138,18 @@ func TestSink(t *testing.T) {
 	t.Run("should return no error for correct status code in response", func(t *testing.T) {
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(success_code)
-			res.Write([]byte("body"))
 		}))
 		defer testServer.Close()
 		r, err := recorder.New("fixtures/response")
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer r.Stop()
+		defer func() {
+			err := r.Stop()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}()
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 		config := map[string]interface{}{
 			"success_code": success_code,
