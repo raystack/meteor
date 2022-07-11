@@ -42,7 +42,7 @@ Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/
 
 ```sh
 # Install meteor (requires homebrew installed)
-$ brew install odpf/taps/meteor
+$ brew install odpf/tap/meteor
 
 # Upgrade meteor (requires homebrew installed)
 $ brew upgrade meteor

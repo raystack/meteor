@@ -312,6 +312,10 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (previe
 			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())
 			return
 		}
+		// sanitize unicode sequence
+		// replace unicode null characters with "null" string to ensure downstream would not have issues dealing with unicode null characters
+		jsonString := strings.ReplaceAll(string(jsonBytes), "\\u0000", "null")
+		jsonBytes = []byte(jsonString)
 		err = json.Unmarshal(jsonBytes, &temp)
 		if err != nil {
 			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())

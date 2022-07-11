@@ -46,8 +46,22 @@ sinks:
         path: "./dir/sample.yaml"
         format: "yaml"
 ```
-
 Sinks metadata to a file in `json/yaml` format as per the config defined.
+
+* **Stencil**
+
+```yaml
+sinks:
+  name: stencil
+  config:
+    host: https://stencil.com
+    namespace_id: myNamespace
+    schema_id: mySchema
+    format: json
+    send_format_header: false
+```
+
+Upload metadata of a given schema `format` in the existing `namespace_id` present in Stencil. Request will be sent via HTTP to a given host.
 
 ## Upcoming sinks
 
