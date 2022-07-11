@@ -87,27 +87,24 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.runDuration,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
-			recordCount,
 			recipe.Source.Name,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.run,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
-			recordCount,
 			recipe.Source.Name,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.runRecordCount,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"false",
-			recordCount,
 			recipe.Source.Name,
 		)
 
@@ -118,7 +115,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: false})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -131,27 +128,24 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		duration := 100
 		recordCount := 2
 		timingMetric := fmt.Sprintf(
-			"%s.runDuration,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.runDuration,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
-			recordCount,
 			recipe.Source.Name,
 		)
 		incrementMetric := fmt.Sprintf(
-			"%s.run,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.run,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
-			recordCount,
 			recipe.Source.Name,
 		)
 		recordIncrementMetric := fmt.Sprintf(
-			"%s.runRecordCount,name=%s,success=%s,records=%d,extractor=%s",
+			"%s.runRecordCount,name=%s,success=%s,extractor=%s",
 			statsdPrefix,
 			recipe.Name,
 			"true",
-			recordCount,
 			recipe.Source.Name,
 		)
 
@@ -162,7 +156,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: 2, Success: true})
+		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: true})
 	})
 }
 
