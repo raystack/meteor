@@ -5,8 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/alecthomas/assert"
@@ -51,11 +49,6 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should return error for status code when not success", func(t *testing.T) {
-		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(404)
-		}))
-		defer testServer.Close()
-
 		r, err := recorder.New(fmt.Sprintf("fixtures/response_%d", 404))
 		if err != nil {
 			t.Fatal(err)
@@ -69,7 +62,7 @@ func TestSink(t *testing.T) {
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 		config := map[string]interface{}{
 			"success_code": success_code,
-			"url":          testServer.URL,
+			"url":          "http://127.0.0.1:54927",
 			"method":       "PATCH",
 			"headers": map[string]string{
 				"Content-Type": "application/json",
@@ -91,7 +84,7 @@ func TestSink(t *testing.T) {
 
 		// change value of method in config
 		config["method"] = "RANDOM"
-		config["url"] = testServer.URL
+		config["url"] = "http://127.0.0.1:54927"
 		err = httpSink.Init(context.TODO(), config)
 		assert.NoError(t, err)
 		err = httpSink.Sink(context.TODO(), getExpectedVal())
@@ -99,13 +92,9 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should return retry error for error code 5xx", func(t *testing.T) {
+		port := 54931
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("should retry for status code %d", code), func(t *testing.T) {
-				testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-					res.WriteHeader(code)
-				}))
-				defer testServer.Close()
-
 				r, err := recorder.New(fmt.Sprintf("fixtures/response_%d", code))
 				if err != nil {
 					t.Fatal(err)
@@ -119,7 +108,7 @@ func TestSink(t *testing.T) {
 				httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 				config := map[string]interface{}{
 					"success_code": success_code,
-					"url":          testServer.URL,
+					"url":          fmt.Sprintf("http://127.0.0.1:%d", port),
 					"method":       "POST",
 					"headers": map[string]string{
 						"Content-Type": "application/json",
@@ -131,15 +120,12 @@ func TestSink(t *testing.T) {
 				defer httpSink.Close()
 				err = httpSink.Sink(context.TODO(), getExpectedVal())
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
+				port += 2
 			})
 		}
 	})
 
 	t.Run("should return no error for correct status code in response", func(t *testing.T) {
-		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(success_code)
-		}))
-		defer testServer.Close()
 		r, err := recorder.New("fixtures/response")
 		if err != nil {
 			t.Fatal(err)
@@ -153,7 +139,7 @@ func TestSink(t *testing.T) {
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
 		config := map[string]interface{}{
 			"success_code": success_code,
-			"url":          testServer.URL,
+			"url":          "http://127.0.0.1:54943",
 			"method":       "POST",
 			"headers": map[string]string{
 				"Content-Type": "application/json",
@@ -166,9 +152,6 @@ func TestSink(t *testing.T) {
 		err = httpSink.Sink(context.TODO(), getExpectedVal())
 		assert.NoError(t, err)
 	})
-
-	err := os.RemoveAll("fixtures")
-	assert.NoError(t, err)
 }
 
 func getExpectedVal() []models.Record {

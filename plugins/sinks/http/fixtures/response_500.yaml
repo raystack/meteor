@@ -1,0 +1,23 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"resource":{"urn":"elasticsearch.index1","name":"index1","type":"table"},"profile":{"total_rows":1},"schema":{"columns":[{"name":"SomeInt","data_type":"long"},{"name":"SomeStr","data_type":"text"}]}}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+    url: http://127.0.0.1:54931
+    method: POST
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 11 Jul 2022 09:32:21 GMT
+    status: 500 Internal Server Error
+    code: 500
+    duration: 430.132µs
