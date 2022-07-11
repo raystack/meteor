@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - main
+      - fix-build-worflow
 
 jobs:
   build:

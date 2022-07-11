@@ -43,7 +43,7 @@ builds:
       - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
       - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
     goos: [windows]
-    goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
+    goarch: [amd64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
       - CGO_ENABLED=0
 
@@ -90,7 +90,7 @@ brews:
     description: "Metadata collection tool."
     tap:
       owner: odpf
-      name: homebrew-taps
+      name: homebrew-tap
     license: "Apache 2.0"
     folder: Formula
 
