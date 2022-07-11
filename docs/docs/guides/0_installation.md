@@ -6,7 +6,7 @@ Meteor can be installed currently by one of the following ways:
 
 ```sh
 # install meteor (requires homebrew installed)
-$ brew install odpf/taps/meteor
+$ brew install odpf/tap/meteor
 
 # Get info about meteor
 $ meteor
