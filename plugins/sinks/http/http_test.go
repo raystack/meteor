@@ -42,7 +42,8 @@ func TestSink(t *testing.T) {
 	t.Run("should return no error for valid config, without optional values", func(t *testing.T) {
 		httpSink := h.New(&http.Client{}, testutils.Logger)
 		config := map[string]interface{}{
-			"url": "http://sitename.com",
+			"url":    "http://sitename.com",
+			"method": "POST",
 		}
 		err := httpSink.Init(context.TODO(), config)
 		assert.NoError(t, err)

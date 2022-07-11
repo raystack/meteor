@@ -46,7 +46,23 @@ sinks:
         path: "./dir/sample.yaml"
         format: "yaml"
 ```
+
 Sinks metadata to a file in `json/yaml` format as per the config defined.
+
+* **http**
+
+```yaml
+sinks:
+  name: http
+  config:
+    method: POST
+    success_code: 200
+    url: https://compass.com/v1beta1/asset
+    headers:
+      Header-1: value11,value12
+```
+
+Sinks metadata to a http destination as per the config defined.
 
 * **Stencil**
 

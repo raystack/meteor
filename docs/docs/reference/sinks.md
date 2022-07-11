@@ -47,6 +47,23 @@ sinks:
         format: "yaml"
 ```
 
+## http
+
+`http`
+
+Sinks metadata to a http destination as per the config defined.
+
+```yaml
+sinks:
+  name: http
+  config:
+    method: POST
+    success_code: 200
+    url: https://compass.com/v1beta1/asset
+    headers:
+      Header-1: value11,value12
+```
+
 ## Stencil
 
 `stencil`

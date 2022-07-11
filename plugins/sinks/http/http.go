@@ -22,10 +22,10 @@ import (
 var summary string
 
 type Config struct {
-	URL          string            `mapstructure:"url" validate:"required"`
-	Headers      map[string]string `mapstructure:"headers"`
-	Method       string            `mapstructure:"method" default:"PATCH"`
-	Success_Code int               `mapstructure:"success_code" default:"200"`
+	URL         string            `mapstructure:"url" validate:"required"`
+	Headers     map[string]string `mapstructure:"headers"`
+	Method      string            `mapstructure:"method" validate:"required"`
+	SuccessCode int               `mapstructure:"success_code" default:"200"`
 }
 
 var sampleConfig = `
@@ -109,7 +109,7 @@ func (s *Sink) send(payloadBytes []byte) (err error) {
 	if err != nil {
 		return
 	}
-	if res.StatusCode == s.config.Success_Code {
+	if res.StatusCode == s.config.SuccessCode {
 		return
 	}
 
