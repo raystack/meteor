@@ -104,7 +104,7 @@ func TestSink(t *testing.T) {
 
 	successJsonTestCases := []struct {
 		description string
-		data        *assetsv1beta1.Table
+		data        *v1beta2.Asset
 		config      map[string]interface{}
 		expected    stencil.JsonSchema
 	}{
@@ -368,7 +368,7 @@ func TestSink(t *testing.T) {
 
 	successAvroTestCases := []struct {
 		description string
-		data        *assetsv1beta1.Table
+		data        *v1beta2.Asset
 		config      map[string]interface{}
 		expected    stencil.AvroSchema
 	}{
