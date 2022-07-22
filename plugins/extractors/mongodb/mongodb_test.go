@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/test/utils"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mongodb"
@@ -123,7 +123,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(), emitter.Get())
+		assert.Equal(t, getExpected(t), emitter.Get())
 	})
 }
 
@@ -164,40 +164,50 @@ func createCollection(ctx context.Context, collectionName string, data []interfa
 	return
 }
 
-func getExpected() []models.Record {
+func getExpected(t *testing.T) []models.Record {
+	data1, err := anypb.New(&v1beta2.Table{
+		Profile: &v1beta2.TableProfile{
+			TotalRows: 3,
+		},
+	})
+	if err != nil {
+		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+	}
+	data2, err := anypb.New(&v1beta2.Table{
+		Profile: &v1beta2.TableProfile{
+			TotalRows: 2,
+		},
+	})
+	if err != nil {
+		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+	}
+	data3, err := anypb.New(&v1beta2.Table{
+		Profile: &v1beta2.TableProfile{
+			TotalRows: 1,
+		},
+	})
+	if err != nil {
+		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+	}
+
 	return []models.Record{
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".connections",
-				Name:    "connections",
-				Service: "mongodb",
-				Type:    "table",
-			},
-			Profile: &assetsv1beta1.TableProfile{
-				TotalRows: 3,
-			},
+		models.NewRecord(&v1beta2.Asset{
+			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".connections",
+			Name: "connections",
+			Type: "table",
+			Data: data1,
 		}),
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".posts",
-				Name:    "posts",
-				Service: "mongodb",
-				Type:    "table",
-			},
-			Profile: &assetsv1beta1.TableProfile{
-				TotalRows: 2,
-			},
+		models.NewRecord(&v1beta2.Asset{
+			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".posts",
+			Name: "posts",
+			Type: "table",
+			Data: data2,
 		}),
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".stats",
-				Name:    "stats",
-				Service: "mongodb",
-				Type:    "table",
-			},
-			Profile: &assetsv1beta1.TableProfile{
-				TotalRows: 1,
-			},
+		models.NewRecord(&v1beta2.Asset{
+			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".stats",
+			Name: "stats",
+			Type: "table",
+			Data: data3,
 		}),
 	}
 }

@@ -7,9 +7,10 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -132,17 +133,21 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		err = errors.Wrap(err, "failed to fetch total no of rows")
 		return
 	}
-
-	table = &assetsv1beta1.Table{
-		Resource: &commonv1beta1.Resource{
-			Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
-			Name:    collectionName,
-			Service: "mongodb",
-			Type:    "table",
-		},
-		Profile: &assetsv1beta1.TableProfile{
+	data, err := anypb.New(&v1beta2.Table{
+		Profile: &v1beta2.TableProfile{
 			TotalRows: totalRows,
 		},
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build Any struct")
+	}
+	//
+	table = &v1beta2.Asset{
+		Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
+		Name: collectionName,
+		Service: "mongodb",
+		Type: "table",
+		Data: data,
 	}
 
 	return
