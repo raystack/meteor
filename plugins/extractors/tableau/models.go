@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	"github.com/odpf/meteor/plugins"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/pkg/errors"
 )
 
@@ -75,7 +74,7 @@ type Sheet struct {
 
 // https://help.tableau.com/current/api/metadata_api/en-us/docs/meta_api_model.html
 type DatabaseInterface interface {
-	CreateResource(tableInfo Table) (resource *commonv1beta1.Resource)
+	CreateResource(tableInfo Table) (resource *v1beta2.Resource)
 }
 
 type Database map[string]interface{}
@@ -107,7 +106,7 @@ func parseBQTableFullName(fullName string) (splittedFN []string, err error) {
 	return
 }
 
-func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *commonv1beta1.Resource) {
+func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
 	source := mapConnectionTypeToSource(dbs.ConnectionType)
 
 	var urn string
@@ -127,7 +126,7 @@ func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *commonv1be
 		host := fmt.Sprintf("%s:%d", dbs.HostName, dbs.Port)
 		urn = models.NewURN(source, host, "table", fmt.Sprintf("%s.%s", dbs.Name, tableInfo.Name))
 	}
-	resource = &commonv1beta1.Resource{
+	resource = &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "table",
 		Service: source,
@@ -146,10 +145,10 @@ type CloudFile struct {
 	RequestURL     string `json:"requestUrl"`
 }
 
-func (cf *CloudFile) CreateResource(tableInfo Table) (resource *commonv1beta1.Resource) {
+func (cf *CloudFile) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
 	source := mapConnectionTypeToSource(cf.ConnectionType)
 	urn := models.NewURN(source, cf.Provider, "bucket", fmt.Sprintf("%s/%s", cf.Name, tableInfo.Name))
-	resource = &commonv1beta1.Resource{
+	resource = &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "bucket", // TODO need to check what would be the appropriate type for this
 		Service: source,
@@ -165,10 +164,10 @@ type File struct {
 	FilePath       string `json:"filePath"`
 }
 
-func (f *File) CreateResource(tableInfo Table) (resource *commonv1beta1.Resource) {
+func (f *File) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
 	source := mapConnectionTypeToSource(f.ConnectionType)
 	urn := models.NewURN(source, f.FilePath, "bucket", fmt.Sprintf("%s.%s", f.Name, tableInfo.Name))
-	resource = &commonv1beta1.Resource{
+	resource = &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "bucket", // TODO need to check what would be the appropriate type for this
 		Service: source,
@@ -184,10 +183,10 @@ type WebDataConnector struct {
 	ConnectorURL   string `json:"connectorUrl"`
 }
 
-func (wdc *WebDataConnector) CreateResource(tableInfo Table) (resource *commonv1beta1.Resource) {
+func (wdc *WebDataConnector) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
 	source := mapConnectionTypeToSource(wdc.ConnectionType)
 	urn := models.NewURN(source, wdc.ConnectorURL, "table", fmt.Sprintf("%s.%s", wdc.Name, tableInfo.Name))
-	resource = &commonv1beta1.Resource{
+	resource = &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "table", // TODO need to check what would be the appropriate type for this
 		Service: source,

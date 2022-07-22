@@ -1,18 +1,14 @@
-//go:build plugins
-// +build plugins
-
 package redash_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/redash"
@@ -20,6 +16,7 @@ import (
 	"github.com/odpf/meteor/test/utils"
 	util "github.com/odpf/meteor/utils"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var testServer *httptest.Server
@@ -62,38 +59,35 @@ func TestInit(t *testing.T) {
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
+		data, err := anypb.New(&v1beta2.Dashboard{})
+		if err != nil {
+			err = fmt.Errorf("error creating Any struct: %w", err)
+			t.Fatal(err)
+		}
 		expectedData := []models.Record{
-			models.NewRecord(&assetsv1beta1.Dashboard{
-				Resource: &commonv1beta1.Resource{
-					Urn:     "urn:redash:test-redash:dashboard:421",
-					Name:    "firstDashboard",
-					Service: "redash",
-					Type:    "dashboard",
-				},
-				Charts: nil,
-				Properties: &facetsv1beta1.Properties{
-					Attributes: util.TryParseMapToProto(map[string]interface{}{
-						"user_id": 1,
-						"version": 1,
-						"slug":    "new-dashboard-copy",
-					}),
-				},
+			models.NewRecord(&v1beta2.Asset{
+				Urn:     "urn:redash:test-redash:dashboard:421",
+				Name:    "firstDashboard",
+				Service: "redash",
+				Type:    "dashboard",
+				Data:    data,
+				Attributes: util.TryParseMapToProto(map[string]interface{}{
+					"user_id": 1,
+					"version": 1,
+					"slug":    "new-dashboard-copy",
+				}),
 			}),
-			models.NewRecord(&assetsv1beta1.Dashboard{
-				Resource: &commonv1beta1.Resource{
-					Urn:     "urn:redash:test-redash:dashboard:634",
-					Name:    "secondDashboard",
-					Service: "redash",
-					Type:    "dashboard",
-				},
-				Charts: nil,
-				Properties: &facetsv1beta1.Properties{
-					Attributes: util.TryParseMapToProto(map[string]interface{}{
-						"user_id": 1,
-						"version": 2,
-						"slug":    "test-dashboard-updated",
-					}),
-				},
+			models.NewRecord(&v1beta2.Asset{
+				Urn:     "urn:redash:test-redash:dashboard:634",
+				Name:    "secondDashboard",
+				Service: "redash",
+				Type:    "dashboard",
+				Data:    data,
+				Attributes: util.TryParseMapToProto(map[string]interface{}{
+					"user_id": 1,
+					"version": 2,
+					"slug":    "test-dashboard-updated",
+				}),
 			}),
 		}
 
