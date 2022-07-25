@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -217,7 +216,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		Profile:       tableProfile,
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		e.logger.Warn("error creating Any struct", "error", err)
 	}
 
 	return &v1beta2.Asset{
