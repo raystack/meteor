@@ -15,9 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//go:embed README.md
-var summary string
-
 var validConfig = map[string]interface{}{
 	"path":   "./test-dir/sample.ndjson",
 	"format": "ndjson",

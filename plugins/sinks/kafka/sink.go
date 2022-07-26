@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	_ "embed"
-	"log"
 	"reflect"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 	kafka "github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
