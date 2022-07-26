@@ -13,3 +13,10 @@ func DashboardURN(service, host, id string) string {
 func JobURN(service, host, id string) string {
 	return fmt.Sprintf("%s::%s/%s", service, host, id)
 }
+
+func NewURN(service, scope, kind, id string) string {
+	return fmt.Sprintf(
+		"urn:%s:%s:%s:%s",
+		service, scope, kind, id,
+	)
+}
