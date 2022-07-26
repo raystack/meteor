@@ -29,7 +29,7 @@ func (p *BasePlugin) Validate(config Config) error {
 		return ErrEmptyURNScope
 	}
 
-	return buildConfig(config.RawConfig, &p.configRef)
+	return buildConfig(config.RawConfig, p.configRef)
 }
 
 // Init will be called once before running the plugin.
@@ -39,9 +39,4 @@ func (p *BasePlugin) Init(ctx context.Context, config Config) error {
 	p.RawConfig = config.RawConfig
 
 	return buildConfig(p.RawConfig, p.configRef)
-}
-
-// Close will be called once after everything is done
-func (p *BasePlugin) Close() error {
-	return nil
 }

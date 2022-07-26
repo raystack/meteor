@@ -61,11 +61,13 @@ func (node RecipeNode) toRecipe() (recipe Recipe, err error) {
 		err = fmt.Errorf("error building sinks :%w", err)
 		return
 	}
+
 	recipe = Recipe{
 		Name:    node.Name.Value,
 		Version: node.Version.Value,
 		Source: PluginRecipe{
 			Name:   node.Source.Name.Value,
+			Scope:  node.Source.Scope.Value,
 			Config: sourceConfig,
 			Node:   node.Source,
 		},

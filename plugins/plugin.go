@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/odpf/meteor/models"
-	"gopkg.in/yaml.v3"
 )
 
 // PluginType is the type of plugin.
@@ -63,13 +62,4 @@ type Syncer interface {
 
 	// Close will be called once after everything is done
 	Close() error
-}
-
-// ParseInfo parses the plugin's meta.yaml file and returns an plugin Info struct.
-func ParseInfo(text string) (info Info, err error) {
-	err = yaml.Unmarshal([]byte(text), &info)
-	if err != nil {
-		return
-	}
-	return
 }
