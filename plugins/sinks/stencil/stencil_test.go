@@ -42,7 +42,7 @@ func TestInit(t *testing.T) {
 				stencilSink := stencil.New(newMockHTTPClient(config, http.MethodPost, url, stencil.JsonSchema{}), testUtils.Logger)
 				err := stencilSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 
-				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
+				assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 			})
 		}
 	})

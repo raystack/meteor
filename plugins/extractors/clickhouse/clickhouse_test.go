@@ -88,11 +88,11 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
-		err := newExtractor().Init(context.TODO(), map[string]interface{}{
+		err := newExtractor().Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"invalid_config": "invalid_config_value",
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -100,9 +100,9 @@ func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"connection_url": fmt.Sprintf("tcp://%s?username=default&password=%s&debug=true", host, pass),
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -31,9 +31,9 @@ func TestInit(t *testing.T) {
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
 		}
-		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{RawConfig: config})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
 		config := map[string]interface{}{
@@ -46,7 +46,7 @@ func TestInit(t *testing.T) {
 		client := new(mockClient)
 		client.On("Authenticate", "sample-host", "user", "sample-password", "").Return(nil)
 
-		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 	})
 	t.Run("should allow session_id to replace username and password", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestInit(t *testing.T) {
 		client := new(mockClient)
 		client.On("Authenticate", "sample-host", "", "", "sample-session").Return(nil)
 
-		err := metabase.New(client, testutils.Logger).Init(context.TODO(), config)
+		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 	})
 }
@@ -81,12 +81,12 @@ func TestExtract(t *testing.T) {
 
 		emitter := mocks.NewEmitter()
 		extr := metabase.New(client, plugins.GetLog())
-		err := extr.Init(context.TODO(), map[string]interface{}{
+		err := extr.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"host":           host,
 			"username":       "test-user",
 			"password":       "test-pass",
 			"instance_label": "my-metabase",
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

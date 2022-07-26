@@ -24,10 +24,10 @@ import (
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := snowflake.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := snowflake.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"invalid_config": "invalid_config_value",
-		})
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		}})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -59,9 +59,9 @@ func TestExtract(t *testing.T) {
 			utils.Logger,
 			snowflake.WithHTTPTransport(r))
 
-		if err := newExtractor.Init(ctx, map[string]interface{}{
+		if err := newExtractor.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"connection_url": "testing:Snowtest0512@lrwfgiz-hi47152/SNOWFLAKE_SAMPLE_DATA",
-		}); err != nil {
+		}}); err != nil {
 			t.Fatal(err)
 		}
 

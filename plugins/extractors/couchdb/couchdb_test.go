@@ -88,11 +88,11 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
-		err := couchdb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := couchdb.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"invalid_config": "invalid_config_value",
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -101,9 +101,9 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		extr := couchdb.New(utils.Logger)
 
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"connection_url": fmt.Sprintf("http://%s:%s@%s/", user, pass, host),
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

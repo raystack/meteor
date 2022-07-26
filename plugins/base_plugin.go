@@ -38,7 +38,7 @@ func (p *BasePlugin) Init(ctx context.Context, config Config) error {
 	p.UrnScope = config.URNScope
 	p.RawConfig = config.RawConfig
 
-	return buildConfig(p.RawConfig, &p.configRef)
+	return buildConfig(p.RawConfig, p.configRef)
 }
 
 // Close will be called once after everything is done

@@ -36,21 +36,21 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
-		err := grafana.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := grafana.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"base_url": "",
 			"api_key":  "qwerty123",
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
-		err := grafana.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := grafana.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "",
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -122,10 +122,10 @@ func TestExtract(t *testing.T) {
 
 		ctx := context.TODO()
 		extractor := grafana.New(utils.Logger)
-		err := extractor.Init(ctx, map[string]interface{}{
+		err := extractor.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"base_url": testServer.URL,
 			"api_key":  "qwerty123",
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

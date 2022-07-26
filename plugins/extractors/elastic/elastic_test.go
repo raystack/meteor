@@ -105,21 +105,21 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Init(ctx, map[string]interface{}{
+		err := newExtractor().Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"password": "pass",
-		})
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		}})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
 func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
 		extr := newExtractor()
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host":     host,
 			"user":     user,
 			"password": pass,
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

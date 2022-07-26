@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/dnaeon/go-vcr/v2/recorder"
 	"github.com/odpf/meteor/models"
 	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
@@ -17,6 +16,7 @@ import (
 	h "github.com/odpf/meteor/plugins/sinks/http"
 	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 //go:embed README.md
@@ -36,7 +36,7 @@ func TestSink(t *testing.T) {
 			},
 		}
 		err := httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
-		assert.Equal(t, err, plugins.InvalidConfigError{Type: plugins.PluginTypeSink, PluginName: "http"})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
 	t.Run("should return no error for valid config, without optional values", func(t *testing.T) {

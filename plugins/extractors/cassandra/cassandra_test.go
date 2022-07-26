@@ -105,12 +105,12 @@ func TestEmptyHosts(t *testing.T) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
-		err := cassandra.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := cassandra.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"password": pass,
 			"host":     host,
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -120,12 +120,12 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		extr := cassandra.New(utils.Logger)
 
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"user_id":  user,
 			"password": pass,
 			"host":     host,
 			"port":     port,
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

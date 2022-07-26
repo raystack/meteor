@@ -37,9 +37,9 @@ func TestInit(t *testing.T) {
 		invalidConfig := map[string]interface{}{}
 		fileSink := f.New(testUtils.Logger)
 		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: invalidConfig})
-		assert.Equal(t, plugins.InvalidConfigError{Type: "sink", PluginName: "file"}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
-	t.Run("should return error on filename missing", func(t *testing.T) {
+	t.Run("should return error if file is not found ", func(t *testing.T) {
 		invalidConfig := map[string]interface{}{
 			"path":   "./some-dir",
 			"format": "ndjson",
@@ -81,11 +81,6 @@ func TestMain(t *testing.T) {
 		}
 		assert.Error(t, sinkInvalidPath(t, config))
 	})
-}
-
-func TestInfo(t *testing.T) {
-	info := f.New(testUtils.Logger).Info()
-	assert.Equal(t, summary, info.Summary)
 }
 
 func sinkInvalidPath(t *testing.T, config map[string]interface{}) error {

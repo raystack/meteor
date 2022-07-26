@@ -98,11 +98,11 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := newExtractor().Init(context.TODO(), map[string]interface{}{
+		err := newExtractor().Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"wrong-config": "wrong-value",
-		})
+		}})
 
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -110,10 +110,10 @@ func TestExtract(t *testing.T) {
 	t.Run("should emit list of topic metadata", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"broker": brokerHost,
 			"label":  "my-kafka-cluster",
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

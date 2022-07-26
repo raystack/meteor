@@ -24,8 +24,8 @@ func TestInit(t *testing.T) {
 		config := map[string]interface{}{}
 		err := csv.New(utils.Logger).Init(
 			context.TODO(),
-			config)
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+			plugins.Config{RawConfig: config})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -33,9 +33,9 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract data if path is a file", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := csv.New(utils.Logger)
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"path": "./testdata/test.csv",
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -68,9 +68,9 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := csv.New(utils.Logger)
-		err := extr.Init(ctx, map[string]interface{}{
+		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"path": "./testdata",
-		})
+		}})
 		if err != nil {
 			t.Fatal(err)
 		}

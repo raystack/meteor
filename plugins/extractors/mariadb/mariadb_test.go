@@ -7,6 +7,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"testing"
+
 	_ "github.com/go-sql-driver/mysql"
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
@@ -16,9 +20,6 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
-	"log"
-	"os"
-	"testing"
 )
 
 const (
@@ -79,10 +80,10 @@ func TestMain(m *testing.M) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := mariadb.New(utils.Logger).Init(context.TODO(), map[string]interface{}{
+		err := mariadb.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"invalid_config": "invalid_config_value",
-		})
-		assert.Equal(t, plugins.InvalidConfigError{}, err)
+		}})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
 
@@ -92,9 +93,9 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := mariadb.New(utils.Logger)
 
-		err := newExtractor.Init(ctx, map[string]interface{}{
+		err := newExtractor.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
-		})
+		}})
 		if err != nil {
 
 			t.Fatal(err)

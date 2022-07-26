@@ -44,7 +44,7 @@ func TestInit(t *testing.T) {
 				compassSink := compass.New(newMockHTTPClient(config, http.MethodPatch, url, compass.RequestPayload{}), testUtils.Logger)
 				err := compassSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 
-				assert.Equal(t, plugins.InvalidConfigError{Type: plugins.PluginTypeSink}, err)
+				assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 			})
 		}
 	})
