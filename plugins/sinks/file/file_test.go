@@ -11,6 +11,7 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	f "github.com/odpf/meteor/plugins/sinks/file"
+	testUtils "github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,8 +26,8 @@ var validConfig = map[string]interface{}{
 func TestValidate(t *testing.T) {
 	t.Run("should return error on invalid config", func(t *testing.T) {
 		invalidConfig := map[string]interface{}{}
-		fileSink := f.New()
-		err := fileSink.Validate(invalidConfig)
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Validate(plugins.Config{RawConfig: invalidConfig})
 		assert.Error(t, err)
 	})
 }
@@ -34,8 +35,8 @@ func TestValidate(t *testing.T) {
 func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
 		invalidConfig := map[string]interface{}{}
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), invalidConfig)
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: invalidConfig})
 		assert.Equal(t, plugins.InvalidConfigError{Type: "sink", PluginName: "file"}, err)
 	})
 	t.Run("should return error on filename missing", func(t *testing.T) {
@@ -43,13 +44,13 @@ func TestInit(t *testing.T) {
 			"path":   "./some-dir",
 			"format": "ndjson",
 		}
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), invalidConfig)
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: invalidConfig})
 		assert.Error(t, err)
 	})
 	t.Run("should return no error on valid config", func(t *testing.T) {
-		fileSink := f.New()
-		err := fileSink.Init(context.TODO(), validConfig)
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: validConfig})
 		assert.NoError(t, err)
 	})
 }
@@ -83,18 +84,18 @@ func TestMain(t *testing.T) {
 }
 
 func TestInfo(t *testing.T) {
-	info := f.New().Info()
+	info := f.New(testUtils.Logger).Info()
 	assert.Equal(t, summary, info.Summary)
 }
 
 func sinkInvalidPath(t *testing.T, config map[string]interface{}) error {
-	fileSink := f.New()
-	return fileSink.Init(context.TODO(), config)
+	fileSink := f.New(testUtils.Logger)
+	return fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 }
 
 func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
-	fileSink := f.New()
-	err := fileSink.Init(context.TODO(), config)
+	fileSink := f.New(testUtils.Logger)
+	err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 	assert.NoError(t, err)
 	err = fileSink.Sink(context.TODO(), getExpectedVal())
 	assert.NoError(t, err)

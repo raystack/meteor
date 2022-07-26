@@ -42,8 +42,16 @@ connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disabl
 exclude: testDB,secondaryDB
 identifier: my-postgres`
 
+var info = plugins.Info{
+	Description:  "Table metadata and metrics from Postgres SQL sever.",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"oss", "extractor"},
+}
+
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
+	plugins.BasePlugin
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
@@ -58,31 +66,18 @@ type Extractor struct {
 
 // New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
-	return &Extractor{
+	e := &Extractor{
 		logger: logger,
 	}
-}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
-// Info returns the brief information about the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Table metadata and metrics from Postgres SQL sever.",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"oss", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return e
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (err error) {
-	// Build and validate config received from recipe
-	if err := utils.BuildConfig(config, &e.config); err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	// build excluded database list

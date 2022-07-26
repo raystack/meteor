@@ -30,6 +30,13 @@ password: xxxxxxxxxx
 sitename: testdev550928
 `
 
+var info = plugins.Info{
+	Description:  "Dashboard list from Tableau server",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"oss", "extractor"},
+}
+
 // Config that holds a set of configuration for tableau extractor
 type Config struct {
 	Host       string `mapstructure:"host" validate:"required"`
@@ -45,6 +52,7 @@ type Config struct {
 // Extractor manages the extraction of data
 // from tableau server
 type Extractor struct {
+	plugins.BasePlugin
 	config     Config
 	logger     log.Logger
 	httpClient *http.Client
@@ -66,6 +74,7 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 	e := &Extractor{
 		logger: logger,
 	}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
 	for _, opt := range opts {
 		opt(e)
@@ -75,26 +84,9 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 	return e
 }
 
-// Info returns the brief information of the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Dashboard list from Tableau server",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"oss", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
-}
-
-func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	// build and validate config
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	err = e.client.Init(ctx, e.config)

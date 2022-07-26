@@ -29,6 +29,13 @@ instance_label: my-metabase
 user_id: meteor_tester
 password: meteor_pass_1234`
 
+var info = plugins.Info{
+	Description:  "Dashboard list from Metabase server.",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"oss", "extractor"},
+}
+
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
 	Host          string `mapstructure:"host" validate:"required"`
@@ -41,6 +48,7 @@ type Config struct {
 // Extractor manages the extraction of data
 // from the metabase server
 type Extractor struct {
+	plugins.BasePlugin
 	config Config
 	logger log.Logger
 	client Client
@@ -48,32 +56,18 @@ type Extractor struct {
 
 // New returns a pointer to an initialized Extractor Object
 func New(client Client, logger log.Logger) *Extractor {
-	return &Extractor{
+	e := &Extractor{
 		client: client,
 		logger: logger,
 	}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+
+	return e
 }
 
-// Info returns the brief information of the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Dashboard list from Metabase server.",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"oss", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
-}
-
-func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	// build and validate config
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	err = e.client.Authenticate(e.config.Host, e.config.Username, e.config.Password, e.config.SessionID)

@@ -16,7 +16,6 @@ import (
 
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	_ "github.com/sijms/go-ora/v2"
 )
@@ -31,8 +30,16 @@ type Config struct {
 var sampleConfig = `
 connection_url: oracle://username:passwd@localhost:1521/xe`
 
+var info = plugins.Info{
+	Description:  "Table metadata Oracle SQL Database.",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"oss", "extractor"},
+}
+
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
+	plugins.BasePlugin
 	logger log.Logger
 	config Config
 	db     *sql.DB
@@ -40,31 +47,18 @@ type Extractor struct {
 
 // New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
-	return &Extractor{
+	e := &Extractor{
 		logger: logger,
 	}
-}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
-// Info returns the brief information about the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Table metadata Oracle SQL Database.",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"oss", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return e
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config map[string]interface{}) (err error) {
-	// Build and validate config received from recipe
-	if err := utils.BuildConfig(config, &e.config); err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	// Create database connection

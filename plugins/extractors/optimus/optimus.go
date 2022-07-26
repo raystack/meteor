@@ -30,39 +30,35 @@ type Config struct {
 var sampleConfig = `
 host: optimus.com:80`
 
+var info = plugins.Info{
+	Description:  "Optimus' jobs metadata",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"optimus", "bigquery", "job", "extractor"},
+}
+
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
+	plugins.BasePlugin
 	logger log.Logger
 	config Config
 	client Client
 }
 
 func New(logger log.Logger, client Client) *Extractor {
-	return &Extractor{
+	e := &Extractor{
 		logger: logger,
 		client: client,
 	}
-}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
-// Info returns the detailed information about the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Optimus' jobs metadata",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"optimus", "bigquery", "job", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return e
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	if err := utils.BuildConfig(configMap, &e.config); err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	if err := e.client.Connect(ctx, e.config.Host, e.config.MaxSizeInMB); err != nil {

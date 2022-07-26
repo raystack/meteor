@@ -16,7 +16,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -50,9 +49,17 @@ service_account_json: |-
     "client_x509_cert_url": "xxxxxxx"
   }`
 
+var info = plugins.Info{
+	Description:  "Online file storage web service for storing and accessing data.",
+	SampleConfig: sampleConfig,
+	Summary:      summary,
+	Tags:         []string{"gcp", "extractor"},
+}
+
 // Extractor manages the extraction of data
 // from the google cloud storage
 type Extractor struct {
+	plugins.BasePlugin
 	client *storage.Client
 	logger log.Logger
 	config Config
@@ -60,32 +67,18 @@ type Extractor struct {
 
 // New returns a pointer to an initialized Extractor Object
 func New(logger log.Logger) *Extractor {
-	return &Extractor{
+	e := &Extractor{
 		logger: logger,
 	}
-}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
-// Info returns the brief information about the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Online file storage web service for storing and accessing data.",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"gcp", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return e
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	// build config
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	// create client

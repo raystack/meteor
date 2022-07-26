@@ -20,6 +20,7 @@ type RecipeNode struct {
 type PluginNode struct {
 	Name   yaml.Node            `json:"name" yaml:"name"`
 	Type   yaml.Node            `json:"type" yaml:"type"`
+	Scope  yaml.Node            `json:"scope" yaml:"scope"`
 	Config map[string]yaml.Node `json:"config" yaml:"config"`
 }
 

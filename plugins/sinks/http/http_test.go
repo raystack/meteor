@@ -35,7 +35,7 @@ func TestSink(t *testing.T) {
 				"Accept":       "application/json",
 			},
 		}
-		err := httpSink.Init(context.TODO(), config)
+		err := httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.Equal(t, err, plugins.InvalidConfigError{Type: plugins.PluginTypeSink, PluginName: "http"})
 	})
 
@@ -45,7 +45,7 @@ func TestSink(t *testing.T) {
 			"url":    "http://sitename.com",
 			"method": "POST",
 		}
-		err := httpSink.Init(context.TODO(), config)
+		err := httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 	})
 
@@ -70,7 +70,7 @@ func TestSink(t *testing.T) {
 				"Accept":       "application/json",
 			},
 		}
-		err = httpSink.Init(context.TODO(), config)
+		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		defer httpSink.Close()
 		err = httpSink.Sink(context.TODO(), getExpectedVal())
@@ -78,7 +78,7 @@ func TestSink(t *testing.T) {
 
 		// change value of url in config
 		config["url"] = "https://random-incorrect-url.odpf.com"
-		err = httpSink.Init(context.TODO(), config)
+		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		err = httpSink.Sink(context.TODO(), getExpectedVal())
 		assert.Error(t, err)
@@ -86,7 +86,7 @@ func TestSink(t *testing.T) {
 		// change value of method in config
 		config["method"] = "RANDOM"
 		config["url"] = "http://127.0.0.1:54927"
-		err = httpSink.Init(context.TODO(), config)
+		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		err = httpSink.Sink(context.TODO(), getExpectedVal())
 		assert.Error(t, err)
@@ -116,7 +116,7 @@ func TestSink(t *testing.T) {
 						"Accept":       "application/json",
 					},
 				}
-				err = httpSink.Init(context.TODO(), config)
+				err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 				assert.NoError(t, err)
 				defer httpSink.Close()
 				err = httpSink.Sink(context.TODO(), getExpectedVal())
@@ -147,7 +147,7 @@ func TestSink(t *testing.T) {
 				"Accept":       "application/json",
 			},
 		}
-		err = httpSink.Init(context.TODO(), config)
+		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		defer httpSink.Close()
 		err = httpSink.Sink(context.TODO(), getExpectedVal())

@@ -27,16 +27,21 @@ type Info struct {
 	Summary      string   `yaml:"summary"`
 }
 
+type Config struct {
+	URNScope  string
+	RawConfig map[string]interface{}
+}
+
 type Plugin interface {
 	// Info returns plugin's information.
 	Info() Info
 
-	// Validate checks if the given config is valid for the plugin.
-	Validate(config map[string]interface{}) error
+	// Validate checks if the given options is valid for the plugin.
+	Validate(config Config) error
 
 	// Init will be called once before running the plugin.
 	// This is where you want to initiate any client or test any connection to external service.
-	Init(ctx context.Context, config map[string]interface{}) error
+	Init(ctx context.Context, config Config) error
 }
 
 // Extractor is a plugin that extracts data from a source.

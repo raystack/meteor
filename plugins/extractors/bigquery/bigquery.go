@@ -59,8 +59,16 @@ service_account_json: |-
 collect_table_usage: false
 usage_period_in_day: 7`
 
+var info = plugins.Info{
+	Description:  "Big Query table metadata and metrics",
+	SampleConfig: sampleConfig,
+	Tags:         []string{"gcp", "table", "extractor"},
+	Summary:      summary,
+}
+
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
+	plugins.BasePlugin
 	logger    log.Logger
 	client    *bigquery.Client
 	config    Config
@@ -69,32 +77,20 @@ type Extractor struct {
 
 func New(logger log.Logger) *Extractor {
 	galc := auditlog.New(logger)
-	return &Extractor{
+
+	e := &Extractor{
 		logger:    logger,
 		galClient: galc,
 	}
-}
+	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
 
-// Info returns the detailed information about the extractor
-func (e *Extractor) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Big Query table metadata and metrics",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"gcp", "table", "extractor"},
-	}
-}
-
-// Validate validates the configuration of the extractor
-func (e *Extractor) Validate(configMap map[string]interface{}) (err error) {
-	return utils.BuildConfig(configMap, &Config{})
+	return e
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, configMap map[string]interface{}) (err error) {
-	err = utils.BuildConfig(configMap, &e.config)
-	if err != nil {
-		return plugins.InvalidConfigError{}
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	if err = e.BasePlugin.Init(ctx, config); err != nil {
+		return err
 	}
 
 	e.client, err = e.createClient(ctx)
