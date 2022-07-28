@@ -94,7 +94,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 // buildDashboard builds a dashboard from redash server
 func (e *Extractor) buildDashboard(dashboard Results) (data *assetsv1beta1.Dashboard, err error) {
-	dashboardUrn := models.DashboardURN("redash", e.config.BaseURL, fmt.Sprintf("dashboard/%d", dashboard.Id))
+	dashboardUrn := models.NewURN("redash", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.Id))
 
 	data = &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{

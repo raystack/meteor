@@ -135,9 +135,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  fmt.Sprintf("%s.%s", database, tableName),
-			Name: tableName,
-			Type: "table",
+			Urn:     models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
+			Name:    tableName,
+			Service: "mariadb",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

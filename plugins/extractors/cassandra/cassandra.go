@@ -32,6 +32,10 @@ var defaultKeyspaceList = []string{
 	"system_traces",
 }
 
+const (
+	service = "cassandra"
+)
+
 // Config holds the set of configuration for the cassandra extractor
 type Config struct {
 	UserID   string `mapstructure:"user_id" validate:"required"`
@@ -160,9 +164,10 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  fmt.Sprintf("%s.%s", keyspace, tableName),
-			Name: tableName,
-			Type: "table",
+			Urn:     models.NewURN(service, e.UrnScope, "table", fmt.Sprintf("%s.%s", keyspace, tableName)),
+			Name:    tableName,
+			Service: service,
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

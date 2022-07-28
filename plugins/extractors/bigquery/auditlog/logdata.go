@@ -1,7 +1,7 @@
 package auditlog
 
 import (
-	"github.com/odpf/meteor/models"
+	"github.com/odpf/meteor/plugins/extractors/bigquery/util"
 	"github.com/pkg/errors"
 	loggingpb "google.golang.org/genproto/googleapis/cloud/bigquery/logging/v1"
 )
@@ -19,7 +19,7 @@ func (ld *LogData) GetReferencedTablesURN() (refTablesURN []string) {
 		return
 	}
 	for _, rt := range stats.ReferencedTables {
-		tableURN := models.TableURN(serviceName, rt.ProjectId, rt.DatasetId, rt.TableId)
+		tableURN := util.TableURN(rt.ProjectId, rt.DatasetId, rt.TableId)
 		refTablesURN = append(refTablesURN, tableURN)
 	}
 	return

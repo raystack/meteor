@@ -135,7 +135,7 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 	}
 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
-	urn := models.JobURN(service, e.config.Host, jobID)
+	urn := models.NewURN(service, e.UrnScope, "job", jobID)
 	job = &assetsv1beta1.Job{
 		Resource: &commonv1beta1.Resource{
 			Urn:         urn,
@@ -255,7 +255,7 @@ func (e *Extractor) mapURN(optimusURN string) (tableURN string, err error) {
 	datasetID := datasetTableID[0] // "datasetB"
 	tableID := datasetTableID[1]   // "tableC"
 
-	return models.TableURN("bigquery", projectID, datasetID, tableID), nil
+	return plugins.BigQueryURN(projectID, datasetID, tableID), nil
 }
 
 // Register the extractor to catalog

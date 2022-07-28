@@ -2,12 +2,14 @@ package plugins
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
+	"github.com/odpf/meteor/models"
 )
 
 var validate *validator.Validate
@@ -51,4 +53,9 @@ func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	}
 
 	return err
+}
+
+func BigQueryURN(projectID, datasetID, tableID string) string {
+	fqn := fmt.Sprintf("%s:%s.%s", projectID, datasetID, tableID)
+	return models.NewURN("bigquery", projectID, "table", fqn)
 }

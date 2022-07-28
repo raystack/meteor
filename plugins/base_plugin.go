@@ -38,5 +38,5 @@ func (p *BasePlugin) Init(ctx context.Context, config Config) error {
 	p.UrnScope = config.URNScope
 	p.RawConfig = config.RawConfig
 
-	return buildConfig(p.RawConfig, p.configRef)
+	return p.Validate(config)
 }

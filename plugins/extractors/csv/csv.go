@@ -109,7 +109,7 @@ func (e *Extractor) buildTable(filePath string) (table *assetsv1beta1.Table, err
 	fileName := stat.Name()
 	table = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     fileName,
+			Urn:     models.NewURN("csv", e.UrnScope, "file", fileName),
 			Name:    fileName,
 			Service: "csv",
 			Type:    "table",

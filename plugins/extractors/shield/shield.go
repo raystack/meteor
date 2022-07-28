@@ -87,7 +87,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 		emit(models.NewRecord(&assetsv1beta1.User{
 			Resource: &commonv1beta1.Resource{
-				Urn:         fmt.Sprintf("%s::%s/%s", service, e.config.Host, user.GetId()),
+				Urn:         models.NewURN(service, e.UrnScope, "user", user.GetId()),
 				Name:        user.GetName(),
 				Service:     service,
 				Type:        "user",

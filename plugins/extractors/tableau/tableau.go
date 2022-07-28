@@ -3,7 +3,6 @@ package tableau
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	"net/http"
 
 	"github.com/odpf/meteor/models"
@@ -39,14 +38,13 @@ var info = plugins.Info{
 
 // Config that holds a set of configuration for tableau extractor
 type Config struct {
-	Host       string `mapstructure:"host" validate:"required"`
-	Version    string `mapstructure:"version" validate:"required"` // float as string
-	Identifier string `mapstructure:"identifier" validate:"required"`
-	Username   string `mapstructure:"username"`
-	Password   string `mapstructure:"password" validate:"required_with=Username"`
-	AuthToken  string `mapstructure:"auth_token" validate:"required_without=Username"`
-	SiteID     string `mapstructure:"site_id" validate:"required_without=Username"`
-	Sitename   string `mapstructure:"sitename"`
+	Host      string `mapstructure:"host" validate:"required"`
+	Version   string `mapstructure:"version" validate:"required"` // float as string
+	Username  string `mapstructure:"username"`
+	Password  string `mapstructure:"password" validate:"required_with=Username"`
+	AuthToken string `mapstructure:"auth_token" validate:"required_without=Username"`
+	SiteID    string `mapstructure:"site_id" validate:"required_without=Username"`
+	Sitename  string `mapstructure:"sitename"`
 }
 
 // Extractor manages the extraction of data
@@ -125,7 +123,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard, err error) {
 	lineages := e.buildLineage(wb.UpstreamTables)
-	dashboardURN := models.DashboardURN("tableau", e.config.Identifier, fmt.Sprintf("workbook/%s", wb.ID))
+	dashboardURN := models.NewURN("tableau", e.UrnScope, "workbook", wb.ID)
 	data = &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{
 			Urn:         dashboardURN,
@@ -166,7 +164,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (data *assetsv1beta1.Dashboard,
 
 func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *facetsv1beta1.Lineage) (charts []*assetsv1beta1.Chart) {
 	for _, sh := range wb.Sheets {
-		chartURN := models.DashboardURN("tableau", e.config.Identifier, fmt.Sprintf("sheet/%s", sh.ID))
+		chartURN := models.NewURN("tableau", e.UrnScope, "sheet", sh.ID)
 		charts = append(charts, &assetsv1beta1.Chart{
 			Urn:          chartURN,
 			Name:         sh.Name,

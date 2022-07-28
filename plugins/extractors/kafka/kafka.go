@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
-	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -29,12 +28,10 @@ var defaultTopics = map[string]byte{
 // Config holds the set of configuration for the kafka extractor
 type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
-	Label  string `mapstructure:"label" validate:"required"`
 }
 
 var sampleConfig = `
-broker: "localhost:9092"
-label: "my-kafka"`
+broker: "localhost:9092"`
 
 var info = plugins.Info{
 	Description:  "Topic list from Apache Kafka.",
@@ -118,7 +115,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 func (e *Extractor) buildTopic(topic string, numOfPartitions int) *assetsv1beta1.Topic {
 	return &assetsv1beta1.Topic{
 		Resource: &commonv1beta1.Resource{
-			Urn:     fmt.Sprintf("kafka::%s/%s", e.config.Label, topic),
+			Urn:     models.NewURN("kafka", e.UrnScope, "topic", topic),
 			Name:    topic,
 			Service: "kafka",
 			Type:    "topic",

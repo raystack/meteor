@@ -24,8 +24,6 @@ import (
 //go:embed README.md
 var summary string
 
-const metadataSource = "googlecloudstorage"
-
 // Config holds the set of configuration for the extractor
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
@@ -133,9 +131,9 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*assetsv1beta1.Blob) (bucket *assetsv1beta1.Bucket) {
 	bucket = &assetsv1beta1.Bucket{
 		Resource: &commonv1beta1.Resource{
-			Urn:     fmt.Sprintf("%s/%s", projectID, b.Name),
+			Urn:     models.NewURN("gcs", projectID, "bucket", b.Name),
 			Name:    b.Name,
-			Service: metadataSource,
+			Service: "gcs",
 			Type:    "bucket",
 		},
 		Location:    b.Location,
@@ -156,7 +154,7 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 
 func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *assetsv1beta1.Blob {
 	return &assetsv1beta1.Blob{
-		Urn:        fmt.Sprintf("%s/%s/%s", projectID, blob.Bucket, blob.Name),
+		Urn:        models.NewURN("gcs", projectID, "object", fmt.Sprintf("%s/%s", blob.Bucket, blob.Name)),
 		Name:       blob.Name,
 		Size:       blob.Size,
 		DeleteTime: timestamppb.New(blob.Deleted),

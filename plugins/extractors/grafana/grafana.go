@@ -95,7 +95,7 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 	}
 	return &assetsv1beta1.Dashboard{
 		Resource: &commonv1beta1.Resource{
-			Urn:         fmt.Sprintf("grafana.%s", dashboard.Dashboard.UID),
+			Urn:         models.NewURN("grafana", e.UrnScope, "dashboard", dashboard.Dashboard.UID),
 			Name:        dashboard.Meta.Slug,
 			Type:        "dashboard",
 			Service:     "grafana",
@@ -113,7 +113,7 @@ func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, 
 		rawQuery = panel.Targets[0].RawSQL
 	}
 	return assetsv1beta1.Chart{
-		Urn:             fmt.Sprintf("%s.%d", dashboardUID, panel.ID),
+		Urn:             models.NewURN("grafana", e.UrnScope, "panel", fmt.Sprintf("%s.%d", dashboardUID, panel.ID)),
 		Name:            panel.Title,
 		Type:            panel.Type,
 		Source:          "grafana",

@@ -30,9 +30,10 @@ import (
 )
 
 const (
-	host = "http://localhost:9200"
-	pass = "secret_pass"
-	user = "elastic_meteor"
+	host     = "http://localhost:9200"
+	pass     = "secret_pass"
+	user     = "elastic_meteor"
+	urnScope = "test-elasticsearch"
 )
 
 var (
@@ -105,9 +106,12 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
-		err := newExtractor().Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
-			"password": "pass",
-		}})
+		err := newExtractor().Init(ctx, plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"password": "pass",
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -115,11 +119,14 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
 		extr := newExtractor()
-		err := extr.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
-			"host":     host,
-			"user":     user,
-			"password": pass,
-		}})
+		err := extr.Init(ctx, plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"host":     host,
+				"user":     user,
+				"password": pass,
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -189,9 +196,10 @@ func getExpectedVal() []models.Record {
 	return []models.Record{
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "elasticsearch.index1",
-				Name: "index1",
-				Type: "table",
+				Urn:     "urn:elasticsearch:test-elasticsearch:index:index1",
+				Name:    "index1",
+				Service: "elasticsearch",
+				Type:    "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{
@@ -207,7 +215,7 @@ func getExpectedVal() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "elasticsearch.index2",
+				Urn:  "urn:elasticsearch:test-elasticsearch:index:.index2",
 				Name: "index2",
 				Type: "table",
 			},

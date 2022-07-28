@@ -134,9 +134,10 @@ func (e *Extractor) processTable(ctx context.Context, dbName string, docID strin
 	// push table to channel
 	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  fmt.Sprintf("%s.%s", dbName, docID),
-			Name: docID,
-			Type: "table",
+			Urn:     models.NewURN("couchdb", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, docID)),
+			Name:    docID,
+			Service: "couchdb",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

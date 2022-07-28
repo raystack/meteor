@@ -22,6 +22,10 @@ import (
 //go:embed README.md
 var summary string
 
+const (
+	service = "bigtable"
+)
+
 // Config holds the configurations for the bigtable extractor
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
@@ -120,9 +124,9 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err e
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
 				emit(models.NewRecord(&assetsv1beta1.Table{
 					Resource: &commonv1beta1.Resource{
-						Urn:     fmt.Sprintf("%s.%s.%s", e.config.ProjectID, instance, table),
+						Urn:     models.NewURN(service, e.config.ProjectID, "table", fmt.Sprintf("%s.%s", instance, table)),
 						Name:    table,
-						Service: "bigtable",
+						Service: service,
 						Type:    "table",
 					},
 					Properties: &facetsv1beta1.Properties{

@@ -3,6 +3,7 @@ package redshift
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -180,7 +181,7 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *a
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     models.TableURN("redshift", e.config.AWSRegion, dbName, tableName),
+			Urn:     models.NewURN("redshift", e.config.ClusterID, "table", fmt.Sprintf("%s.%s.%s", e.config.ClusterID, dbName, tableName)),
 			Name:    tableName,
 			Type:    "table",
 			Service: "redshift",

@@ -104,7 +104,7 @@ func (e *Extractor) buildDashboard(d Dashboard) (data *assetsv1beta1.Dashboard, 
 		return
 	}
 
-	dashboardUrn := models.DashboardURN("metabase", e.config.InstanceLabel, fmt.Sprintf("dashboard/%d", dashboard.ID))
+	dashboardUrn := models.NewURN("metabase", e.UrnScope, "collection", fmt.Sprintf("%d", dashboard.ID))
 	charts := e.buildCharts(dashboardUrn, dashboard)
 	dashboardUpstreams := e.buildDashboardUpstreams(charts)
 
@@ -156,7 +156,7 @@ func (e *Extractor) buildChart(card Card, dashboardUrn string) (chart *assetsv1b
 	}
 
 	return &assetsv1beta1.Chart{
-		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
+		Urn:          models.NewURN("metabase", e.UrnScope, "card", fmt.Sprintf("%d", card.ID)),
 		DashboardUrn: dashboardUrn,
 		Source:       "metabase",
 		Name:         card.Name,
@@ -310,15 +310,19 @@ func (e *Extractor) buildURN(service, cluster, dbName, tableName string) string 
 			cluster = tableComps[0]
 		}
 	case "bigquery":
+		project := cluster
+		dataset := dbName
 		if compLength > 2 {
-			cluster = tableComps[0]
-			dbName = tableComps[1]
+			project = tableComps[0]
+			dataset = tableComps[1]
 		} else if compLength > 1 {
-			dbName = tableComps[0]
+			dataset = tableComps[0]
 		}
+
+		return plugins.BigQueryURN(project, dataset, tableName)
 	}
 
-	return models.TableURN(service, cluster, dbName, tableName)
+	return models.NewURN(service, cluster, "table", fmt.Sprintf("%s.%s", dbName, tableName))
 }
 
 // Register the extractor to catalog

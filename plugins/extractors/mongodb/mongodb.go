@@ -136,9 +136,10 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 
 	table = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  fmt.Sprintf("%s.%s", db.Name(), collectionName),
-			Name: collectionName,
-			Type: "table",
+			Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
+			Name:    collectionName,
+			Service: "mongodb",
+			Type:    "table",
 		},
 		Profile: &assetsv1beta1.TableProfile{
 			TotalRows: totalRows,

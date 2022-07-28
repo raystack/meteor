@@ -31,7 +31,7 @@ var sampleConfig = `
 connection_url: oracle://username:passwd@localhost:1521/xe`
 
 var info = plugins.Info{
-	Description:  "Table metadata Oracle SQL Database.",
+	Description:  "Table metadata oracle SQL Database.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "extractor"},
@@ -148,9 +148,9 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     fmt.Sprintf("%s.%s", dbName, tableName),
+			Urn:     models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
 			Name:    tableName,
-			Service: "Oracle",
+			Service: "oracle",
 			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{

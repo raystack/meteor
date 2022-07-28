@@ -85,8 +85,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		emit(models.NewRecord(&assetsv1beta1.User{
 			Resource: &commonv1beta1.Resource{
-				Urn:  usr.GetURL(),
-				Type: "user",
+				Urn:     models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),
+				Service: "github",
+				Name:    usr.GetEmail(),
+				Type:    "user",
+				Url:     usr.GetURL(),
 			},
 			Email:    usr.GetEmail(),
 			Username: usr.GetLogin(),

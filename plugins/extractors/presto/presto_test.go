@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	user = "presto"
-	port = "8888"
+	user     = "presto"
+	port     = "8888"
+	urnScope = "test-presto"
 )
 
 var (
@@ -72,9 +73,11 @@ func TestMain(m *testing.M) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := presto.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
-			"invalid_config": "invalid_config_value",
-		}})
+		err := presto.New(utils.Logger).Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"invalid_config": "invalid_config_value",
+			}})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -85,10 +88,12 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := presto.New(utils.Logger)
 
-		if err := newExtractor.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
-			"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
-			"exclude_catalog": "memory,jmx,tpcds,tpch", // only system catalog is not excluded
-		}}); err != nil {
+		if err := newExtractor.Init(ctx, plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
+				"exclude_catalog": "memory,jmx,tpcds,tpch", // only system catalog is not excluded
+			}}); err != nil {
 			t.Fatal(err)
 		}
 

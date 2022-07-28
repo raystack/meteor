@@ -35,12 +35,10 @@ var defaultDBList = []string{
 // Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-	Identifier    string `mapstructure:"identifier" validate:"required"`
 }
 
 var sampleConfig = `
-connection_url: "sqlserver://admin:pass123@localhost:3306/"
-identifier: my-mssql`
+connection_url: "sqlserver://admin:pass123@localhost:3306/"`
 
 var info = plugins.Info{
 	Description:  "Table metdata from MSSQL server",
@@ -128,9 +126,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:  models.TableURN("mssql", e.config.Identifier, database, tableName),
-			Name: tableName,
-			Type: "table",
+			Urn:     models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
+			Name:    tableName,
+			Service: "mssql",
+			Type:    "table",
 		},
 		Schema: &facetsv1beta1.Columns{
 			Columns: columns,

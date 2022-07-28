@@ -101,9 +101,10 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 
 		emit(models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
-				Name: tableName,
-				Type: "table",
+				Urn:     models.NewURN("clickhouse", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
+				Name:    tableName,
+				Service: "clickhouse",
+				Type:    "table",
 			}, Schema: &facetsv1beta1.Columns{
 				Columns: columns,
 			},

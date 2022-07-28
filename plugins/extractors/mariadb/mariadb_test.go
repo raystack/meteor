@@ -23,10 +23,11 @@ import (
 )
 
 const (
-	testDB = "test_db"
-	user   = "test_user"
-	pass   = "pass"
-	port   = "3306"
+	testDB   = "test_db"
+	user     = "test_user"
+	pass     = "pass"
+	port     = "3306"
+	urnScope = "test-mariadb"
 )
 
 var (
@@ -80,9 +81,11 @@ func TestMain(m *testing.M) {
 // TestInit tests the configs
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
-		err := mariadb.New(utils.Logger).Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
-			"invalid_config": "invalid_config_value",
-		}})
+		err := mariadb.New(utils.Logger).Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"invalid_config": "invalid_config_value",
+			}})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -93,9 +96,11 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := mariadb.New(utils.Logger)
 
-		err := newExtractor.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
-			"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
-		}})
+		err := newExtractor.Init(ctx, plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
+			}})
 		if err != nil {
 
 			t.Fatal(err)
@@ -109,9 +114,12 @@ func TestExtract(t *testing.T) {
 		for _, record := range emitter.Get() {
 			table := record.Data().(*assetsv1beta1.Table)
 			urns = append(urns, table.Resource.Urn)
-
 		}
-		assert.Equal(t, []string{"test_db.applicant", "test_db.jobs"}, urns)
+
+		assert.Equal(t, []string{
+			"urn:mariadb:test-mariadb:table:test_db.applicant",
+			"urn:mariadb:test-mariadb:table:test_db.jobs",
+		}, urns)
 	})
 }
 

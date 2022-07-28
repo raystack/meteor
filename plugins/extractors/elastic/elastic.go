@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -125,9 +124,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 		emit(models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  fmt.Sprintf("%s.%s", "elasticsearch", indexName),
-				Name: indexName,
-				Type: "table",
+				Urn:     models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
+				Name:    indexName,
+				Service: "elasticsearch",
+				Type:    "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: columns,

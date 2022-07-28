@@ -165,7 +165,7 @@ func (e *Extractor) processTable(db *sql.DB, catalog string, database string, ta
 	// push table to channel
 	result = &assetsv1beta1.Table{
 		Resource: &commonv1beta1.Resource{
-			Urn:     fmt.Sprintf("%s.%s.%s", catalog, database, tableName),
+			Urn:     models.NewURN("presto", e.UrnScope, "table", fmt.Sprintf("%s.%s.%s", catalog, database, tableName)),
 			Name:    tableName,
 			Service: "presto",
 			Type:    "table",

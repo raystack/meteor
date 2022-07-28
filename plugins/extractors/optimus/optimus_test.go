@@ -23,12 +23,16 @@ var (
 	validConfig = map[string]interface{}{
 		"host": "optimus:80",
 	}
+	urnScope = "test-optimus"
 )
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		extr := optimus.New(testutils.Logger, new(mockClient))
-		err := extr.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{}})
+		err := extr.Init(context.TODO(), plugins.Config{
+			URNScope:  urnScope,
+			RawConfig: map[string]interface{}{},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -42,7 +46,10 @@ func TestInit(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		extr := optimus.New(testutils.Logger, client)
-		err = extr.Init(ctx, plugins.Config{RawConfig: validConfig})
+		err = extr.Init(ctx, plugins.Config{
+			URNScope:  urnScope,
+			RawConfig: validConfig,
+		})
 		assert.NoError(t, err)
 	})
 }
@@ -58,7 +65,7 @@ func TestExtract(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		extr := optimus.New(testutils.Logger, client)
-		err = extr.Init(ctx, plugins.Config{RawConfig: validConfig})
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
 		require.NoError(t, err)
 
 		emitter := mocks.NewEmitter()
