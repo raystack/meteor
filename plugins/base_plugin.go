@@ -25,10 +25,6 @@ func (p *BasePlugin) Info() Info {
 
 // Validate checks if the given options is valid for the plugin.
 func (p *BasePlugin) Validate(config Config) error {
-	if config.URNScope == "" {
-		return ErrEmptyURNScope
-	}
-
 	return buildConfig(config.RawConfig, p.configRef)
 }
 

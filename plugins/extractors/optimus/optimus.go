@@ -39,7 +39,7 @@ var info = plugins.Info{
 
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	logger log.Logger
 	config Config
 	client Client
@@ -50,14 +50,14 @@ func New(logger log.Logger, client Client) *Extractor {
 		logger: logger,
 		client: client,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
 	return e
 }
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 

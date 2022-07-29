@@ -42,7 +42,7 @@ var info = plugins.Info{
 
 // Extractor manages the extraction of data from CouchDB
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	client      *kivik.Client
 	db          *kivik.DB
 	excludedDbs map[string]bool
@@ -56,14 +56,14 @@ func New(logger log.Logger) *Extractor {
 	e := &Extractor{
 		logger: logger,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
 	return e
 }
 
 // Initialise the Extractor with Configurations
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 

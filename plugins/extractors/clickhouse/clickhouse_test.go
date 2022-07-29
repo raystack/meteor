@@ -89,9 +89,11 @@ func TestMain(m *testing.M) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
-		err := newExtractor().Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
-			"invalid_config": "invalid_config_value",
-		}})
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"invalid_config": "invalid_config_value",
+			}})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})

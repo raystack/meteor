@@ -215,9 +215,10 @@ func getExpectedVal() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "urn:elasticsearch:test-elasticsearch:index:.index2",
-				Name: "index2",
-				Type: "table",
+				Urn:     "urn:elasticsearch:test-elasticsearch:index:index2",
+				Name:    "index2",
+				Service: "elasticsearch",
+				Type:    "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{

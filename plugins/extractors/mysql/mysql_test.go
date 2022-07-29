@@ -190,9 +190,10 @@ func getExpected() []models.Record {
 		}),
 		models.NewRecord(&assetsv1beta1.Table{
 			Resource: &commonv1beta1.Resource{
-				Urn:  "urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.jobs",
-				Name: "jobs",
-				Type: "table",
+				Urn:     "urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.jobs",
+				Name:    "jobs",
+				Service: "mysql",
+				Type:    "table",
 			},
 			Schema: &facetsv1beta1.Columns{
 				Columns: []*facetsv1beta1.Column{

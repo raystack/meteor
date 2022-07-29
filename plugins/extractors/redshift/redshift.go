@@ -58,7 +58,7 @@ func WithClient(redshiftClient redshiftdataapiserviceiface.RedshiftDataAPIServic
 // Extractor manages the extraction of data
 // from the redshift server
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	config Config
 	logger log.Logger
 	client redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
@@ -69,7 +69,7 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 	e := &Extractor{
 		logger: logger,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -79,7 +79,7 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 

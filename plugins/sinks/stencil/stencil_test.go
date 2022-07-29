@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package stencil_test
 
 import (

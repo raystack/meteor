@@ -6,8 +6,6 @@ import (
 	loggingpb "google.golang.org/genproto/googleapis/cloud/bigquery/logging/v1"
 )
 
-const serviceName = "bigquery"
-
 type LogData struct {
 	*loggingpb.AuditData
 }

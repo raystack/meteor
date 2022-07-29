@@ -48,7 +48,7 @@ type Config struct {
 // Extractor manages the extraction of data
 // from the metabase server
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	config Config
 	logger log.Logger
 	client Client
@@ -60,13 +60,13 @@ func New(client Client, logger log.Logger) *Extractor {
 		client: client,
 		logger: logger,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
 	return e
 }
 
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 

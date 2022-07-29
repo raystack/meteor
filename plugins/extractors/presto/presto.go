@@ -43,7 +43,7 @@ var info = plugins.Info{
 
 // Extractor manages the extraction of data
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	logger          log.Logger
 	config          Config
 	client          *sql.DB
@@ -60,14 +60,14 @@ func New(logger log.Logger) *Extractor {
 	e := &Extractor{
 		logger: logger,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
 	return e
 }
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 

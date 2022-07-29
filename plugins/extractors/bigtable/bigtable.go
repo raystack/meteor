@@ -51,7 +51,7 @@ var (
 
 // Extractor used to extract bigtable metadata
 type Extractor struct {
-	plugins.BasePlugin
+	plugins.BaseExtractor
 	config        Config
 	logger        log.Logger
 	instanceNames []string
@@ -61,13 +61,13 @@ func New(logger log.Logger) *Extractor {
 	e := &Extractor{
 		logger: logger,
 	}
-	e.BasePlugin = plugins.NewBasePlugin(info, &e.config)
+	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
 	return e
 }
 
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BasePlugin.Init(ctx, config); err != nil {
+	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
