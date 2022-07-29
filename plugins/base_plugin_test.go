@@ -37,13 +37,6 @@ func TestBasePluginInfo(t *testing.T) {
 }
 
 func TestBasePluginValidate(t *testing.T) {
-	t.Run("should return ErrEmptyURNScope if Config.URNScope is empty", func(t *testing.T) {
-		basePlugin := plugins.NewBasePlugin(plugins.Info{}, nil)
-		err := basePlugin.Validate(plugins.Config{URNScope: ""})
-
-		assert.ErrorIs(t, err, plugins.ErrEmptyURNScope)
-	})
-
 	t.Run("should return InvalidConfigError if config is invalid", func(t *testing.T) {
 		invalidConfig := struct {
 			FieldA string `validate:"required"`
@@ -76,13 +69,6 @@ func TestBasePluginValidate(t *testing.T) {
 }
 
 func TestBasePluginInit(t *testing.T) {
-	t.Run("should return ErrEmptyURNScope if Config.URNScope is empty", func(t *testing.T) {
-		basePlugin := plugins.NewBasePlugin(plugins.Info{}, nil)
-		err := basePlugin.Validate(plugins.Config{URNScope: ""})
-
-		assert.ErrorIs(t, err, plugins.ErrEmptyURNScope)
-	})
-
 	t.Run("should return InvalidConfigError if config is invalid", func(t *testing.T) {
 		invalidConfig := struct {
 			FieldA string `validate:"required"`
