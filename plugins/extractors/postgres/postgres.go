@@ -278,9 +278,7 @@ func (e *Extractor) isExcludedDB(database string) bool {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("postgres", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

@@ -104,9 +104,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 // init registers the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("github", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

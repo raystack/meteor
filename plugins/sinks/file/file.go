@@ -127,16 +127,14 @@ func (s *Sink) validateFilePath(path string) error {
 	filename := dirs[len(dirs)-1]
 	format := strings.Split(filename, ".")
 	if len(format) != 2 {
-		return fmt.Errorf("invalid filename")
+		return fmt.Errorf("invalid filename for \"%s\"", path)
 	}
 	return nil
 }
 
 func init() {
 	if err := registry.Sinks.Register("file", func() plugins.Syncer {
-		return &Sink{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

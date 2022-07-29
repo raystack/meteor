@@ -214,9 +214,7 @@ func connection(cfg Config) (db *sql.DB, err error) {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("oracle", func() plugins.Extractor {
-		return &Extractor{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
