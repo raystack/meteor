@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/anypb"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -70,8 +72,14 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		data := &v1beta2.Asset{}
+		table, err := anypb.New(&v1beta2.Table{
+			Columns: nil,
+		})
+		data := &v1beta2.Asset{
+			Data: table,
+		}
 		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		require.Error(t, err)
 		assert.Equal(t, errMessage, err.Error())
 	})
 
@@ -91,8 +99,14 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				data := &v1beta2.Asset{}
+				table, err := anypb.New(&v1beta2.Table{
+					Columns: nil,
+				})
+				data := &v1beta2.Asset{
+					Data: table,
+				}
 				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+				require.Error(t, err)
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 			})
 		}

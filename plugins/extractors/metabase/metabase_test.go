@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package metabase_test
 
 import (
@@ -108,29 +111,8 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
 
-		actuals := emitter.Get()
-		//marshal, err := json.Marshal(actuals)
-		//if err != nil {
-		//	return
-		//}
-		//fmt.Println("marshal data ", string(marshal))
-		//assertResults(t, getExpected(), actuals)
-		//for i, j := range getExpected() {
-		//	//assert.Equal(t, j, actuals[i])
-		//
-		//}
-		assert.Equal(t, getExpected(), actuals)
-		//testutils.AssertWithJSONFile(t, "./testdata/expected.json", actuals)
-		//bytes, err := json.Marshal(getExpected()[0])
-		//if err != nil {
-		//	return
-		//}
-		//bytes1, err := json.Marshal(actuals[0])
-		//if err != nil {
-		//	return
-		//}
-		//
-		//assert.Equal(t, string(bytes), string(bytes1))
+		actuals := emitter.GetAllData()
+		testutils.AssertProtoWithJSONFile(t, "./testdata/expected.json", actuals[0])
 	})
 }
 

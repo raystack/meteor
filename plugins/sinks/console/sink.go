@@ -3,8 +3,9 @@ package console
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/runtime/protoiface"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
@@ -54,12 +55,16 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) process(value interface{}) error {
-	jsonBytes, err := json.Marshal(value)
+func (s *Sink) process(value protoiface.MessageV1) error {
+	m := jsonpb.Marshaler{}
+
+	jsonBytes, err := m.MarshalToString(value)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(jsonBytes))
+
+	fmt.Println(jsonBytes)
+
 	return nil
 }
 

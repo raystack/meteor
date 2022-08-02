@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/protobuf/types/known/structpb"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -152,6 +153,25 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
 	}
 
+	assetData, err := asset.GetData().UnmarshalNew()
+	if err != nil {
+		return RequestPayload{}, errors.Wrap(err, "error unmarshalling asset data")
+	}
+	bytes, err := json.Marshal(assetData)
+	if err != nil {
+		return RequestPayload{}, errors.Wrap(err, "error marshalling json")
+	}
+
+	var mapData map[string]interface{}
+	err = json.Unmarshal(bytes, &mapData)
+	if err != nil {
+		return RequestPayload{}, errors.Wrap(err, "error unmarshalling json")
+	}
+
+	data, err := structpb.NewStruct(mapData)
+	if err != nil {
+		return RequestPayload{}, errors.Wrap(err, "error constructing struct")
+	}
 	upstreams, downstreams := s.buildLineage(asset)
 	owners := s.buildOwners(asset)
 	record := RequestPayload{
@@ -162,7 +182,7 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 			Service:     asset.GetService(),
 			Description: asset.GetDescription(),
 			Owners:      owners,
-			Data:        asset,
+			Data:        data,
 			Labels:      labels,
 		},
 		Upstreams:   upstreams,
