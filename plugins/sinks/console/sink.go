@@ -56,8 +56,9 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 func (s *Sink) Close() (err error) { return }
 
 func (s *Sink) process(value protoiface.MessageV1) error {
-	m := jsonpb.Marshaler{}
-
+	m := jsonpb.Marshaler{
+		OrigName: true,
+	}
 	jsonBytes, err := m.MarshalToString(value)
 	if err != nil {
 		return err

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -75,6 +76,8 @@ func TestSink(t *testing.T) {
 		table, err := anypb.New(&v1beta2.Table{
 			Columns: nil,
 		})
+		require.NoError(t, err)
+
 		data := &v1beta2.Asset{
 			Data: table,
 		}
@@ -102,6 +105,7 @@ func TestSink(t *testing.T) {
 				table, err := anypb.New(&v1beta2.Table{
 					Columns: nil,
 				})
+				require.NoError(t, err)
 				data := &v1beta2.Asset{
 					Data: table,
 				}
@@ -185,6 +189,16 @@ func TestSink(t *testing.T) {
 
 	})
 
+	jsonTable, _ := anypb.New(&v1beta2.Table{
+		Columns: []*v1beta2.Column{
+			{
+				Name:        "id",
+				Description: "It is the ID",
+				DataType:    "INT",
+				IsNullable:  true,
+			},
+		},
+	})
 	successTestCases := []struct {
 		description string
 		data        *v1beta2.Asset
@@ -199,6 +213,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Data:        jsonTable,
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -229,6 +244,7 @@ func TestSink(t *testing.T) {
 					"labelA": "valueLabelA",
 					"labelB": "valueLabelB",
 				},
+				Data: jsonTable,
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -259,6 +275,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Data:        jsonTable,
 				Lineage: &v1beta2.Lineage{
 					Upstreams: []*v1beta2.Resource{
 						{
@@ -307,6 +324,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Data:        jsonTable,
 				Lineage: &v1beta2.Lineage{
 					Downstreams: []*v1beta2.Resource{
 						{
@@ -355,6 +373,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Data:        jsonTable,
 				Owners: []*v1beta2.Owner{
 					{
 						Urn:   "urn-1",
@@ -412,11 +431,13 @@ func TestSink(t *testing.T) {
 		{
 			description: "should send headers if get populated in config",
 			data: &v1beta2.Asset{
+				Url:         "my-topic-url",
 				Urn:         "my-topic-urn",
 				Name:        "my-topic",
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Data:        jsonTable,
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -439,7 +460,26 @@ func TestSink(t *testing.T) {
 
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
-			tc.expected.Asset.Data = tc.data
+			assetData, err := tc.data.GetData().UnmarshalNew()
+			if err != nil {
+				t.Fatal(err)
+			}
+			bytes, err := json.Marshal(assetData)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var mapData map[string]interface{}
+			err = json.Unmarshal(bytes, &mapData)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			data, err := structpb.NewStruct(mapData)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tc.expected.Asset.Data = data
 			payload := compass.RequestPayload{
 				Asset:       tc.expected.Asset,
 				Upstreams:   tc.expected.Upstreams,
