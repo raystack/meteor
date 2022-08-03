@@ -4,13 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/golang/protobuf/jsonpb"
-	"google.golang.org/protobuf/runtime/protoiface"
-
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 //go:embed README.md
@@ -55,11 +54,12 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) process(value protoiface.MessageV1) error {
-	m := jsonpb.Marshaler{
-		OrigName: true,
+func (s *Sink) process(value proto.Message) error {
+	m := protojson.MarshalOptions{
+		UseProtoNames: true,
 	}
-	jsonBytes, err := m.MarshalToString(value)
+
+	jsonBytes, err := m.Marshal(value)
 	if err != nil {
 		return err
 	}

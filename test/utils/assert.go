@@ -2,8 +2,8 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/jsonpb"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"os"
 	"testing"
 
@@ -21,15 +21,18 @@ func AssertWithJSONFile(t *testing.T, expectedFilePath string, actual interface{
 	AssertJSON(t, expectedBytes, actualBytes)
 }
 
-func AssertProtoWithJSONFile(t *testing.T, expectedFilePath string, actual protoiface.MessageV1) {
+func AssertProtoWithJSONFile(t *testing.T, expectedFilePath string, actual proto.Message) {
 	expectedBytes, err := os.ReadFile(expectedFilePath)
 	require.NoError(t, err)
 
-	m := jsonpb.Marshaler{OrigName: true}
-	jsonString, err := m.MarshalToString(actual)
+	m := protojson.MarshalOptions{
+		UseProtoNames: true,
+	}
+	
+	jsonBytes, err := m.Marshal(actual)
 	require.NoError(t, err)
 
-	AssertJSON(t, expectedBytes, []byte(jsonString))
+	AssertJSON(t, expectedBytes, jsonBytes)
 }
 
 func AssertJSON(t *testing.T, expected []byte, actual []byte) {

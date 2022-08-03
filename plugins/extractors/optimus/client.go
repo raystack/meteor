@@ -2,6 +2,7 @@ package optimus
 
 import (
 	"context"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -73,7 +74,7 @@ func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB 
 	}
 	var opts []grpc.DialOption
 	opts = append(opts,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSizeMB<<20),
