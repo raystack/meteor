@@ -223,15 +223,17 @@ func getExpectedVal(t *testing.T) []models.Record {
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:elasticsearch:test-elasticsearch:index:index1",
-			Name: "index1",
-			Type: "table",
-			Data: table1,
+			Name:    "index1",
+			Type:    "table",
+			Data:    table1,
+			Service: "elasticsearch",
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:elasticsearch:test-elasticsearch:index:index2",
-			Name: "index2",
-			Type: "table",
-			Data: table2,
+			Name:    "index2",
+			Type:    "table",
+			Data:    table2,
+			Service: "elasticsearch",
 		}),
 	}
 }

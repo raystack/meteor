@@ -37,8 +37,8 @@
         "@type": "type.googleapis.com/odpf.assets.v1beta2.Dashboard",
         "charts": [
             {
-                "urn": "urn:metabase:test-metabase:card:1",
-                "dashboard_urn": "metabase::my-metabase/dashboard/1",
+                "urn": "metabase::my-metabase/card/1",
+                "dashboard_urn": "urn:metabase:test-metabase:collection:1",
                 "source": "metabase",
                 "name": "Orders, Filtered by Quantity",
                 "description": "HELPFUL CHART DESC",
@@ -64,7 +64,7 @@
             },
             {
                 "urn": "metabase::my-metabase/card/2",
-                "dashboard_urn": "metabase::my-metabase/dashboard/1",
+                "dashboard_urn": "urn:metabase:test-metabase:collection:1",
                 "source": "metabase",
                 "name": "Exceptional Users",
                 "description": "This shows only exceptional users.",
@@ -81,7 +81,7 @@
                 "lineage": {
                     "upstreams": [
                         {
-                            "urn": "postgres::postgres:5432/postgres/user",
+                            "urn": "urn:postgres:postgres:5432:table:postgres.user",
                             "type": "table",
                             "service": "postgres"
                         }
@@ -90,7 +90,7 @@
             },
             {
                 "urn": "metabase::my-metabase/card/3",
-                "dashboard_urn": "metabase::my-metabase/dashboard/1",
+                "dashboard_urn": "urn:metabase:test-metabase:collection:1",
                 "source": "metabase",
                 "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
                 "description": "Users, Average of Total Followers",
@@ -107,7 +107,7 @@
                 "lineage": {
                     "upstreams": [
                         {
-                            "urn": "postgres::postgres:5432/postgres/user",
+                            "urn": "urn:postgres:postgres:5432:table:postgres.user",
                             "type": "table",
                             "service": "postgres"
                         }
@@ -115,18 +115,18 @@
                 }
             },
             {
-                "dashboard_urn": "metabase::my-metabase/dashboard/1",
+                "dashboard_urn": "urn:metabase:test-metabase:collection:1",
                 "lineage": {
                     "upstreams": [
                         {
                             "service": "bigquery",
                             "type": "table",
-                            "urn": "bigquery::sample-project/dataset_a/invoice"
+                            "urn": "urn:bigquery:sample-project:table:sample-project:dataset_a.invoice"
                         },
                         {
                             "service": "bigquery",
                             "type": "table",
-                            "urn": "bigquery::project_a/dataset_b/user"
+                            "urn": "urn:bigquery:project_a:table:project_a:dataset_b.user"
                         }
                     ]
                 },

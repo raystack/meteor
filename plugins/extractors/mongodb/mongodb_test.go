@@ -192,10 +192,11 @@ func getExpected(t *testing.T) []models.Record {
 
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
-			Urn:  "urn:mongodb:test-mongodb:collection:" + testDB + ".connections",
-			Name: "connections",
-			Type: "table",
-			Data: data1,
+			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".connections",
+			Name:    "connections",
+			Type:    "table",
+			Data:    data1,
+			Service: "mongodb",
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".posts",
