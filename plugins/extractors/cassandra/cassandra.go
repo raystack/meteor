@@ -173,6 +173,7 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 		Name:    tableName,
 		Service: service,
 		Data:    table,
+		Type:    "table",
 	}))
 
 	return

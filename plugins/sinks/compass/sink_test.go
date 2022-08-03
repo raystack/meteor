@@ -491,7 +491,7 @@ func TestSink(t *testing.T) {
 			ctx := context.TODO()
 
 			compassSink := compass.New(client, testUtils.Logger)
-			err := compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
+			err = compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
 			if err != nil {
 				t.Fatal(err)
 			}

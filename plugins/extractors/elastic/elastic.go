@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -132,10 +133,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		emit(models.NewRecord(&v1beta2.Asset{
 			Urn:     models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
-			Name: indexName,
-			Type: "table",
+			Name:    indexName,
+			Type:    "table",
 			Service: "elasticsearch",
-			Data: table,
+			Data:    table,
 		}))
 	}
 	return

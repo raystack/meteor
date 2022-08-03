@@ -231,15 +231,17 @@ func getExpected() []models.Record {
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".applicant",
-			Name: "applicant",
-			Type: "table",
-			Data: table1,
+			Name:    "applicant",
+			Type:    "table",
+			Service: "cassandra",
+			Data:    table1,
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".jobs",
-			Name: "jobs",
-			Type: "table",
-			Data: table2,
+			Name:    "jobs",
+			Type:    "table",
+			Data:    table2,
+			Service: "cassandra",
 		}),
 	}
 }

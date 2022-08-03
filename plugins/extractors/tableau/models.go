@@ -2,6 +2,7 @@ package tableau
 
 import (
 	"fmt"
+	"github.com/odpf/meteor/plugins"
 	"regexp"
 	"strings"
 	"time"

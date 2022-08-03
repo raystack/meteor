@@ -133,7 +133,7 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 	}
 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
-	urn := models.JobURN(service, e.config.Host, jobID)
+	urn := models.NewURN(service, e.UrnScope, "job", jobID)
 	asset = &v1beta2.Asset{
 		Urn:         urn,
 		Name:        jobSpec.Name,

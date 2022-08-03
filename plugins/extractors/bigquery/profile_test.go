@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert"
-	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/util"

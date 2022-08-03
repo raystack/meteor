@@ -134,7 +134,7 @@ func TestExtract(t *testing.T) {
 
 		ctx := context.TODO()
 		extractor := grafana.New(utils.Logger)
-		err := extractor.Init(ctx, plugins.Config{
+		err = extractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"base_url": testServer.URL,

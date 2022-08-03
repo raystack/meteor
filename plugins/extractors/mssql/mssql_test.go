@@ -200,15 +200,17 @@ func getExpected(t *testing.T) []models.Record {
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.applicant",
-			Name: "applicant",
-			Type: "table",
-			Data: data1,
+			Name:    "applicant",
+			Type:    "table",
+			Data:    data1,
+			Service: "mssql",
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.jobs",
-			Name: "jobs",
-			Type: "table",
-			Data: data2,
+			Name:    "jobs",
+			Type:    "table",
+			Data:    data2,
+			Service: "mssql",
 		}),
 	}
 }

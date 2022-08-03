@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/odpf/meteor/models"
@@ -91,7 +92,7 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 		return errors.Wrap(err, "failed to get dashboard list")
 	}
 	for _, dashboard := range dashboards {
-		data, err := e.buildDashboard(dashboard)
+		data, err := e.buildDashboard(dashboard.ID)
 		if err != nil {
 			return errors.Wrap(err, "failed to build dashbaord")
 		}
@@ -160,7 +161,7 @@ func (e *Extractor) getChartsList(id int) (charts []*v1beta2.Chart, err error) {
 		tempChart.Description = res.Description
 		tempChart.Url = res.SliceUrl
 		tempChart.DataSource = res.Datasource
-		tempChart.DashboardUrn = dashboardURN
+		tempChart.DashboardUrn = "dashboard:" + strconv.Itoa(id)
 		tempCharts = append(tempCharts, &tempChart)
 	}
 	return tempCharts, nil

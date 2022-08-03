@@ -36,8 +36,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.9.0 // indirect
-	github.com/hashicorp/go-hclog v1.2.0
-	github.com/hashicorp/go-plugin v1.4.2
 	github.com/lib/pq v1.10.4
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -80,13 +78,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	github.com/flimzy/diff v0.1.7 // indirect
-	github.com/flimzy/testy v0.1.17 // indirect
-	github.com/go-kivik/kiviktest v2.0.0+incompatible // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
-	github.com/kr/text v0.2.0 // indirect
-	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	gitlab.com/flimzy/testy v0.8.0 // indirect
-)
+require github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect

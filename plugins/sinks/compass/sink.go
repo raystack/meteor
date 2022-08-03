@@ -59,19 +59,9 @@ type Sink struct {
 }
 
 func New(c httpClient, logger log.Logger) plugins.Syncer {
-	sink := &Sink{client: c, logger: logger}
-	return sink
-}
+	s := &Sink{client: c, logger: logger}
 
-func (s *Sink) Info() plugins.Info {
-	return plugins.Info{
-		Description:  "Send asset to compass http service",
-		SampleConfig: sampleConfig,
-		Summary:      summary,
-		Tags:         []string{"http", "sink"},
-	}
 	s.BasePlugin = plugins.NewBasePlugin(info, &s.config)
-
 	return s
 }
 
