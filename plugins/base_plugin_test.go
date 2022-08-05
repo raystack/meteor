@@ -37,6 +37,16 @@ func TestBasePluginInfo(t *testing.T) {
 }
 
 func TestBasePluginValidate(t *testing.T) {
+	t.Run("should not return error if config is nil", func(t *testing.T) {
+		basePlugin := plugins.NewBasePlugin(plugins.Info{}, nil)
+		err := basePlugin.Validate(plugins.Config{
+			URNScope:  "test-scope",
+			RawConfig: map[string]interface{}{},
+		})
+
+		assert.NoError(t, err)
+	})
+
 	t.Run("should return InvalidConfigError if config is invalid", func(t *testing.T) {
 		invalidConfig := struct {
 			FieldA string `validate:"required"`

@@ -25,6 +25,10 @@ func (p *BasePlugin) Info() Info {
 
 // Validate checks if the given options is valid for the plugin.
 func (p *BasePlugin) Validate(config Config) error {
+	if p.configRef == nil {
+		return nil
+	}
+
 	return buildConfig(config.RawConfig, p.configRef)
 }
 
