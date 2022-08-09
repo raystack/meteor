@@ -3,12 +3,12 @@ package googleworkspace
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"fmt"
+	"reflect"
 
 	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
-	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
@@ -16,6 +16,10 @@ import (
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
+
+	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
+	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 )
 
 type Config struct {
@@ -50,6 +54,7 @@ type Extractor struct {
 	logger log.Logger
 	config Config
 	client *admin.Service
+	emit   plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -88,7 +93,8 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 // The data is returned as a list of assets.Asset
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	var status string
-	r, err := e.client.Users.List().Customer("my_customer").MaxResults(10).
+	e.emit = emit
+	r, err := e.client.Users.List().Customer("my_customer").
 		OrderBy("email").Do()
 	if err != nil {
 		e.logger.Error("Unable to retrieve users in domain: %v", err)
@@ -104,18 +110,22 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 				status = "suspended"
 			}
 
-			emit(models.NewRecord(&assetsv1beta1.User{
+			var userAttributes = make(map[string]interface{})
+			userAttributes = getOrgAttributes(userAttributes, u.Organizations)
+			userAttributes = getRelationsAttributes(userAttributes, u.Relations)
+			userAttributes = getCustomSchemasAttributes(userAttributes, u.CustomSchemas)
+			userAttributes["org_unit_path"] = u.OrgUnitPath
+			e.emit(models.NewRecord(&assetsv1beta1.User{
+				Resource: &commonv1beta1.Resource{
+					Service: "google workspace",
+					Name:    u.PrimaryEmail,
+				},
 				Email:    u.PrimaryEmail,
 				FullName: u.Name.FullName,
 				LastName: u.Name.FamilyName,
 				Status:   status,
 				Properties: &facetsv1beta1.Properties{
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
-						"organisation":   u.Organizations,
-						"relation":       u.Relations,
-						"custom_schemas": u.CustomSchemas,
-						"org_unit_path":  u.OrgUnitPath,
-					}),
+					Attributes: utils.TryParseMapToProto(userAttributes),
 				},
 			}))
 		}
@@ -131,4 +141,55 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+func getOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+	if i != nil {
+		itr := reflect.ValueOf(i)
+		if itr.Kind() == reflect.Slice {
+			for idx := 0; idx < itr.Len(); idx++ {
+				valMap := reflect.ValueOf(itr.Index(idx).Interface())
+				for _, key := range valMap.MapKeys() {
+					strct := valMap.MapIndex(key)
+					userAttributes[fmt.Sprintf("%v", key.Interface())] = strct.Interface()
+				}
+			}
+		}
+	}
+	return userAttributes
+}
+
+func getRelationsAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+	if i != nil {
+		itr := reflect.ValueOf(i)
+		if itr.Kind() == reflect.Slice {
+			for idx := 0; idx < itr.Len(); idx++ {
+				valMap := reflect.ValueOf(itr.Index(idx).Interface())
+				var relationType, relationValue string
+				for _, key := range valMap.MapKeys() {
+					strct := valMap.MapIndex(key)
+					if key.Interface().(string) == "type" {
+						relationType = strct.Interface().(string)
+					} else if key.Interface().(string) == "value" {
+						relationValue = strct.Interface().(string)
+					}
+				}
+				userAttributes[relationType] = relationValue
+			}
+		}
+	}
+	return userAttributes
+}
+
+func getCustomSchemasAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+	if i != nil {
+		itr := reflect.ValueOf(i)
+		if itr.Kind() == reflect.Map {
+			for _, key := range itr.MapKeys() {
+				strct := itr.MapIndex(key)
+				userAttributes[fmt.Sprintf("%v", key.Interface())] = strct.Interface()
+			}
+		}
+	}
+	return userAttributes
 }
