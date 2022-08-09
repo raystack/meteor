@@ -15,17 +15,22 @@ import (
 //go:embed README.md
 var summary string
 
+type Config struct {
+	Attributes map[string]interface{} `mapstructure:"attributes" validate:"required"`
+}
+
 // Processor work in a list of data
 type Processor struct {
 	plugins.BasePlugin
-	config map[string]interface{}
+	config Config
 	logger log.Logger
 }
 
 var sampleConfig = `
  # Enrichment configuration
- # fieldA: valueA
- # fieldB: valueB`
+ # attributes:
+ #	fieldA: valueA
+ # 	fieldB: valueB`
 
 var info = plugins.Info{
 	Description:  "Append custom fields to records",
@@ -69,7 +74,7 @@ func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 	customProps := utils.GetCustomProperties(data)
 
 	// update custom properties using value from config
-	for key, value := range p.config {
+	for key, value := range p.config.Attributes {
 		stringVal, ok := value.(string)
 		if ok {
 			customProps[key] = stringVal
