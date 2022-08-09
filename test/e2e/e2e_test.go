@@ -130,10 +130,8 @@ func TestMySqlToKafka(t *testing.T) {
 
 	expected := getExpectedTables()
 	assert.Equal(t, len(getExpectedTables()), len(sinkData))
-	fmt.Println("exp table", len(getExpectedTables()))
-	fmt.Println("exp sink table", len(sinkData))
 	for tableNum := 0; tableNum < len(getExpectedTables()); tableNum++ {
-		//assert.Equal(t, expected[tableNum].Urn, sinkData[tableNum].Urn)
+		assert.Equal(t, expected[tableNum].Urn, sinkData[tableNum].Urn)
 		assert.Equal(t, expected[tableNum].Name, sinkData[tableNum].Name)
 		assert.Equal(t, len(expected[tableNum].Data.Value), len(sinkData[tableNum].Data.Value))
 	}
