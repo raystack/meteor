@@ -12,7 +12,6 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
-	ndjson "github.com/scizorman/go-ndjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -98,12 +97,21 @@ func (s *Sink) Close() (err error) {
 }
 
 func (s *Sink) ndjsonOut(data []*assetsv1beta2.Asset) error {
-	jsnBy, err := ndjson.Marshal(data)
-	if err != nil {
-		return err
+	result := ""
+	for _, asset := range data {
+		jsonBytes, err := models.ToJSON(asset)
+		if err != nil {
+			return fmt.Errorf("error marshaling asset (%s): %w", asset.Urn, err)
+		}
+
+		result += string(jsonBytes) + "\n"
 	}
-	err = s.writeBytes(jsnBy)
-	return err
+
+	if err := s.writeBytes([]byte(result)); err != nil {
+		return fmt.Errorf("error writing to file: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Sink) yamlOut(data []*assetsv1beta2.Asset) error {

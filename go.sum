@@ -1446,8 +1446,6 @@ github.com/sagikazarmark/crypt v0.5.0/go.mod h1:l+nzl7KWh51rpzp2h7t4MZWyiEWdhNpO
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/schollz/progressbar/v3 v3.8.5 h1:VcmmNRO+eFN3B0m5dta6FXYXY+MEJmXdWoIS+jjssQM=
 github.com/schollz/progressbar/v3 v3.8.5/go.mod h1:ewO25kD7ZlaJFTvMeOItkOZa8kXu1UvFs379htE8HMQ=
-github.com/scizorman/go-ndjson v0.0.0-20200902005011-1d92486df71e h1:irVMZAXAG3l2RXnj0AUEQO5hTYmIEHu0usaYQrOdlco=
-github.com/scizorman/go-ndjson v0.0.0-20200902005011-1d92486df71e/go.mod h1:LoK3vOi95qRhyyu7Y7SnZBTTw2x7YQyvmOQC3HNbc+8=
 github.com/scylladb/go-set v1.0.2/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/seccomp/libseccomp-golang v0.9.1/go.mod h1:GbW5+tmTXfcxTToHLXlScSlAvWlF4P2Ca7zGrPiEpWo=

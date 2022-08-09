@@ -50,7 +50,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c
 	github.com/schollz/progressbar/v3 v3.8.5
-	github.com/scizorman/go-ndjson v0.0.0-20200902005011-1d92486df71e
 	github.com/segmentio/kafka-go v0.4.17
 	github.com/sijms/go-ora/v2 v2.2.22
 	github.com/snowflakedb/gosnowflake v1.6.7
@@ -77,4 +76,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
+require (
+	github.com/golang/protobuf v1.5.2
+	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
+)

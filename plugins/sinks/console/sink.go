@@ -4,12 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	"github.com/odpf/meteor/models"
+	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 //go:embed README.md
@@ -54,17 +54,13 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) process(value proto.Message) error {
-	m := protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-
-	jsonBytes, err := m.Marshal(value)
+func (s *Sink) process(asset *assetsv1beta2.Asset) error {
+	jsonBytes, err := models.ToJSON(asset)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(jsonBytes)
+	fmt.Println(string(jsonBytes))
 
 	return nil
 }
