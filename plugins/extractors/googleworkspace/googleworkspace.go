@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
@@ -51,10 +52,11 @@ var info = plugins.Info{
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	plugins.BaseExtractor
-	logger log.Logger
-	config Config
-	client *admin.Service
-	emit   plugins.Emit
+	logger      log.Logger
+	config      Config
+	TokenSource oauth2.TokenSource
+	Client      *admin.Service
+	emit        plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -75,16 +77,16 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 
 	jwtConfig, err := google.JWTConfigFromJSON([]byte(e.config.ServiceAccountJSON), admin.AdminDirectoryUserScope)
 	if err != nil {
-		return errors.Wrap(err, "JWTConfigFromJSON")
+		return plugins.InvalidConfigError{}
+	}
+
+	if e.config.UserEmail == "" {
+		return plugins.InvalidConfigError{}
 	}
 	jwtConfig.Subject = e.config.UserEmail
-
 	ts := jwtConfig.TokenSource(ctx)
 
-	e.client, err = admin.NewService(ctx, option.WithTokenSource(ts))
-	if err != nil {
-		return errors.Wrap(err, "NewService")
-	}
+	e.TokenSource = ts
 
 	return
 }
@@ -94,10 +96,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	var status string
 	e.emit = emit
-	r, err := e.client.Users.List().Customer("my_customer").
-		OrderBy("email").Do()
+	r, err := FetchUsers(ctx, e.TokenSource)
 	if err != nil {
-		e.logger.Error("Unable to retrieve users in domain: %v", err)
+		return err
 	}
 
 	if len(r.Users) == 0 {
@@ -141,6 +142,20 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+}
+
+func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error) {
+	srv, err := admin.NewService(ctx, option.WithTokenSource(ts))
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := srv.Users.List().Customer("my_customer").OrderBy("email").Do()
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to retrieve users in domain")
+	}
+
+	return r, nil
 }
 
 func getOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
