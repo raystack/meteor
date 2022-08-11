@@ -83,7 +83,7 @@ func TestExtract(t *testing.T) {
 
 		emitter := mocks.NewEmitter()
 		extractor := mocks.NewExtractor()
-		extractor.On("Init", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("plugins.Emit")).Return(nil)
+		extractor.On("Init", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("plugins.Config")).Return(nil)
 		extractor.SetEmit(expectedData)
 		extractor.On("Extract", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("plugins.Emit")).Return(nil)
 
