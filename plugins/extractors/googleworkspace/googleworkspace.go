@@ -5,6 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -112,14 +113,17 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			}
 
 			var userAttributes = make(map[string]interface{})
-			userAttributes = getOrgAttributes(userAttributes, u.Organizations)
-			userAttributes = getRelationsAttributes(userAttributes, u.Relations)
-			userAttributes = getCustomSchemasAttributes(userAttributes, u.CustomSchemas)
+			userAttributes = buildOrgAttributes(userAttributes, u.Organizations)
+			userAttributes = buildRelationsAttributes(userAttributes, u.Relations)
+			userAttributes = buildCustomSchemasAttributes(userAttributes, u.CustomSchemas)
 			userAttributes["org_unit_path"] = u.OrgUnitPath
+			userAttributes["aliases"] = strings.Join(u.Aliases, ",")
+
 			e.emit(models.NewRecord(&assetsv1beta1.User{
 				Resource: &commonv1beta1.Resource{
 					Service: "google workspace",
-					Name:    u.PrimaryEmail,
+					Name:    u.Name.FullName,
+					Urn:     u.PrimaryEmail,
 				},
 				Email:    u.PrimaryEmail,
 				FullName: u.Name.FullName,
@@ -158,7 +162,7 @@ func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error
 	return r, nil
 }
 
-func getOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+func buildOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
 	if i != nil {
 		itr := reflect.ValueOf(i)
 		if itr.Kind() == reflect.Slice {
@@ -174,7 +178,7 @@ func getOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[
 	return userAttributes
 }
 
-func getRelationsAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+func buildRelationsAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
 	if i != nil {
 		itr := reflect.ValueOf(i)
 		if itr.Kind() == reflect.Slice {
@@ -196,7 +200,7 @@ func getRelationsAttributes(userAttributes map[string]interface{}, i interface{}
 	return userAttributes
 }
 
-func getCustomSchemasAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
+func buildCustomSchemasAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
 	if i != nil {
 		itr := reflect.ValueOf(i)
 		if itr.Kind() == reflect.Map {

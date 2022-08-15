@@ -51,6 +51,7 @@ func TestExtract(t *testing.T) {
 				Resource: &commonv1beta1.Resource{
 					Service: "google workspace",
 					Name:    "odpf admin",
+					Urn:     "admin@odpf.com",
 				},
 				Email:    "admin@odpf.com",
 				FullName: "John Doe",
@@ -66,6 +67,7 @@ func TestExtract(t *testing.T) {
 				Resource: &commonv1beta1.Resource{
 					Service: "google workspace",
 					Name:    "ipsum",
+					Urn:     "ipsum@odpf.com",
 				},
 				Email:    "ipsum@odpf.com",
 				FullName: "Ipsum Lorum",
