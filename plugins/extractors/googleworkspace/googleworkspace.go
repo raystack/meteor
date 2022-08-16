@@ -109,35 +109,35 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	if len(r.Users) == 0 {
 		e.logger.Info("No users found.\n")
 		return nil
-	} else {
-		for _, u := range r.Users {
-			if !u.Suspended {
-				status = "not suspended"
-			} else {
-				status = "suspended"
-			}
+	}
 
-			var userAttributes = make(map[string]interface{})
-			userAttributes = buildOrgAttributes(userAttributes, u.Organizations)
-			userAttributes = buildRelationsAttributes(userAttributes, u.Relations)
-			userAttributes = buildCustomSchemasAttributes(userAttributes, u.CustomSchemas)
-			userAttributes["org_unit_path"] = u.OrgUnitPath
-			userAttributes["aliases"] = strings.Join(u.Aliases, ",")
-
-			e.emit(models.NewRecord(&assetsv1beta1.User{
-				Resource: &commonv1beta1.Resource{
-					Service: "google workspace",
-					Name:    u.Name.FullName,
-					Urn:     u.PrimaryEmail,
-				},
-				Email:    u.PrimaryEmail,
-				FullName: u.Name.FullName,
-				Status:   status,
-				Properties: &facetsv1beta1.Properties{
-					Attributes: utils.TryParseMapToProto(userAttributes),
-				},
-			}))
+	for _, u := range r.Users {
+		if !u.Suspended {
+			status = "not suspended"
+		} else {
+			status = "suspended"
 		}
+
+		var userAttributes = make(map[string]interface{})
+		userAttributes = buildOrgAttributes(userAttributes, u.Organizations)
+		userAttributes = buildRelationsAttributes(userAttributes, u.Relations)
+		userAttributes = buildCustomSchemasAttributes(userAttributes, u.CustomSchemas)
+		userAttributes["org_unit_path"] = u.OrgUnitPath
+		userAttributes["aliases"] = strings.Join(u.Aliases, ",")
+
+		e.emit(models.NewRecord(&assetsv1beta1.User{
+			Resource: &commonv1beta1.Resource{
+				Service: "google workspace",
+				Name:    u.Name.FullName,
+				Urn:     u.PrimaryEmail,
+			},
+			Email:    u.PrimaryEmail,
+			FullName: u.Name.FullName,
+			Status:   status,
+			Properties: &facetsv1beta1.Properties{
+				Attributes: utils.TryParseMapToProto(userAttributes),
+			},
+		}))
 	}
 
 	return nil
