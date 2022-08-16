@@ -6,14 +6,13 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 	"github.com/spf13/cobra"
 )
 
 // InfoCmd creates a command object for get info about a plugin
-func InfoCmd(lg log.Logger) *cobra.Command {
+func InfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "info <command>",
 		Short: "Display plugin information",

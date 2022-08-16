@@ -6,13 +6,12 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/recipe"
-	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
 // GenCmd creates a command object for the "gen" action
-func GenCmd(lg log.Logger) *cobra.Command {
+func GenCmd() *cobra.Command {
 	var (
 		outputDirPath string
 		dataFilePath  string

@@ -5,22 +5,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/odpf/meteor/plugins"
-
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/meteor/config"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
-
 	"github.com/spf13/cobra"
 )
 
 // LintCmd creates a command object for linting recipes
-func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
+func LintCmd() *cobra.Command {
 	var (
 		report   [][]string
 		success  = 0
@@ -50,12 +48,19 @@ func LintCmd(lg log.Logger, mt *metrics.StatsdMonitor) *cobra.Command {
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load("./meteor.yaml")
+			if err != nil {
+				return err
+			}
+
+			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
+			plugins.SetLog(lg)
+
 			cs := term.NewColorScheme()
 			runner := agent.NewAgent(agent.Config{
 				ExtractorFactory: registry.Extractors,
 				ProcessorFactory: registry.Processors,
 				SinkFactory:      registry.Sinks,
-				Monitor:          mt,
 				Logger:           lg,
 			})
 

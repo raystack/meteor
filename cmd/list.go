@@ -7,7 +7,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
 	"github.com/odpf/salt/printer"
 	"github.com/odpf/salt/term"
 
@@ -15,7 +14,7 @@ import (
 )
 
 // ListCmd creates a command object for linting recipes
-func ListCmd(lg log.Logger) *cobra.Command {
+func ListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list <command>",
 		Short: "List available plugins",

@@ -8,12 +8,11 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/generator"
 	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
 	"github.com/spf13/cobra"
 )
 
 // NewCmd creates a command object for the "new" action
-func NewCmd(lg log.Logger) *cobra.Command {
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Bootstrap new recipes",

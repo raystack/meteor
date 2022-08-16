@@ -21,6 +21,7 @@ const (
 func main() {
 	// Execute the root command
 	root := cmd.New()
+
 	cmd, err := root.ExecuteC()
 
 	if err == nil {
