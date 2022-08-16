@@ -104,6 +104,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	if len(r.Users) == 0 {
 		e.logger.Info("No users found.\n")
+		return nil
 	} else {
 		for _, u := range r.Users {
 			if !u.Suspended {
@@ -127,7 +128,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 				},
 				Email:    u.PrimaryEmail,
 				FullName: u.Name.FullName,
-				LastName: u.Name.FamilyName,
 				Status:   status,
 				Properties: &facetsv1beta1.Properties{
 					Attributes: utils.TryParseMapToProto(userAttributes),
@@ -154,7 +154,7 @@ func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error
 		return nil, err
 	}
 
-	r, err := srv.Users.List().Customer("my_customer").OrderBy("email").Do()
+	r, err := srv.Users.List().Customer("my_customer").Do()
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to retrieve users in domain")
 	}
@@ -162,35 +162,36 @@ func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error
 	return r, nil
 }
 
-func buildOrgAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
-	if i != nil {
-		itr := reflect.ValueOf(i)
-		if itr.Kind() == reflect.Slice {
-			for idx := 0; idx < itr.Len(); idx++ {
-				valMap := reflect.ValueOf(itr.Index(idx).Interface())
-				for _, key := range valMap.MapKeys() {
-					strct := valMap.MapIndex(key)
-					userAttributes[fmt.Sprintf("%v", key.Interface())] = strct.Interface()
-				}
+func buildOrgAttributes(userAttributes map[string]interface{}, orgsIfc interface{}) map[string]interface{} {
+	if orgsIfc != nil {
+		orgs := reflect.ValueOf(orgsIfc)
+		if orgs.Kind() == reflect.Slice {
+			//based on assumpton that a user shall belong to a single org
+			org := reflect.ValueOf(orgs.Index(0).Interface())
+			for _, key := range org.MapKeys() {
+				value := org.MapIndex(key)
+				userAttributes[fmt.Sprintf("%v", key.Interface())] = value.Interface()
 			}
 		}
 	}
 	return userAttributes
 }
 
-func buildRelationsAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
-	if i != nil {
-		itr := reflect.ValueOf(i)
-		if itr.Kind() == reflect.Slice {
-			for idx := 0; idx < itr.Len(); idx++ {
-				valMap := reflect.ValueOf(itr.Index(idx).Interface())
+func buildRelationsAttributes(userAttributes map[string]interface{}, relationsIfc interface{}) map[string]interface{} {
+	if relationsIfc != nil {
+		relations := reflect.ValueOf(relationsIfc)
+		if relations.Kind() == reflect.Slice {
+			for idx := 0; idx < relations.Len(); idx++ {
 				var relationType, relationValue string
-				for _, key := range valMap.MapKeys() {
-					strct := valMap.MapIndex(key)
+
+				relation := reflect.ValueOf(relations.Index(idx).Interface())
+				for _, key := range relation.MapKeys() {
+					value := relation.MapIndex(key)
+
 					if key.Interface().(string) == "type" {
-						relationType = strct.Interface().(string)
+						relationType = value.Interface().(string)
 					} else if key.Interface().(string) == "value" {
-						relationValue = strct.Interface().(string)
+						relationValue = value.Interface().(string)
 					}
 				}
 				userAttributes[relationType] = relationValue
@@ -200,13 +201,13 @@ func buildRelationsAttributes(userAttributes map[string]interface{}, i interface
 	return userAttributes
 }
 
-func buildCustomSchemasAttributes(userAttributes map[string]interface{}, i interface{}) map[string]interface{} {
-	if i != nil {
-		itr := reflect.ValueOf(i)
-		if itr.Kind() == reflect.Map {
-			for _, key := range itr.MapKeys() {
-				strct := itr.MapIndex(key)
-				userAttributes[fmt.Sprintf("%v", key.Interface())] = strct.Interface()
+func buildCustomSchemasAttributes(userAttributes map[string]interface{}, customSchemasIfc interface{}) map[string]interface{} {
+	if customSchemasIfc != nil {
+		customSchema := reflect.ValueOf(customSchemasIfc)
+		if customSchema.Kind() == reflect.Map {
+			for _, key := range customSchema.MapKeys() {
+				value := customSchema.MapIndex(key)
+				userAttributes[fmt.Sprintf("%v", key.Interface())] = value.Interface()
 			}
 		}
 	}
