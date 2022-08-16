@@ -24,6 +24,9 @@ import (
 	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 )
 
+//go:embed README.md
+var summary string
+
 type Config struct {
 	ServiceAccountJSON string `mapstructure:"service_account_json" validate:"required"`
 	UserEmail          string `mapstructure:"user_email" validate:"required"`
@@ -48,6 +51,7 @@ var info = plugins.Info{
 	Description:  "User list from Google Workspace",
 	SampleConfig: sampleConfig,
 	Tags:         []string{"platform", "extractor"},
+	Summary:      summary,
 }
 
 // Extractor manages the extraction of data from the extractor
