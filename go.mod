@@ -27,8 +27,6 @@ require (
 	github.com/google/go-github/v37 v37.0.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hashicorp/go-hclog v0.16.1
-	github.com/hashicorp/go-plugin v1.4.2
 	github.com/lib/pq v1.10.4
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.4.2
