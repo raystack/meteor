@@ -71,6 +71,9 @@ func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 	asset := record.Data()
 
 	labels := asset.Labels
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 
 	// update labels using value from config
 	for key, value := range p.config.Labels {

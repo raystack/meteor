@@ -158,6 +158,7 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 			Name:        asset.GetName(),
 			Service:     asset.GetService(),
 			Description: asset.GetDescription(),
+			URL:         asset.GetUrl(),
 			Owners:      owners,
 			Data:        mapData,
 			Labels:      labels,

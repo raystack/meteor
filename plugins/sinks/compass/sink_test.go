@@ -203,6 +203,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
+				Url:         "http://test.com",
 				Data: testUtils.BuildAny(t, &v1beta2.Table{
 					Columns: []*v1beta2.Column{
 						{
@@ -223,6 +224,7 @@ func TestSink(t *testing.T) {
 					Name:        "my-topic",
 					Service:     "kafka",
 					Type:        "topic",
+					URL:         "http://test.com",
 					Description: "topic information",
 					Data: map[string]interface{}{
 						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
@@ -487,7 +489,6 @@ func TestSink(t *testing.T) {
 		{
 			description: "should send headers if get populated in config",
 			data: &v1beta2.Asset{
-				Url:         "my-topic-url",
 				Urn:         "my-topic-urn",
 				Name:        "my-topic",
 				Service:     "kafka",
