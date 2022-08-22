@@ -252,16 +252,12 @@ func TestSink(t *testing.T) {
 						"attrB": "valueAttrB",
 					}),
 				}),
-				Labels: map[string]string{
-					"labelA": "valueLabelA",
-					"labelB": "valueLabelB",
-				},
 			},
 			config: map[string]interface{}{
 				"host": host,
 				"labels": map[string]string{
-					"foo": "$attributes.attrB",
-					"bar": "$labels.labelA",
+					"foo": "$attributes.attrA",
+					"bar": "$attributes.attrB",
 				},
 			},
 			expected: compass.RequestPayload{
@@ -272,14 +268,56 @@ func TestSink(t *testing.T) {
 					Type:        "topic",
 					Description: "topic information",
 					Labels: map[string]string{
-						"foo": "valueAttrB",
-						"bar": "valueLabelA",
+						"foo": "valueAttrA",
+						"bar": "valueAttrB",
 					},
 					Data: map[string]interface{}{
 						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
 						"attributes": map[string]interface{}{
 							"attrA": "valueAttrA",
 							"attrB": "valueAttrB",
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "should merge labels from assets and config",
+			data: &v1beta2.Asset{
+				Urn:     "my-topic-urn",
+				Name:    "my-topic",
+				Service: "kafka",
+				Type:    "topic",
+				Data: testUtils.BuildAny(t, &v1beta2.Table{
+					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+						"newFoo": "newBar",
+					}),
+				}),
+				Labels: map[string]string{
+					"foo1": "bar1",
+					"foo2": "bar2",
+				},
+			},
+			config: map[string]interface{}{
+				"host": host,
+				"labels": map[string]string{
+					"foo2": "$attributes.newFoo",
+				},
+			},
+			expected: compass.RequestPayload{
+				Asset: compass.Asset{
+					URN:     "my-topic-urn",
+					Name:    "my-topic",
+					Service: "kafka",
+					Type:    "topic",
+					Labels: map[string]string{
+						"foo1": "bar1",
+						"foo2": "newBar",
+					},
+					Data: map[string]interface{}{
+						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"attributes": map[string]interface{}{
+							"newFoo": "newBar",
 						},
 					},
 				},

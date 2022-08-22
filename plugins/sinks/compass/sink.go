@@ -229,7 +229,10 @@ func (s *Sink) buildLabels(asset *v1beta2.Asset) (labels map[string]string, err 
 		return
 	}
 
-	labels = map[string]string{}
+	labels = asset.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	for key, template := range s.config.Labels {
 		var value string
 		value, err = s.buildLabelValue(template, asset)
