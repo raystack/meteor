@@ -10,11 +10,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/test/utils"
 	ut "github.com/odpf/meteor/utils"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"database/sql"
 
@@ -22,6 +20,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/test/mocks"
+	testUtils "github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -107,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		assert.Equal(t, getExpected(t), emitter.Get())
+		testUtils.AssertAssetsWithJSON(t, getExpected(t), emitter.GetAllData())
 	})
 }
 
@@ -148,73 +147,67 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []models.Record {
-	data1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:       "id",
-				DataType:   "bigint",
-				IsNullable: false,
-				Length:     0,
-			},
-			{
-				Name:       "name",
-				DataType:   "character varying",
-				IsNullable: false,
-				Length:     20,
-			},
-		},
-		Attributes: ut.TryParseMapToProto(map[string]interface{}{
-			"grants": []interface{}{
-				map[string]interface{}{
-					"user":            "test_user",
-					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-				},
-			},
-		}),
-	})
-	require.NoError(t, err)
-
-	data2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:       "id",
-				DataType:   "bigint",
-				IsNullable: false,
-				Length:     0,
-			},
-			{
-				Name:       "title",
-				DataType:   "character varying",
-				IsNullable: false,
-				Length:     20,
-			},
-		},
-		Attributes: ut.TryParseMapToProto(map[string]interface{}{
-			"grants": []interface{}{
-				map[string]interface{}{
-					"user":            "test_user",
-					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-				},
-			},
-		}),
-	})
-	require.NoError(t, err)
-
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+func getExpected(t *testing.T) []*v1beta2.Asset {
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:postgres:test-postgres:table:test_db.article",
 			Name:    "article",
 			Service: "postgres",
 			Type:    "table",
-			Data:    data1,
-		}),
-		models.NewRecord(&v1beta2.Asset{
+			Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Columns: []*v1beta2.Column{
+					{
+						Name:       "id",
+						DataType:   "bigint",
+						IsNullable: false,
+						Length:     0,
+					},
+					{
+						Name:       "name",
+						DataType:   "character varying",
+						IsNullable: false,
+						Length:     20,
+					},
+				},
+				Attributes: ut.TryParseMapToProto(map[string]interface{}{
+					"grants": []interface{}{
+						map[string]interface{}{
+							"user":            "test_user",
+							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+						},
+					},
+				}),
+			}),
+		},
+		{
 			Urn:     "urn:postgres:test-postgres:table:test_db.post",
 			Name:    "post",
 			Service: "postgres",
 			Type:    "table",
-			Data:    data2,
-		}),
+			Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Columns: []*v1beta2.Column{
+					{
+						Name:       "id",
+						DataType:   "bigint",
+						IsNullable: false,
+						Length:     0,
+					},
+					{
+						Name:       "title",
+						DataType:   "character varying",
+						IsNullable: false,
+						Length:     20,
+					},
+				},
+				Attributes: ut.TryParseMapToProto(map[string]interface{}{
+					"grants": []interface{}{
+						map[string]interface{}{
+							"user":            "test_user",
+							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+						},
+					},
+				}),
+			}),
+		},
 	}
 }
