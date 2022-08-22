@@ -77,6 +77,6 @@ require (
 )
 
 require (
-	github.com/golang/protobuf v1.5.2
 	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
+	github.com/sergi/go-diff v1.1.0 // indirect
 )

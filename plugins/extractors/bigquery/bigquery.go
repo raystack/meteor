@@ -214,6 +214,14 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		PreviewFields: previewFields,
 		PreviewRows:   previewRows,
 		Profile:       tableProfile,
+		Attributes: utils.TryParseMapToProto(map[string]interface{}{
+			"full_qualified_name": tableFQN,
+			"dataset":             t.DatasetID,
+			"project":             t.ProjectID,
+			"type":                string(md.Type),
+			"partition_field":     partitionField,
+			"labels":              md.Labels,
+		}),
 	})
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)
@@ -226,16 +234,8 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		Description: md.Description,
 		Service:     "bigquery",
 		Data:        table,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"full_qualified_name": tableFQN,
-			"dataset":             t.DatasetID,
-			"project":             t.ProjectID,
-			"type":                string(md.Type),
-			"partition_field":     partitionField,
-		}),
-		Labels:     md.Labels,
-		CreateTime: timestamppb.New(md.CreationTime),
-		UpdateTime: timestamppb.New(md.LastModifiedTime),
+		CreateTime:  timestamppb.New(md.CreationTime),
+		UpdateTime:  timestamppb.New(md.LastModifiedTime),
 	}, nil
 }
 

@@ -164,10 +164,17 @@ func getExpected(t *testing.T) []models.Record {
 				Length:     20,
 			},
 		},
+		Attributes: ut.TryParseMapToProto(map[string]interface{}{
+			"grants": []interface{}{
+				map[string]interface{}{
+					"user":            "test_user",
+					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+				},
+			},
+		}),
 	})
-	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
-	}
+	require.NoError(t, err)
+
 	data2, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -183,10 +190,17 @@ func getExpected(t *testing.T) []models.Record {
 				Length:     20,
 			},
 		},
+		Attributes: ut.TryParseMapToProto(map[string]interface{}{
+			"grants": []interface{}{
+				map[string]interface{}{
+					"user":            "test_user",
+					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+				},
+			},
+		}),
 	})
-	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
-	}
+	require.NoError(t, err)
+
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:postgres:test-postgres:table:test_db.article",
@@ -194,14 +208,6 @@ func getExpected(t *testing.T) []models.Record {
 			Service: "postgres",
 			Type:    "table",
 			Data:    data1,
-			Attributes: ut.TryParseMapToProto(map[string]interface{}{
-				"grants": []interface{}{
-					map[string]interface{}{
-						"user":            "test_user",
-						"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-					},
-				},
-			}),
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:postgres:test-postgres:table:test_db.post",
@@ -209,14 +215,6 @@ func getExpected(t *testing.T) []models.Record {
 			Service: "postgres",
 			Type:    "table",
 			Data:    data2,
-			Attributes: ut.TryParseMapToProto(map[string]interface{}{
-				"grants": []interface{}{
-					map[string]interface{}{
-						"user":            "test_user",
-						"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-					},
-				},
-			}),
 		}),
 	}
 }

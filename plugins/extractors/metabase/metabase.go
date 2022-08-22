@@ -109,6 +109,11 @@ func (e *Extractor) buildDashboard(d Dashboard) (asset *v1beta2.Asset, err error
 
 	data, err := anypb.New(&v1beta2.Dashboard{
 		Charts: charts,
+		Attributes: utils.TryParseMapToProto(map[string]interface{}{
+			"id":            dashboard.ID,
+			"collection_id": dashboard.CollectionID,
+			"creator_id":    dashboard.CreatorID,
+		}),
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
@@ -121,13 +126,8 @@ func (e *Extractor) buildDashboard(d Dashboard) (asset *v1beta2.Asset, err error
 		Type:        "dashboard",
 		Description: dashboard.Description,
 		Data:        data,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"id":            dashboard.ID,
-			"collection_id": dashboard.CollectionID,
-			"creator_id":    dashboard.CreatorID,
-		}),
-		CreateTime: timestamppb.New(time.Time(dashboard.CreatedAt)),
-		UpdateTime: timestamppb.New(time.Time(dashboard.UpdatedAt)),
+		CreateTime:  timestamppb.New(time.Time(dashboard.CreatedAt)),
+		UpdateTime:  timestamppb.New(time.Time(dashboard.UpdatedAt)),
 		Lineage: &v1beta2.Lineage{
 			Upstreams: dashboardUpstreams,
 		},

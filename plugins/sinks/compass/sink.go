@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/protobuf/types/known/structpb"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -18,6 +17,8 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -143,25 +144,11 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
 	}
 
-	assetData, err := asset.GetData().UnmarshalNew()
+	mapData, err := s.buildCompassData(asset.GetData())
 	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "error unmarshalling asset data")
-	}
-	bytes, err := json.Marshal(assetData)
-	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "error marshalling json")
+		return RequestPayload{}, errors.Wrap(err, "error building compass data")
 	}
 
-	var mapData map[string]interface{}
-	err = json.Unmarshal(bytes, &mapData)
-	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "error unmarshalling json")
-	}
-
-	data, err := structpb.NewStruct(mapData)
-	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "error constructing struct")
-	}
 	upstreams, downstreams := s.buildLineage(asset)
 	owners := s.buildOwners(asset)
 	record := RequestPayload{
@@ -172,7 +159,7 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 			Service:     asset.GetService(),
 			Description: asset.GetDescription(),
 			Owners:      owners,
-			Data:        data,
+			Data:        mapData,
 			Labels:      labels,
 		},
 		Upstreams:   upstreams,
@@ -180,6 +167,25 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 	}
 
 	return record, nil
+}
+
+func (s *Sink) buildCompassData(anyData *anypb.Any) (map[string]interface{}, error) {
+	var mapData map[string]interface{}
+
+	marshaler := &protojson.MarshalOptions{
+		UseProtoNames: true,
+	}
+	bytes, err := marshaler.Marshal(anyData)
+	if err != nil {
+		return mapData, errors.Wrap(err, "error marshaling asset data")
+	}
+
+	err = json.Unmarshal(bytes, &mapData)
+	if err != nil {
+		return mapData, errors.Wrap(err, "error unmarshalling to mapdata")
+	}
+
+	return mapData, nil
 }
 
 func (s *Sink) buildLineage(asset *v1beta2.Asset) (upstreams, downstreams []LineageRecord) {
@@ -240,28 +246,24 @@ func (s *Sink) buildLabels(asset *v1beta2.Asset) (labels map[string]string, err 
 
 func (s *Sink) buildLabelValue(template string, asset *v1beta2.Asset) (value string, err error) {
 	fields := strings.Split(template, ".")
-	if len(fields) < 3 {
-		err = errors.New("label template has to be at least nested 3 levels")
+	if len(fields) < 2 {
+		err = errors.New("label template has to be at least nested 2 levels")
 		return
 	}
 
-	switch fields[0] {
-	case "$properties":
-		value, err = s.getLabelValueFromProperties(fields[1], fields[2], asset)
-		if err != nil {
-			err = errors.Wrapf(err, "error getting label value from $properties")
-		}
+	value, err = s.getLabelValueFromProperties(fields[0], fields[1], asset)
+	if err != nil {
+		err = fmt.Errorf("error getting label value")
 		return
 	}
 
-	err = errors.New("invalid label template format")
 	return
 }
 
 func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, asset *v1beta2.Asset) (value string, err error) {
 	switch field1 {
-	case "attributes":
-		attr := utils.GetCustomProperties(asset)
+	case "$attributes":
+		attr := utils.GetAttributes(asset)
 		v, ok := attr[field2]
 		if !ok {
 			err = fmt.Errorf("could not find \"%s\" field on attributes", field2)
@@ -273,7 +275,7 @@ func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, asset *
 			return
 		}
 		return
-	case "labels":
+	case "$labels":
 		labels := asset.GetLabels()
 		if labels == nil {
 			err = errors.New("could not find labels field")

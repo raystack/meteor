@@ -14,6 +14,7 @@ import (
 	pb "github.com/odpf/optimus/api/proto/odpf/optimus/core/v1beta1"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -134,22 +135,8 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
 	urn := models.NewURN(service, e.UrnScope, "job", jobID)
-	asset = &v1beta2.Asset{
-		Urn:         urn,
-		Name:        jobSpec.Name,
-		Service:     service,
-		Description: jobSpec.Description,
-		Type:        "job",
-		Owners: []*v1beta2.Owner{
-			{
-				Urn:   jobSpec.Owner,
-				Email: jobSpec.Owner,
-			},
-		},
-		Lineage: &v1beta2.Lineage{
-			Upstreams:   upstreams,
-			Downstreams: downstreams,
-		},
+
+	jobModel, err := anypb.New(&v1beta2.Job{
 		Attributes: utils.TryParseMapToProto(map[string]interface{}{
 			"version":          jobSpec.Version,
 			"project":          project,
@@ -171,6 +158,28 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 				"image":       task.Image,
 			},
 		}),
+	})
+	if err != nil {
+		err = fmt.Errorf("error creating Any struct: %w", err)
+	}
+
+	asset = &v1beta2.Asset{
+		Urn:         urn,
+		Name:        jobSpec.Name,
+		Service:     service,
+		Description: jobSpec.Description,
+		Type:        "job",
+		Data:        jobModel,
+		Owners: []*v1beta2.Owner{
+			{
+				Urn:   jobSpec.Owner,
+				Email: jobSpec.Owner,
+			},
+		},
+		Lineage: &v1beta2.Lineage{
+			Upstreams:   upstreams,
+			Downstreams: downstreams,
+		},
 	}
 
 	return

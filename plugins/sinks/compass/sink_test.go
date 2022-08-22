@@ -9,13 +9,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	testUtils "github.com/odpf/meteor/test/utils"
 	"github.com/odpf/meteor/utils"
@@ -123,9 +123,11 @@ func TestSink(t *testing.T) {
 			Service:     "kafka",
 			Type:        "topic",
 			Description: "topic information",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"attrA": "valueAttrA",
-				"attrB": "valueAttrB",
+			Data: testUtils.BuildAny(t, &v1beta2.Topic{
+				Attributes: utils.TryParseMapToProto(map[string]interface{}{
+					"attrA": "valueAttrA",
+					"attrB": "valueAttrB",
+				}),
 			}),
 			Labels: map[string]string{
 				"labelA": "valueLabelA",
@@ -145,19 +147,19 @@ func TestSink(t *testing.T) {
 			{
 				"host": host,
 				"labels": map[string]string{
-					"foo": "$properties.attributes",
+					"foo": "$attributes",
 				},
 			},
 			{
 				"host": host,
 				"labels": map[string]string{
-					"foo": "$properties.attributes.12",
+					"foo": "$attributes.12",
 				},
 			},
 			{
 				"host": host,
 				"labels": map[string]string{
-					"foo": "$properties.attributes.attrC",
+					"foo": "$attributes.attrC",
 				},
 			},
 			{
@@ -169,7 +171,7 @@ func TestSink(t *testing.T) {
 			{
 				"host": host,
 				"labels": map[string]string{
-					"bar": "$properties.labels.labelC",
+					"bar": "$labels.labelC",
 				},
 			},
 		}
@@ -184,21 +186,9 @@ func TestSink(t *testing.T) {
 			}
 			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(testData)})
 			assert.Error(t, err)
-			fmt.Println(err)
 		}
-
 	})
 
-	jsonTable, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "INT",
-				IsNullable:  true,
-			},
-		},
-	})
 	successTestCases := []struct {
 		description string
 		data        *v1beta2.Asset
@@ -213,7 +203,16 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data:        jsonTable,
+				Data: testUtils.BuildAny(t, &v1beta2.Table{
+					Columns: []*v1beta2.Column{
+						{
+							Name:        "id",
+							Description: "It is the ID",
+							DataType:    "INT",
+							IsNullable:  true,
+						},
+					},
+				}),
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -225,6 +224,17 @@ func TestSink(t *testing.T) {
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
+					Data: map[string]interface{}{
+						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"columns": []map[string]interface{}{
+							{
+								"name":        "id",
+								"description": "It is the ID",
+								"data_type":   "INT",
+								"is_nullable": true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -236,21 +246,22 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Attributes: utils.TryParseMapToProto(map[string]interface{}{
-					"attrA": "valueAttrA",
-					"attrB": "valueAttrB",
+				Data: testUtils.BuildAny(t, &v1beta2.Table{
+					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+						"attrA": "valueAttrA",
+						"attrB": "valueAttrB",
+					}),
 				}),
 				Labels: map[string]string{
 					"labelA": "valueLabelA",
 					"labelB": "valueLabelB",
 				},
-				Data: jsonTable,
 			},
 			config: map[string]interface{}{
 				"host": host,
 				"labels": map[string]string{
-					"foo": "$properties.attributes.attrB",
-					"bar": "$properties.labels.labelA",
+					"foo": "$attributes.attrB",
+					"bar": "$labels.labelA",
 				},
 			},
 			expected: compass.RequestPayload{
@@ -264,6 +275,13 @@ func TestSink(t *testing.T) {
 						"foo": "valueAttrB",
 						"bar": "valueLabelA",
 					},
+					Data: map[string]interface{}{
+						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"attributes": map[string]interface{}{
+							"attrA": "valueAttrA",
+							"attrB": "valueAttrB",
+						},
+					},
 				},
 			},
 		},
@@ -275,7 +293,6 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data:        jsonTable,
 				Lineage: &v1beta2.Lineage{
 					Upstreams: []*v1beta2.Resource{
 						{
@@ -301,6 +318,7 @@ func TestSink(t *testing.T) {
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
+					Data:        map[string]interface{}{},
 				},
 				Upstreams: []compass.LineageRecord{
 					{
@@ -324,7 +342,6 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data:        jsonTable,
 				Lineage: &v1beta2.Lineage{
 					Downstreams: []*v1beta2.Resource{
 						{
@@ -350,6 +367,7 @@ func TestSink(t *testing.T) {
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
+					Data:        map[string]interface{}{},
 				},
 				Downstreams: []compass.LineageRecord{
 					{
@@ -373,7 +391,6 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data:        jsonTable,
 				Owners: []*v1beta2.Owner{
 					{
 						Urn:   "urn-1",
@@ -405,6 +422,7 @@ func TestSink(t *testing.T) {
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
+					Data:        map[string]interface{}{},
 					Owners: []compass.Owner{
 						{
 							URN:   "urn-1",
@@ -437,7 +455,6 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data:        jsonTable,
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -453,6 +470,7 @@ func TestSink(t *testing.T) {
 					Service:     "kafka",
 					Type:        "topic",
 					Description: "topic information",
+					Data:        map[string]interface{}{},
 				},
 			},
 		},
@@ -460,41 +478,13 @@ func TestSink(t *testing.T) {
 
 	for _, tc := range successTestCases {
 		t.Run(tc.description, func(t *testing.T) {
-			assetData, err := tc.data.GetData().UnmarshalNew()
-			if err != nil {
-				t.Fatal(err)
-			}
-			bytes, err := json.Marshal(assetData)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			var mapData map[string]interface{}
-			err = json.Unmarshal(bytes, &mapData)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			data, err := structpb.NewStruct(mapData)
-			if err != nil {
-				t.Fatal(err)
-			}
-			tc.expected.Asset.Data = data
-			payload := compass.RequestPayload{
-				Asset:       tc.expected.Asset,
-				Upstreams:   tc.expected.Upstreams,
-				Downstreams: tc.expected.Downstreams,
-			}
-
-			client := newMockHTTPClient(tc.config, http.MethodPatch, url, payload)
+			client := newMockHTTPClient(tc.config, http.MethodPatch, url, tc.expected)
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
 
 			compassSink := compass.New(client, testUtils.Logger)
-			err = compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
-			if err != nil {
-				t.Fatal(err)
-			}
+			err := compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
+			require.NoError(t, err)
 
 			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
 			assert.NoError(t, err)

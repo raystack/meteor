@@ -1,14 +1,9 @@
-{
+[{
     "urn": "urn:metabase:test-metabase:collection:1",
     "name": "Main",
     "service": "metabase",
     "type": "dashboard",
     "description": "HELPFUL DESCRIPTION",
-    "attributes": {
-        "id": 1,
-        "collection_id": 1,
-        "creator_id": 1
-    },
     "lineage": {
         "upstreams": [
             {
@@ -144,8 +139,14 @@
                 "source": "metabase",
                 "urn": "metabase::my-metabase/card/4"
             }
-        ]
+        ],
+        "attributes": {
+            "id": 1,
+            "collection_id": 1,
+            "creator_id": 1
+        }
     },
     "create_time": "2021-10-25T16:10:40.371Z",
     "update_time": "2021-11-02T10:32:58.786Z"
 }
+]

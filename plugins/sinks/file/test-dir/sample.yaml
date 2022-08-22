@@ -28,7 +28,6 @@
         - 101
         - 120
         - 116
-  attributes: null
   owners: []
   lineage: null
   labels: {}
@@ -65,7 +64,6 @@
         - 101
         - 120
         - 116
-  attributes: null
   owners: []
   lineage: null
   labels: {}

@@ -160,10 +160,12 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 
 	usrPrivilegeInfo, err := e.userPrivilegesInfo(db, dbName, tableName)
 	if err != nil {
-		return result, nil
+		e.logger.Warn("unable to fetch user privileges info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
 	}
+
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: usrPrivilegeInfo,
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
@@ -171,11 +173,10 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 	}
 	result = &v1beta2.Asset{
 		Urn:     models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-		Name:       tableName,
-		Service:    "postgres",
-		Type:       "table",
-		Data:       table,
-		Attributes: usrPrivilegeInfo,
+		Name:    tableName,
+		Service: "postgres",
+		Type:    "table",
+		Data:    table,
 	}
 	return
 }

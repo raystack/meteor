@@ -95,7 +95,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 func (e *Extractor) buildDashboard(dashboard Results) (asset *v1beta2.Asset, err error) {
 	dashboardUrn := models.NewURN("redash", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.Id))
 
-	data, err := anypb.New(&v1beta2.Dashboard{})
+	data, err := anypb.New(&v1beta2.Dashboard{
+		Attributes: utils.TryParseMapToProto(map[string]interface{}{
+			"user_id": dashboard.UserId,
+			"version": dashboard.Version,
+			"slug":    dashboard.Slug,
+		}),
+	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
 		return nil, err
@@ -106,11 +112,6 @@ func (e *Extractor) buildDashboard(dashboard Results) (asset *v1beta2.Asset, err
 		Service: "redash",
 		Type:    "dashboard",
 		Data:    data,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"user_id": dashboard.UserId,
-			"version": dashboard.Version,
-			"slug":    dashboard.Slug,
-		}),
 	}
 
 	return

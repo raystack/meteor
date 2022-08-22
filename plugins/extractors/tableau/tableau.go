@@ -125,6 +125,15 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 	dashboardURN := models.NewURN("tableau", e.UrnScope, "workbook", wb.ID)
 	data, err := anypb.New(&v1beta2.Dashboard{
 		Charts: e.buildCharts(dashboardURN, wb, lineages),
+		Attributes: utils.TryParseMapToProto(map[string]interface{}{
+			"id":           wb.ID,
+			"name":         wb.Name,
+			"project_name": wb.ProjectName,
+			"uri":          wb.URI,
+			"owner_id":     wb.Owner.ID,
+			"owner_name":   wb.Owner.Name,
+			"owner_email":  wb.Owner.Email,
+		}),
 	})
 	if err != nil {
 		return nil, err
@@ -136,15 +145,6 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 		Type:        "dashboard",
 		Description: wb.Description,
 		Data:        data,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"id":           wb.ID,
-			"name":         wb.Name,
-			"project_name": wb.ProjectName,
-			"uri":          wb.URI,
-			"owner_id":     wb.Owner.ID,
-			"owner_name":   wb.Owner.Name,
-			"owner_email":  wb.Owner.Email,
-		}),
 		Owners: []*v1beta2.Owner{
 			{
 				Urn:   wb.Owner.Email,

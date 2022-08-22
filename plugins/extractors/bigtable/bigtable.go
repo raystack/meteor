@@ -10,6 +10,7 @@ import (
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/registry"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odpf/meteor/plugins"
@@ -120,14 +121,20 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err e
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
+				tableMeta, err := anypb.New(&v1beta2.Table{
+					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+						"column_family": string(familyInfoBytes),
+					}),
+				})
+				if err != nil {
+					e.logger.Warn("error creating Any struct", "error", err)
+				}
 				asset := v1beta2.Asset{
 					Urn:     models.NewURN(service, e.config.ProjectID, "table", fmt.Sprintf("%s.%s", instance, table)),
 					Name:    table,
 					Service: service,
 					Type:    "table",
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
-						"column_family": string(familyInfoBytes),
-					}),
+					Data:    tableMeta,
 				}
 				emit(models.NewRecord(&asset))
 

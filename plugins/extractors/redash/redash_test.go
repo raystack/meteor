@@ -2,21 +2,20 @@ package redash_test
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/redash"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/odpf/meteor/test/utils"
+	testUtils "github.com/odpf/meteor/test/utils"
 	util "github.com/odpf/meteor/utils"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/anypb"
+	"github.com/stretchr/testify/require"
 )
 
 var testServer *httptest.Server
@@ -59,55 +58,51 @@ func TestInit(t *testing.T) {
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
-		data, err := anypb.New(&v1beta2.Dashboard{})
-		if err != nil {
-			err = fmt.Errorf("error creating Any struct: %w", err)
-			t.Fatal(err)
-		}
-		expectedData := []models.Record{
-			models.NewRecord(&v1beta2.Asset{
+		expectedData := []*v1beta2.Asset{
+			{
 				Urn:     "urn:redash:test-redash:dashboard:421",
 				Name:    "firstDashboard",
 				Service: "redash",
 				Type:    "dashboard",
-				Data:    data,
-				Attributes: util.TryParseMapToProto(map[string]interface{}{
-					"user_id": 1,
-					"version": 1,
-					"slug":    "new-dashboard-copy",
+				Data: testUtils.BuildAny(t, &v1beta2.Dashboard{
+					Attributes: util.TryParseMapToProto(map[string]interface{}{
+						"user_id": 1,
+						"version": 1,
+						"slug":    "new-dashboard-copy",
+					}),
 				}),
-			}),
-			models.NewRecord(&v1beta2.Asset{
+			},
+			{
 				Urn:     "urn:redash:test-redash:dashboard:634",
 				Name:    "secondDashboard",
 				Service: "redash",
 				Type:    "dashboard",
-				Data:    data,
-				Attributes: util.TryParseMapToProto(map[string]interface{}{
-					"user_id": 1,
-					"version": 2,
-					"slug":    "test-dashboard-updated",
+				Data: testUtils.BuildAny(t, &v1beta2.Dashboard{
+					Attributes: util.TryParseMapToProto(map[string]interface{}{
+						"user_id": 1,
+						"version": 2,
+						"slug":    "test-dashboard-updated",
+					}),
 				}),
-			}),
+			},
 		}
 
 		ctx := context.TODO()
 		extractor := redash.New(utils.Logger)
-		err = extractor.Init(ctx, plugins.Config{
+		err := extractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"base_url": testServer.URL,
 				"api_key":  "checkAPI",
-			}})
-		if err != nil {
-			t.Fatal(err)
-		}
+			},
+		})
+		require.NoError(t, err)
 
 		emitter := mocks.NewEmitter()
 		err = extractor.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, expectedData, emitter.Get())
+		testUtils.AssertAssetsWithJSON(t, expectedData, emitter.GetAllData())
 	})
 }
 
@@ -190,9 +185,7 @@ func NewTestServer() *httptest.Server {
 					}
 				]
 			}
-		`,
-		),
-		)
+		`))
 		if err != nil {
 			return
 		}

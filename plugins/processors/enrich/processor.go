@@ -71,7 +71,7 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 	data := record.Data()
 	p.logger.Debug("enriching record", "record", data.Urn)
-	customProps := utils.GetCustomProperties(data)
+	customProps := utils.GetAttributes(data)
 
 	// update custom properties using value from config
 	for key, value := range p.config.Attributes {
@@ -82,7 +82,7 @@ func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 	}
 
 	// save custom properties
-	result, err := utils.SetCustomProperties(data, customProps)
+	result, err := utils.SetAttributes(data, customProps)
 	if err != nil {
 		return data, err
 	}
