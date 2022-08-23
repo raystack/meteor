@@ -4,15 +4,11 @@
 package tableau_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
-	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/tableau"
 	"github.com/odpf/meteor/test/mocks"
@@ -110,30 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		records := emitter.Get()
-		var actuals []models.Metadata
-		for _, r := range records {
-			actuals = append(actuals, r.Data())
-		}
-
-		expectedJSONStringDashboardProto, err := ioutil.ReadFile("testdata/dashboards_proto.json")
-		assert.Nil(t, err)
-
-		assertJSONString(t, string(expectedJSONStringDashboardProto), actuals)
+		actuals := emitter.GetAllData()
+		testutils.AssertProtosWithJSONFile(t, "./testdata/dashboards_proto.json", actuals)
 	})
-}
-
-func assertJSONString(t *testing.T, expected string, actual interface{}) {
-	actualBytes, err := json.Marshal(actual)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var prettyPrintActualBytes bytes.Buffer
-	err = json.Indent(&prettyPrintActualBytes, []byte(actualBytes), "", "\t")
-	assert.Nil(t, err)
-
-	var parsedJSON bytes.Buffer
-	err = json.Indent(&parsedJSON, []byte(expected), "", "\t")
-	assert.Nil(t, err)
-	assert.Equal(t, parsedJSON.String(), prettyPrintActualBytes.String())
 }

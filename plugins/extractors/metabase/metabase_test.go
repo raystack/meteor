@@ -10,6 +10,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/odpf/meteor/models"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+
 	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/pkg/errors"
 
@@ -77,12 +80,12 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		dashboards := getDashboardList(t)
-		dashboard_1 := getDashboard(t, 1)
+		dashboard1 := getDashboard(t, 1)
 
 		client := new(mockClient)
 		client.On("Authenticate", host, "test-user", "test-pass", "").Return(nil)
 		client.On("GetDashboards").Return(dashboards, nil)
-		client.On("GetDashboard", 1).Return(dashboard_1, nil)
+		client.On("GetDashboard", 1).Return(dashboard1, nil)
 		client.On("GetTable", 2).Return(getTable(t, 2), nil).Once()
 		client.On("GetDatabase", 2).Return(getDatabase(t, 2), nil).Once()
 		client.On("GetTable", 5).Return(getTable(t, 5), nil).Once()
@@ -107,7 +110,7 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		actuals := emitter.GetAllData()
-		testutils.AssertWithJSONFile(t, "./testdata/expected.json", actuals)
+		testutils.AssertProtosWithJSONFile(t, "./testdata/expected.json", actuals)
 	})
 }
 
@@ -194,4 +197,24 @@ func (m *mockClient) GetDatabase(id int) (metabase.Database, error) {
 func (m *mockClient) GetTable(id int) (metabase.Table, error) {
 	args := m.Called(id)
 	return args.Get(0).(metabase.Table), args.Error(1)
+}
+
+// This function compares two slices without concerning about the order
+func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
+	assert.Len(t, result, len(expected))
+
+	expectedMap := make(map[string]*v1beta2.Asset)
+	for _, record := range expected {
+		expectedAsset := record.Data()
+		expectedMap[expectedAsset.Urn] = expectedAsset
+	}
+
+	for _, record := range result {
+		actualAsset := record.Data()
+		assert.Contains(t, expectedMap, actualAsset.Urn)
+		assert.Equal(t, expectedMap[actualAsset.Urn], actualAsset)
+
+		// delete entry to make sure there is no duplicate
+		delete(expectedMap, actualAsset.Urn)
+	}
 }

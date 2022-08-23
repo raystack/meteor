@@ -21,3 +21,12 @@ processors:
      fieldA: valueA
      fieldB: valueB
 ```
+
+
+## Labels
+
+`labels`
+
+This processor will append Asset's Labels with value from given config.
+
+[More details](../../../plugins/processors/labels/README.md)

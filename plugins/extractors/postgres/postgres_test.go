@@ -10,10 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
-	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/test/utils"
 	ut "github.com/odpf/meteor/utils"
 
@@ -23,6 +20,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/postgres"
 	"github.com/odpf/meteor/test/mocks"
+	testUtils "github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -108,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		assert.Equal(t, getExpected(), emitter.Get())
+		testUtils.AssertAssetsWithJSON(t, getExpected(t), emitter.GetAllData())
 	})
 }
 
@@ -149,17 +147,15 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected() []models.Record {
-	return []models.Record{
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:     "urn:postgres:test-postgres:table:test_db.article",
-				Name:    "article",
-				Service: "postgres",
-				Type:    "table",
-			},
-			Schema: &facetsv1beta1.Columns{
-				Columns: []*facetsv1beta1.Column{
+func getExpected(t *testing.T) []*v1beta2.Asset {
+	return []*v1beta2.Asset{
+		{
+			Urn:     "urn:postgres:test-postgres:table:test_db.article",
+			Name:    "article",
+			Service: "postgres",
+			Type:    "table",
+			Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Columns: []*v1beta2.Column{
 					{
 						Name:       "id",
 						DataType:   "bigint",
@@ -173,8 +169,6 @@ func getExpected() []models.Record {
 						Length:     20,
 					},
 				},
-			},
-			Properties: &facetsv1beta1.Properties{
 				Attributes: ut.TryParseMapToProto(map[string]interface{}{
 					"grants": []interface{}{
 						map[string]interface{}{
@@ -183,17 +177,15 @@ func getExpected() []models.Record {
 						},
 					},
 				}),
-			},
-		}),
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:     "urn:postgres:test-postgres:table:test_db.post",
-				Name:    "post",
-				Service: "postgres",
-				Type:    "table",
-			},
-			Schema: &facetsv1beta1.Columns{
-				Columns: []*facetsv1beta1.Column{
+			}),
+		},
+		{
+			Urn:     "urn:postgres:test-postgres:table:test_db.post",
+			Name:    "post",
+			Service: "postgres",
+			Type:    "table",
+			Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Columns: []*v1beta2.Column{
 					{
 						Name:       "id",
 						DataType:   "bigint",
@@ -207,8 +199,6 @@ func getExpected() []models.Record {
 						Length:     20,
 					},
 				},
-			},
-			Properties: &facetsv1beta1.Properties{
 				Attributes: ut.TryParseMapToProto(map[string]interface{}{
 					"grants": []interface{}{
 						map[string]interface{}{
@@ -217,7 +207,7 @@ func getExpected() []models.Record {
 						},
 					},
 				}),
-			},
-		}),
+			}),
+		},
 	}
 }

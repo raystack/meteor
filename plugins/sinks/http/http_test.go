@@ -12,14 +12,13 @@ import (
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
-	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	h "github.com/odpf/meteor/plugins/sinks/http"
 	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -76,14 +75,14 @@ func TestSink(t *testing.T) {
 		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		defer httpSink.Close()
-		err = httpSink.Sink(context.TODO(), getExpectedVal())
+		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 		assert.Error(t, err)
 
 		// change value of url in config
 		config["url"] = "https://random-incorrect-url.odpf.com"
 		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
-		err = httpSink.Sink(context.TODO(), getExpectedVal())
+		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 		assert.Error(t, err)
 
 		// change value of method in config
@@ -91,7 +90,7 @@ func TestSink(t *testing.T) {
 		config["url"] = "http://127.0.0.1:54927"
 		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
-		err = httpSink.Sink(context.TODO(), getExpectedVal())
+		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 		assert.Error(t, err)
 	})
 
@@ -122,7 +121,7 @@ func TestSink(t *testing.T) {
 				err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 				assert.NoError(t, err)
 				defer httpSink.Close()
-				err = httpSink.Sink(context.TODO(), getExpectedVal())
+				err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 				assert.True(t, errors.Is(err, plugins.RetryError{}))
 				port += 2
 			})
@@ -153,56 +152,52 @@ func TestSink(t *testing.T) {
 		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		defer httpSink.Close()
-		err = httpSink.Sink(context.TODO(), getExpectedVal())
+		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 		assert.NoError(t, err)
 	})
 }
 
-func getExpectedVal() []models.Record {
+func getExpectedVal(t *testing.T) []models.Record {
+	table1, err := anypb.New(&v1beta2.Table{
+		Columns: []*v1beta2.Column{
+			{
+				Name:     "SomeStr",
+				DataType: "text",
+			},
+		},
+		Profile: &v1beta2.TableProfile{
+			TotalRows: 1,
+		},
+	})
+	if err != nil {
+		t.Fatal("error creating Any struct for test: %w", err)
+	}
+	table2, err := anypb.New(&v1beta2.Table{
+		Columns: []*v1beta2.Column{
+			{
+				Name:     "SomeStr",
+				DataType: "text",
+			},
+		},
+		Profile: &v1beta2.TableProfile{
+			TotalRows: 1,
+		},
+	})
+	if err != nil {
+		t.Fatal("error creating Any struct for test: %w", err)
+	}
 	return []models.Record{
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:  "elasticsearch.index1",
-				Name: "index1",
-				Type: "table",
-			},
-			Schema: &facetsv1beta1.Columns{
-				Columns: []*facetsv1beta1.Column{
-					{
-						Name:     "SomeInt",
-						DataType: "long",
-					},
-					{
-						Name:     "SomeStr",
-						DataType: "text",
-					},
-				},
-			},
-			Profile: &assetsv1beta1.TableProfile{
-				TotalRows: 1,
-			},
+		models.NewRecord(&v1beta2.Asset{
+			Urn:  "elasticsearch.index1",
+			Name: "index1",
+			Type: "table",
+			Data: table1,
 		}),
-		models.NewRecord(&assetsv1beta1.Table{
-			Resource: &commonv1beta1.Resource{
-				Urn:  "elasticsearch.index2",
-				Name: "index2",
-				Type: "table",
-			},
-			Schema: &facetsv1beta1.Columns{
-				Columns: []*facetsv1beta1.Column{
-					{
-						Name:     "SomeInt",
-						DataType: "long",
-					},
-					{
-						Name:     "SomeStr",
-						DataType: "text",
-					},
-				},
-			},
-			Profile: &assetsv1beta1.TableProfile{
-				TotalRows: 1,
-			},
+		models.NewRecord(&v1beta2.Asset{
+			Urn:  "elasticsearch.index2",
+			Name: "index2",
+			Type: "table",
+			Data: table2,
 		}),
 	}
 }

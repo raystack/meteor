@@ -3,10 +3,10 @@ package console
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 
 	"github.com/odpf/meteor/models"
+	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -54,12 +54,14 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) process(value interface{}) error {
-	jsonBytes, err := json.Marshal(value)
+func (s *Sink) process(asset *assetsv1beta2.Asset) error {
+	jsonBytes, err := models.ToJSON(asset)
 	if err != nil {
 		return err
 	}
+
 	fmt.Println(string(jsonBytes))
+
 	return nil
 }
 

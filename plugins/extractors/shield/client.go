@@ -9,6 +9,7 @@ import (
 	sh "github.com/odpf/shield/proto/v1beta1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 )
 
@@ -59,7 +60,7 @@ func (c *client) createConnection(ctx context.Context, host string) (*grpc.Clien
 	}
 	var opts []grpc.DialOption
 	opts = append(opts,
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSize),

@@ -1,60 +1,50 @@
 [
   {
-    "resource": {
-      "urn": "urn:shield:test-shield:user:user-A",
-      "type": "user",
+      "create_time": "1970-01-01T00:40:00Z",
+      "data": {
+          "@type": "type.googleapis.com/odpf.assets.v1beta2.User",
+          "email": "user1@gojek.com",
+          "full_name": "fullname-A",
+          "memberships": [
+              {
+                  "group_urn": "grpname-A:grpId-A",
+                  "role": [
+                      "role-A"
+                  ]
+              }
+          ],
+          "status": "active",
+          "username": "user-A"
+      },
+      "description": "sample description for user-A",
       "name": "fullname-A",
       "service": "shield",
-      "description": "sample description for user-A"
-    },
-    "email": "user1@gojek.com",
-    "username": "user-A",
-    "full_name": "fullname-A",
-    "status": "active",
-    "timestamps": {
-      "create_time": {
-        "seconds": 2400
-      },
-      "update_time": {
-        "seconds": 2100
-      }
-    },
-    "memberships": [
-      {
-        "group_urn": "grpname-A:grpId-A",
-        "role": [
-          "role-A"
-        ]
-      }
-    ]
+      "type": "user",
+      "update_time": "1970-01-01T00:35:00Z",
+      "urn": "urn:shield:test-shield:user:user-A"
   },
   {
-    "resource": {
-      "urn": "urn:shield:test-shield:user:user-B",
+      "create_time": "1970-01-01T00:20:00Z",
+      "data": {
+          "@type": "type.googleapis.com/odpf.assets.v1beta2.User",
+          "email": "user2@gojek.com",
+          "full_name": "fullname-B",
+          "memberships": [
+              {
+                  "group_urn": "grpname-B:grpId-B",
+                  "role": [
+                      "role-B"
+                  ]
+              }
+          ],
+          "status": "active",
+          "username": "user-B"
+      },
+      "description": "sample description for user-B",
       "name": "fullname-B",
       "service": "shield",
       "type": "user",
-      "description": "sample description for user-B"
-    },
-    "email": "user2@gojek.com",
-    "username": "user-B",
-    "full_name": "fullname-B",
-    "status": "active",
-    "timestamps": {
-      "create_time": {
-        "seconds": 1200
-      },
-      "update_time": {
-        "seconds": 900
-      }
-    },
-    "memberships": [
-      {
-        "group_urn": "grpname-B:grpId-B",
-        "role": [
-          "role-B"
-        ]
-      }
-    ]
+      "update_time": "1970-01-01T00:15:00Z",
+      "urn": "urn:shield:test-shield:user:user-B"
   }
 ]

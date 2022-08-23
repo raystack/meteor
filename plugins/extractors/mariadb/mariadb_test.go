@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/mariadb"
 	"github.com/odpf/meteor/test/mocks"
@@ -112,8 +111,9 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			table := record.Data().(*assetsv1beta1.Table)
-			urns = append(urns, table.Resource.Urn)
+			table := record.Data()
+			urns = append(urns, table.Urn)
+
 		}
 
 		assert.Equal(t, []string{

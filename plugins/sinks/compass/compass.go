@@ -12,6 +12,7 @@ type Asset struct {
 	Name        string            `json:"name"`
 	Service     string            `json:"service"`
 	Description string            `json:"description"`
+	URL         string            `json:"url"`
 	Owners      []Owner           `json:"owners"`
 	Data        interface{}       `json:"data"`
 	Labels      map[string]string `json:"labels"`

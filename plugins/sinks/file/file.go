@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/odpf/meteor/models"
+	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
-	ndjson "github.com/scizorman/go-ndjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -73,7 +73,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	var data []models.Metadata
+	var data []*assetsv1beta2.Asset
 	for _, record := range batch {
 		data = append(data, record.Data())
 	}
@@ -96,16 +96,25 @@ func (s *Sink) Close() (err error) {
 	return nil
 }
 
-func (s *Sink) ndjsonOut(data []models.Metadata) error {
-	jsnBy, err := ndjson.Marshal(data)
-	if err != nil {
-		return err
+func (s *Sink) ndjsonOut(data []*assetsv1beta2.Asset) error {
+	result := ""
+	for _, asset := range data {
+		jsonBytes, err := models.ToJSON(asset)
+		if err != nil {
+			return fmt.Errorf("error marshaling asset (%s): %w", asset.Urn, err)
+		}
+
+		result += string(jsonBytes) + "\n"
 	}
-	err = s.writeBytes(jsnBy)
-	return err
+
+	if err := s.writeBytes([]byte(result)); err != nil {
+		return fmt.Errorf("error writing to file: %w", err)
+	}
+
+	return nil
 }
 
-func (s *Sink) yamlOut(data []models.Metadata) error {
+func (s *Sink) yamlOut(data []*assetsv1beta2.Asset) error {
 	ymlByte, err := yaml.Marshal(data)
 	if err != nil {
 		return err
