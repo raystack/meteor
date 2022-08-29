@@ -247,10 +247,12 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
 	}
 	retryNotification := func(e error, d time.Duration) {
-		r.logger.Info(
-			fmt.Sprintf("retrying sink in %d", d),
+		r.logger.Warn(
+			fmt.Sprintf("retrying sink in %s", d),
+			"retry_delay_ms", d.Milliseconds(),
 			"sink", sr.Name,
-			"error", e.Error())
+			"error", e.Error(),
+		)
 	}
 	stream.subscribe(func(records []models.Record) error {
 		err := r.retrier.retry(func() error {
