@@ -2,7 +2,7 @@ package config
 
 import (
 	"errors"
-	"log"
+	"fmt"
 
 	"github.com/odpf/salt/config"
 )
@@ -18,15 +18,17 @@ type Config struct {
 	StopOnSinkError             bool   `mapstructure:"STOP_ON_SINK_ERROR" default:"false"`
 }
 
-func Load(configFile string) (cfg Config, err error) {
-	err = config.
-		NewLoader(config.WithFile(configFile)).
+func Load(configFile string) (Config, error) {
+	var cfg Config
+	err := config.NewLoader(config.WithFile(configFile)).
 		Load(&cfg)
-
-	if errors.As(err, &config.ConfigFileNotFoundError{}) {
-		log.Println(err)
-		err = nil
+	if err != nil {
+		if errors.As(err, &config.ConfigFileNotFoundError{}) {
+			fmt.Println(err)
+			return cfg, nil
+		}
+		return Config{}, err
 	}
 
-	return
+	return cfg, nil
 }

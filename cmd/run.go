@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/meteor/agent"
 	"github.com/odpf/meteor/config"
 	"github.com/odpf/meteor/metrics"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/recipe"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
@@ -23,7 +24,7 @@ import (
 )
 
 // RunCmd creates a command object for the "run" action.
-func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.Command {
+func RunCmd() *cobra.Command {
 	var (
 		report       [][]string
 		pathToConfig string
@@ -57,12 +58,17 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 			"group:core": "true",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if configFile != "" {
-				var err error
-				cfg, err = config.Load(configFile)
-				if err != nil {
-					return err
-				}
+			cfg, err := config.Load(configFile)
+			if err != nil {
+				return err
+			}
+
+			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
+			plugins.SetLog(lg)
+
+			mt, err := newStatsdMonitor(cfg)
+			if err != nil {
+				return err
 			}
 
 			cs := term.NewColorScheme()
@@ -134,4 +140,16 @@ func RunCmd(lg log.Logger, mt *metrics.StatsdMonitor, cfg config.Config) *cobra.
 	cmd.Flags().StringVarP(&configFile, "config", "c", "./meteor.yaml", "file path for agent level config")
 
 	return cmd
+}
+
+func newStatsdMonitor(cfg config.Config) (*metrics.StatsdMonitor, error) {
+	if !cfg.StatsdEnabled {
+		return nil, nil
+	}
+
+	client, err := metrics.NewStatsdClient(cfg.StatsdHost)
+	if err != nil {
+		return nil, err
+	}
+	return metrics.NewStatsdMonitor(client, cfg.StatsdPrefix), nil
 }

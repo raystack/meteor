@@ -7,8 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
 	"log"
 	"net"
 	"os"
@@ -17,12 +15,14 @@ import (
 	"testing"
 	"time"
 
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"google.golang.org/protobuf/types/known/anypb"
+
 	"github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 
 	"github.com/odpf/meteor/cmd"
-	"github.com/odpf/meteor/config"
 	_ "github.com/odpf/meteor/plugins/extractors"
 	_ "github.com/odpf/meteor/plugins/processors"
 	_ "github.com/odpf/meteor/plugins/sinks"
@@ -105,13 +105,9 @@ func TestMySqlToKafka(t *testing.T) {
 		}
 	}()
 
-	// run mysql_kafka.yml file
-	cfg, err := config.Load("mysql_kafka.yml")
-	if err != nil {
-		t.Error(err)
-	}
-	command := cmd.RunCmd(utils.Logger, nil, cfg)
+	command := cmd.RunCmd()
 
+	// run mysql_kafka.yml file
 	command.SetArgs([]string{"mysql_kafka.yml"})
 	if err := command.Execute(); err != nil {
 		if strings.HasPrefix(err.Error(), "unknown command ") {
