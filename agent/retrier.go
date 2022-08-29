@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	defaultMaxRetries      = 5
 	defaultInitialInterval = 5 * time.Second
 )
 
@@ -19,18 +18,16 @@ type retrier struct {
 }
 
 func newRetrier(maxRetries int, initialInterval time.Duration) *retrier {
-	r := new(retrier)
-
-	r.maxRetries = maxRetries
-	if r.maxRetries == 0 {
-		r.maxRetries = defaultMaxRetries
+	r := retrier{
+		maxRetries:      maxRetries,
+		initialInterval: initialInterval,
 	}
-	r.initialInterval = initialInterval
+
 	if r.initialInterval == 0 {
 		r.initialInterval = defaultInitialInterval
 	}
 
-	return r
+	return &r
 }
 
 func (r *retrier) retry(operation func() error, notify func(e error, d time.Duration)) error {
