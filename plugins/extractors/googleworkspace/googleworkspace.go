@@ -34,15 +34,15 @@ type Config struct {
 var sampleConfig = `
 service_account_json: {
     "type": "service_account",
-    "project_id": "odpf-project",
-    "private_key_id": "3cb2saasa3ef788dvdvdvdvdvdssdvds57",
-    "private_key": "-----BEGIN PRIVATE KEY-----\njbjabdjbajd\n-----END PRIVATE KEY-----\n",
-    "client_email": "meteor-sa@odpf-project.iam.gserviceaccount.com",
-    "client_id": "1100599572858548635286",
+    "project_id": "XXXXXX",
+    "private_key_id": "XXXXXX",
+    "private_key": "XXXXXX",
+    "client_email": "XXXXXX",
+    "client_id": "XXXXXX",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/meteor-sa%40odpf-project.iam.gserviceaccount.com"
+    "client_x509_cert_url": "XXXXXX"
 }
 user_email: user@odpf.com`
 
@@ -159,7 +159,7 @@ func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error
 
 	r, err := srv.Users.List().Customer("my_customer").Do()
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to retrieve users in domain")
+		return nil, errors.Wrap(err, "unable to retrieve users in domain")
 	}
 
 	return r, nil
