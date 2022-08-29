@@ -8,9 +8,7 @@ import (
 	"testing"
 
 	"github.com/odpf/meteor/models"
-	commonv1beta1 "github.com/odpf/meteor/models/odpf/assets/common/v1beta1"
-	facetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
-	assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
+	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/googleworkspace"
 	"github.com/odpf/meteor/test/mocks"
@@ -18,6 +16,7 @@ import (
 	utilities "github.com/odpf/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var urnScope string = "test-googleworkspace"
@@ -47,37 +46,25 @@ func TestExtract(t *testing.T) {
 	t.Run("should extract user details from google workspace", func(t *testing.T) {
 
 		expectedData := []models.Record{
-			models.NewRecord(&assetsv1beta1.User{
-				Resource: &commonv1beta1.Resource{
-					Service: "google workspace",
-					Name:    "odpf admin",
-					Urn:     "admin@odpf.com",
-				},
-				Email:    "admin@odpf.com",
-				FullName: "John Doe",
-				LastName: "Doe",
-				Status:   "not suspended",
-				Properties: &facetsv1beta1.Properties{
+			models.NewRecord(&assetsv1beta2.Asset{
+				Data: userToAny(assetsv1beta2.User{
+					Email:    "admin@odpf.com",
+					FullName: "John Doe",
+					Status:   "not suspended",
 					Attributes: utilities.TryParseMapToProto(map[string]interface{}{
 						"manager": "lorem@odpf.com",
 					}),
-				},
+				}),
 			}),
-			models.NewRecord(&assetsv1beta1.User{
-				Resource: &commonv1beta1.Resource{
-					Service: "google workspace",
-					Name:    "ipsum",
-					Urn:     "ipsum@odpf.com",
-				},
-				Email:    "ipsum@odpf.com",
-				FullName: "Ipsum Lorum",
-				LastName: "Lorum",
-				Status:   "not suspended",
-				Properties: &facetsv1beta1.Properties{
+			models.NewRecord(&assetsv1beta2.Asset{
+				Data: userToAny(assetsv1beta2.User{
+					Email:    "ipsum@odpf.com",
+					FullName: "Ipsum Lorum",
+					Status:   "not suspended",
 					Attributes: utilities.TryParseMapToProto(map[string]interface{}{
 						"manager": "manager@odpf.com",
 					}),
-				},
+				}),
 			}),
 		}
 
@@ -104,4 +91,12 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 		assert.EqualValues(t, expectedData, emitter.Get())
 	})
+}
+
+func userToAny(user assetsv1beta2.User) *anypb.Any {
+	u, err := anypb.New(&user)
+	if err != nil {
+		return &anypb.Any{}
+	}
+	return u
 }
