@@ -13,11 +13,15 @@ import (
 //go:embed recipe.yaml
 var file embed.FS
 
-// Template represents the template for generating a recipe.
-type Template struct {
-	Name       string
-	Version    string
-	Source     map[string]string
+// templateData represents the template for generating a recipe.
+type templateData struct {
+	Name    string
+	Version string
+	Source  struct {
+		Name         string
+		Scope        string
+		SampleConfig string
+	}
 	Sinks      map[string]string
 	Processors map[string]string
 }
@@ -28,24 +32,35 @@ var templateFuncs = map[string]interface{}{
 
 var recipeVersions = [1]string{"v1beta1"}
 
+type RecipeParams struct {
+	Name       string
+	Source     string
+	Scope      string
+	Sinks      []string
+	Processors []string
+}
+
 // Recipe checks if the recipe is valid and returns a Template
-func Recipe(name string, source string, sinks []string, processors []string) (err error) {
-	tem := Template{
-		Name:    name,
+func Recipe(p RecipeParams) error {
+	tem := templateData{
+		Name:    p.Name,
 		Version: recipeVersions[len(recipeVersions)-1],
 	}
 
-	if source != "" {
-		tem.Source = make(map[string]string)
-		sourceInfo, err := registry.Extractors.Info(source)
+	if p.Source != "" {
+		tem.Source.Name = p.Source
+		tem.Source.Scope = p.Scope
+
+		sourceInfo, err := registry.Extractors.Info(p.Source)
 		if err != nil {
 			return errors.Wrap(err, "failed to provide extractor information")
 		}
-		tem.Source[source] = sourceInfo.SampleConfig
+
+		tem.Source.SampleConfig = sourceInfo.SampleConfig
 	}
-	if len(sinks) > 0 {
+	if len(p.Sinks) > 0 {
 		tem.Sinks = make(map[string]string)
-		for _, sink := range sinks {
+		for _, sink := range p.Sinks {
 			info, err := registry.Sinks.Info(sink)
 			if err != nil {
 				return errors.Wrap(err, "failed to provide sink information")
@@ -53,9 +68,9 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 			tem.Sinks[sink] = info.SampleConfig
 		}
 	}
-	if len(processors) > 0 {
+	if len(p.Processors) > 0 {
 		tem.Processors = make(map[string]string)
-		for _, procc := range processors {
+		for _, procc := range p.Processors {
 			info, err := registry.Processors.Info(procc)
 			if err != nil {
 				return errors.Wrap(err, "failed to provide processor information")
@@ -67,7 +82,7 @@ func Recipe(name string, source string, sinks []string, processors []string) (er
 	tmpl := template.Must(
 		template.New("recipe.yaml").Funcs(templateFuncs).ParseFS(file, "*"),
 	)
-	if err = tmpl.Execute(os.Stdout, tem); err != nil {
+	if err := tmpl.Execute(os.Stdout, tem); err != nil {
 		return errors.Wrap(err, "failed to execute template")
 	}
 	return nil
