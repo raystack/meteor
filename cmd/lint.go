@@ -124,7 +124,7 @@ func printLintErrors(errs []error, rcp recipe.Recipe) {
 			printConfigErrors(rcp, invalidConfigError)
 			continue
 		}
-		fmt.Printf("recipe error: %s", err.Error())
+		fmt.Printf("recipe error: %s\n", err.Error())
 	}
 }
 
