@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -30,8 +31,9 @@ func newRetrier(maxRetries int, initialInterval time.Duration) *retrier {
 	return &r
 }
 
-func (r *retrier) retry(operation func() error, notify func(e error, d time.Duration)) error {
+func (r *retrier) retry(ctx context.Context, operation func() error, notify func(e error, d time.Duration)) error {
 	bo := backoff.WithMaxRetries(r.createExponentialBackoff(r.initialInterval), uint64(r.maxRetries))
+	bo = backoff.WithContext(bo, ctx)
 	return backoff.RetryNotify(func() error {
 		err := operation()
 		if err == nil {
