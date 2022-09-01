@@ -3,7 +3,6 @@ package googleworkspace
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -164,7 +162,7 @@ func (e *Extractor) buildRelations(gSuiteRelations interface{}) (result []interf
 		return
 	}
 
-	orgList, ok := value.Interface().([]map[string]googleapi.RawMessage)
+	orgList, ok := value.Interface().([]interface{})
 	if !ok {
 		return
 	}
@@ -174,7 +172,7 @@ func (e *Extractor) buildRelations(gSuiteRelations interface{}) (result []interf
 		result = append(result, e.buildMapFromGsuiteMap(orgMap))
 	}
 
-	return result
+	return
 }
 
 func (e *Extractor) buildOrganizations(gSuiteOrganizations interface{}) (result []interface{}) {
@@ -187,17 +185,16 @@ func (e *Extractor) buildOrganizations(gSuiteOrganizations interface{}) (result 
 		return
 	}
 
-	orgList, ok := value.Interface().([]map[string]googleapi.RawMessage)
+	orgList, ok := value.Interface().([]interface{})
 	if !ok {
 		return
 	}
 
-	result = []interface{}{}
-	for _, orgMap := range orgList {
-		result = append(result, e.buildMapFromGsuiteMap(orgMap))
+	for _, org := range orgList {
+		result = append(result, e.buildMapFromGsuiteMap(org))
 	}
 
-	return result
+	return
 }
 
 func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]interface{}) {
@@ -210,20 +207,10 @@ func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]
 		return
 	}
 
-	result = map[string]interface{}{}
+	result = make(map[string]interface{})
 	for _, key := range gsuiteMap.MapKeys() {
-		keyString := key.String()
-		rawMessage, ok := gsuiteMap.MapIndex(key).Interface().(googleapi.RawMessage)
-		if !ok {
-			continue
-		}
-
-		var value interface{}
-		err := json.Unmarshal(rawMessage, &value)
-		if err != nil {
-			e.logger.Warn("error unmarshalling rawMessage", "err", err, "value", rawMessage)
-			value = string(rawMessage)
-		}
+		keyString := fmt.Sprintf("%v", key.Interface())
+		value := gsuiteMap.MapIndex(key).Interface()
 
 		result[keyString] = value
 	}
