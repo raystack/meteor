@@ -35,8 +35,7 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-connection_url: "admin:pass123@tcp(localhost:3306)/"`
+var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
 
 var info = plugins.Info{
 	Description:  "Table metadata from MySQL server.",
@@ -144,10 +143,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
 		Urn:     models.NewURN("mysql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name: tableName,
-		Type: "table",
+		Name:    tableName,
+		Type:    "table",
 		Service: "mysql",
-		Data: table,
+		Data:    table,
 	}))
 
 	return

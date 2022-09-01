@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
@@ -31,13 +32,14 @@ var info = plugins.Info{
 	Description: "Send metadata to http service",
 	Summary:     summary,
 	Tags:        []string{"http", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	# The url (hostname and route) of the http service
 	url: https://compass.com/route
+	method: "PUT"
 	# Additional HTTP headers, multiple headers value are separated by a comma
 	headers:
-		X-Other-Header: value1, value2
-	`,
+	  X-Other-Header: value1, value2
+	`),
 }
 
 type httpClient interface {

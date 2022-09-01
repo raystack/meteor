@@ -4,14 +4,14 @@ source:
 {{- with .Source }}
   name: {{.Name}}
   scope: {{.Scope}}
-  config: {{.SampleConfig | indent 4}}
+  config: {{.SampleConfig | fmtSampleConfig | indent 4}}
 {{- end }}
 {{- if ne (len .Sinks) 0 }}
 sinks:
 {{- range $key, $value := .Sinks }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | indent 6}}
+    config: {{$value | fmtSampleConfig | indent 6}}
     {{- end }}    
 {{- end }}
 {{- end }}
@@ -20,7 +20,7 @@ processors:
 {{- range $key, $value := .Processors }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | indent 6}}
+    config: {{$value | fmtSampleConfig | indent 6}}
     {{- end }}
 {{- end }}
 {{- end }}

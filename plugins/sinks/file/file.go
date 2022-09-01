@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
 	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -28,10 +29,10 @@ var info = plugins.Info{
 	Description: "save output to a file",
 	Summary:     summary,
 	Tags:        []string{"file", "json", "yaml", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	path: ./output-filename.txt
 	format: ndjson
-	`,
+	`),
 }
 
 type Sink struct {

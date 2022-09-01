@@ -27,10 +27,10 @@ type Processor struct {
 }
 
 var sampleConfig = `
- # Enrichment configuration
- # attributes:
- #	fieldA: valueA
- # 	fieldB: valueB`
+# Enrichment configuration
+# attributes:
+#   fieldA: valueA
+#   fieldB: valueB`
 
 var info = plugins.Info{
 	Description:  "Append custom fields to records",

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
-	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -31,13 +32,14 @@ var info = plugins.Info{
 	Description: "Sink metadata to Apache Kafka topic",
 	Summary:     summary,
 	Tags:        []string{"kafka", "topic", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	# Kafka broker addresses
 	brokers: "localhost:9092"
 	# The Kafka topic to write to
 	topic: sample-topic-name
 	# The path to the key field in the payload
-	key_path: xxx`,
+	key_path: xxx
+	`),
 }
 
 type ProtoReflector interface {
