@@ -3,24 +3,21 @@ package googleworkspace
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 )
 
 //go:embed README.md
@@ -56,17 +53,18 @@ var info = plugins.Info{
 // Extractor manages the extraction of data from the extractor
 type Extractor struct {
 	plugins.BaseExtractor
-	logger      log.Logger
-	config      Config
-	TokenSource oauth2.TokenSource
-	Client      *admin.Service
-	emit        plugins.Emit
+	logger             log.Logger
+	config             Config
+	userServiceFactory UsersServiceFactory
+	userService        UsersListCall
+	emit               plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
+func New(logger log.Logger, userServiceFactory UsersServiceFactory) *Extractor {
 	e := &Extractor{
-		logger: logger,
+		logger:             logger,
+		userServiceFactory: userServiceFactory,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
@@ -79,18 +77,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
-	jwtConfig, err := google.JWTConfigFromJSON([]byte(e.config.ServiceAccountJSON), admin.AdminDirectoryUserScope)
+	e.userService, err = e.userServiceFactory.BuildUserService(ctx, e.config.UserEmail, e.config.ServiceAccountJSON)
 	if err != nil {
-		return plugins.InvalidConfigError{}
+		return fmt.Errorf("error building user service: %w", err)
 	}
-
-	if e.config.UserEmail == "" {
-		return plugins.InvalidConfigError{}
-	}
-	jwtConfig.Subject = e.config.UserEmail
-	ts := jwtConfig.TokenSource(ctx)
-
-	e.TokenSource = ts
 
 	return
 }
@@ -98,121 +88,154 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	var status string
 	e.emit = emit
-	r, err := FetchUsers(ctx, e.TokenSource)
+	adminUsers, err := e.fetchUsers(ctx)
 	if err != nil {
 		return err
 	}
 
-	if len(r.Users) == 0 {
+	if len(adminUsers.Users) == 0 {
 		e.logger.Info("No users found.\n")
 		return nil
 	}
 
-	for _, u := range r.Users {
-		if !u.Suspended {
-			status = "not suspended"
-		} else {
-			status = "suspended"
-		}
-
-		var userAttributes = make(map[string]interface{})
-		userAttributes = buildOrgAttributes(userAttributes, u.Organizations)
-		userAttributes = buildRelationsAttributes(userAttributes, u.Relations)
-		userAttributes = buildCustomSchemasAttributes(userAttributes, u.CustomSchemas)
-		userAttributes["org_unit_path"] = u.OrgUnitPath
-		userAttributes["aliases"] = strings.Join(u.Aliases, ",")
-
-		user, err := anypb.New(&assetsv1beta2.User{
-			Email:      u.PrimaryEmail,
-			FullName:   u.Name.FullName,
-			Status:     status,
-			Attributes: utils.TryParseMapToProto(userAttributes),
-		})
+	for _, u := range adminUsers.Users {
+		asset, err := e.buildAsset(u)
 		if err != nil {
-			return err
+			e.logger.Warn("error when building asset", "err", err)
+			continue
 		}
-
-		e.emit(models.NewRecord(&assetsv1beta2.Asset{
-			Data: user,
-		}))
+		e.emit(models.NewRecord(asset))
 	}
 
 	return nil
 }
 
+func (e *Extractor) buildAsset(gsuiteUser *admin.User) (*v1beta2.Asset, error) {
+	var status string
+	if gsuiteUser.Suspended {
+		status = "suspended"
+	}
+
+	var userAttributes = make(map[string]interface{})
+	userAttributes["organizations"] = e.buildOrganizations(gsuiteUser.Organizations)
+	userAttributes["relations"] = e.buildRelations(gsuiteUser.Relations)
+	userAttributes["custom_schemas"] = e.buildMapFromGsuiteMap(gsuiteUser.CustomSchemas)
+	userAttributes["aliases"] = strings.Join(gsuiteUser.Aliases, ",")
+	userAttributes["org_unit_path"] = gsuiteUser.OrgUnitPath
+
+	assetUser, err := anypb.New(&v1beta2.User{
+		Email:      gsuiteUser.PrimaryEmail,
+		FullName:   gsuiteUser.Name.FullName,
+		Status:     status,
+		Attributes: utils.TryParseMapToProto(userAttributes),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error when creating anypb.Any: %w", err)
+	}
+
+	asset := &v1beta2.Asset{
+		Urn:     models.NewURN("gsuite", e.UrnScope, "user", gsuiteUser.PrimaryEmail),
+		Name:    gsuiteUser.Name.FullName,
+		Service: "gsuite",
+		Type:    "user",
+		Data:    assetUser,
+	}
+
+	return asset, nil
+}
+
+func (e *Extractor) fetchUsers(ctx context.Context) (*admin.Users, error) {
+	users, err := e.userService.Do()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching users: %w", err)
+	}
+
+	return users, nil
+}
+
+func (e *Extractor) buildRelations(gSuiteRelations interface{}) (result []interface{}) {
+	if gSuiteRelations == nil {
+		return
+	}
+
+	value := reflect.ValueOf(gSuiteRelations)
+	if value.Kind() != reflect.Slice {
+		return
+	}
+
+	orgList, ok := value.Interface().([]map[string]googleapi.RawMessage)
+	if !ok {
+		return
+	}
+
+	result = []interface{}{}
+	for _, orgMap := range orgList {
+		result = append(result, e.buildMapFromGsuiteMap(orgMap))
+	}
+
+	return result
+}
+
+func (e *Extractor) buildOrganizations(gSuiteOrganizations interface{}) (result []interface{}) {
+	if gSuiteOrganizations == nil {
+		return
+	}
+
+	value := reflect.ValueOf(gSuiteOrganizations)
+	if value.Kind() != reflect.Slice {
+		return
+	}
+
+	orgList, ok := value.Interface().([]map[string]googleapi.RawMessage)
+	if !ok {
+		return
+	}
+
+	result = []interface{}{}
+	for _, orgMap := range orgList {
+		result = append(result, e.buildMapFromGsuiteMap(orgMap))
+	}
+
+	return result
+}
+
+func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]interface{}) {
+	if value == nil {
+		return
+	}
+
+	gsuiteMap := reflect.ValueOf(value)
+	if gsuiteMap.Kind() != reflect.Map {
+		return
+	}
+
+	result = map[string]interface{}{}
+	for _, key := range gsuiteMap.MapKeys() {
+		keyString := key.String()
+		rawMessage, ok := gsuiteMap.MapIndex(key).Interface().(googleapi.RawMessage)
+		if !ok {
+			continue
+		}
+
+		var value interface{}
+		err := json.Unmarshal(rawMessage, &value)
+		if err != nil {
+			e.logger.Warn("error unmarshalling rawMessage", "err", err, "value", rawMessage)
+			value = string(rawMessage)
+		}
+
+		result[keyString] = value
+	}
+
+	return
+}
+
 // init registers the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("googleworkspace", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), &DefaultUsersServiceFactory{})
 	}); err != nil {
 		panic(err)
 	}
-}
-
-func FetchUsers(ctx context.Context, ts oauth2.TokenSource) (*admin.Users, error) {
-	srv, err := admin.NewService(ctx, option.WithTokenSource(ts))
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := srv.Users.List().Customer("my_customer").Do()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to retrieve users in domain")
-	}
-
-	return r, nil
-}
-
-func buildOrgAttributes(userAttributes map[string]interface{}, orgsIfc interface{}) map[string]interface{} {
-	if orgsIfc != nil {
-		orgs := reflect.ValueOf(orgsIfc)
-		if orgs.Kind() == reflect.Slice {
-			//based on assumpton that a user shall belong to a single org
-			org := reflect.ValueOf(orgs.Index(0).Interface())
-			for _, key := range org.MapKeys() {
-				value := org.MapIndex(key)
-				userAttributes[fmt.Sprintf("%v", key.Interface())] = value.Interface()
-			}
-		}
-	}
-	return userAttributes
-}
-
-func buildRelationsAttributes(userAttributes map[string]interface{}, relationsIfc interface{}) map[string]interface{} {
-	if relationsIfc != nil {
-		relations := reflect.ValueOf(relationsIfc)
-		if relations.Kind() == reflect.Slice {
-			for idx := 0; idx < relations.Len(); idx++ {
-				var relationType, relationValue string
-
-				relation := reflect.ValueOf(relations.Index(idx).Interface())
-				for _, key := range relation.MapKeys() {
-					value := relation.MapIndex(key)
-
-					if key.Interface().(string) == "type" {
-						relationType = value.Interface().(string)
-					} else if key.Interface().(string) == "value" {
-						relationValue = value.Interface().(string)
-					}
-				}
-				userAttributes[relationType] = relationValue
-			}
-		}
-	}
-	return userAttributes
-}
-
-func buildCustomSchemasAttributes(userAttributes map[string]interface{}, customSchemasIfc interface{}) map[string]interface{} {
-	if customSchemasIfc != nil {
-		customSchema := reflect.ValueOf(customSchemasIfc)
-		if customSchema.Kind() == reflect.Map {
-			for _, key := range customSchema.MapKeys() {
-				value := customSchema.MapIndex(key)
-				userAttributes[fmt.Sprintf("%v", key.Interface())] = value.Interface()
-			}
-		}
-	}
-	return userAttributes
 }
