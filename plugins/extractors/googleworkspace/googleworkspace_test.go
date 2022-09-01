@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package googleworkspace_test
 
 import (
@@ -66,16 +63,16 @@ func TestExtract(t *testing.T) {
 				PrimaryEmail: "user1@test.com",
 				Suspended:    true,
 				Aliases:      []string{"alias1", "alias2"},
-				Relations: []map[string]googleapi.RawMessage{
-					{
-						"type":  []byte("manager1"),
-						"value": []byte("manager1@test.com"),
+				Relations: []interface{}{
+					map[string]interface{}{
+						"type":  "manager1",
+						"value": "manager1@test.com",
 					},
 				},
-				Organizations: []map[string]googleapi.RawMessage{
-					{
-						"foo0": []byte("bar0"),
-						"foo1": []byte("bar1"),
+				Organizations: []interface{}{
+					map[string]interface{}{
+						"foo0": "bar0",
+						"foo1": "bar1",
 					},
 				},
 				OrgUnitPath: "/",
@@ -89,16 +86,16 @@ func TestExtract(t *testing.T) {
 				PrimaryEmail: "user2@test.com",
 				Suspended:    false,
 				Aliases:      []string{"alias3"},
-				Relations: []map[string]googleapi.RawMessage{
-					{
-						"type":  []byte("manager2"),
-						"value": []byte("manager2@test.com"),
+				Relations: []interface{}{
+					map[string]interface{}{
+						"type":  "manager2",
+						"value": "manager2@test.com",
 					},
 				},
-				Organizations: []map[string]googleapi.RawMessage{
-					{
-						"foo20": []byte("bar20"),
-						"foo21": []byte("bar21"),
+				Organizations: []interface{}{
+					map[string]interface{}{
+						"foo20": "bar20",
+						"foo21": "bar21",
 					},
 				},
 				OrgUnitPath: "/test2",

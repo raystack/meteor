@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
 	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -116,9 +117,9 @@ func (e *Extractor) buildAsset(gsuiteUser *admin.User) (*v1beta2.Asset, error) {
 	}
 
 	var userAttributes = make(map[string]interface{})
-	userAttributes["organizations"] = e.buildOrganizations(gsuiteUser.Organizations)
-	userAttributes["relations"] = e.buildRelations(gsuiteUser.Relations)
-	userAttributes["custom_schemas"] = e.buildMapFromGsuiteMap(gsuiteUser.CustomSchemas)
+	userAttributes["organizations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Organizations)
+	userAttributes["relations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Relations)
+	userAttributes["custom_schemas"] = e.buildMapFromGsuiteMapRawMessage(gsuiteUser.CustomSchemas)
 	userAttributes["aliases"] = strings.Join(gsuiteUser.Aliases, ",")
 	userAttributes["org_unit_path"] = gsuiteUser.OrgUnitPath
 
@@ -152,46 +153,23 @@ func (e *Extractor) fetchUsers(ctx context.Context) (*admin.Users, error) {
 	return users, nil
 }
 
-func (e *Extractor) buildRelations(gSuiteRelations interface{}) (result []interface{}) {
-	if gSuiteRelations == nil {
+func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) (result []interface{}) {
+	if value == nil {
 		return
 	}
 
-	value := reflect.ValueOf(gSuiteRelations)
-	if value.Kind() != reflect.Slice {
+	gsuiteSlice := reflect.ValueOf(value)
+	if gsuiteSlice.Kind() != reflect.Slice {
 		return
 	}
 
-	orgList, ok := value.Interface().([]interface{})
+	list, ok := gsuiteSlice.Interface().([]interface{})
 	if !ok {
 		return
 	}
 
-	result = []interface{}{}
-	for _, orgMap := range orgList {
-		result = append(result, e.buildMapFromGsuiteMap(orgMap))
-	}
-
-	return
-}
-
-func (e *Extractor) buildOrganizations(gSuiteOrganizations interface{}) (result []interface{}) {
-	if gSuiteOrganizations == nil {
-		return
-	}
-
-	value := reflect.ValueOf(gSuiteOrganizations)
-	if value.Kind() != reflect.Slice {
-		return
-	}
-
-	orgList, ok := value.Interface().([]interface{})
-	if !ok {
-		return
-	}
-
-	for _, org := range orgList {
-		result = append(result, e.buildMapFromGsuiteMap(org))
+	for _, item := range list {
+		result = append(result, e.buildMapFromGsuiteMap(item))
 	}
 
 	return
@@ -213,6 +191,37 @@ func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]
 		value := gsuiteMap.MapIndex(key).Interface()
 
 		result[keyString] = value
+	}
+
+	return
+}
+
+func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result map[string]interface{}) {
+	if value == nil {
+		return
+	}
+
+	gsuiteMap := reflect.ValueOf(value)
+	if gsuiteMap.Kind() != reflect.Map {
+		return
+	}
+
+	result = make(map[string]interface{})
+	for _, key := range gsuiteMap.MapKeys() {
+		keyString := fmt.Sprintf("%v", key.Interface())
+		value := gsuiteMap.MapIndex(key)
+
+		msg, ok := value.Interface().(googleapi.RawMessage)
+		if !ok {
+			continue
+		}
+
+		json, err := msg.MarshalJSON()
+		if err != nil {
+			continue
+		}
+
+		result[keyString] = string(json)
 	}
 
 	return
