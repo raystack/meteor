@@ -1,4 +1,4 @@
-package googleworkspace
+package gsuite
 
 import (
 	"context"
@@ -229,7 +229,7 @@ func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result m
 
 // init registers the extractor to catalog
 func init() {
-	if err := registry.Extractors.Register("googleworkspace", func() plugins.Extractor {
+	if err := registry.Extractors.Register("gsuite", func() plugins.Extractor {
 		return New(plugins.GetLog(), &DefaultUsersServiceFactory{})
 	}); err != nil {
 		panic(err)

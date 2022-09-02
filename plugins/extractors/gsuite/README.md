@@ -1,11 +1,11 @@
-# Google Workspace
+# G-Suite
 
 ## Usage
 
 ```yaml
 source:
   scope: my-scope
-  type: googleworkspace
+  type: gsuite
   config:     
     service_account_json: "XXX"
     user_email: meteor@odpf.com

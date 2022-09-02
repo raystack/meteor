@@ -1,4 +1,4 @@
-package googleworkspace_test
+package gsuite_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/odpf/meteor/models"
 	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/googleworkspace"
+	"github.com/odpf/meteor/plugins/extractors/gsuite"
 	"github.com/odpf/meteor/test/mocks"
 	"github.com/odpf/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
@@ -17,11 +17,11 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-var urnScope string = "test-googleworkspace"
+var urnScope string = "test-gsuite"
 
 func TestInit(t *testing.T) {
 	t.Run("should return error for empty user email", func(t *testing.T) {
-		err := googleworkspace.New(utils.Logger, new(mockUsersServiceFactory)).Init(context.TODO(), plugins.Config{
+		err := gsuite.New(utils.Logger, new(mockUsersServiceFactory)).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"user_email":           "",
@@ -30,7 +30,7 @@ func TestInit(t *testing.T) {
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 	t.Run("should return error for invalid service account json", func(t *testing.T) {
-		err := googleworkspace.New(utils.Logger, new(mockUsersServiceFactory)).Init(context.TODO(), plugins.Config{
+		err := gsuite.New(utils.Logger, new(mockUsersServiceFactory)).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"user_email":           "user@example.com",
@@ -45,7 +45,7 @@ func TestInit(t *testing.T) {
 		factory := new(mockUsersServiceFactory)
 		factory.On("BuildUserService", ctx, userEmail, serviceAcc).Return(new(mockUsersListCall), nil)
 
-		err := googleworkspace.New(utils.Logger, factory).Init(ctx, plugins.Config{
+		err := gsuite.New(utils.Logger, factory).Init(ctx, plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"user_email":           userEmail,
@@ -183,7 +183,7 @@ func TestExtract(t *testing.T) {
 		factory.On("BuildUserService", ctx, userEmail, serviceAcc).Return(userService, nil)
 		defer factory.AssertExpectations(t)
 
-		extr := googleworkspace.New(utils.Logger, factory)
+		extr := gsuite.New(utils.Logger, factory)
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
@@ -205,9 +205,9 @@ type mockUsersServiceFactory struct {
 	mock.Mock
 }
 
-func (m *mockUsersServiceFactory) BuildUserService(ctx context.Context, email, serviceAccountJSON string) (googleworkspace.UsersListCall, error) {
+func (m *mockUsersServiceFactory) BuildUserService(ctx context.Context, email, serviceAccountJSON string) (gsuite.UsersListCall, error) {
 	args := m.Called(ctx, email, serviceAccountJSON)
-	return args.Get(0).(googleworkspace.UsersListCall), args.Error(1)
+	return args.Get(0).(gsuite.UsersListCall), args.Error(1)
 }
 
 type mockUsersListCall struct {
