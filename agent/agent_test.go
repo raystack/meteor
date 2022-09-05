@@ -704,6 +704,66 @@ func TestAgentRun(t *testing.T) {
 		assert.NoError(t, run.Error)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
+
+	t.Run("should respect context cancellation and stop retries", func(t *testing.T) {
+		err := errors.New("some-error")
+		ctx, cancel := context.WithCancel(ctx)
+		data := []models.Record{
+			models.NewRecord(&v1beta2.Asset{}),
+		}
+
+		extr := mocks.NewExtractor()
+		extr.SetEmit(data)
+		extr.On("Init", utils.OfTypeContext(), buildPluginConfig(validRecipe.Source)).Return(nil).Once()
+		extr.On("Extract", utils.OfTypeContext(), mock.AnythingOfType("plugins.Emit")).Return(nil)
+		ef := registry.NewExtractorFactory()
+		if err := ef.Register("test-extractor", newExtractor(extr)); err != nil {
+			t.Fatal(err)
+		}
+
+		proc := mocks.NewProcessor()
+		proc.On("Init", utils.OfTypeContext(), buildPluginConfig(validRecipe.Processors[0])).Return(nil).Once()
+		proc.On("Process", utils.OfTypeContext(), data[0]).Return(data[0], nil)
+		defer proc.AssertExpectations(t)
+		pf := registry.NewProcessorFactory()
+		if err := pf.Register("test-processor", newProcessor(proc)); err != nil {
+			t.Fatal(err)
+		}
+
+		sink := mocks.NewSink()
+		sink.On("Init", utils.OfTypeContext(), buildPluginConfig(validRecipe.Sinks[0])).Return(nil).Once()
+		// Sink should not be called more than once in total since we cancel the context after the first call.
+		sink.On("Sink", utils.OfTypeContext(), data).Return(plugins.NewRetryError(err)).Once().Run(func(args mock.Arguments) {
+			go func() {
+				cancel()
+			}()
+		})
+		sink.On("Close").Return(nil)
+		defer sink.AssertExpectations(t)
+		sf := registry.NewSinkFactory()
+		if err := sf.Register("test-sink", newSink(sink)); err != nil {
+			t.Fatal(err)
+		}
+
+		monitor := newMockMonitor()
+		monitor.On("RecordRun", mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordPlugin", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("bool"))
+		defer monitor.AssertExpectations(t)
+
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory:     ef,
+			ProcessorFactory:     pf,
+			SinkFactory:          sf,
+			Logger:               utils.Logger,
+			Monitor:              monitor,
+			MaxRetries:           5,
+			RetryInitialInterval: 10 * time.Second,
+		})
+		run := r.Run(ctx, validRecipe)
+		assert.NoError(t, run.Error)
+		assert.Equal(t, validRecipe, run.Recipe)
+	})
+
 }
 
 func TestAgentRunMultiple(t *testing.T) {

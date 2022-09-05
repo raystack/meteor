@@ -255,7 +255,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		)
 	}
 	stream.subscribe(func(records []models.Record) error {
-		err := r.retrier.retry(func() error {
+		err := r.retrier.retry(ctx, func() error {
 			err := sink.Sink(ctx, records)
 			return err
 		}, retryNotification)
