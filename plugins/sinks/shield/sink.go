@@ -143,7 +143,7 @@ func (s *Sink) buildShieldPayload(resource *assetsv1beta2.Asset) (RequestPayload
 		return RequestPayload{}, err
 	}
 
-	name, ok := mapdata["name"].(string)
+	name, ok := mapdata["full_name"].(string)
 	if !ok {
 		return RequestPayload{}, errors.New("name must be a string")
 	}
@@ -153,9 +153,9 @@ func (s *Sink) buildShieldPayload(resource *assetsv1beta2.Asset) (RequestPayload
 		return RequestPayload{}, errors.New("email must be a string")
 	}
 
-	metadata, ok := mapdata["metadata"].(map[string]interface{})
+	metadata, ok := mapdata["attributes"].(map[string]interface{})
 	if !ok {
-		return RequestPayload{}, errors.New("metadata must be a map[string]interface{})")
+		return RequestPayload{}, errors.New("attributes must be a map[string]interface{}")
 	}
 
 	record := RequestPayload{
