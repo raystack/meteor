@@ -1,6 +1,3 @@
-//go:build plugins
-// +build plugins
-
 package shield_test
 
 import (
@@ -177,6 +174,38 @@ func TestSink(t *testing.T) {
 			require.Error(t, err)
 			assert.Equal(t, d.wantErr.Error(), err.Error())
 		}
+	})
+
+	t.Run("should not return when valid payload is sent", func(t *testing.T) {
+		user, _ := anypb.New(&v1beta2.User{
+			FullName: "John Doe",
+			Email:    "john.doe@odpf.com",
+			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				"org_unit_path": "/",
+				"aliases":       "doe.john@odpf.com,johndoe@odpf.com",
+			}),
+		})
+		data := &v1beta2.Asset{
+			Data: user,
+		}
+
+		// setup mock client
+		url := fmt.Sprintf("%s/admin/v1beta1/users/user@odpf.com", host)
+
+		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPut, url, shield.RequestPayload{})
+		ctx := context.TODO()
+		client.SetupResponse(200, "")
+
+		shieldSink := shield.New(client, testUtils.Logger)
+		err := shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+		}})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		assert.Equal(t, nil, err)
 	})
 }
 
