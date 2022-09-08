@@ -20,14 +20,16 @@ source:
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `john.doe@gmail.com` |
-| `resource.name` | `John Doe` |
-| `email` | `john.doe@gmail.com` |
-| `full_name` | `John Doe` |
-| `status` | `not suspended` |
-| `properties` | `{"attributes":{"aliases":"doe.john@gmail.com,john.doe0@gmail.com","manager":"christian.aristika@gmail.com","org_unit_path":"/"}}`
+| Field                   | Sample Value                                         |
+|:------------------------|:-----------------------------------------------------|
+| `email`                 | `doe.john@gmail.com`                                 |
+| `full_name`             | `Jon Doe`                                            |
+| `status`                | `suspended`                                          |
+| `attributes`            | `{"aliases":"john.doe@odpf.com","custom_schemas":{},`|
+|                         |  `"org_unit_path":"/","organizations":`              |
+|                         | `[{"costCenter": "odpf"}],`                          |
+|                         |  `"relations":[{"type":"manager",`                   |
+|                         |  `"value":"john.lee@odpf.com"}]}`                    |
 
 ### Notes
  - The service account must have a [delegated domain wide authority](https://developers.google.com/admin-sdk/directory/v1/guides/delegation#delegate_domain-wide_authority_to_your_service_account)
