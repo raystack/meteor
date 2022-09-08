@@ -9,9 +9,9 @@ sinks:
   name: shield
   config:
     host: https://shield.com
-	headers:
-		X-Shield-Email: meteor@odpf.io
-		X-Other-Header: value1, value2
+    headers:
+      X-Shield-Email: meteor@odpf.io
+      X-Other-Header: value1, value2
 ```
 
 ## Contributing
