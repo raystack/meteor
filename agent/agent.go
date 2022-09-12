@@ -171,7 +171,7 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				run.Error = fmt.Errorf("recover run panic: %s", r)
+				run.Error = fmt.Errorf("agent run: close stream: panic: %s", r)
 			}
 			stream.Close()
 		}()
