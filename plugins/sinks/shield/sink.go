@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
 	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -32,14 +33,14 @@ var info = plugins.Info{
 	Description: "Send user information to shield http service",
 	Summary:     summary,
 	Tags:        []string{"http", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	# The hostname of the shield service
 	host: https://shield.com
 	# Additional HTTP headers send to shield, multiple headers value are separated by a comma
 	headers:
-		X-Shield-Email: meteor@odpf.io
-		X-Other-Header: value1, value2
-	`,
+	  X-Shield-Email: meteor@odpf.io
+      X-Other-Header: value1, value2
+	`),
 }
 
 type httpClient interface {
