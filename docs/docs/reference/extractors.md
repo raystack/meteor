@@ -44,6 +44,7 @@ Meteor currently supports metadata extraction on these data sources. To perform 
 |:-----------------------------------------------------------------------------------------|:------|:---------|:---------|:------|:---------|:-------------|:---------|:------------|:-------|:-------|
 | [`github`](https://github.com/odpf/meteor/tree/main/plugins/extractors/github/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ☐           | ☐      | ☐      |
 | [`shield`](https://github.com/odpf/meteor/tree/main/plugins/extractors/shield/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ✅           | ✅      | ☐      |
+| [`gsuite`](https://github.com/odpf/meteor/tree/main/plugins/extractors/gsuite/README.md) | ✅     | ☐        | ✅        | ☐     | ✅        | ✅            | ☐        | ☐            | ☐      | ☐      |
 
 ### Bucket
 
