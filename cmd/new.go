@@ -30,6 +30,7 @@ func NewCmd() *cobra.Command {
 func NewRecipeCmd() *cobra.Command {
 	var (
 		extractor  string
+		scope      string
 		sinks      string
 		processors string
 	)
@@ -88,13 +89,24 @@ func NewRecipeCmd() *cobra.Command {
 				}
 			}
 
-			return generator.Recipe(args[0], extractor, sinkList, procList)
+			return generator.Recipe(generator.RecipeParams{
+				Name:       args[0],
+				Source:     extractor,
+				Scope:      scope,
+				Sinks:      sinkList,
+				Processors: procList,
+			})
 		},
 	}
 
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
+	cmd.Flags().StringVarP(&scope, "scope", "n", "", "URN's namespace")
 	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
 	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
+
+	if err := cmd.MarkFlagRequired("scope"); err != nil {
+		panic(err)
+	}
 
 	return cmd
 
