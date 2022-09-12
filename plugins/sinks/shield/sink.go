@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -64,15 +65,15 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	if err := s.BasePlugin.Init(ctx, config); err != nil {
 		return err
 	}
 
-	return
+	return nil
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		metadata := record.Data()
 		s.logger.Info("sinking record to shield", "record", metadata.GetUrn())
@@ -88,43 +89,44 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		s.logger.Info("successfully sinked record to shield", "record", metadata.Name)
 	}
 
-	return
+	return nil
 }
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record RequestPayload) (err error) {
+func (s *Sink) send(record RequestPayload) error {
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
-		return
+		return err
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", s.config.Host, record.Email)
+	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", url.PathEscape(s.config.Host), url.PathEscape(record.Email))
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return
+		return err
 	}
 
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")
 		for _, val := range hdrVals {
+			val = strings.TrimSpace(val)
 			req.Header.Add(hdrKey, val)
 		}
 	}
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 	if res.StatusCode == 200 {
-		return
+		return err
 	}
 
 	var bodyBytes []byte
 	bodyBytes, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return
+		return err
 	}
 	err = fmt.Errorf("shield returns %d: %v", res.StatusCode, string(bodyBytes))
 
