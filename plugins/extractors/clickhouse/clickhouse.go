@@ -25,8 +25,7 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-connection_url: "tcp://localhost:3306?username=admin&password=pass123&debug=true"`
+var sampleConfig = `connection_url: "tcp://localhost:3306?username=admin&password=pass123&debug=true"`
 
 var info = plugins.Info{
 	Description:  "Column-oriented DBMS for online analytical processing.",
@@ -108,10 +107,10 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 
 		asset := v1beta2.Asset{
 			Urn:     models.NewURN("clickhouse", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-			Name: tableName,
-			Type: "table",
+			Name:    tableName,
+			Type:    "table",
 			Service: "clickhouse",
-			Data: table,
+			Data:    table,
 		}
 		emit(models.NewRecord(&asset))
 	}

@@ -11,7 +11,7 @@ import (
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
-	kafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go"
 
 	"github.com/odpf/salt/log"
 )
@@ -30,8 +30,7 @@ type Config struct {
 	Broker string `mapstructure:"broker" validate:"required"`
 }
 
-var sampleConfig = `
-broker: "localhost:9092"`
+var sampleConfig = `broker: "localhost:9092"`
 
 var info = plugins.Info{
 	Description:  "Topic list from Apache Kafka.",

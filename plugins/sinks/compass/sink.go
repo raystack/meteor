@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -34,18 +35,18 @@ var info = plugins.Info{
 	Description: "Send metadata to compass http service",
 	Summary:     summary,
 	Tags:        []string{"http", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	# The hostname of the compass service
 	host: https://compass.com
 	# Additional HTTP headers send to compass, multiple headers value are separated by a comma
 	headers:
-		Compass-User-Email: meteor@odpf.io
-		X-Other-Header: value1, value2
+	  Compass-User-Email: meteor@odpf.io
+	  X-Other-Header: value1, value2
 	# The labels to pass as payload label of the patch api
 	labels:
-		myCustom: $properties.attributes.myCustomField
-		sampleLabel: $properties.labels.sampleLabelField
-	`,
+	  myCustom: $properties.attributes.myCustomField
+	  sampleLabel: $properties.labels.sampleLabelField
+	`),
 }
 
 type httpClient interface {

@@ -36,8 +36,7 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-connection_url: "sqlserver://admin:pass123@localhost:3306/"`
+var sampleConfig = `connection_url: "sqlserver://admin:pass123@localhost:3306/"`
 
 var info = plugins.Info{
 	Description:  "Table metdata from MSSQL server",
@@ -131,10 +130,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
 		Urn:     models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name: tableName,
-		Type: "table",
+		Name:    tableName,
+		Type:    "table",
 		Service: "mssql",
-		Data: table,
+		Data:    table,
 	}))
 
 	return

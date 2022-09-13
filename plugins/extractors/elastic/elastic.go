@@ -28,9 +28,9 @@ type Config struct {
 }
 
 var sampleConfig = `
- user: "elastic"
- password: "changeme"
- host: elastic_server`
+user: "elastic"
+password: "changeme"
+host: elastic_server`
 
 var info = plugins.Info{
 	Description:  "Search engine based on the Lucene library.",
@@ -63,7 +63,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
-	//build elasticsearch client
+	// build elasticsearch client
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			e.config.Host,

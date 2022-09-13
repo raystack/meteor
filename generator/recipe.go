@@ -27,7 +27,8 @@ type templateData struct {
 }
 
 var templateFuncs = map[string]interface{}{
-	"indent": indent,
+	"indent":          indent,
+	"fmtSampleConfig": fmtSampleConfig,
 }
 
 var recipeVersions = [1]string{"v1beta1"}
@@ -91,6 +92,14 @@ func Recipe(p RecipeParams) error {
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
+}
+
+func fmtSampleConfig(s string) string {
+	if !strings.HasPrefix(s, "\n") {
+		s = "\n" + s
+	}
+
+	return strings.ReplaceAll(s, "\t", "  ")
 }
 
 func GetRecipeVersions() [1]string {
