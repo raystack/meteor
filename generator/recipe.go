@@ -27,8 +27,8 @@ type templateData struct {
 }
 
 var templateFuncs = map[string]interface{}{
-	"indent":          indent,
-	"fmtSampleConfig": fmtSampleConfig,
+	"indent": indent,
+	"rawfmt": rawfmt,
 }
 
 var recipeVersions = [1]string{"v1beta1"}
@@ -94,7 +94,7 @@ func indent(spaces int, v string) string {
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 }
 
-func fmtSampleConfig(s string) string {
+func rawfmt(s string) string {
 	if !strings.HasPrefix(s, "\n") {
 		s = "\n" + s
 	}
