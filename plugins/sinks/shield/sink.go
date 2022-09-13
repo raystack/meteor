@@ -82,7 +82,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to build shield payload")
 		}
-		if err = s.send(shieldPayload); err != nil {
+		if err = s.send(ctx, shieldPayload); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 
@@ -94,7 +94,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 
 func (s *Sink) Close() (err error) { return }
 
-func (s *Sink) send(record RequestPayload) error {
+func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (s *Sink) send(record RequestPayload) error {
 
 	// send request
 	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", url.PathEscape(s.config.Host), url.PathEscape(record.Email))
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
 	}
