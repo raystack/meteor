@@ -107,6 +107,8 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 		return err
 	}
 
+	req.Close = true
+
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")
 		for _, val := range hdrVals {
@@ -116,9 +118,13 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	}
 
 	res, err := s.client.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
+
 	if res.StatusCode == 200 {
 		return err
 	}
