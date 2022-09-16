@@ -22,8 +22,7 @@ type Config struct {
 	Host string `mapstructure:"host" validate:"required"`
 }
 
-var sampleConfig = `
-host: shield.com:80`
+var sampleConfig = `host: shield.com:80`
 
 var info = plugins.Info{
 	Description:  "Shield' users metadata",

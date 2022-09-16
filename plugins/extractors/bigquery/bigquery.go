@@ -150,10 +150,9 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 	tb := ds.Tables(ctx)
 	for {
 		table, err := tb.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) || errors.Is(err, context.Canceled) {
 			break
-		}
-		if err != nil {
+		} else if err != nil {
 			e.logger.Error("failed to get table, skipping table", "err", err)
 			continue
 		}
@@ -220,7 +219,6 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 			"project":             t.ProjectID,
 			"type":                string(md.Type),
 			"partition_field":     partitionField,
-			"labels":              md.Labels,
 		}),
 	})
 	if err != nil {
@@ -234,6 +232,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		Description: md.Description,
 		Service:     "bigquery",
 		Data:        table,
+		Labels:      md.Labels,
 		CreateTime:  timestamppb.New(md.CreationTime),
 		UpdateTime:  timestamppb.New(md.LastModifiedTime),
 	}, nil

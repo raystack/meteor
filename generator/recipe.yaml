@@ -1,16 +1,17 @@
 name: {{.Name}}
 version: {{.Version}}
 source:
-{{- range $key, $value := .Source }}
-  type: {{$key}}
-  config: {{$value | indent 4}}
+{{- with .Source }}
+  name: {{.Name}}
+  scope: {{.Scope}}
+  config: {{.SampleConfig | rawfmt | indent 4}}
 {{- end }}
 {{- if ne (len .Sinks) 0 }}
 sinks:
 {{- range $key, $value := .Sinks }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | indent 6}}
+    config: {{$value | rawfmt | indent 6}}
     {{- end }}    
 {{- end }}
 {{- end }}
@@ -19,7 +20,7 @@ processors:
 {{- range $key, $value := .Processors }}
   - name: {{$key}}
     {{- if  $value}}
-    config: {{$value | indent 6}}
+    config: {{$value | rawfmt | indent 6}}
     {{- end }}
 {{- end }}
 {{- end }}

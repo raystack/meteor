@@ -26,8 +26,7 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-connection_url: oracle://username:passwd@localhost:1521/xe`
+var sampleConfig = `connection_url: oracle://username:passwd@localhost:1521/xe`
 
 var info = plugins.Info{
 	Description:  "Table metadata oracle SQL Database.",

@@ -34,8 +34,7 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `
-connection_url: "mongodb://admin:pass123@localhost:3306"`
+var sampleConfig = `connection_url: "mongodb://admin:pass123@localhost:3306"`
 
 var info = plugins.Info{
 	Description:  "Collection metadata from MongoDB Server",
@@ -144,10 +143,10 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 	//
 	table = &v1beta2.Asset{
 		Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
-		Name: collectionName,
+		Name:    collectionName,
 		Service: "mongodb",
-		Type: "table",
-		Data: data,
+		Type:    "table",
+		Data:    data,
 	}
 
 	return

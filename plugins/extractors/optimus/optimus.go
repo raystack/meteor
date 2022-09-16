@@ -26,8 +26,7 @@ type Config struct {
 	MaxSizeInMB int    `mapstructure:"max_size_in_mb"`
 }
 
-var sampleConfig = `
-host: optimus.com:80`
+var sampleConfig = `host: optimus.com:80`
 
 var info = plugins.Info{
 	Description:  "Optimus' jobs metadata",

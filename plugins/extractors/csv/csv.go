@@ -3,6 +3,7 @@ package csv
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,8 +17,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"encoding/csv"
-
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/salt/log"
 )
@@ -30,8 +29,7 @@ type Config struct {
 	Path string `mapstructure:"path" validate:"required"`
 }
 
-var sampleConfig = `
-path: ./path-to-a-file-or-a-directory`
+var sampleConfig = `path: ./path-to-a-file-or-a-directory`
 
 var info = plugins.Info{
 	Description:  "Comma separated file",

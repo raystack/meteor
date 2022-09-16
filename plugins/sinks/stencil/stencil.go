@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -32,14 +33,14 @@ var info = plugins.Info{
 	Description: "Send metadata to stencil http service",
 	Summary:     summary,
 	Tags:        []string{"http", "sink"},
-	SampleConfig: `
+	SampleConfig: heredoc.Doc(`
 	# The hostname of the stencil service
 	host: https://stencil.com
 	# The namespace ID of the stencil service
 	namespace_id: myNamespace
 	# The schema format in which data will sink to stencil
 	format: avro
-	`,
+	`),
 }
 
 // httpClient holds the set of methods require for creating request

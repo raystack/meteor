@@ -25,7 +25,7 @@ var summary string
 var sampleConfig = `
 host: http://localhost:3000
 instance_label: my-metabase
-user_id: meteor_tester
+username: meteor_tester
 password: meteor_pass_1234`
 
 var info = plugins.Info{
