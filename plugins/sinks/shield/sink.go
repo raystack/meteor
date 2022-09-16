@@ -101,7 +101,7 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", url.PathEscape(s.config.Host), url.PathEscape(record.Email))
+	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", s.config.Host, url.PathEscape(record.Email))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
