@@ -154,17 +154,17 @@ func (s *Sink) buildShieldPayload(resource *assetsv1beta2.Asset) (RequestPayload
 
 	name, ok := mapdata["full_name"].(string)
 	if !ok {
-		return RequestPayload{}, errors.New("name must be a string")
+		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for name, must be a string", mapdata["full_name"]))
 	}
 
 	email, ok := mapdata["email"].(string)
 	if !ok {
-		return RequestPayload{}, errors.New("email must be a string")
+		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for email, must be a string", mapdata["email"]))
 	}
 
 	metadata, ok := mapdata["attributes"].(map[string]interface{})
 	if !ok {
-		return RequestPayload{}, errors.New("attributes must be a map[string]interface{}")
+		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for attributes, must be a map[string]interface{}", mapdata["attributes"]))
 	}
 
 	record := RequestPayload{
