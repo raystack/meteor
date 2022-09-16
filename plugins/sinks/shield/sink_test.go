@@ -131,7 +131,7 @@ func TestSink(t *testing.T) {
 					Email:      "",
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{}),
 				},
-				wantErr: errors.Wrap(errors.New("name must be a string"), "failed to build shield payload"),
+				wantErr: errors.Wrap(errors.New(fmt.Sprintf("unexpected type %T for name, must be a string", nil)), "failed to build shield payload"),
 			},
 			{
 				User: &v1beta2.User{
@@ -139,14 +139,14 @@ func TestSink(t *testing.T) {
 					Email:      "",
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{}),
 				},
-				wantErr: errors.Wrap(errors.New("email must be a string"), "failed to build shield payload"),
+				wantErr: errors.Wrap(errors.New(fmt.Sprintf("unexpected type %T for email, must be a string", nil)), "failed to build shield payload"),
 			},
 			{
 				User: &v1beta2.User{
 					FullName: "John Doe",
 					Email:    "john.doe@odpf.com",
 				},
-				wantErr: errors.Wrap(errors.New("attributes must be a map[string]interface{}"), "failed to build shield payload"),
+				wantErr: errors.Wrap(errors.New(fmt.Sprintf("unexpected type %T for attributes, must be a map[string]interface{}", nil)), "failed to build shield payload"),
 			},
 		}
 
