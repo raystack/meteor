@@ -37,7 +37,7 @@ type client struct {
 }
 
 func (c *client) Connect(ctx context.Context, host string) (err error) {
-	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*5)
+	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
 	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
