@@ -1,14 +1,11 @@
 package shield
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -17,9 +14,14 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
+	sh "github.com/odpf/shield/proto/v1beta1"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -50,12 +52,12 @@ type httpClient interface {
 
 type Sink struct {
 	plugins.BasePlugin
-	client httpClient
+	client Client
 	config Config
 	logger log.Logger
 }
 
-func New(c httpClient, logger log.Logger) plugins.Syncer {
+func New(c Client, logger log.Logger) plugins.Syncer {
 	s := &Sink{
 		logger: logger,
 		client: c,
@@ -68,6 +70,10 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 	if err := s.BasePlugin.Init(ctx, config); err != nil {
 		return err
+	}
+
+	if err := s.client.Connect(ctx, s.config.Host); err != nil {
+		return fmt.Errorf("error connecting to host: %w", err)
 	}
 
 	return nil
@@ -92,56 +98,58 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	return nil
 }
 
-func (s *Sink) Close() (err error) { return }
+func (s *Sink) Close() (err error) {
+	return
+	//TODO: Connection closes even when some records are unpiblished
+	//TODO: return s.client.Close()
+}
 
 func (s *Sink) send(ctx context.Context, record RequestPayload) error {
-	payloadBytes, err := json.Marshal(record)
-	if err != nil {
-		return err
-	}
-
-	// send request
-	url := fmt.Sprintf("%s/admin/v1beta1/users/%s", s.config.Host, url.PathEscape(record.Email))
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return err
-	}
-
-	req.Close = true
-
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")
 		for _, val := range hdrVals {
 			val = strings.TrimSpace(val)
-			req.Header.Add(hdrKey, val)
+			md := metadata.New(map[string]string{hdrKey: val})
+			ctx = metadata.NewOutgoingContext(ctx, md)
 		}
 	}
 
-	res, err := s.client.Do(req)
-	if res != nil {
-		defer res.Body.Close()
-	}
+	metadataBytes, err := json.Marshal(record.Metadata)
 	if err != nil {
 		return err
 	}
 
-	if res.StatusCode == 200 {
-		return err
-	}
+	var requestBody sh.UserRequestBody
+	requestBody.Name = record.Name
+	requestBody.Email = record.Email
+	requestBody.Metadata = new(structpb.Struct)
 
-	var bodyBytes []byte
-	bodyBytes, err = ioutil.ReadAll(res.Body)
+	err = json.Unmarshal(metadataBytes, requestBody.Metadata)
 	if err != nil {
 		return err
 	}
-	err = fmt.Errorf("shield returns %d: %v", res.StatusCode, string(bodyBytes))
 
-	switch code := res.StatusCode; {
-	case code >= 500:
-		return plugins.NewRetryError(err)
-	default:
-		return err
+	_, err = s.client.UpdateUser(ctx, &sh.UpdateUserRequest{
+		Id:   requestBody.Email,
+		Body: &requestBody,
+	})
+	if err == nil {
+		return nil
 	}
+
+	if e, ok := status.FromError(err); ok {
+		err = fmt.Errorf("shield returns code %d: %v", e.Code(), e.Message())
+		switch e.Code() {
+		case codes.Unavailable:
+			return plugins.NewRetryError(err)
+		default:
+			return err
+		}
+	} else {
+		err = fmt.Errorf("not able to parse error returned %v", err)
+	}
+
+	return err
 }
 
 func (s *Sink) buildShieldPayload(resource *assetsv1beta2.Asset) (RequestPayload, error) {
@@ -197,7 +205,7 @@ func (s *Sink) buildShieldData(anyData *anypb.Any) (map[string]interface{}, erro
 
 func init() {
 	if err := registry.Sinks.Register("shield", func() plugins.Syncer {
-		return New(&http.Client{}, plugins.GetLog())
+		return New(newClient(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
