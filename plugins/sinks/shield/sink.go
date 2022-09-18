@@ -32,13 +32,13 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Send user information to shield http service",
+	Description: "Send user information to shield grpc service",
 	Summary:     summary,
-	Tags:        []string{"http", "sink"},
+	Tags:        []string{"grpc", "sink"},
 	SampleConfig: heredoc.Doc(`
 	# The hostname of the shield service
 	host: https://shield.com
-	# Additional HTTP headers send to shield, multiple headers value are separated by a comma
+	# Additional headers send to shield, multiple headers value are separated by a comma
 	headers:
 	  X-Shield-Email: meteor@odpf.io
       X-Other-Header: value1, value2

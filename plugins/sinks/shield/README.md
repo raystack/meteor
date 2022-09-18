@@ -8,7 +8,7 @@ Shield is a cloud-native role-based authorization-aware reverse-proxy service th
 sinks:
   name: shield
   config:
-    host: https://shield.com
+    host: shield.com
     headers:
       X-Shield-Email: meteor@odpf.io
       X-Other-Header: value1, value2
