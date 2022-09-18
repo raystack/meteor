@@ -185,8 +185,6 @@ func TestSink(t *testing.T) {
 		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&sh.UpdateUserResponse{}, nil)
 
 		shieldSink := shield.New(client, testUtils.Logger)
-
-		shieldSink = shield.New(client, testUtils.Logger)
 		err := shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": validConfig["host"],
 		}})

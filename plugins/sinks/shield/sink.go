@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -44,10 +43,6 @@ var info = plugins.Info{
 	  X-Shield-Email: meteor@odpf.io
       X-Other-Header: value1, value2
 	`),
-}
-
-type httpClient interface {
-	Do(*http.Request) (*http.Response, error)
 }
 
 type Sink struct {

@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	service                    = "shield"
 	GRPCMaxClientSendSize      = 45 << 20 // 45MB
 	GRPCMaxClientRecvSize      = 45 << 20 // 45MB
 	GRPCMaxRetry          uint = 3
