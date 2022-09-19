@@ -81,6 +81,22 @@ sinks:
     send_format_header: false
 ```
 
+## Shield
+
+`shield`
+
+Upsert users to shield service running at a given 'host'. Request will be sent via GRPC.
+
+```yaml
+sinks:
+  name: shield
+  config:
+    host: shield.com
+    headers:
+      X-Shield-Email: meteor@odpf.io
+      X-Other-Header: value1, value2
+```
+
 _**Notes**_
 
 Compass' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Compass. Supports getting value from nested fields.
