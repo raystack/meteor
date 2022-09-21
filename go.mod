@@ -77,5 +77,6 @@ require (
 
 require (
 	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
+	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852
 	github.com/sergi/go-diff v1.1.0 // indirect
 )

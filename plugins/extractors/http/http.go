@@ -11,9 +11,16 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
+	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/oliveagle/jsonpath"
+
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 )
 
 //go:embed README.md
@@ -28,7 +35,17 @@ type Request struct {
 	Body    map[string]interface{} `mapstructure:"body"`
 }
 
+type Mappings struct {
+	Urn     string                 `mapstructure:"urn" validate:"required"`
+	Name    string                 `mapstructure:"name" validate:"required"`
+	Service string                 `mapstructure:"service" validate:"required"`
+	Type    string                 `mapstructure:"type" validate:"required"`
+	Data    map[string]interface{} `mapstructure:"data" validate:"required"`
+}
+
 type Response struct {
+	Root    string   `mapstructure:"root" validate:"required"`
+	Mapping Mappings `mapstructure:"mapping" validate:"required"`
 }
 
 // Config holds the set of configuration for the extractor
@@ -53,6 +70,7 @@ type Extractor struct {
 	logger log.Logger
 	config Config
 	client httpClient
+	emit   plugins.Emit
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -78,6 +96,8 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	e.emit = emit
+
 	req, err := e.buildHTTPRequest(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to build HTTP request: %v", err)
@@ -94,12 +114,69 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		if err != nil {
 			return fmt.Errorf("failed to extract body: %v", err)
 		}
-		e.logger.Info("http returns %d: %v", res.StatusCode, string(bodyBytes))
 
+		var s interface{}
+		err := json.Unmarshal(bodyBytes, &s)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal: %v", err)
+		}
+
+		switch e.config.Response.Mapping.Type {
+		case "user":
+			return e.emitUserAsset(s)
+		}
 		return nil
 	}
 
 	return fmt.Errorf("request failed with status: %v", res.StatusCode)
+}
+
+func (e *Extractor) emitUserAsset(i interface{}) error {
+	idx := 0
+	for {
+		u, err := jsonpath.JsonPathLookup(i, fmt.Sprintf("$.%s[%d]", e.config.Response.Root, idx))
+		if err != nil {
+			if strings.Contains(err.Error(), "index out of range") {
+				break
+			}
+			return err
+		}
+		userMap := u.(map[string]interface{})
+
+		email := userMap[e.config.Response.Mapping.Data["email"].(string)].(string)
+		fullname := userMap[e.config.Response.Mapping.Data["fullname"].(string)].(string)
+		status := userMap[e.config.Response.Mapping.Data["status"].(string)].(string)
+		attributesMap := e.config.Response.Mapping.Data["attributes"].(map[string]interface{})
+
+		attributes := make(map[string]interface{})
+		for key, value := range attributesMap {
+			attributes[key] = userMap[value.(string)]
+		}
+
+		assetUser, err := anypb.New(&v1beta2.User{
+			Email:      email,
+			FullName:   fullname,
+			Status:     status,
+			Attributes: utils.TryParseMapToProto(attributes),
+		})
+		if err != nil {
+			return fmt.Errorf("error when creating anypb.Any: %w", err)
+		}
+
+		asset := &v1beta2.Asset{
+			Urn:     models.NewURN("http", e.UrnScope, "user", userMap[e.config.Response.Mapping.Urn].(string)),
+			Name:    userMap[e.config.Response.Mapping.Name].(string),
+			Service: "http",
+			Type:    "user",
+			Data:    assetUser,
+		}
+
+		e.emit(models.NewRecord(asset))
+
+		idx++
+	}
+
+	return nil
 }
 
 func (e *Extractor) buildHTTPRequest(ctx context.Context) (*http.Request, error) {
