@@ -141,39 +141,74 @@ func (e *Extractor) emitUserAsset(i interface{}) error {
 			}
 			return err
 		}
-		userMap := u.(map[string]interface{})
+		idx++
 
-		email := userMap[e.config.Response.Mapping.Data["email"].(string)].(string)
-		fullname := userMap[e.config.Response.Mapping.Data["fullname"].(string)].(string)
-		status := userMap[e.config.Response.Mapping.Data["status"].(string)].(string)
+		email, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["email"].(string)))
+		if err != nil {
+			e.logger.Error("can't find email : %v", err)
+			continue
+		}
+
+		fullname, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["fullname"].(string)))
+		if err != nil {
+			e.logger.Error("can't find fullname : %v", err)
+			continue
+		}
+
+		status, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["status"].(string)))
+		if err != nil {
+			e.logger.Error("can't find status : %v", err)
+			continue
+		}
+
 		attributesMap := e.config.Response.Mapping.Data["attributes"].(map[string]interface{})
 
 		attributes := make(map[string]interface{})
 		for key, value := range attributesMap {
-			attributes[key] = userMap[value.(string)]
+			attributes[key], err = jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", value.(string)))
+			if err != nil {
+				e.logger.Error("can't find %s : %v", key, err)
+				continue
+			}
 		}
 
 		assetUser, err := anypb.New(&v1beta2.User{
-			Email:      email,
-			FullName:   fullname,
-			Status:     status,
+			Email:      email.(string),
+			FullName:   fullname.(string),
+			Status:     status.(string),
 			Attributes: utils.TryParseMapToProto(attributes),
 		})
 		if err != nil {
 			return fmt.Errorf("error when creating anypb.Any: %w", err)
 		}
 
+		urn, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Urn))
+		if err != nil {
+			e.logger.Error("can't find urn : %v", err)
+			continue
+		}
+
+		name, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Name))
+		if err != nil {
+			e.logger.Error("can't find name : %v", err)
+			continue
+		}
+
+		service, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Service))
+		if err != nil {
+			e.logger.Error("can't find name : %v", err)
+			continue
+		}
+
 		asset := &v1beta2.Asset{
-			Urn:     models.NewURN("http", e.UrnScope, "user", userMap[e.config.Response.Mapping.Urn].(string)),
-			Name:    userMap[e.config.Response.Mapping.Name].(string),
-			Service: "http",
+			Urn:     models.NewURN("http", e.UrnScope, "user", urn.(string)),
+			Name:    name.(string),
+			Service: service.(string),
 			Type:    "user",
 			Data:    assetUser,
 		}
 
 		e.emit(models.NewRecord(asset))
-
-		idx++
 	}
 
 	return nil
