@@ -221,9 +221,7 @@ func (e *Extractor) buildHTTPRequest(ctx context.Context) (*http.Request, error)
 			values := strings.Split(value, ",")
 
 			valueArr := []string{}
-			for _, val := range values {
-				valueArr = append(valueArr, val)
-			}
+			valueArr = append(valueArr, values...)
 			params[param] = valueArr
 		}
 		URL = URL + "?" + params.Encode()
