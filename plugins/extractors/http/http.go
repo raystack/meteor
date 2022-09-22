@@ -194,16 +194,10 @@ func (e *Extractor) emitUserAsset(i interface{}) error {
 			continue
 		}
 
-		service, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Service))
-		if err != nil {
-			e.logger.Error("can't find name : %v", err)
-			continue
-		}
-
 		asset := &v1beta2.Asset{
 			Urn:     models.NewURN("http", e.UrnScope, "user", urn.(string)),
 			Name:    name.(string),
-			Service: service.(string),
+			Service: e.config.Response.Mapping.Service,
 			Type:    "user",
 			Data:    assetUser,
 		}
