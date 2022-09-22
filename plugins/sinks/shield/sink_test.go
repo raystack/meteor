@@ -20,9 +20,6 @@ import (
 	shield "github.com/odpf/meteor/plugins/sinks/shield"
 	sh "github.com/odpf/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -68,40 +65,6 @@ func TestSink(t *testing.T) {
 		}})
 		require.Error(t, err)
 		assert.EqualError(t, err, "error connecting to host: failed to create connection")
-	})
-
-	t.Run("should return RetryError if shield returns certain status code", func(t *testing.T) {
-
-		user, err := anypb.New(&v1beta2.User{
-			Email:    "user@odpf.com",
-			FullName: "john",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"org_unit_path": "/",
-			}),
-		})
-		require.NoError(t, err)
-
-		data := &v1beta2.Asset{
-			Data: user,
-		}
-
-		ctx := context.TODO()
-
-		client := new(mockClient)
-		client.On("Connect", ctx, "shield:80").Return(nil)
-		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&sh.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
-		shieldSink := shield.New(client, testUtils.Logger)
-		err = shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
-			"host": validConfig["host"],
-		}})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
-		require.Error(t, err)
-		assert.True(t, errors.Is(err, plugins.RetryError{}))
-
 	})
 
 	t.Run("should return error when invalid payload is sent", func(t *testing.T) {
