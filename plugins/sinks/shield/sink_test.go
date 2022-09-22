@@ -34,18 +34,11 @@ var (
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
-		invalidConfigs := []map[string]interface{}{
-			{
-				"host": "",
-			},
-		}
-		for i, config := range invalidConfigs {
-			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				sink := shield.New(new(mockClient), testUtils.Logger)
-				err := sink.Init(context.TODO(), plugins.Config{RawConfig: config})
-				assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
-			})
-		}
+		sink := shield.New(new(mockClient), testUtils.Logger)
+		err := sink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
+			"host": "",
+		}})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
 	t.Run("should not return error if config is valid", func(t *testing.T) {
