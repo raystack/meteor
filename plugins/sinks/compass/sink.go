@@ -44,8 +44,8 @@ var info = plugins.Info{
 	  X-Other-Header: value1, value2
 	# The labels to pass as payload label of the patch api
 	labels:
-	  myCustom: $properties.attributes.myCustomField
-	  sampleLabel: $properties.labels.sampleLabelField
+	  myCustom: $attributes.myCustomField
+	  sampleLabel: $labels.sampleLabelField
 	`),
 }
 

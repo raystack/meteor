@@ -3,6 +3,8 @@ package metabase
 import (
 	"strings"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -146,4 +148,8 @@ func (mt *MetabaseTime) UnmarshalJSON(b []byte) error {
 	}
 	*mt = MetabaseTime(t)
 	return nil
+}
+
+func (mt MetabaseTime) ToPB() *timestamppb.Timestamp {
+	return timestamppb.New((time.Time)(mt))
 }

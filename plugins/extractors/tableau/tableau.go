@@ -134,6 +134,8 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 			"owner_name":   wb.Owner.Name,
 			"owner_email":  wb.Owner.Email,
 		}),
+		CreateTime: timestamppb.New(wb.CreatedAt),
+		UpdateTime: timestamppb.New(wb.UpdatedAt),
 	})
 	if err != nil {
 		return nil, err
@@ -152,9 +154,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 				Email: wb.Owner.Email,
 			},
 		},
-		Lineage:    lineages,
-		CreateTime: timestamppb.New(wb.CreatedAt),
-		UpdateTime: timestamppb.New(wb.UpdatedAt),
+		Lineage: lineages,
 	}
 	return
 }

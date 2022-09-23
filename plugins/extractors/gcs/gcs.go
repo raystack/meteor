@@ -134,6 +134,7 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	bucket := &v1beta2.Bucket{
 		Location:    b.Location,
 		StorageType: b.StorageClass,
+		CreateTime:  timestamppb.New(b.Created),
 	}
 	if blobs != nil {
 		bucket.Blobs = blobs
@@ -144,12 +145,11 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	}
 	asset = &v1beta2.Asset{
 		Urn:     models.NewURN("gcs", projectID, "bucket", b.Name),
-		Name:       b.Name,
+		Name:    b.Name,
 		Service: "gcs",
-		Type:       "bucket",
-		CreateTime: timestamppb.New(b.Created),
-		Labels:     b.Labels,
-		Data:       buck,
+		Type:    "bucket",
+		Labels:  b.Labels,
+		Data:    buck,
 	}
 	return
 }

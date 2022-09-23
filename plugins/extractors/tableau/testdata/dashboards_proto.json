@@ -136,7 +136,9 @@
                     "create_time": "2021-11-01T11:32:30Z",
                     "update_time": "2021-11-01T11:32:31Z"
                 }
-            ]
+            ],
+            "create_time": "2021-11-01T11:32:30Z",
+            "update_time": "2021-11-01T11:32:31Z"
         },
         "owners": [
             {
@@ -145,8 +147,6 @@
                 "email": "meteor_user"
             }
         ],
-        "create_time": "2021-11-01T11:32:30Z",
-        "update_time": "2021-11-01T11:32:31Z",
         "lineage": {
             "upstreams": [
                 {
@@ -452,7 +452,9 @@
                 "owner_name": "Meteor User",
                 "project_name": "Samples",
                 "uri": "sites/15038/workbooks/88353"
-            }
+            },
+            "create_time": "2021-11-01T11:32:35Z",
+            "update_time": "2021-11-02T06:07:18Z"
         },
         "owners": [
             {
@@ -461,8 +463,6 @@
                 "email": "meteor_user"
             }
         ],
-        "create_time": "2021-11-01T11:32:35Z",
-        "update_time": "2021-11-02T06:07:18Z",
         "lineage": {
             "upstreams": [
                 {
@@ -644,7 +644,9 @@
                 "owner_name": "Meteor User",
                 "project_name": "test-meteor",
                 "uri": "sites/15038/workbooks/88403"
-            }
+            },
+            "create_time": "2021-11-02T11:57:32Z",
+            "update_time": "2021-11-02T11:57:33Z"
         },
         "owners": [
             {
@@ -653,8 +655,6 @@
                 "email": "meteor_user"
             }
         ],
-        "create_time": "2021-11-02T11:57:32Z",
-        "update_time": "2021-11-02T11:57:33Z",
         "lineage": {
             "upstreams": [
                 {

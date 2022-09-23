@@ -5,11 +5,6 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 	"strings"
-	"time"
-
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -17,6 +12,8 @@ import (
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -114,6 +111,8 @@ func (e *Extractor) buildDashboard(d Dashboard) (asset *v1beta2.Asset, err error
 			"collection_id": dashboard.CollectionID,
 			"creator_id":    dashboard.CreatorID,
 		}),
+		CreateTime: dashboard.CreatedAt.ToPB(),
+		UpdateTime: dashboard.UpdatedAt.ToPB(),
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
@@ -126,8 +125,6 @@ func (e *Extractor) buildDashboard(d Dashboard) (asset *v1beta2.Asset, err error
 		Type:        "dashboard",
 		Description: dashboard.Description,
 		Data:        data,
-		CreateTime:  timestamppb.New(time.Time(dashboard.CreatedAt)),
-		UpdateTime:  timestamppb.New(time.Time(dashboard.UpdatedAt)),
 		Lineage: &v1beta2.Lineage{
 			Upstreams: dashboardUpstreams,
 		},
