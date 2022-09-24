@@ -26,13 +26,17 @@ import (
 //go:embed README.md
 var summary string
 
+const CONST string = "CONST"
+
 type Request struct {
-	URL     string                 `mapstructure:"url" validate:"required"`
-	Path    string                 `mapstructure:"path"`
-	Headers map[string]string      `mapstructure:"headers"`
-	Method  string                 `mapstructure:"method" validate:"required"`
-	Query   map[string]string      `mapstructure:"query"`
-	Body    map[string]interface{} `mapstructure:"body"`
+	URL         string                 `mapstructure:"url" validate:"required"`
+	Path        string                 `mapstructure:"path"`
+	Headers     map[string]string      `mapstructure:"headers"`
+	Method      string                 `mapstructure:"method" validate:"required"`
+	Query       map[string]string      `mapstructure:"query"`
+	Body        map[string]interface{} `mapstructure:"body"`
+	ContentType string                 `mapstructure:"content_type" default:"application/json"`
+	Accept      string                 `mapstructure:"accept" default:"application/json"`
 }
 
 type Mappings struct {
@@ -45,6 +49,7 @@ type Mappings struct {
 
 type Response struct {
 	Root    string   `mapstructure:"root" validate:"required"`
+	Type    string   `mapstructure:"type" validate:"required"`
 	Mapping Mappings `mapstructure:"mapping" validate:"required"`
 }
 
@@ -132,6 +137,24 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 func (e *Extractor) emitUserAsset(i interface{}) error {
+	if e.config.Response.Type != "list" {
+		u, err := jsonpath.JsonPathLookup(i, fmt.Sprintf("$.%s", e.config.Response.Root))
+		if err != nil {
+			return err
+		}
+
+		asset, err := e.buildUserAsset(u)
+		if err != nil {
+			return err
+		} else if asset == nil {
+			return nil
+		}
+
+		e.emit(models.NewRecord(asset))
+
+		return nil
+	}
+
 	idx := 0
 	for {
 		u, err := jsonpath.JsonPathLookup(i, fmt.Sprintf("$.%s[%d]", e.config.Response.Root, idx))
@@ -143,69 +166,96 @@ func (e *Extractor) emitUserAsset(i interface{}) error {
 		}
 		idx++
 
-		email, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["email"].(string)))
+		asset, err := e.buildUserAsset(u)
 		if err != nil {
-			e.logger.Error("can't find email : %v", err)
+			return err
+		} else if asset == nil {
 			continue
-		}
-
-		fullname, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["fullname"].(string)))
-		if err != nil {
-			e.logger.Error("can't find fullname : %v", err)
-			continue
-		}
-
-		status, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Data["status"].(string)))
-		if err != nil {
-			e.logger.Error("can't find status : %v", err)
-			continue
-		}
-
-		attributesMap := e.config.Response.Mapping.Data["attributes"].(map[string]interface{})
-
-		attributes := make(map[string]interface{})
-		for key, value := range attributesMap {
-			attributes[key], err = jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", value.(string)))
-			if err != nil {
-				e.logger.Error("can't find %s : %v", key, err)
-				continue
-			}
-		}
-
-		assetUser, err := anypb.New(&v1beta2.User{
-			Email:      email.(string),
-			FullName:   fullname.(string),
-			Status:     status.(string),
-			Attributes: utils.TryParseMapToProto(attributes),
-		})
-		if err != nil {
-			return fmt.Errorf("error when creating anypb.Any: %w", err)
-		}
-
-		urn, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Urn))
-		if err != nil {
-			e.logger.Error("can't find urn : %v", err)
-			continue
-		}
-
-		name, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", e.config.Response.Mapping.Name))
-		if err != nil {
-			e.logger.Error("can't find name : %v", err)
-			continue
-		}
-
-		asset := &v1beta2.Asset{
-			Urn:     models.NewURN("http", e.UrnScope, "user", urn.(string)),
-			Name:    name.(string),
-			Service: e.config.Response.Mapping.Service,
-			Type:    "user",
-			Data:    assetUser,
 		}
 
 		e.emit(models.NewRecord(asset))
 	}
 
 	return nil
+}
+
+func (e *Extractor) buildUserAsset(u interface{}) (*v1beta2.Asset, error) {
+	email := e.keyJsonPathLookup(u, e.config.Response.Mapping.Data["email"].(string), "email")
+	if email == "" {
+		return nil, nil
+	}
+
+	fullname := e.keyJsonPathLookup(u, e.config.Response.Mapping.Data["fullname"].(string), "fullname")
+	if fullname == "" {
+		return nil, nil
+	}
+
+	status := e.keyJsonPathLookup(u, e.config.Response.Mapping.Data["status"].(string), "status")
+	if status == "" {
+		return nil, nil
+	}
+
+	attributesMap := e.config.Response.Mapping.Data["attributes"].(map[string]interface{})
+
+	attributes := make(map[string]interface{})
+	for key, value := range attributesMap {
+		val := e.keyJsonPathLookup(u, value.(string), key)
+		if status == "" {
+			return nil, nil
+		}
+
+		attributes[key] = val
+	}
+
+	assetUser, err := anypb.New(&v1beta2.User{
+		Email:      email,
+		FullName:   fullname,
+		Status:     status,
+		Attributes: utils.TryParseMapToProto(attributes),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error when creating anypb.Any: %w", err)
+	}
+
+	urn := e.keyJsonPathLookup(u, e.config.Response.Mapping.Urn, "urn")
+	if urn == "" {
+		return nil, nil
+	}
+
+	name := e.keyJsonPathLookup(u, e.config.Response.Mapping.Name, "name")
+	if name == "" {
+		return nil, nil
+	}
+
+	asset := &v1beta2.Asset{
+		Urn:     models.NewURN("http", e.UrnScope, "user", urn),
+		Name:    name,
+		Service: e.config.Response.Mapping.Service,
+		Type:    "user",
+		Data:    assetUser,
+	}
+
+	return asset, nil
+}
+
+func (e *Extractor) keyJsonPathLookup(u interface{}, key, lable string) string {
+	s := strings.Split(key, `.`)
+	if s[0] == CONST && len(s) == 2 {
+		key = s[1]
+	}
+
+	v, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", s[1]))
+	if err != nil {
+		e.logger.Error("can't find %s : %v", lable, err)
+		return ""
+	}
+
+	value, ok := v.(string)
+	if !ok {
+		e.logger.Error("%v is not a string", v)
+		return ""
+	}
+	return value
 }
 
 func (e *Extractor) buildHTTPRequest(ctx context.Context) (*http.Request, error) {
@@ -243,6 +293,9 @@ func (e *Extractor) buildHTTPRequest(ctx context.Context) (*http.Request, error)
 			req.Header.Add(hdrKey, val)
 		}
 	}
+
+	req.Header.Add("Content-Type", e.config.Request.ContentType)
+	req.Header.Add("Accept", e.config.Request.Accept)
 
 	return req, nil
 }
