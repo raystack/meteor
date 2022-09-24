@@ -244,7 +244,7 @@ func (e *Extractor) keyJsonPathLookup(u interface{}, key, lable string) string {
 		key = s[1]
 	}
 
-	v, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", s[1]))
+	v, err := jsonpath.JsonPathLookup(u, fmt.Sprintf("$.%s", key))
 	if err != nil {
 		e.logger.Error("can't find %s : %v", lable, err)
 		return ""
