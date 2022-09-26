@@ -18,8 +18,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -37,7 +35,7 @@ var info = plugins.Info{
 	Tags:        []string{"grpc", "sink"},
 	SampleConfig: heredoc.Doc(`
 	# The hostname of the shield service
-	host: https://shield.com
+	host: shield.com:5556
 	# Additional headers send to shield, multiple headers value are separated by a comma
 	headers:
 	  X-Shield-Email: meteor@odpf.io
@@ -76,18 +74,19 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
-		metadata := record.Data()
-		s.logger.Info("sinking record to shield", "record", metadata.GetUrn())
+		asset := record.Data()
+		s.logger.Info("sinking record to shield", "record", asset.GetUrn())
 
-		shieldPayload, err := s.buildShieldPayload(metadata)
+		userRequestBody, err := s.buildUserRequestBody(asset)
 		if err != nil {
 			return errors.Wrap(err, "failed to build shield payload")
 		}
-		if err = s.send(ctx, shieldPayload); err != nil {
+
+		if err = s.send(ctx, userRequestBody); err != nil {
 			return errors.Wrap(err, "error sending data")
 		}
 
-		s.logger.Info("successfully sinked record to shield", "record", metadata.Name)
+		s.logger.Info("successfully sinked record to shield", "record", asset.Name)
 	}
 
 	return nil
@@ -99,7 +98,7 @@ func (s *Sink) Close() (err error) {
 	//TODO: return s.client.Close()
 }
 
-func (s *Sink) send(ctx context.Context, record RequestPayload) error {
+func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) error {
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")
 		for _, val := range hdrVals {
@@ -109,24 +108,9 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 		}
 	}
 
-	metadataBytes, err := json.Marshal(record.Metadata)
-	if err != nil {
-		return err
-	}
-
-	var requestBody sh.UserRequestBody
-	requestBody.Name = record.Name
-	requestBody.Email = record.Email
-	requestBody.Metadata = new(structpb.Struct)
-
-	err = json.Unmarshal(metadataBytes, requestBody.Metadata)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.UpdateUser(ctx, &sh.UpdateUserRequest{
-		Id:   requestBody.Email,
-		Body: &requestBody,
+	_, err := s.client.UpdateUser(ctx, &sh.UpdateUserRequest{
+		Id:   userRequestBody.Email,
+		Body: userRequestBody,
 	})
 	if err == nil {
 		return nil
@@ -147,55 +131,44 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	return err
 }
 
-func (s *Sink) buildShieldPayload(resource *assetsv1beta2.Asset) (RequestPayload, error) {
-	data := resource.GetData()
+func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequestBody, error) {
+	data := asset.GetData()
 
-	mapdata, err := s.buildShieldData(data)
+	var user assetsv1beta2.User
+	err := data.UnmarshalTo(&user)
 	if err != nil {
-		return RequestPayload{}, err
+		return &sh.UserRequestBody{}, err
 	}
 
-	name, ok := mapdata["full_name"].(string)
-	if !ok {
-		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for name, must be a string", mapdata["full_name"]))
+	if user.FullName == "" {
+		return &sh.UserRequestBody{}, errors.New("empty user name")
+	}
+	if user.Email == "" {
+		return &sh.UserRequestBody{}, errors.New("empty user email")
+	}
+	if user.Attributes == nil {
+		return &sh.UserRequestBody{}, errors.New("empty user attributes")
 	}
 
-	email, ok := mapdata["email"].(string)
-	if !ok {
-		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for email, must be a string", mapdata["email"]))
-	}
-
-	metadata, ok := mapdata["attributes"].(map[string]interface{})
-	if !ok {
-		return RequestPayload{}, errors.New(fmt.Sprintf("unexpected type %T for attributes, must be a map[string]interface{}", mapdata["attributes"]))
-	}
-
-	record := RequestPayload{
-		Name:     name,
-		Email:    email,
-		Metadata: metadata,
-	}
-
-	return record, nil
-}
-
-func (s *Sink) buildShieldData(anyData *anypb.Any) (map[string]interface{}, error) {
-	var mapData map[string]interface{}
-
-	marshaler := &protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-	bytes, err := marshaler.Marshal(anyData)
+	metadataBytes, err := json.Marshal(user.Attributes)
 	if err != nil {
-		return mapData, errors.Wrap(err, "error marshaling asset data")
+		return &sh.UserRequestBody{}, err
 	}
 
-	err = json.Unmarshal(bytes, &mapData)
+	m := new(structpb.Struct)
+
+	err = json.Unmarshal(metadataBytes, m)
 	if err != nil {
-		return mapData, errors.Wrap(err, "error unmarshalling to mapdata")
+		return &sh.UserRequestBody{}, err
 	}
 
-	return mapData, nil
+	requestBody := &sh.UserRequestBody{
+		Name:     user.FullName,
+		Email:    user.Email,
+		Metadata: m,
+	}
+
+	return requestBody, nil
 }
 
 func init() {
