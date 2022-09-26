@@ -106,7 +106,32 @@ func TestSink(t *testing.T) {
 
 	})
 
-	t.Run("should return error when invalid payload is sent", func(t *testing.T) {
+	t.Run("should return error when payload is not User type", func(t *testing.T) {
+		wantErr := errors.Wrap(errors.New("not a User struct: proto: mismatched message type: got \"odpf.assets.v1beta2.User\", want \"odpf.assets.v1beta2.Topic\""), "failed to build shield payload")
+
+		d, _ := anypb.New(&v1beta2.Topic{})
+		data := &v1beta2.Asset{
+			Data: d,
+		}
+
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, "shield:80").Return(nil)
+		shieldSink := shield.New(client, testUtils.Logger)
+		err := shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": validConfig["host"],
+		}})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		require.Error(t, err)
+		assert.Equal(t, wantErr.Error(), err.Error())
+	})
+
+	t.Run("should return error when invalid user payload is sent", func(t *testing.T) {
 		testData := []struct {
 			User    *v1beta2.User
 			wantErr error

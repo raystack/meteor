@@ -137,7 +137,7 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 	var user assetsv1beta2.User
 	err := data.UnmarshalTo(&user)
 	if err != nil {
-		return &sh.UserRequestBody{}, err
+		return &sh.UserRequestBody{}, errors.Wrap(err, "not a User struct")
 	}
 
 	if user.FullName == "" {
