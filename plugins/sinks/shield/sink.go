@@ -3,7 +3,6 @@ package shield
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -18,7 +17,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -73,13 +71,17 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
+	failedRequestBodyBuildCount := 0
 	for _, record := range batch {
 		asset := record.Data()
 		s.logger.Info("sinking record to shield", "record", asset.GetUrn())
 
 		userRequestBody, err := s.buildUserRequestBody(asset)
 		if err != nil {
-			return errors.Wrap(err, "failed to build shield payload")
+			s.logger.Error(errors.Wrap(err, "failed to build shield payload").Error(), "record", asset.Name)
+
+			failedRequestBodyBuildCount++
+			continue
 		}
 
 		if err = s.send(ctx, userRequestBody); err != nil {
@@ -87,6 +89,10 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		}
 
 		s.logger.Info("successfully sinked record to shield", "record", asset.Name)
+	}
+
+	if failedRequestBodyBuildCount > 0 {
+		return errors.New(fmt.Sprintf("failed to sink %d record(s) to shield", failedRequestBodyBuildCount))
 	}
 
 	return nil
@@ -150,22 +156,10 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 		return &sh.UserRequestBody{}, errors.New("empty user attributes")
 	}
 
-	metadataBytes, err := json.Marshal(user.Attributes)
-	if err != nil {
-		return &sh.UserRequestBody{}, err
-	}
-
-	m := new(structpb.Struct)
-
-	err = json.Unmarshal(metadataBytes, m)
-	if err != nil {
-		return &sh.UserRequestBody{}, err
-	}
-
 	requestBody := &sh.UserRequestBody{
 		Name:     user.FullName,
 		Email:    user.Email,
-		Metadata: m,
+		Metadata: user.Attributes,
 	}
 
 	return requestBody, nil

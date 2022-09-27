@@ -107,7 +107,7 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should return error when payload is not User type", func(t *testing.T) {
-		wantErr := errors.Wrap(errors.New("not a User struct: proto: mismatched message type: got \"odpf.assets.v1beta2.User\", want \"odpf.assets.v1beta2.Topic\""), "failed to build shield payload")
+		wantErr := errors.New("failed to sink 1 record(s) to shield")
 
 		d, _ := anypb.New(&v1beta2.Topic{})
 		data := &v1beta2.Asset{
@@ -142,7 +142,7 @@ func TestSink(t *testing.T) {
 					Email:      "",
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{}),
 				},
-				wantErr: errors.Wrap(errors.New("empty user name"), "failed to build shield payload"),
+				wantErr: errors.New("failed to sink 1 record(s) to shield"),
 			},
 			{
 				User: &v1beta2.User{
@@ -150,14 +150,14 @@ func TestSink(t *testing.T) {
 					Email:      "",
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{}),
 				},
-				wantErr: errors.Wrap(errors.New("empty user email"), "failed to build shield payload"),
+				wantErr: errors.New("failed to sink 1 record(s) to shield"),
 			},
 			{
 				User: &v1beta2.User{
 					FullName: "John Doe",
 					Email:    "john.doe@odpf.com",
 				},
-				wantErr: errors.Wrap(errors.New("empty user attributes"), "failed to build shield payload"),
+				wantErr: errors.New("failed to sink 1 record(s) to shield"),
 			},
 		}
 
