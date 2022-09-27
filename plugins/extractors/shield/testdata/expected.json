@@ -1,6 +1,5 @@
 [
   {
-      "create_time": "1970-01-01T00:40:00Z",
       "data": {
           "@type": "type.googleapis.com/odpf.assets.v1beta2.User",
           "email": "user1@gojek.com",
@@ -14,17 +13,17 @@
               }
           ],
           "status": "active",
-          "username": "user-A"
+          "username": "user-A",
+          "create_time": "1970-01-01T00:40:00Z",
+          "update_time": "1970-01-01T00:35:00Z"
       },
       "description": "sample description for user-A",
       "name": "fullname-A",
       "service": "shield",
       "type": "user",
-      "update_time": "1970-01-01T00:35:00Z",
       "urn": "urn:shield:test-shield:user:user-A"
   },
   {
-      "create_time": "1970-01-01T00:20:00Z",
       "data": {
           "@type": "type.googleapis.com/odpf.assets.v1beta2.User",
           "email": "user2@gojek.com",
@@ -38,13 +37,14 @@
               }
           ],
           "status": "active",
-          "username": "user-B"
+          "username": "user-B",
+          "create_time": "1970-01-01T00:20:00Z",
+          "update_time": "1970-01-01T00:15:00Z"
       },
       "description": "sample description for user-B",
       "name": "fullname-B",
       "service": "shield",
       "type": "user",
-      "update_time": "1970-01-01T00:15:00Z",
       "urn": "urn:shield:test-shield:user:user-B"
   }
 ]

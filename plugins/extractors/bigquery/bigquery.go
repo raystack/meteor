@@ -220,6 +220,8 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 			"type":                string(md.Type),
 			"partition_field":     partitionField,
 		}),
+		CreateTime: timestamppb.New(md.CreationTime),
+		UpdateTime: timestamppb.New(md.LastModifiedTime),
 	})
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)
@@ -233,8 +235,6 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		Service:     "bigquery",
 		Data:        table,
 		Labels:      md.Labels,
-		CreateTime:  timestamppb.New(md.CreationTime),
-		UpdateTime:  timestamppb.New(md.LastModifiedTime),
 	}, nil
 }
 

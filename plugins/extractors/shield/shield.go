@@ -94,6 +94,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 					Role:     []string{role.Role.GetName()},
 				},
 			},
+			CreateTime: user.GetCreatedAt(),
+			UpdateTime: user.GetUpdatedAt(),
 		})
 		if err != nil {
 			err = fmt.Errorf("error creating Any struct: %w", err)
@@ -106,8 +108,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			Type:        "user",
 			Description: user.GetSlug(),
 			Data:        data,
-			CreateTime:  user.GetCreatedAt(),
-			UpdateTime:  user.GetUpdatedAt(),
 		}))
 	}
 
