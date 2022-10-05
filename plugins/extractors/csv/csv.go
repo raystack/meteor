@@ -6,7 +6,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -143,7 +142,7 @@ func (e *Extractor) buildFilePaths(filePath string) (files []string, err error) 
 	}
 
 	if fileInfo.IsDir() {
-		fileInfos, err := ioutil.ReadDir(filePath)
+		fileInfos, err := os.ReadDir(filePath)
 		if err != nil {
 			return files, err
 		}

@@ -1,0 +1,92 @@
+{
+  "entities": [
+    {
+      "spec": {
+        "name": "merchant_uuid",
+        "value_type": "STRING",
+        "description": "merchant uuid"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:51Z",
+        "last_updated_timestamp": "2022-08-08T03:17:51Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "booking_hour",
+        "value_type": "STRING",
+        "description": "Booking creation hour"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:51Z",
+        "last_updated_timestamp": "2022-08-08T03:17:51Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "day_of_week",
+        "value_type": "STRING",
+        "description": "Booking Day of Week"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:51Z",
+        "last_updated_timestamp": "2022-08-08T03:17:51Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "meal_id",
+        "value_type": "STRING",
+        "description": "Mealtime Identifier"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:51Z",
+        "last_updated_timestamp": "2022-08-08T03:17:51Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "t3_distance_bucket",
+        "value_type": "STRING",
+        "description": "T3 Distance Bucket"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:51Z",
+        "last_updated_timestamp": "2022-08-08T03:17:51Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "destination_s2id_12",
+        "value_type": "STRING",
+        "description": "Destination s2id_12"
+      },
+      "meta": {
+        "created_timestamp": "2022-09-02T08:28:33Z",
+        "last_updated_timestamp": "2022-09-02T08:28:33Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "service_area_id",
+        "value_type": "STRING",
+        "description": "the id of gofood service area"
+      },
+      "meta": {
+        "created_timestamp": "2022-09-14T03:10:45Z",
+        "last_updated_timestamp": "2022-09-14T03:10:45Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "item_uuid",
+        "value_type": "STRING",
+        "description": "item uuid"
+      },
+      "meta": {
+        "created_timestamp": "2022-09-17T15:14:13Z",
+        "last_updated_timestamp": "2022-09-17T15:14:13Z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "tables": [
+    {
+      "spec": {
+        "name": "merchant_uuid_t2_discovery",
+        "entities": [
+          "merchant_uuid"
+        ],
+        "features": [
+          {
+            "name": "avg_t2_merchant_3d",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_t2_merchant_1d",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_merchant_price",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_t2_same_hour_merchant_1m",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_t2_merchant_1w",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_gmv_merchant_1w",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_gmv_merchant_1d",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "merch_demand_same_hour_1m",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_t2_merchant_3h",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "t2_discovery",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_gmv_merchant_3h",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_gmv_merchant_1m",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_gmv_same_hour_merchant_1m",
+            "value_type": "DOUBLE"
+          },
+          {
+            "name": "avg_t2_merchant_1m",
+            "value_type": "DOUBLE"
+          }
+        ],
+        "max_age": "7200s",
+        "batch_source": {
+          "type": "BATCH_BIGQUERY",
+          "event_timestamp_column": "event_timestamp",
+          "bigquery_options": {
+            "table_ref": "celestial-dragons-staging:feast.merchant_uuid_t2_discovery"
+          }
+        },
+        "online_store": {
+          "name": "bigtable",
+          "type": "BIGTABLE"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:17:54Z",
+        "last_updated_timestamp": "2022-08-08T03:17:54Z",
+        "hash": "1227ba57"
+      }
+    },
+    {
+      "spec": {
+        "name": "avg_dispatch_arrival_time_10_mins",
+        "entities": [
+          "merchant_uuid"
+        ],
+        "features": [
+          {
+            "name": "ongoing_placed_and_waiting_acceptance_orders",
+            "value_type": "INT64"
+          },
+          {
+            "name": "ongoing_orders",
+            "value_type": "INT64"
+          },
+          {
+            "name": "merchant_avg_dispatch_arrival_time_10m",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "ongoing_accepted_orders",
+            "value_type": "INT64"
+          }
+        ],
+        "max_age": "0s",
+        "batch_source": {
+          "type": "BATCH_FILE",
+          "event_timestamp_column": "null",
+          "file_options": {
+            "file_format": {
+              "parquet_format": {
+
+              }
+            },
+            "file_url": "/dev/null"
+          }
+        },
+        "stream_source": {
+          "type": "STREAM_KAFKA",
+          "field_mapping": {
+            "merchant_uuid": "restaurant_uuid"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "kafka_options": {
+            "bootstrap_servers": "int-dagstream-kafka.yonkou.io:6668",
+            "topic": "GO_FOOD-delay-allocation-merchant-feature-10m-log",
+            "message_format": {
+              "proto_format": {
+                "class_path": "com.bubble.DelayAllocationMerchantFeature10mLogMessage"
+              }
+            }
+          }
+        },
+        "online_store": {
+          "name": "bigtable",
+          "type": "BIGTABLE"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-09-19T22:42:04Z",
+        "last_updated_timestamp": "2022-09-21T13:23:02Z",
+        "revision": "2",
+        "hash": "730855ef"
+      }
+    }
+  ]
+}

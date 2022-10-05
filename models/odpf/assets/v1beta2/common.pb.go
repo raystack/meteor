@@ -93,7 +93,7 @@ func (x *Event) GetDescription() string {
 	return ""
 }
 
-// Linage reprsents the relationship of resource to other resources.
+// Linage represents the relationship of resource to other resources.
 // Relation is way of describing the relationship between two resources.
 type Lineage struct {
 	state         protoimpl.MessageState

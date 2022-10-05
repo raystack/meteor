@@ -1,0 +1,81 @@
+{
+  "entities": [
+    {
+      "spec": {
+        "name": "s2id_13",
+        "value_type": "STRING",
+        "description": "S2 ID Level 13"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "service_type",
+        "value_type": "STRING",
+        "description": "Service type"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "mixed_spatial_id_v1",
+        "value_type": "STRING",
+        "description": "Mixed Spatial Index Version 1"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "s2id_11",
+        "value_type": "STRING",
+        "description": "S2 ID Level 11"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "s2id_12",
+        "value_type": "STRING",
+        "description": "S2 ID Level 12"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "vehicle_type",
+        "value_type": "STRING",
+        "description": "Vehicle type"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    },
+    {
+      "spec": {
+        "name": "merchant_id",
+        "value_type": "STRING",
+        "description": "Unique ID of merchant"
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z"
+      }
+    }
+  ]
+}

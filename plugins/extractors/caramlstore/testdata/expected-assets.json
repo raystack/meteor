@@ -1,0 +1,274 @@
+[
+  {
+    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:merchant_uuid_t2_discovery",
+    "name": "merchant_uuid_t2_discovery",
+    "service": "caramlstore",
+    "type": "ml_feature_table",
+    "data": {
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "namespace": "sauron",
+      "entities": [
+        {
+          "name": "merchant_uuid",
+          "labels": {
+            "description": "merchant uuid",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "features": [
+        {
+          "name": "avg_t2_merchant_3d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_merchant_price",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_same_hour_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1w",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1w",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "merch_demand_same_hour_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_3h",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "t2_discovery",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_3h",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_same_hour_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1m",
+          "data_type": "DOUBLE"
+        }
+      ],
+      "create_time": "2022-08-08T03:17:54Z",
+      "update_time": "2022-08-08T03:17:54Z"
+    },
+    "lineage": {
+      "upstreams": [
+        {
+          "urn": "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
+          "service": "bigquery",
+          "type": "table"
+        }
+      ]
+    }
+  },
+  {
+    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:avg_dispatch_arrival_time_10_mins",
+    "name": "avg_dispatch_arrival_time_10_mins",
+    "service": "caramlstore",
+    "type": "ml_feature_table",
+    "data": {
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "namespace": "sauron",
+      "entities": [
+        {
+          "name": "merchant_uuid",
+          "labels": {
+            "description": "merchant uuid",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "features": [
+        {
+          "name": "ongoing_placed_and_waiting_acceptance_orders",
+          "data_type": "INT64"
+        },
+        {
+          "name": "ongoing_orders",
+          "data_type": "INT64"
+        },
+        {
+          "name": "merchant_avg_dispatch_arrival_time_10m",
+          "data_type": "FLOAT"
+        },
+        {
+          "name": "ongoing_accepted_orders",
+          "data_type": "INT64"
+        }
+      ],
+      "create_time": "2022-09-19T22:42:04Z",
+      "update_time": "2022-09-21T13:23:02Z"
+    },
+    "lineage": {
+      "upstreams": [
+        {
+          "urn": "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
+          "service": "kafka",
+          "type": "topic"
+        }
+      ]
+    }
+  },
+  {
+    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:merchant_uuid_t2_discovery",
+    "name": "merchant_uuid_t2_discovery",
+    "service": "caramlstore",
+    "type": "ml_feature_table",
+    "data": {
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "namespace": "food-tensoba",
+      "entities": [
+        {
+          "name": "merchant_uuid",
+          "labels": {
+            "description": "merchant uuid",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "features": [
+        {
+          "name": "avg_t2_merchant_3d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_merchant_price",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_same_hour_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1w",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1w",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1d",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "merch_demand_same_hour_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_3h",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "t2_discovery",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_3h",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_gmv_same_hour_merchant_1m",
+          "data_type": "DOUBLE"
+        },
+        {
+          "name": "avg_t2_merchant_1m",
+          "data_type": "DOUBLE"
+        }
+      ],
+      "create_time": "2022-08-08T03:17:54Z",
+      "update_time": "2022-08-08T03:17:54Z"
+    },
+    "lineage": {
+      "upstreams": [
+        {
+          "urn": "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
+          "service": "bigquery",
+          "type": "table"
+        }
+      ]
+    }
+  },
+  {
+    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:avg_dispatch_arrival_time_10_mins",
+    "name": "avg_dispatch_arrival_time_10_mins",
+    "service": "caramlstore",
+    "type": "ml_feature_table",
+    "data": {
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "namespace": "food-tensoba",
+      "entities": [
+        {
+          "name": "merchant_uuid",
+          "labels": {
+            "description": "merchant uuid",
+            "value_type": "STRING"
+          }
+        }
+      ],
+      "features": [
+        {
+          "name": "ongoing_placed_and_waiting_acceptance_orders",
+          "data_type": "INT64"
+        },
+        {
+          "name": "ongoing_orders",
+          "data_type": "INT64"
+        },
+        {
+          "name": "merchant_avg_dispatch_arrival_time_10m",
+          "data_type": "FLOAT"
+        },
+        {
+          "name": "ongoing_accepted_orders",
+          "data_type": "INT64"
+        }
+      ],
+      "create_time": "2022-09-19T22:42:04Z",
+      "update_time": "2022-09-21T13:23:02Z"
+    },
+    "lineage": {
+      "upstreams": [
+        {
+          "urn": "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
+          "service": "kafka",
+          "type": "topic"
+        }
+      ]
+    }
+  }
+]

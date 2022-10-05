@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/recipe"
@@ -36,7 +36,7 @@ func GenCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			templatePath := args[0]
 
-			bytes, err := ioutil.ReadFile(dataFilePath)
+			bytes, err := os.ReadFile(dataFilePath)
 			if err != nil {
 				return fmt.Errorf("error reading data: %w", err)
 			}

@@ -1,0 +1,245 @@
+{
+  "tables": [
+    {
+      "spec": {
+        "name": "s2id13_30min_demand",
+        "entities": [
+          "service_type",
+          "s2id_13"
+        ],
+        "features": [
+          {
+            "name": "s2id13_30min_demand",
+            "value_type": "FLOAT"
+          }
+        ],
+        "labels": {
+          "gcThresholdSec": "86400"
+        },
+        "max_age": "600s",
+        "batch_source": {
+          "type": "BATCH_BIGQUERY",
+          "field_mapping": {
+            "s2id13_30min_demand": "metric",
+            "s2id_13": "entity1",
+            "service_type": "entity2"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "created_timestamp_column": "message_timestamp",
+          "bigquery_options": {
+            "table_ref": "bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand"
+          }
+        },
+        "stream_source": {
+          "type": "STREAM_KAFKA",
+          "field_mapping": {
+            "s2id13_30min_demand": "metric",
+            "s2id_13": "entity1",
+            "service_type": "entity2"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "kafka_options": {
+            "bootstrap_servers": "int-dagstream-kafka.yonkou.io:9999",
+            "topic": "staging_feast09_s2id13_30min_demand",
+            "message_format": {
+              "proto_format": {
+                "class_path": "com.bubble.pricing.SauronFeastFeature"
+              }
+            }
+          }
+        },
+        "online_store": {
+          "name": "redis",
+          "type": "REDIS"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:35Z",
+        "last_updated_timestamp": "2022-08-08T03:15:35Z",
+        "hash": "44485ce7"
+      }
+    },
+    {
+      "spec": {
+        "name": "functional_test_supply",
+        "entities": [
+          "vehicle_type",
+          "s2id_13"
+        ],
+        "features": [
+          {
+            "name": "s2id13_20min_supply",
+            "value_type": "FLOAT"
+          }
+        ],
+        "max_age": "0s",
+        "batch_source": {
+          "type": "BATCH_FILE",
+          "event_timestamp_column": "event_timestamp",
+          "created_timestamp_column": "created_timestamp",
+          "file_options": {
+            "file_format": {
+              "parquet_format": {
+
+              }
+            },
+            "file_url": "gs://mlflow-storage-int/sauron/test/test/resources/feast_supply_i.parquet"
+          }
+        },
+        "online_store": {
+          "name": "redis",
+          "type": "REDIS"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:38Z",
+        "last_updated_timestamp": "2022-08-08T03:15:38Z",
+        "hash": "e5444670"
+      }
+    },
+    {
+      "spec": {
+        "name": "mixedspatialid_v1_15min_demand_forecast_3es",
+        "entities": [
+          "mixed_spatial_id_v1",
+          "service_type"
+        ],
+        "features": [
+          {
+            "name": "sum_15min_demand_density_forecast_15min",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "sum_15min_demand_forecast_30min",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "sum_15min_demand_density_forecast_30min",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "sum_15min_demand_forecast_0min",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "sum_15min_demand_density_forecast_0min",
+            "value_type": "FLOAT"
+          },
+          {
+            "name": "sum_15min_demand_forecast_15min",
+            "value_type": "FLOAT"
+          }
+        ],
+        "labels": {
+          "gcThresholdSec": "86400"
+        },
+        "max_age": "600s",
+        "batch_source": {
+          "type": "BATCH_BIGQUERY",
+          "field_mapping": {
+            "mixed_spatial_id_v1": "mixed_spatial_id_v1",
+            "service_type": "service_type",
+            "sum_15min_demand_density_forecast_0min": "sum_15min_value_density_forecast_0min",
+            "sum_15min_demand_density_forecast_15min": "sum_15min_value_density_forecast_15min",
+            "sum_15min_demand_density_forecast_30min": "sum_15min_value_density_forecast_30min",
+            "sum_15min_demand_forecast_0min": "sum_15min_value_forecast_0min",
+            "sum_15min_demand_forecast_15min": "sum_15min_value_forecast_15min",
+            "sum_15min_demand_forecast_30min": "sum_15min_value_forecast_30min"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "created_timestamp_column": "message_timestamp",
+          "bigquery_options": {
+            "table_ref": "bq-raw-internal:mainstream.feast09_mixed_granularity_demand_forecast_3es"
+          }
+        },
+        "stream_source": {
+          "type": "STREAM_KAFKA",
+          "field_mapping": {
+            "mixed_spatial_id_v1": "mixed_spatial_id_v1",
+            "service_type": "service_type",
+            "sum_15min_demand_density_forecast_0min": "sum_15min_value_density_forecast_0min",
+            "sum_15min_demand_density_forecast_15min": "sum_15min_value_density_forecast_15min",
+            "sum_15min_demand_density_forecast_30min": "sum_15min_value_density_forecast_30min",
+            "sum_15min_demand_forecast_0min": "sum_15min_value_forecast_0min",
+            "sum_15min_demand_forecast_15min": "sum_15min_value_forecast_15min",
+            "sum_15min_demand_forecast_30min": "sum_15min_value_forecast_30min"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "kafka_options": {
+            "bootstrap_servers": "celestial-dragons-prodstream.yonkou.io:9999",
+            "topic": "staging_feast09_mixed_granularity_demand_forecast_3es",
+            "message_format": {
+              "proto_format": {
+                "class_path": "com.bubble.feast.forecast.ForecastMessage"
+              }
+            }
+          }
+        },
+        "online_store": {
+          "name": "redis",
+          "type": "REDIS"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:38Z",
+        "last_updated_timestamp": "2022-08-08T03:15:38Z",
+        "hash": "9bfcf656"
+      }
+    },
+    {
+      "spec": {
+        "name": "functional_test_s2id13_supply_sg_car",
+        "entities": [
+          "vehicle_type",
+          "s2id_13"
+        ],
+        "features": [
+          {
+            "name": "functional_test_s2id13_supply_sg_car",
+            "value_type": "FLOAT"
+          }
+        ],
+        "max_age": "7200s",
+        "batch_source": {
+          "type": "BATCH_FILE",
+          "event_timestamp_column": "null",
+          "file_options": {
+            "file_format": {
+              "parquet_format": {
+
+              }
+            },
+            "file_url": "/dev/null"
+          }
+        },
+        "stream_source": {
+          "type": "STREAM_KAFKA",
+          "field_mapping": {
+            "functional_test_s2id13_supply_sg_car": "metric",
+            "s2id_13": "entity1",
+            "vehicle_type": "entity2"
+          },
+          "event_timestamp_column": "event_timestamp",
+          "kafka_options": {
+            "bootstrap_servers": "celestial-dragons-prodstream.yonkou.io:9999",
+            "topic": "functional_test_s2id13_supply_sg_car",
+            "message_format": {
+              "proto_format": {
+                "class_path": "com.bubble.pricing.SauronFeastFeature"
+              }
+            }
+          }
+        },
+        "online_store": {
+          "name": "redis",
+          "type": "REDIS"
+        }
+      },
+      "meta": {
+        "created_timestamp": "2022-08-08T03:15:39Z",
+        "last_updated_timestamp": "2022-08-08T03:15:39Z",
+        "hash": "48e771e6"
+      }
+    }
+  ]
+}
