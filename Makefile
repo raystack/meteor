@@ -1,7 +1,7 @@
 NAME="github.com/odpf/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
-PROTON_COMMIT := "7557d095f1535143684fdb13a2ba536d4723f560"
+PROTON_COMMIT := "a3dd74d3f400f43719a647e61d56d0e2e3bc906f"
 .PHONY: all build clean test
 
 all: build
@@ -39,3 +39,7 @@ generate-proto: ## regenerate protos
 
 lint: ## Lint with golangci-lint
 	golangci-lint run
+
+install: ## install required dependencies
+	@echo "> installing dependencies"
+	go install github.com/vektra/mockery/v2@v2.14.0

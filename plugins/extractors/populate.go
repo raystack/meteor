@@ -3,6 +3,7 @@ package extractors
 import (
 	_ "github.com/odpf/meteor/plugins/extractors/bigquery"
 	_ "github.com/odpf/meteor/plugins/extractors/bigtable"
+	_ "github.com/odpf/meteor/plugins/extractors/caramlstore"
 	_ "github.com/odpf/meteor/plugins/extractors/cassandra"
 	_ "github.com/odpf/meteor/plugins/extractors/clickhouse"
 	_ "github.com/odpf/meteor/plugins/extractors/couchdb"

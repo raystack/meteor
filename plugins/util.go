@@ -30,8 +30,18 @@ func init() {
 func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	defaults.SetDefaults(c)
 
-	if err = mapstructure.Decode(configMap, c); err != nil {
-		return err
+	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(), mapstructure.StringToSliceHookFunc(","),
+		),
+		WeaklyTypedInput: true,
+		Result:           c,
+	})
+	if err != nil {
+		return fmt.Errorf("create new mapstructure decoder: %w", err)
+	}
+	if err = dec.Decode(configMap); err != nil {
+		return fmt.Errorf("decode with mapstructure: %w", err)
 	}
 	if err = validate.Struct(c); err == nil {
 		return nil

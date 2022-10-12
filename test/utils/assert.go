@@ -12,6 +12,8 @@ import (
 )
 
 func AssertAssetsWithJSON(t *testing.T, expected, actuals []*v1beta2.Asset) {
+	t.Helper()
+
 	expectedBytes := buildJSONFromAssets(t, expected)
 	actualBytes := buildJSONFromAssets(t, actuals)
 
@@ -19,6 +21,8 @@ func AssertAssetsWithJSON(t *testing.T, expected, actuals []*v1beta2.Asset) {
 }
 
 func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actuals []*v1beta2.Asset) {
+	t.Helper()
+
 	expectedBytes, err := os.ReadFile(expectedFilePath)
 	require.NoError(t, err)
 
@@ -28,6 +32,8 @@ func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actuals []*
 }
 
 func assertJSON(t *testing.T, expected []byte, actual []byte) {
+	t.Helper()
+
 	options := jsondiff.DefaultConsoleOptions()
 	diff, report := jsondiff.Compare(expected, actual, &options)
 	if diff != jsondiff.FullMatch {
