@@ -15,6 +15,7 @@ name: main-kafka-production # unique recipe name as an ID
 version: v1beta1 #recipe version
 source: # required - for fetching input from sources
  name: kafka # required - collector to use (e.g. bigquery, kafka)
+ scope: local-kafka # required - URN's namespace 
  config:
    broker: "localhost:9092"
 sinks: # required - at least 1 sink defined
@@ -34,13 +35,13 @@ processors: # optional - metadata processors
 
 Contains details about the ingredients of our recipe. The `config` of each source, sinks and processors differs as different data sources require different kinds of credentials, please refer more about them in further reference section.
 
-| Key | Description | Requirement | further reference |
-| :--- | :--- | :--- | :--- |
-| `name` | **unique** recipe name, will be used as ID for job | required | N/A |
-| `version` | Specify the version of recipe being used | required | N/A |
-| `source` | contains details about the source of metadata extraction | required | [source](source.md) |
-| `sinks` | defines the final destination of extracted and processed metadata | required | [sink](sink.md) |
-| `processors` | used process the metadata before sinking | optional | [processor](processor.md) |
+| Key          | Description                                                       | Requirement | further reference         |
+|:-------------|:------------------------------------------------------------------|:------------|:--------------------------|
+| `name`       | **unique** recipe name, will be used as ID for job                | required    | N/A                       |
+| `version`    | Specify the version of recipe being used                          | required    | N/A                       |
+| `source`     | contains details about the source of metadata extraction          | required    | [source](source.md)       |
+| `sinks`      | defines the final destination of extracted and processed metadata | required    | [sink](sink.md)           |
+| `processors` | used process the metadata before sinking                          | optional    | [processor](processor.md) |
 
 ## Dynamic recipe value
 
