@@ -12,12 +12,9 @@ sinks: # required - at least 1 sink defined
       url: "https://example.com/metadata"
   - name: kafka
     config:
-      broker: localhost:9092
+      brokers: localhost:9092
       topic: "target-topic"
-      serializer:
-        type: proto
-        key: SampleLogKey
-        value: SampleLogMessage
+      key_path:
 ```
 
 | key | Description | requirement |

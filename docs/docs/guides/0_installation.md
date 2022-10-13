@@ -17,9 +17,9 @@ $ meteor list extractors
 
 ## Binary from releases
 
-The binaries are downloadable at the releases tab.
+The binaries are downloadable from the [Github releases][github-releases] page.
 There is currently no installer available.
-You have to add the meteor binary to the PATH environment variable yourself or put the binary in a location that is already in your $PATH (e.g. /usr/local/bin, ...).
+You have to add the meteor binary to the `PATH` environment variable yourself or put the binary in a location that is already in your `$PATH` (e.g. /usr/local/bin, ...).
 
 Once installed, you should be able to run:
 
@@ -52,3 +52,5 @@ $ make build
 
 $ ./meteor --help
 ```
+
+[github-releases]: https://github.com/odpf/meteor/releases

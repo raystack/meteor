@@ -6,61 +6,88 @@ Meteor currently supports metadata extraction on these data sources. To perform 
 
 ### Table
 
-| Type                                                             | Attributes | Profile | Schema | Lineage | Ownership | Custom |
-|:-----------------------------------------------------------------|:-----------|:--------|:-------|:--------|:----------|:-------|
-| [`clickhouse`](../../../plugins/extractors/clickhouse/README.md) | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`couchdb`](../../../plugins/extractors/couchdb/README.md)       | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`mongodb`](../../../plugins/extractors/mongodb/README.md)       | ✅          | ✅       | ✗      | ✗       | ✗         | ✗      |
-| [`mssql`](../../../plugins/extractors/mssql/README.md)           | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`mysql`](../../../plugins/extractors/mysql/README.md)           | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`postgres`](../../../plugins/extractors/postgres/README.md)     | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`cassandra`](../../../plugins/extractors/cassandra/README.md)   | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`oracle`](../../../plugins/extractors/oracle/README.md)         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`mariadb`](../../../plugins/extractors/mariadb/README.md)       | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`redshift`](../../../plugins/extractors/redshift/README.md)     | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`presto`](../../../plugins/extractors/presto/README.md)         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
-| [`snowflake`](../../../plugins/extractors/snowflake/README.md)   | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| Type                              | Attributes | Profile | Schema | Lineage | Ownership | Custom |
+|:----------------------------------|:-----------|:--------|:-------|:--------|:----------|:-------|
+| [`clickhouse`][clickhouse-readme] | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`couchdb`][couchdb-readme]       | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`mongodb`][mongodb-readme]       | ✅          | ✅       | ✗      | ✗       | ✗         | ✗      |
+| [`mssql`][mssql-readme]           | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`mysql`][mysql-readme]           | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`postgres`][postgres-readme]     | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`cassandra`][cassandra-readme]   | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`oracle`][oracle-readme]         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`mariadb`][mariadb-readme]       | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`redshift`][redshift-readme]     | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`presto`][presto-readme]         | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
+| [`snowflake`][snowflake-readme]   | ✅          | ✅       | ✅      | ✗       | ✗         | ✗      |
 
 ### Dashboard
 
-| Type                                                         | Url | Chart | Lineage | Tags | Custom |
-|:-------------------------------------------------------------|:----|:------|:--------|:-----|:-------|
-| [`grafana`](../../../plugins/extractors/grafana/README.md)   | ✅   | ✅     | ✗       | ✗    | ✗      |
-| [`metabase`](../../../plugins/extractors/metabase/README.md) | ✅   | ✅     | ✗       | ✗    | ✗      |
-| [`superset`](../../../plugins/extractors/superset/README.md) | ✅   | ✅     | ✅       | ✗    | ✗      |
-| [`tableau`](../../../plugins/extractors/tableau/README.md)   | ✅   | ✅     | ✅       | ✗    | ✗      |
-| [`redash`](../../../plugins/extractors/redash/README.md)     | ✅   | ✗     | ✗       | ✗    | ✗      |
+| Type                          | Url | Chart | Lineage | Tags | Custom |
+|:------------------------------|:----|:------|:--------|:-----|:-------|
+| [`grafana`][grafana-readme]   | ✅   | ✅     | ✗       | ✗    | ✗      |
+| [`metabase`][metabase-readme] | ✅   | ✅     | ✗       | ✗    | ✗      |
+| [`superset`][superset-readme] | ✅   | ✅     | ✅       | ✗    | ✗      |
+| [`tableau`][tableau-readme]   | ✅   | ✅     | ✅       | ✗    | ✗      |
+| [`redash`][redash-readme]     | ✅   | ✗     | ✗       | ✗    | ✗      |
 
 
 ### Topic
 
-| Type                                                   | Profile | Schema | Ownership | Lineage | Tags | Custom |
-|:-------------------------------------------------------|:--------|:-------|:----------|:--------|:-----|:-------|
-| [`kafka`](../../../plugins/extractors/kafka/README.md) | ✗       | ✗      | ✗         | ✗       | ✗    | ✗      |
+| Type                    | Profile | Schema | Ownership | Lineage | Tags | Custom |
+|:------------------------|:--------|:-------|:----------|:--------|:-----|:-------|
+| [`kafka`][kafka-readme] | ✗       | ✗      | ✗         | ✗       | ✗    | ✗      |
 
 ### User
 
-| Type                                                     | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
-|:---------------------------------------------------------|:------|:---------|:---------|:------|:---------|:-------------|:---------|:------------|:-------|:-------|
-| [`github`](../../../plugins/extractors/github/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ☐           | ☐      | ☐      |
-| [`shield`](../../../plugins/extractors/shield/README.md) | ✅     | ✅        | ✅        | ☐     | ✅        | ☐            | ☐        | ✅           | ✅      | ☐      |
-| [`gsuite`](../../../plugins/extractors/gsuite/README.md) | ✅     | ☐        | ✅        | ☐     | ✅        | ✅            | ☐        | ☐           | ☐      | ☐      |
+| Type                      | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
+|:--------------------------|:------|:---------|:---------|:------|:---------|:-------------|:---------|:------------|:-------|:-------|
+| [`github`][github-readme] | ✅     | ✅        | ✅        | ✗     | ✅        | ✗            | ✗        | ✗           | ✗      | ✗      |
+| [`shield`][shield-readme] | ✅     | ✅        | ✅        | ✗     | ✅        | ✗            | ✗        | ✅           | ✅      | ✗      |
+| [`gsuite`][gsuite-readme] | ✅     | ✗        | ✅        | ✗     | ✅        | ✅            | ✗        | ✗           | ✗      | ✗      |
 
 ### Bucket
 
-| type                                               | Location | StorageType | Blobs | Ownership | Tags | Custom | Timestamps |
-|:---------------------------------------------------|:---------|:------------|:------|:----------|:-----|:-------|:-----------|
-| [`gcs`](../../../plugins/extractors/gcs/README.md) | ✅        | ✅           | ✗     | ✅         | ✅    | ✗      | ✅          |
+| Type                | Location | StorageType | Blobs | Ownership | Tags | Custom | Timestamps |
+|:--------------------|:---------|:------------|:------|:----------|:-----|:-------|:-----------|
+| [`gcs`][gcs-readme] | ✅        | ✅           | ✗     | ✅         | ✅    | ✗      | ✅          |
 
 ### Job
 
-| Type                                                       | Ownership | Upstreams | Downstreams | Custom |
-|:-----------------------------------------------------------|:----------|:----------|:------------|:-------|
-| [`optimus`](../../../plugins/extractors/optimus/README.md) | ✅         | ✅         | ✅           | ✅      | ✅ |
+| Type                        | Ownership | Upstreams | Downstreams | Custom |
+|:----------------------------|:----------|:----------|:------------|:-------|
+| [`optimus`][optimus-readme] | ✅         | ✅         | ✅           | ✅      | ✅ |
 
 ### Machine Learning Feature Table
 
-| Type                                                               | Ownership | Upstreams | Downstreams | Custom |
-|:-------------------------------------------------------------------|:----------|:----------|:------------|:-------|
-| [`caramlstore`](../../../plugins/extractors/caramlstore/README.md) | ✗         | ✅         | ✗           | ✅      |
+| Type                                | Ownership | Upstreams | Downstreams | Custom |
+|:------------------------------------|:----------|:----------|:------------|:-------|
+| [`caramlstore`][caramlstore-readme] | ✗         | ✅         | ✗           | ✅      |
 
+
+<!--- Not using relative links because that breaks the docs build -->
+
+[clickhouse-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/clickhouse/README.md
+[couchdb-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/couchdb/README.md
+[mongodb-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/mongodb/README.md
+[mssql-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/mssql/README.md
+[mysql-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/mysql/README.md
+[postgres-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/postgres/README.md
+[cassandra-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/cassandra/README.md
+[oracle-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/oracle/README.md
+[mariadb-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/mariadb/README.md
+[redshift-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/redshift/README.md
+[presto-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/presto/README.md
+[snowflake-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/snowflake/README.md
+[grafana-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/grafana/README.md
+[metabase-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/metabase/README.md
+[superset-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/superset/README.md
+[tableau-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/tableau/README.md
+[redash-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/redash/README.md
+[kafka-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/kafka/README.md
+[github-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/github/README.md
+[shield-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/shield/README.md
+[gsuite-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/gsuite/README.md
+[gcs-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/gcs/README.md
+[optimus-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/optimus/README.md
+[caramlstore-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/caramlstore/README.md
