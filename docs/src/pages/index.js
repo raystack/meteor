@@ -180,7 +180,7 @@ export default function Home() {
                     title: 'Processors',
                     content: (
                       <div>
-                        Meteor has in-built processors inlcuding enrichment and others.
+                        Meteor has in-built processors including enrichment and others.
                         It is easy to add your own processors as well using custom plugins.
                       </div>
                     ),
