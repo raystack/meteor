@@ -16,7 +16,7 @@ import (
 
 const (
 	service = "caramlstore"
-	typ     = "ml_feature_table"
+	typ     = "feature_table"
 )
 
 type featureTableBuilder struct {
@@ -43,7 +43,7 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 		return fail("entities", err)
 	}
 
-	featureTable, err := anypb.New(&v1beta2.MLFeatureTable{
+	featureTable, err := anypb.New(&v1beta2.FeatureTable{
 		Namespace:  b.project,
 		Entities:   entities,
 		Features:   b.buildFeatures(ft),
@@ -79,8 +79,8 @@ func (b featureTableBuilder) buildLineage(ft *core.FeatureTable) (
 	return upstreams, nil, nil
 }
 
-func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.MLFeatureTable_Entity, error) {
-	entities := make([]*v1beta2.MLFeatureTable_Entity, 0, len(ft.Spec.Entities))
+func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.FeatureTable_Entity, error) {
+	entities := make([]*v1beta2.FeatureTable_Entity, 0, len(ft.Spec.Entities))
 	for _, e := range ft.Spec.Entities {
 		entity, ok := b.entities[e]
 		if !ok {
@@ -95,7 +95,7 @@ func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.ML
 			labels[k] = v
 		}
 
-		entities = append(entities, &v1beta2.MLFeatureTable_Entity{
+		entities = append(entities, &v1beta2.FeatureTable_Entity{
 			Name:   entity.Spec.Name,
 			Labels: labels,
 		})
@@ -104,10 +104,10 @@ func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.ML
 	return entities, nil
 }
 
-func (b featureTableBuilder) buildFeatures(ft *core.FeatureTable) []*v1beta2.MLFeature {
-	features := make([]*v1beta2.MLFeature, 0, len(ft.Spec.Features))
+func (b featureTableBuilder) buildFeatures(ft *core.FeatureTable) []*v1beta2.Feature {
+	features := make([]*v1beta2.Feature, 0, len(ft.Spec.Features))
 	for _, f := range ft.Spec.Features {
-		features = append(features, &v1beta2.MLFeature{
+		features = append(features, &v1beta2.Feature{
 			Name:     f.Name,
 			DataType: f.ValueType.String(),
 		})

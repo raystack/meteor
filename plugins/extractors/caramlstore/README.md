@@ -28,20 +28,20 @@ source:
 ## Outputs
 
 The feature tables are mapped to an [`Asset`][proton-asset] with model specific
-metadata stored using [`MLFeatureTable`][proton-mlfeaturetable]. Please refer 
+metadata stored using [`FeatureTable`][proton-featuretable]. Please refer 
 the proto definitions for more information.
 
-| Field              | Value                                                           | Sample Value                                                                 |
-|:-------------------|:----------------------------------------------------------------|:-----------------------------------------------------------------------------|
-| `resource.urn`     | `urn:caramlstore:{scope}:ml-feature-table:{feature_table_name}` | `urn:caramlstore:caramlstore-stg:ml_feature_table:merchant_uuid_t2_discovery` |
-| `resource.name`    | `{feature_table.name}`                                          | `merchant_uuid_t2_discovery`                                                 |
-| `resource.service` | `caramlstore`                                                   | `caramlstore`                                                                |
-| `resource.type`    | `ml_feature_table`                                              | `ml_feature_table`                                                           |
-| `namespace`        | `{feature_table.project}`                                       | `my_project`                                                                 |
-| `entities`         | [`[]Entity`](#entity)                                           |                                                                              |
-| `features`         | [`[]Feature`](#feature)                                         |                                                                              |
-| `create_time`      | `{feature_table.created_timestamp}`                             | `2022-08-08T03:17:54Z`                                                       |
-| `update_time`      | `{feature_table.updated_timestamp}`                             | `2022-08-08T03:57:54Z`                                                       |
+| Field              | Value                                                           | Sample Value                                                               |
+|:-------------------|:----------------------------------------------------------------|:---------------------------------------------------------------------------|
+| `resource.urn`     | `urn:caramlstore:{scope}:ml-feature-table:{feature_table_name}` | `urn:caramlstore:caramlstore-stg:feature_table:merchant_uuid_t2_discovery` |
+| `resource.name`    | `{feature_table.name}`                                          | `merchant_uuid_t2_discovery`                                               |
+| `resource.service` | `caramlstore`                                                   | `caramlstore`                                                              |
+| `resource.type`    | `feature_table`                                                 | `feature_table`                                                            |
+| `namespace`        | `{feature_table.project}`                                       | `my_project`                                                               |
+| `entities`         | [`[]Entity`](#entity)                                           |                                                                            |
+| `features`         | [`[]Feature`](#feature)                                         |                                                                            |
+| `create_time`      | `{feature_table.created_timestamp}`                             | `2022-08-08T03:17:54Z`                                                     |
+| `update_time`      | `{feature_table.updated_timestamp}`                             | `2022-08-08T03:57:54Z`                                                     |
 
 ### Entity
 
@@ -64,5 +64,5 @@ for information on contributing to this module.
 
 [caraml-store]: https://github.com/caraml-dev/caraml-store
 [coreservice.proto]: https://github.com/caraml-dev/caraml-store/blob/v0.1.1/caraml-store-protobuf/src/main/proto/feast/core/CoreService.proto#L12
-[proton-asset]: https://github.com/odpf/proton/blob/ff960a3/odpf/assets/v1beta2/asset.proto#L14
-[proton-mlfeaturetable]: https://github.com/odpf/proton/blob/ff960a3/odpf/assets/v1beta2/ml_feature.proto#L32
+[proton-asset]: https://github.com/odpf/proton/blob/0acbe8a/odpf/assets/v1beta2/asset.proto#L14
+[proton-featuretable]: https://github.com/odpf/proton/blob/0acbe8a/odpf/assets/v1beta2/feature_table.proto#L32

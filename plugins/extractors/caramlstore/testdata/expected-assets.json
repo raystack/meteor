@@ -1,11 +1,11 @@
 [
   {
-    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:merchant_uuid_t2_discovery",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:merchant_uuid_t2_discovery",
     "name": "merchant_uuid_t2_discovery",
     "service": "caramlstore",
-    "type": "ml_feature_table",
+    "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
       "namespace": "sauron",
       "entities": [
         {
@@ -88,12 +88,12 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:avg_dispatch_arrival_time_10_mins",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
     "name": "avg_dispatch_arrival_time_10_mins",
     "service": "caramlstore",
-    "type": "ml_feature_table",
+    "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
       "namespace": "sauron",
       "entities": [
         {
@@ -136,12 +136,12 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:merchant_uuid_t2_discovery",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:merchant_uuid_t2_discovery",
     "name": "merchant_uuid_t2_discovery",
     "service": "caramlstore",
-    "type": "ml_feature_table",
+    "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
       "namespace": "food-tensoba",
       "entities": [
         {
@@ -224,12 +224,12 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:ml_feature_table:avg_dispatch_arrival_time_10_mins",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
     "name": "avg_dispatch_arrival_time_10_mins",
     "service": "caramlstore",
-    "type": "ml_feature_table",
+    "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.MLFeatureTable",
+      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
       "namespace": "food-tensoba",
       "entities": [
         {

@@ -22,19 +22,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Job is a resource that represents a job.
+// Asset is a resource that represents any type of asset.
 type Asset struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The unique identifier of the asset/resource.
+	// The unique identifier of the asset.
 	// Example: `user:jdoe` or `group:accounting`.
 	Urn string `protobuf:"bytes,1,opt,name=urn,proto3" json:"urn,omitempty"`
-	// The name of the resource.
+	// The name of the asset.
 	// Example: `John Doe` or `Accounting`.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// The source of the resource.
+	// The source of the asset.
 	// Example: `github` or `bigquery`.
 	Service string `protobuf:"bytes,3,opt,name=service,proto3" json:"service,omitempty"`
 	// The type of the asset.
@@ -49,7 +49,7 @@ type Asset struct {
 	// Represents Data in asset, can be of type bucket, dashboard, group ... user
 	Data *anypb.Any `protobuf:"bytes,7,opt,name=data,proto3" json:"data,omitempty"`
 	// The ownership of the job.
-	// For an example check out ownership.
+	// For an example check out Owner.
 	Owners []*Owner `protobuf:"bytes,31,rep,name=owners,proto3" json:"owners,omitempty"`
 	// The lineage of the job.
 	// For an example check out lineage schema.
