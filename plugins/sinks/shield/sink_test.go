@@ -20,7 +20,7 @@ import (
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	shield "github.com/odpf/meteor/plugins/sinks/shield"
-	sh "github.com/odpf/shield/proto/v1beta1"
+	shieldProto "github.com/odpf/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
@@ -91,7 +91,7 @@ func TestSink(t *testing.T) {
 
 		client := new(mockClient)
 		client.On("Connect", ctx, "shield:80").Return(nil)
-		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&sh.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
+		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&shieldProto.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
 		shieldSink := shield.New(client, testUtils.Logger)
 		err = shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": validConfig["host"],
@@ -202,7 +202,7 @@ func TestSink(t *testing.T) {
 
 		client := new(mockClient)
 		client.On("Connect", ctx, "shield:80").Return(nil)
-		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&sh.UpdateUserResponse{}, nil)
+		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&shieldProto.UpdateUserResponse{}, nil)
 
 		shieldSink := shield.New(client, testUtils.Logger)
 		err := shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
@@ -219,7 +219,7 @@ func TestSink(t *testing.T) {
 }
 
 type mockClient struct {
-	sh.ShieldServiceClient
+	shieldProto.ShieldServiceClient
 	mock.Mock
 }
 
@@ -235,8 +235,8 @@ func (c *mockClient) Close() error {
 	return args.Error(0)
 }
 
-func (c *mockClient) UpdateUser(ctx context.Context, in *sh.UpdateUserRequest, opts ...grpc.CallOption) (*sh.UpdateUserResponse, error) {
+func (c *mockClient) UpdateUser(ctx context.Context, in *shieldProto.UpdateUserRequest, opts ...grpc.CallOption) (*shieldProto.UpdateUserResponse, error) {
 	args := c.Called(ctx, in, opts)
 
-	return args.Get(0).(*sh.UpdateUserResponse), args.Error(1)
+	return args.Get(0).(*shieldProto.UpdateUserResponse), args.Error(1)
 }
