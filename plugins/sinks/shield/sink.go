@@ -71,16 +71,14 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
-	failedRequestBodyBuildCount := 0
 	for _, record := range batch {
 		asset := record.Data()
 		s.logger.Info("sinking record to shield", "record", asset.GetUrn())
 
 		userRequestBody, err := s.buildUserRequestBody(asset)
 		if err != nil {
-			s.logger.Error(errors.Wrap(err, "failed to build shield payload").Error(), "record", asset.Name)
+			s.logger.Error("failed to build shield payload", "err", err, "record", asset.Name)
 
-			failedRequestBodyBuildCount++
 			continue
 		}
 
@@ -89,10 +87,6 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		}
 
 		s.logger.Info("successfully sinked record to shield", "record", asset.Name)
-	}
-
-	if failedRequestBodyBuildCount > 0 {
-		return errors.New(fmt.Sprintf("failed to sink %d record(s) to shield", failedRequestBodyBuildCount))
 	}
 
 	return nil
