@@ -58,6 +58,20 @@ func TestInit(t *testing.T) {
 }
 
 func TestSink(t *testing.T) {
+	t.Run("should return error if shield host returns error", func(t *testing.T) {
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, "shield:80").Return(errors.New("failed to create connection"))
+		shieldSink := shield.New(client, testUtils.Logger)
+
+		err := shieldSink.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: map[string]interface{}{
+			"host": "shield:80",
+		}})
+		require.Error(t, err)
+		assert.EqualError(t, err, "error connecting to host: failed to create connection")
+	})
+
 	t.Run("should return RetryError if shield returns certain status code", func(t *testing.T) {
 
 		user, err := anypb.New(&v1beta2.User{
