@@ -78,7 +78,6 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		userRequestBody, err := s.buildUserRequestBody(asset)
 		if err != nil {
 			s.logger.Error("failed to build shield payload", "err", err, "record", asset.Name)
-
 			continue
 		}
 
