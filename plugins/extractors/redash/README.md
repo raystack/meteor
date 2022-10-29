@@ -34,4 +34,4 @@ Currently, no Redash public API is exposed to fetch charts detail in a particula
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

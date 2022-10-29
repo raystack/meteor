@@ -1,7 +1,7 @@
 NAME="github.com/odpf/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
-PROTON_COMMIT := "0acbe8af97af5565155f332b1c837ce5e9fb6956"
+PROTON_COMMIT := "2d2177aa02ee885bae094af283ff79a1d800791a"
 .PHONY: all build clean test
 
 all: build

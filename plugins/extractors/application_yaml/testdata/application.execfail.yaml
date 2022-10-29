@@ -1,0 +1,13 @@
+name: "{{ .project_name }}" # CI_PROJECT_NAME
+id: "ca29d0e2-b857-4ce5-8b93-36217473847d"
+team:
+  id: "123"
+  name: "myteam"
+  email: "myteam@company.com"
+description: "My incredible project"
+url: "{{ .project_url }}" # CI_PROJECT_URL
+version: "{{ .commit_short_sha }}" # CI_COMMIT_SHORT_SHA
+create_time: "2006-01-02T15:04:05Z"
+update_time: "2006-01-02T15:04:05Z" # CI_JOB_STARTED_AT / CI_COMMIT_TIMESTAMP?
+labels:
+  x: "y"

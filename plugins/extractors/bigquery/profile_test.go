@@ -8,12 +8,12 @@ import (
 
 	"github.com/alecthomas/assert"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
-	"github.com/odpf/meteor/plugins/extractors/bigquery/util"
 )
 
 func TestBuildTableProfile(t *testing.T) {
-	tableURN := util.TableURN("project1", "dataset1", "table1")
+	tableURN := plugins.BigQueryURN("project1", "dataset1", "table1")
 	t.Run("table profile usage related fields are empty if usage collection is disabled", func(t *testing.T) {
 
 		var tableStats *auditlog.TableStats
@@ -45,19 +45,19 @@ func TestBuildTableProfile(t *testing.T) {
 	t.Run("table profile usage related fields are populated if table stats is not nil and usage collection is enabled", func(t *testing.T) {
 		tableStats := &auditlog.TableStats{
 			TableUsage: map[string]int64{
-				util.TableURN("project1", "dataset1", "table1"): 5,
-				util.TableURN("project2", "dataset1", "table1"): 3,
-				util.TableURN("project3", "dataset1", "table1"): 1,
+				plugins.BigQueryURN("project1", "dataset1", "table1"): 5,
+				plugins.BigQueryURN("project2", "dataset1", "table1"): 3,
+				plugins.BigQueryURN("project3", "dataset1", "table1"): 1,
 			},
 			JoinDetail: map[string]map[string]auditlog.JoinDetail{
-				util.TableURN("project1", "dataset1", "table1"): {
-					util.TableURN("project2", "dataset1", "table1"): auditlog.JoinDetail{
+				plugins.BigQueryURN("project1", "dataset1", "table1"): {
+					plugins.BigQueryURN("project2", "dataset1", "table1"): auditlog.JoinDetail{
 						Usage: 1,
 					},
-					util.TableURN("project3", "dataset1", "table1"): auditlog.JoinDetail{
+					plugins.BigQueryURN("project3", "dataset1", "table1"): auditlog.JoinDetail{
 						Usage: 3,
 					},
-					util.TableURN("project4", "dataset1", "table1"): auditlog.JoinDetail{
+					plugins.BigQueryURN("project4", "dataset1", "table1"): auditlog.JoinDetail{
 						Usage: 1,
 					},
 				},
@@ -74,15 +74,15 @@ func TestBuildTableProfile(t *testing.T) {
 
 		assert.EqualValues(t, 5, tp.UsageCount)
 		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   util.TableURN("project2", "dataset1", "table1"),
+			Urn:   plugins.BigQueryURN("project2", "dataset1", "table1"),
 			Count: 1,
 		})
 		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   util.TableURN("project3", "dataset1", "table1"),
+			Urn:   plugins.BigQueryURN("project3", "dataset1", "table1"),
 			Count: 3,
 		})
 		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   util.TableURN("project4", "dataset1", "table1"),
+			Urn:   plugins.BigQueryURN("project4", "dataset1", "table1"),
 			Count: 1,
 		})
 	})

@@ -14,7 +14,6 @@ import (
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
-	"github.com/odpf/meteor/plugins/extractors/bigquery/util"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
 	"github.com/odpf/salt/log"
@@ -212,7 +211,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	}
 
 	tableFQN := t.FullyQualifiedName()
-	tableURN := util.TableURN(t.ProjectID, t.DatasetID, t.TableID)
+	tableURN := plugins.BigQueryURN(t.ProjectID, t.DatasetID, t.TableID)
 
 	tableProfile := e.buildTableProfile(tableURN, tableStats)
 
