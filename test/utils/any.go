@@ -9,6 +9,8 @@ import (
 )
 
 func BuildAny(t *testing.T, protoMessage protoreflect.ProtoMessage) *anypb.Any {
+	t.Helper()
+
 	res, err := anypb.New(protoMessage)
 	require.NoError(t, err)
 

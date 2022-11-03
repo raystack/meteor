@@ -16,6 +16,7 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
 	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/d5/tengo/v2 v2.13.0
 	github.com/denisenkom/go-mssqldb v0.10.0
 	github.com/dnaeon/go-vcr/v2 v2.0.1
 	github.com/elastic/go-elasticsearch v0.0.0
@@ -31,7 +32,9 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
+	github.com/google/go-cmp v0.5.8
 	github.com/google/go-github/v37 v37.0.0
+	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/lib/pq v1.10.4
@@ -50,6 +53,7 @@ require (
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c
 	github.com/schollz/progressbar/v3 v3.8.5
 	github.com/segmentio/kafka-go v0.4.17
+	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sijms/go-ora/v2 v2.2.22
 	github.com/snowflakedb/gosnowflake v1.6.7
 	github.com/spf13/cast v1.5.0 // indirect
@@ -73,9 +77,4 @@ require (
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-)
-
-require (
-	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
-	github.com/sergi/go-diff v1.1.0 // indirect
 )
