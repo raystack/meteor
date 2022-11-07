@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -573,7 +573,7 @@ func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
 		Request:       req,
 		Header:        make(http.Header),
 		ContentLength: int64(len(m.ResponseJSON)),
-		Body:          ioutil.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
+		Body:          io.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
 	}
 
 	return
@@ -597,7 +597,7 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 	var bodyBytes = []byte("")
 	if m.req.Body != nil {
 		var err error
-		bodyBytes, err = ioutil.ReadAll(m.req.Body)
+		bodyBytes, err = io.ReadAll(m.req.Body)
 		if err != nil {
 			t.Error(err)
 		}

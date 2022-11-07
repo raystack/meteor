@@ -6,8 +6,8 @@ package tableau
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
@@ -105,7 +105,7 @@ func TestGetWorkbooksByProjectName(t *testing.T) {
 }
 
 func testDataGetWorkbooksByProjectName(t *testing.T) (wbs []*Workbook, err error) {
-	byteString, err := ioutil.ReadFile("testdata/workbooks_by_project_response.json")
+	byteString, err := os.ReadFile("testdata/workbooks_by_project_response.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func testDataGetWorkbooksByProjectName(t *testing.T) (wbs []*Workbook, err error
 }
 
 func testDataGetAllProjects(t *testing.T) (ps []*Project, err error) {
-	byteString, err := ioutil.ReadFile("testdata/projects_response.json")
+	byteString, err := os.ReadFile("testdata/projects_response.json")
 	if err != nil {
 		t.Fatal(err)
 	}

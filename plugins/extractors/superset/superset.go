@@ -6,7 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -167,7 +167,7 @@ func (e *Extractor) getChartsList(id int) (charts []*v1beta2.Chart, err error) {
 	return tempCharts, nil
 }
 
-//getAccessToken authenticate and get a JWT access token
+// getAccessToken authenticate and get a JWT access token
 func (e *Extractor) getAccessToken() (accessToken string, err error) {
 	payload := map[string]interface{}{
 		"username": e.config.Username,
@@ -220,7 +220,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return errors.Wrapf(err, "response failed with status code: %d", res.StatusCode)
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return errors.Wrap(err, "failed to read response body")
 	}

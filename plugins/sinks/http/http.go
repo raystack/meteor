@@ -6,7 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -114,7 +114,7 @@ func (s *Sink) send(payloadBytes []byte) (err error) {
 	}
 
 	var bodyBytes []byte
-	bodyBytes, err = ioutil.ReadAll(res.Body)
+	bodyBytes, err = io.ReadAll(res.Body)
 	if err != nil {
 		return
 	}

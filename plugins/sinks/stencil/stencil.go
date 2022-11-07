@@ -6,7 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -173,7 +173,7 @@ func (s *Sink) send(tableURN string, record interface{}) (err error) {
 	}
 
 	var bodyBytes []byte
-	bodyBytes, err = ioutil.ReadAll(res.Body)
+	bodyBytes, err = io.ReadAll(res.Body)
 	if err != nil {
 		return
 	}

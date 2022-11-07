@@ -6,7 +6,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -160,7 +160,7 @@ func (e *Extractor) makeRequest(method, url string, payload interface{}, data in
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return fmt.Errorf("response failed with status code %d: %w", res.StatusCode, err)
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}

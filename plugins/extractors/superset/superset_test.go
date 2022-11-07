@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -253,7 +252,7 @@ func makeRequest(method, url string, payload interface{}, data interface{}) (err
 		bodyString := string(bodyBytes)
 		return fmt.Errorf("response failed with status code: %d and body: %s", res.StatusCode, bodyString)
 	}
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
 	}

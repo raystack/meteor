@@ -2,7 +2,6 @@ package recipe_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -17,7 +16,7 @@ func TestFromTemplate(t *testing.T) {
 	t.Run("should throw error for invalid template path", func(t *testing.T) {
 		templatePath := "./testdata/template.yaml"
 		outputDir := "./test/temp"
-		bytes, err := ioutil.ReadFile("./testdata/generator/data-3.yaml")
+		bytes, err := os.ReadFile("./testdata/generator/data-3.yaml")
 		if err != nil {
 			fmt.Println(fmt.Errorf("error reading data: %w", err))
 			return
@@ -42,7 +41,7 @@ func TestFromTemplate(t *testing.T) {
 		outputDir := "./testdata/generator/temp"
 
 		t.Run("when recipe has a name", func(t *testing.T) {
-			bytes, err := ioutil.ReadFile("./testdata/generator/data-1-2.yaml")
+			bytes, err := os.ReadFile("./testdata/generator/data-1-2.yaml")
 			if err != nil {
 				fmt.Println(fmt.Errorf("error reading data: %w", err))
 				return
@@ -75,7 +74,7 @@ func TestFromTemplate(t *testing.T) {
 		})
 
 		t.Run("when recipe does not have a name", func(t *testing.T) {
-			bytes, err := ioutil.ReadFile("./testdata/generator/data-3.yaml")
+			bytes, err := os.ReadFile("./testdata/generator/data-3.yaml")
 			if err != nil {
 				fmt.Println(fmt.Errorf("error reading data: %w", err))
 				return
