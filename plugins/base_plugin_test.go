@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package plugins_test
 
 import (
@@ -49,7 +52,8 @@ func TestBasePluginValidate(t *testing.T) {
 
 	t.Run("should return InvalidConfigError if config is invalid", func(t *testing.T) {
 		invalidConfig := struct {
-			FieldA string `validate:"required"`
+			FieldA string `mapstructure:"field_a" validate:"required"`
+			FieldB string `mapstructure:"field_b" validate:"url"`
 		}{}
 
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &invalidConfig)
@@ -58,7 +62,12 @@ func TestBasePluginValidate(t *testing.T) {
 			RawConfig: map[string]interface{}{},
 		})
 
-		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
+		assert.Equal(t, err, plugins.InvalidConfigError{
+			Errors: []plugins.ConfigError{
+				{Key: "field_a", Message: "validation for field 'field_a' failed on the 'required' tag"},
+				{Key: "field_b", Message: "validation for field 'field_b' failed on the 'url' tag"},
+			},
+		})
 	})
 
 	t.Run("should return no error if config is valid", func(t *testing.T) {

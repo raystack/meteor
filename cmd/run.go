@@ -111,7 +111,7 @@ func RunCmd() *cobra.Command {
 				lg.Debug("recipe details", "recipe", run.Recipe)
 				var row []string
 				if run.Error != nil {
-					lg.Error(run.Error.Error(), "recipe")
+					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					failures++
 					row = append(row, cs.FailureIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Name), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
 				} else {
