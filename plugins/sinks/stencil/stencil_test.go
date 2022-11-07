@@ -9,14 +9,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins/sinks/stencil"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/odpf/meteor/plugins"
@@ -621,7 +621,7 @@ func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
 		Request:       req,
 		Header:        make(http.Header),
 		ContentLength: int64(len(m.ResponseJSON)),
-		Body:          ioutil.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
+		Body:          io.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
 	}
 
 	return
@@ -640,7 +640,7 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 	var bodyBytes = []byte("")
 	if m.req.Body != nil {
 		var err error
-		bodyBytes, err = ioutil.ReadAll(m.req.Body)
+		bodyBytes, err = io.ReadAll(m.req.Body)
 		if err != nil {
 			t.Error(err)
 		}

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -243,7 +243,7 @@ func (c *client) makeRequest(method, url string, payload interface{}, data inter
 		return fmt.Errorf("getting %d status code", res.StatusCode)
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	bytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return errors.Wrap(err, "failed to read response body")
 	}
