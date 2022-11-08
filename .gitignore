@@ -32,3 +32,5 @@ meteor-plugin-*
 
 # build
 /dist
+
+.playground

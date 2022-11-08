@@ -28,4 +28,18 @@ processors:
 
 This processor will append Asset's Labels with value from given config.
 
-[More details](https://github.com/odpf/meteor/blob/main/plugins/processors/labels/README.md)
+[More details][labels-readme]
+
+## Script
+
+Script processor uses the user specified script to transform each asset emitted
+from the extractor. Currently, [Tengo][tengo] is the only supported script
+engine.
+
+[More details][script-readme]
+
+[labels-readme]: https://github.com/odpf/meteor/blob/main/plugins/processors/labels/README.md
+
+[script-readme]: https://github.com/odpf/meteor/blob/main/plugins/processors/script/README.md
+
+[tengo]: https://github.com/d5/tengo
