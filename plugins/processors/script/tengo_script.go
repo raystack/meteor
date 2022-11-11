@@ -8,6 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/d5/tengo/v2"
 	"github.com/odpf/meteor/models"
+	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/internal/tengoutil"
 	"github.com/odpf/meteor/plugins/internal/tengoutil/structmap"
@@ -86,8 +87,7 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (models.Record, error) {
-	astWrapper := structmap.AssetWrapper{A: src.Data()}
-	m, err := astWrapper.AsMap()
+	m, err := structmap.AsMap(src.Data())
 	if err != nil {
 		return models.Record{}, fmt.Errorf("script processor: %w", err)
 	}
@@ -101,11 +101,12 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 		return models.Record{}, fmt.Errorf("script processor: run script: %w", err)
 	}
 
-	if err := astWrapper.OverwriteWith(c.Get("asset").Map()); err != nil {
+	var transformed *v1beta2.Asset
+	if err := structmap.AsStruct(c.Get("asset").Map(), &transformed); err != nil {
 		return models.Record{}, fmt.Errorf("script processor: overwrite asset: %w", err)
 	}
 
-	return models.NewRecord(astWrapper.A), nil
+	return models.NewRecord(transformed), nil
 }
 
 func (p *Processor) declareGlobals(s *tengo.Script) error {
