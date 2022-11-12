@@ -55,7 +55,7 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 	}
 
 	return &v1beta2.Asset{
-		Urn:     models.NewURN(service, b.scope, typ, ft.Spec.Name),
+		Urn:     models.NewURN(service, b.scope, typ, b.project+"-"+ft.Spec.Name),
 		Name:    ft.Spec.Name,
 		Service: service,
 		Type:    typ,
