@@ -32,6 +32,7 @@ var summary string
 type Config struct {
 	ProjectID            string   `mapstructure:"project_id" validate:"required"`
 	ServiceAccountJSON   string   `mapstructure:"service_account_json"`
+	MaxPageSize          int      `mapstructure:"max_page_size"`
 	TablePattern         string   `mapstructure:"table_pattern"`
 	IncludeColumnProfile bool     `mapstructure:"include_column_profile"`
 	MaxPreviewRows       int      `mapstructure:"max_preview_rows" default:"30"`
@@ -40,9 +41,14 @@ type Config struct {
 	UsageProjectIDs      []string `mapstructure:"usage_project_ids"`
 }
 
+const (
+	maxPageSizeDefault = 100
+)
+
 var sampleConfig = `
 project_id: google-project-id
 table_pattern: gofood.fact_
+max_page_size: 100
 include_column_profile: true
 service_account_json: |-
   {
@@ -121,6 +127,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
+	it.PageInfo().MaxSize = e.getMaxPageSize()
 	for {
 		ds, err := it.Next()
 		if err == iterator.Done {
@@ -148,6 +155,7 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 // Create big query client
 func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit plugins.Emit) {
 	tb := ds.Tables(ctx)
+	tb.PageInfo().MaxSize = e.getMaxPageSize()
 	for {
 		table, err := tb.Next()
 		if errors.Is(err, iterator.Done) || errors.Is(err, context.Canceled) {
@@ -288,6 +296,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	tempRows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
+	ri.PageInfo().MaxSize = e.getMaxPageSize()
 	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
@@ -349,6 +358,7 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 	}
 
 	it, err := query.Read(ctx)
+	it.PageInfo().MaxSize = e.getMaxPageSize()
 	if err != nil {
 		return nil, err
 	}
@@ -419,6 +429,16 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 	default:
 		return "NULLABLE"
 	}
+}
+
+// getMaxPageSize returns max_page_size if configured in recipe, otherwise returns default value
+func (e *Extractor) getMaxPageSize() int {
+	if e.config.MaxPageSize > 0 {
+		return e.config.MaxPageSize
+	}
+
+	// default max page size
+	return maxPageSizeDefault
 }
 
 // Register the extractor to catalog
