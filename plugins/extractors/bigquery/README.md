@@ -31,26 +31,18 @@ source:
 
 ## Inputs
 
-| Key                      | Value      | Example                                        | Description                                                                                                                  |     |
-|:-------------------------|:-----------|:-----------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------|:----|
-| `project_id`             | `string`   | `my-project`                                   | BigQuery Project ID                                                                                                          | *   |
-| required*                |            |                                                |                                                                                                                              |     |
-| `credentials_json`       | `string`   | `{"private_key": .., "private_id": ...}`       | Service Account in JSON string                                                                                               | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `table_pattern`          | `string`   | `gofood.fact_`                                 | Regex pattern to filter which bigquery table to scan (whitelist)                                                             | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `max_page_size`          | `int`      | `100`                                          | max page size hint used for fetching datasets/tables/rows from bigquery                                                      | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `include_column_profile` | `bool`     | `true`                                         | true if you want to profile the column value such min, max, med, avg, top, and freq                                          | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `max_preview_rows`       | `int`      | `30`                                           | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`.                                        | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `collect_table_usage`    | `boolean`  | `false`                                        | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`.                        | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `usage_period_in_day`    | `int`      | `7`                                            | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
-| `usage_project_ids`      | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID.                                                 | *   |
-| optional*                |            |                                                |                                                                                                                              |     |
+| Key | Value | Example | Description |    |
+| :-- | :---- | :------ | :---------- | :-- |
+| `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
+| `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
+| `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
+| `max_page_size` | `int` | `100` | max page size hint used for fetching datasets/tables/rows from bigquery | *optional* |
+| `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
+| `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
+| `collect_table_usage` | `boolean` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
+| `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
+| `usage_project_ids` | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID. | *optional* |
+
 
 ### *Notes*
 
