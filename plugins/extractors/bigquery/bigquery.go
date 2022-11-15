@@ -3,6 +3,7 @@ package bigquery
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"encoding/base64"
 	"encoding/json"
 	"html/template"
 	"strings"
@@ -30,7 +31,9 @@ var summary string
 
 // Config holds the set of configuration for the bigquery extractor
 type Config struct {
-	ProjectID            string   `mapstructure:"project_id" validate:"required"`
+	ProjectID string `mapstructure:"project_id" validate:"required"`
+	// ServiceAccountBase64 takes precedence over ServiceAccountJSON field
+	ServiceAccountBase64 string   `mapstructure:"service_account_base64"`
 	ServiceAccountJSON   string   `mapstructure:"service_account_json"`
 	MaxPageSize          int      `mapstructure:"max_page_size"`
 	TablePattern         string   `mapstructure:"table_pattern"`
@@ -50,6 +53,9 @@ project_id: google-project-id
 table_pattern: gofood.fact_
 max_page_size: 100
 include_column_profile: true
+# Only one of service_account_base64 / service_account_json is needed. 
+# If both are present, service_account_base64 takes precedence
+service_account_base64: ____base64_encoded_service_account____
 service_account_json: |-
   {
     "type": "service_account",
@@ -144,9 +150,18 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 // Create big query client
 func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) {
-	if e.config.ServiceAccountJSON == "" {
+	if e.config.ServiceAccountBase64 == "" && e.config.ServiceAccountJSON == "" {
 		e.logger.Info("credentials are not specified, creating bigquery client using default credentials...")
 		return bigquery.NewClient(ctx, e.config.ProjectID)
+	}
+
+	if e.config.ServiceAccountBase64 != "" {
+		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+		if err != nil || len(serviceAccountJSON) == 0 {
+			return nil, errors.Wrap(err, "failed to decode base64 service account")
+		}
+		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
+		e.config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
 	return bigquery.NewClient(ctx, e.config.ProjectID, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
