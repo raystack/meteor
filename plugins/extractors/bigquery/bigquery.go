@@ -5,7 +5,6 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -149,8 +148,8 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 
 	if e.config.ServiceAccountBase64 != "" {
 		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
-		if err != nil {
-			e.logger.Fatal(fmt.Sprintf("failed to decode base64 service account, err : %v\n", err))
+		if err != nil || len(serviceAccountJSON) == 0 {
+			return nil, errors.Wrap(err, "failed to decode base64 service account")
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
 		e.config.ServiceAccountJSON = string(serviceAccountJSON)

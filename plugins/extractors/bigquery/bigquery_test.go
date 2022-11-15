@@ -39,4 +39,17 @@ func TestInit(t *testing.T) {
 
 		assert.NotEqual(t, plugins.InvalidConfigError{}, err)
 	})
+	t.Run("should return error if service_account_base64 config is invalid", func(t *testing.T) {
+		extr := bigquery.New(utils.Logger)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		err := extr.Init(ctx, plugins.Config{
+			URNScope: "test-bigquery",
+			RawConfig: map[string]interface{}{
+				"project_id":             "google-project-id",
+				"service_account_base64": "----", // invalid
+			}})
+
+		assert.ErrorContains(t, err, "failed to decode base64 service account")
+	})
 }
