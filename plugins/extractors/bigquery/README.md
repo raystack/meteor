@@ -9,6 +9,7 @@ source:
     project_id: google-project-id
     table_pattern: gofood.fact_
     profile_column: true
+    service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
     service_account_json:
       {
         "type": "service_account",
@@ -33,6 +34,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
+| `service_account_base64` | `string` | `____BASE64_ENCODED_SERVICE_ACCOUNT____` | Service Account in base64 encoded string. Takes precedence over `service_account_json` value | *optional* |
 | `service_account_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
