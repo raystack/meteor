@@ -33,7 +33,7 @@ var summary string
 // Config holds the set of configuration for the bigquery extractor
 type Config struct {
 	ProjectID string `mapstructure:"project_id" validate:"required"`
-	//ServiceAccountBase64 takes precedence over  ServiceAccountJSON field
+	// ServiceAccountBase64 takes precedence over ServiceAccountJSON field
 	ServiceAccountBase64 string   `mapstructure:"service_account_base64"`
 	ServiceAccountJSON   string   `mapstructure:"service_account_json"`
 	TablePattern         string   `mapstructure:"table_pattern"`
