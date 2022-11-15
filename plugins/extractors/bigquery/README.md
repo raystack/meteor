@@ -8,6 +8,7 @@ source:
   config:
     project_id: google-project-id
     table_pattern: gofood.fact_
+    max_page_size: 100
     profile_column: true
     credentials_json:
       {
@@ -24,62 +25,66 @@ source:
     collect_table_usage: false
     usage_period_in_day: 7
     usage_project_ids:
-      - google-project-id 
+      - google-project-id
       - other-google-project-id
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
+| :-- | :---- | :------ | :---------- | :-- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
 | `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
+| `max_page_size` | `int` | `100` | max page size hint used for fetching datasets/tables/rows from bigquery | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 | `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
 | `collect_table_usage` | `boolean` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
 | `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
 | `usage_project_ids` | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID. | *optional* |
 
+
 ### *Notes*
 
-- Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
+- Leaving `credentials_json` blank will default
+  to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is
+  recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
 - Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `project_id.dataset_name.table_name` |
-| `resource.name` | `table_name` |
-| `resource.service` | `bigquery` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `profile.usage_count` | `15` |
-| `profile.joins` | [][Join](#Join)  |
-| `profile.filters` |  [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
-| `schema` | [][Column](#column) |
+| Field                 | Sample Value                                                                                                                                                                                                       |
+|:----------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `resource.urn`        | `project_id.dataset_name.table_name`                                                                                                                                                                               |
+| `resource.name`       | `table_name`                                                                                                                                                                                                       |
+| `resource.service`    | `bigquery`                                                                                                                                                                                                         |
+| `description`         | `table description`                                                                                                                                                                                                |
+| `profile.total_rows`  | `2100`                                                                                                                                                                                                             |
+| `profile.usage_count` | `15`                                                                                                                                                                                                               |
+| `profile.joins`       | [][Join](#Join)                                                                                                                                                                                                    |
+| `profile.filters`     | [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |
+| `schema`              | [][Column](#column)                                                                                                                                                                                                |
 
 ### Column
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
-| `profile` | `{"min":...,"max": ...,"unique": ...}` |
+| Field         | Sample Value                           |
+|:--------------|:---------------------------------------|
+| `name`        | `total_price`                          |
+| `description` | `item's total price`                   |
+| `data_type`   | `decimal`                              |
+| `is_nullable` | `true`                                 |
+| `length`      | `12,2`                                 |
+| `profile`     | `{"min":...,"max": ...,"unique": ...}` |
 
 ### Join
 
-| Field | Sample Value |
-| :---- | :---- |
-| `urn` | `project_id.dataset_name.table_name` |
-| `count` | `3` |
+| Field        | Sample Value                                                                                                                                            |
+|:-------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `urn`        | `project_id.dataset_name.table_name`                                                                                                                    |
+| `count`      | `3`                                                                                                                                                     |
 | `conditions` | [`"ON target.column_1 = source.column_1 and target.param_name = source.param_name"`,`"ON DATE(target.event_timestamp) = DATE(source.event_timestamp)"`] |
-
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on
+contributing to this module.
