@@ -47,6 +47,8 @@ var sampleConfig = `
 project_id: google-project-id
 table_pattern: gofood.fact_
 include_column_profile: true
+# Only one of service_account_base64 / service_account_json is needed. 
+# If both are present, service_account_base64 takes precedence
 service_account_base64: ____base64_encoded_service_account____
 service_account_json: |-
   {
