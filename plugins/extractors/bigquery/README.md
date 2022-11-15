@@ -9,7 +9,7 @@ source:
     project_id: google-project-id
     table_pattern: gofood.fact_
     profile_column: true
-    credentials_json:
+    service_account_json:
       {
         "type": "service_account",
         "private_key_id": "xxxxxxx",
@@ -33,7 +33,7 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `project_id` | `string` | `my-project` | BigQuery Project ID | *required* |
-| `credentials_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
+| `service_account_json` | `string` | `{"private_key": .., "private_id": ...}` | Service Account in JSON string | *optional* |
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
 | `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
