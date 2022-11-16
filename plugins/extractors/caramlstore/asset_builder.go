@@ -3,9 +3,6 @@ package caramlstore
 import (
 	"errors"
 	"fmt"
-	"net"
-	"sort"
-	"strings"
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -127,7 +124,7 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 				return nil, errors.New("build upstream: empty big query data source options")
 			}
 
-			urn, err := mapBQTableURN(opts.TableRef)
+			urn, err := plugins.BigQueryTableFQNToURN(opts.TableRef)
 			if err != nil {
 				return nil, fmt.Errorf("build upstream: table ref: %s: %w", opts.TableRef, err)
 			}
@@ -149,7 +146,7 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 			}
 
 			ups = append(ups, &v1beta2.Resource{
-				Urn:     models.NewURN("kafka", parseKafkaScope(opts.BootstrapServers), "topic", opts.Topic),
+				Urn:     models.NewURN("kafka", plugins.KafkaServersToScope(opts.BootstrapServers), "topic", opts.Topic),
 				Service: "kafka",
 				Type:    "topic",
 			})
@@ -157,42 +154,4 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 	}
 
 	return ups, nil
-}
-
-func mapBQTableURN(tableRef string) (string, error) {
-	projectID, datasetID, tableID, err := parseBQTableFQN(tableRef)
-	if err != nil {
-		return "", fmt.Errorf("map URN: %w", err)
-	}
-
-	return plugins.BigQueryURN(projectID, datasetID, tableID), nil
-}
-
-func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err error) {
-	// fqn is the ID of the table in projectID:datasetID.tableID format.
-	if !strings.ContainsRune(fqn, ':') || strings.IndexRune(fqn, '.') < strings.IndexRune(fqn, ':') {
-		return "", "", "", fmt.Errorf(
-			"unexpected BigQuery table FQN '%s', expected in format projectID:datasetID.tableID", fqn,
-		)
-	}
-	ss := strings.FieldsFunc(fqn, func(r rune) bool {
-		return r == ':' || r == '.'
-	})
-	return ss[0], ss[1], ss[2], nil
-}
-
-func parseKafkaScope(servers string) string {
-	if strings.IndexRune(servers, ',') > 0 {
-		// there are multiple bootstrap servers, just sort and join
-		ss := strings.Split(servers, ",")
-		sort.Strings(ss)
-		return strings.Join(ss, ",")
-	}
-
-	host, _, err := net.SplitHostPort(servers)
-	if err != nil {
-		return servers
-	}
-
-	return host
 }

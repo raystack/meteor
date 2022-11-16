@@ -36,5 +36,5 @@ You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as 
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) for information on
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on
 contributing to this module.

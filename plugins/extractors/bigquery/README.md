@@ -45,7 +45,6 @@ source:
 | `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
 | `usage_project_ids` | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID. | *optional* |
 
-
 ### *Notes*
 
 - Leaving `credentials_json` blank will default
@@ -88,5 +87,5 @@ source:
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on 
 contributing to this module.

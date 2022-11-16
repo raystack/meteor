@@ -27,7 +27,7 @@ func init() {
 //go:embed README.md
 var summary string
 
-// Config holds the set of configuration for the bigquery extractor
+// Config holds the set of configuration for the CaraML Store extractor
 type Config struct {
 	URL            string        `mapstructure:"url" validate:"required"`
 	MaxSizeInMB    int           `mapstructure:"max_size_in_mb"`
@@ -43,7 +43,7 @@ var info = plugins.Info{
 	Tags:         []string{"caraml", "caramlstore", "ml", "feature", "extractor"},
 }
 
-// Extractor manages the communication with the bigquery service
+// Extractor manages the communication with the CaraML Store service
 type Extractor struct {
 	plugins.BaseExtractor
 

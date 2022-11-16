@@ -1,0 +1,9 @@
+name: "{{ .project_name }}"
+id: "test-id"
+team:
+  id: "123"
+  name: "myteam"
+  email: "myteam@company.com"
+description: "My incredible project"
+url: "{{ .project_url }}"
+version: "{{ .commit_short_sha }}"

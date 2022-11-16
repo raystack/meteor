@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	_ "github.com/odpf/meteor/plugins/extractors/application_yaml"
 	_ "github.com/odpf/meteor/plugins/extractors/bigquery"
 	_ "github.com/odpf/meteor/plugins/extractors/bigtable"
 	_ "github.com/odpf/meteor/plugins/extractors/caramlstore"

@@ -1,0 +1,13 @@
+name: ""
+id: ""
+team:
+  id: "123"
+  name: "myteam"
+  email: "myteam@company.com"
+description: "My incredible project"
+url: "notvalidurl"
+version: ""
+create_time: "2006-01-02T15:04:05Z"
+update_time: "2006-01-02T15:04:05Z"
+labels:
+  x: "y"

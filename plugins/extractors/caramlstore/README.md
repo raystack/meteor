@@ -59,10 +59,10 @@ the proto definitions for more information.
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/contribute/guide.md#adding-a-new-extractor) 
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) 
 for information on contributing to this module.
 
 [caraml-store]: https://github.com/caraml-dev/caraml-store
 [coreservice.proto]: https://github.com/caraml-dev/caraml-store/blob/v0.1.1/caraml-store-protobuf/src/main/proto/feast/core/CoreService.proto#L12
-[proton-asset]: https://github.com/odpf/proton/blob/0acbe8a/odpf/assets/v1beta2/asset.proto#L14
-[proton-featuretable]: https://github.com/odpf/proton/blob/0acbe8a/odpf/assets/v1beta2/feature_table.proto#L32
+[proton-asset]: https://github.com/odpf/proton/blob/5350bde/odpf/assets/v1beta2/asset.proto#L14
+[proton-featuretable]: https://github.com/odpf/proton/blob/5350bde/odpf/assets/v1beta2/feature_table.proto#L32

@@ -1,0 +1,18 @@
+name: "test"
+id: "test-id"
+team:
+  id: "123"
+  name: "myteam"
+  email: "myteam@company.com"
+description: "My incredible project"
+url: "http://company.com/myteam/test"
+version: "c23sdf6"
+inputs:
+  - urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand
+  - urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand
+outputs:
+  - urn:kafka:1-my-kafka.company.com,2-my-kafka.company.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es
+create_time: "2006-01-02T15:04:05Z"
+update_time: "2006-01-02T15:04:05Z"
+labels:
+  x: "y"
