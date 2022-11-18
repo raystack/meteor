@@ -33,21 +33,12 @@ description: "string"
 url: "string"
 version: "string"
 inputs: # OPTIONAL
-  - type: "batch" # ONE OF {batch, kafka}
-    platform: "bigquery" # If type is batch then bigquery 
-    options:
-      table_ref: "{project_id}:{dataset_id}.{table_id}" # REQUIRED
-  - type: "stream"
-    platform: "kafka" # If type is stream then kafka
-    options:
-      topic: "estimate-log" # REQUIRED
-      bootstrap_servers: "host:port" # REQUIRED
+  # Format: "urn:{service}:{scope}:{type}:{name}"
+  - urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand
+  - urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand
 outputs: # OPTIONAL
-  - type: "stream"
-    platform: "kafka"
-    options:
-      topic: "string"
-      bootstrap_servers: "host:port"
+  # Format: "urn:{service}:{scope}:{type}:{name}"
+  - urn:kafka:1-my-kafka.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es
 create_time: "2006-01-02T15:04:05Z"
 update_time: "2006-01-02T15:04:05Z"
 labels:
@@ -90,12 +81,8 @@ proto definitions for more information.
 | `ownership.owners[0].urn`       | `{application.team.id}`                                       | `9ebcc2f8-5894-47c6-83a9-160b7eaa3f6b`                                         |
 | `ownership.owners[0].name`      | `{application.team.name}`                                     | `Search`                                                                       |
 | `ownership.owners[0].email`     | `{application.team.email}`                                    | `search@mycompany.com`                                                         |
-| `lineage.upstreams[].urn`       | `urn:{service}:{scope}:{type}:{name}`                         | `urn:kafka:int-kafka.yonkou.io:topic:staging_30min_demand`                     |
-| `lineage.upstreams[].type`      | `{type}`                                                      | `topic`                                                                        |
-| `lineage.upstreams[].service`   | `{service}`                                                   | `kafka`                                                                        |
-| `lineage.downstreams[].urn`     | `urn:{service}:{scope}:{type}:{name}`                         | `urn:bigquery:bq-internal:table:bq-internal:dagstream.production_30min_demand` |
-| `lineage.downstreams[].type`    | `{type}`                                                      | `table`                                                                        |
-| `lineage.downstreams[].service` | `{service}`                                                   | `bigquery`                                                                     |
+| `lineage.upstreams[].urn`       | `{application.inputs[]}`                                      | `urn:kafka:int-kafka.yonkou.io:topic:staging_30min_demand`                     |
+| `lineage.downstreams[].urn`     | `{application.outputs[]}`                                     | `urn:bigquery:bq-internal:table:bq-internal:dagstream.production_30min_demand` |
 | `resource.labels`               | `map[string]string`                                           | `{"team": "Booking Experience"}`                                               |
 
 ## Contributing

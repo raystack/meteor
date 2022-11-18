@@ -31,17 +31,17 @@ The feature tables are mapped to an [`Asset`][proton-asset] with model specific
 metadata stored using [`FeatureTable`][proton-featuretable]. Please refer 
 the proto definitions for more information.
 
-| Field              | Value                                                           | Sample Value                                                               |
-|:-------------------|:----------------------------------------------------------------|:---------------------------------------------------------------------------|
-| `resource.urn`     | `urn:caramlstore:{scope}:ml-feature-table:{feature_table_name}` | `urn:caramlstore:caramlstore-stg:feature_table:merchant_uuid_t2_discovery` |
-| `resource.name`    | `{feature_table.name}`                                          | `merchant_uuid_t2_discovery`                                               |
-| `resource.service` | `caramlstore`                                                   | `caramlstore`                                                              |
-| `resource.type`    | `feature_table`                                                 | `feature_table`                                                            |
-| `namespace`        | `{feature_table.project}`                                       | `my_project`                                                               |
-| `entities`         | [`[]Entity`](#entity)                                           |                                                                            |
-| `features`         | [`[]Feature`](#feature)                                         |                                                                            |
-| `create_time`      | `{feature_table.created_timestamp}`                             | `2022-08-08T03:17:54Z`                                                     |
-| `update_time`      | `{feature_table.updated_timestamp}`                             | `2022-08-08T03:57:54Z`                                                     |
+| Field              | Value                                                                                | Sample Value                                                                         |
+|:-------------------|:-------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------|
+| `resource.urn`     | `urn:caramlstore:{scope}:feature_table:{feature_table.project}.{feature_table.name}` | `urn:caramlstore:caramlstore-stg:feature_table:my_project.merchant_uuid_t2_discovery` |
+| `resource.name`    | `{feature_table.name}`                                                               | `merchant_uuid_t2_discovery`                                                         |
+| `resource.service` | `caramlstore`                                                                        | `caramlstore`                                                                        |
+| `resource.type`    | `feature_table`                                                                      | `feature_table`                                                                      |
+| `namespace`        | `{feature_table.project}`                                                            | `my_project`                                                                         |
+| `entities`         | [`[]Entity`](#entity)                                                                |                                                                                      |
+| `features`         | [`[]Feature`](#feature)                                                              |                                                                                      |
+| `create_time`      | `{feature_table.created_timestamp}`                                                  | `2022-08-08T03:17:54Z`                                                               |
+| `update_time`      | `{feature_table.updated_timestamp}`                                                  | `2022-08-08T03:57:54Z`                                                               |
 
 ### Entity
 
