@@ -3,6 +3,7 @@ package plugins
 import "context"
 
 type BaseExtractor struct {
+	ScopeNotRequired bool
 	BasePlugin
 }
 
@@ -14,7 +15,7 @@ func NewBaseExtractor(info Info, configRef interface{}) BaseExtractor {
 
 // Validate checks if the given options is valid for the plugin.
 func (p *BaseExtractor) Validate(config Config) error {
-	if config.URNScope == "" {
+	if config.URNScope == "" && !p.ScopeNotRequired {
 		return ErrEmptyURNScope
 	}
 

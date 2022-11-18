@@ -69,6 +69,8 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 		logger: logger,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
+	e.ScopeNotRequired = true
+
 	for _, opt := range opts {
 		opt(e)
 	}

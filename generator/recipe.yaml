@@ -3,7 +3,9 @@ version: {{.Version}}
 source:
 {{- with .Source }}
   name: {{.Name}}
+  {{- if .Scope}}
   scope: {{.Scope}}
+  {{- end}}
   config: {{.SampleConfig | rawfmt | indent 4}}
 {{- end }}
 {{- if ne (len .Sinks) 0 }}
