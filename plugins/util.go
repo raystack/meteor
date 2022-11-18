@@ -80,6 +80,10 @@ func BigQueryURN(projectID, datasetID, tableID string) string {
 	return models.NewURN("bigquery", projectID, "table", fqn)
 }
 
+func KafkaURN(bootstrapServers, topic string) string {
+	return models.NewURN("kafka", KafkaServersToScope(bootstrapServers), "topic", topic)
+}
+
 func KafkaServersToScope(servers string) string {
 	if strings.IndexRune(servers, ',') > 0 {
 		// there are multiple bootstrap servers, just strip port, sort and join
@@ -103,6 +107,10 @@ func KafkaServersToScope(servers string) string {
 	}
 
 	return host
+}
+
+func CaraMLStoreURN(scope, project, featureTable string) string {
+	return models.NewURN("caramlstore", scope, "feature_table", project+"."+featureTable)
 }
 
 func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err error) {

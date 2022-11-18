@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -111,7 +110,7 @@ func TestSink(t *testing.T) {
 				}
 				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 				require.Error(t, err)
-				assert.True(t, errors.Is(err, plugins.RetryError{}))
+				assert.ErrorAs(t, err, &plugins.RetryError{})
 			})
 		}
 	})

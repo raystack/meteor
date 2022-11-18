@@ -64,11 +64,17 @@ Meteor currently supports metadata extraction on these data sources. To perform 
 |:------------------------------------|:----------|:----------|:------------|:-------|
 | [`caramlstore`][caramlstore-readme] | ✗         | ✅         | ✗           | ✅      |
 
-### Service
+### Application
 
-| Type                           | Ownership | Upstreams | Downstreams | Custom |
-|:-------------------------------|:----------|:----------|:------------|:-------|
-| [`service_yaml`][service-yaml] | ✅         | ✅         | ✅           | ✅      | ✅ |
+| Type                                          | Ownership | Upstreams | Downstreams | Custom |
+|:----------------------------------------------|:----------|:----------|:------------|:-------|
+| [`application_yaml`][application-yaml-readme] | ✅         | ✅         | ✅           | ✅      | ✅ |
+
+### Machine Learning Model
+
+| Type                      | Ownership | Upstreams | Downstreams | Custom |
+|:--------------------------|:----------|:----------|:------------|:-------|
+| [`merlin`][merlin-readme] | ✅         | ✅         | ✗           | ✅      | ✅ |
 
 <!--- Not using relative links because that breaks the docs build -->
 
@@ -96,4 +102,5 @@ Meteor currently supports metadata extraction on these data sources. To perform 
 [gcs-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/gcs/README.md
 [optimus-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/optimus/README.md
 [caramlstore-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/caramlstore/README.md
-[service-yaml]: https://github.com/odpf/meteor/tree/main/plugins/extractors/service_yaml/README.md
+[application-yaml-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/application_yaml/README.md
+[merlin-readme]: https://github.com/odpf/meteor/tree/main/plugins/extractors/merlin/README.md

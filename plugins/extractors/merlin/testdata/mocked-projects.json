@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "one-piece",
+    "mlflow_tracking_url": "http://mlflow.company.com",
+    "administrators": [
+      "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com",
+      "gol.d.roger@onepiece.com"
+    ],
+    "readers": null,
+    "team": "pirates",
+    "stream": "roger",
+    "labels": null,
+    "created_at": "2019-11-19T11:05:11.41501Z",
+    "updated_at": "2022-06-23T09:31:25.834714Z"
+  },
+  {
+    "id": 100,
+    "name": "strongest-man",
+    "mlflow_tracking_url": "http://mlflow.company.com",
+    "administrators": ["edward.newgate@onepiece.com"],
+    "readers": ["ace.d.portgas@onepiece.com"],
+    "team": "pirates",
+    "stream": "whitebeard",
+    "labels": null,
+    "created_at": "2021-09-20T05:20:53.540571Z",
+    "updated_at": "2021-09-20T05:20:53.540571Z"
+  },
+  {
+    "id": 200,
+    "name": "kurohige",
+    "mlflow_tracking_url": "http://mlflow.company.com",
+    "administrators": [
+      "teach.d.marshall@onepiece.com",
+      "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com"
+    ],
+    "readers": ["jesus.burgess@gojek.com"],
+    "team": "pirates",
+    "stream": "blackbeard",
+    "labels": null,
+    "created_at": "2021-10-29T02:12:43.142433Z",
+    "updated_at": "2022-05-08T17:56:32.924721Z"
+  }
+]

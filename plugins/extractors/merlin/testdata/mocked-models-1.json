@@ -1,0 +1,138 @@
+[
+  {
+    "id": 12,
+    "project_id": 1,
+    "mlflow_experiment_id": 12,
+    "name": "model.bst",
+    "type": "xgboost",
+    "mlflow_url": "http://mlflow.company.com/#/experiments/12",
+    "endpoints": [],
+    "created_at": "2020-01-10T08:18:46.887143Z",
+    "updated_at": "2020-01-10T08:18:46.887143Z"
+  },
+  {
+    "id": 80,
+    "project_id": 1,
+    "mlflow_experiment_id": 83,
+    "name": "resource-request",
+    "type": "sklearn",
+    "mlflow_url": "http://mlflow.company.com/#/experiments/83",
+    "endpoints": [
+      {
+        "id": 450,
+        "status": "terminated",
+        "url": "resource-request.sample.models.company.com",
+        "rule": {
+          "destinations": [
+            {
+              "version_endpoint_id": "01fee5b9-1fd9-4664-8c2d-52073af405f8",
+              "version_endpoint": {
+                "id": "01fee5b9-1fd9-4664-8c2d-52073af405f8",
+                "version_id": 2,
+                "status": "running",
+                "url": "http://resource-request-2.sample.models.company.com/v1/models/resource-request-2",
+                "service_name": "resource-request-2-predictor-default.sample.models.company.com",
+                "environment_name": "staging",
+                "monitoring_url": "",
+                "message": "",
+                "env_vars": null,
+                "transformer": {
+                  "enabled": false,
+                  "transformer_type": "custom",
+                  "image": "",
+                  "command": "",
+                  "args": "",
+                  "env_vars": [],
+                  "created_at": "2022-05-30T07:52:32.790496Z",
+                  "updated_at": "2022-05-30T07:52:51.047734Z"
+                },
+                "deployment_mode": "",
+                "created_at": "2022-05-30T07:43:21.252389Z",
+                "updated_at": "2022-05-30T07:52:51.046666Z"
+              },
+              "weight": 100
+            }
+          ]
+        },
+        "environment_name": "staging",
+        "created_at": "2022-05-30T07:54:04.137016Z",
+        "updated_at": "2022-06-14T07:12:09.538048Z"
+      }
+    ],
+    "created_at": "2020-04-23T10:07:40.105711Z",
+    "updated_at": "2022-06-14T07:12:09.536419Z"
+  },
+  {
+    "id": 689,
+    "project_id": 1,
+    "mlflow_experiment_id": 692,
+    "name": "pyfunc-standard-transfo",
+    "type": "pyfunc",
+    "mlflow_url": "http://mlflow.company.com/#/experiments/692",
+    "endpoints": [
+      {
+        "id": 174,
+        "status": "terminated",
+        "url": "pyfunc-standard-transfo.sample.models.company.com",
+        "rule": {
+          "destinations": [
+            {
+              "version_endpoint_id": "81dbbb50-8cea-48cf-85c9-2ccdfcb91d24",
+              "version_endpoint": {
+                "id": "81dbbb50-8cea-48cf-85c9-2ccdfcb91d24",
+                "version_id": 7,
+                "status": "running",
+                "url": "http://pyfunc-standard-transfo-7.sample.models.company.com/v1/models/pyfunc-standard-transfo-7",
+                "service_name": "pyfunc-standard-transfo-7-predictor-default.sample.models.company.com",
+                "environment_name": "staging",
+                "monitoring_url": "",
+                "message": "",
+                "env_vars": [
+                  {"name": "MODEL_NAME", "value": "pyfunc-standard-transfo-7"},
+                  {
+                    "name": "MODEL_DIR",
+                    "value": "gs://mlp/mlflow/692/061ew38v3b7kp088s9b49kzr68v5ixvm3/artifacts/model"
+                  },
+                  {"name": "WORKERS", "value": "1"}
+                ],
+                "transformer": {
+                  "enabled": true,
+                  "transformer_type": "standard",
+                  "image": "asia.gcr.io/company-staging/merlin-transformer:v0.10.0-rc2",
+                  "command": "",
+                  "args": "",
+                  "env_vars": [
+                    {"name": "LOG_LEVEL", "value": "DEBUG"},
+                    {
+                      "name": "STANDARD_TRANSFORMER_CONFIG",
+                      "value": "{\"transformerConfig\":{\"feast\":[{\"project\":\"default\",\"entities\":[{\"name\":\"merchant_id\",\"valueType\":\"STRING\",\"jsonPath\":\"$.merchants[*].id\"}],\"features\":[{\"name\":\"merchant_t1_discovery:t1_estimate\",\"valueType\":\"DOUBLE\",\"defaultValue\":\"0\"}]}]}}"
+                    },
+                    {
+                      "name": "FEAST_FEATURE_STATUS_MONITORING_ENABLED",
+                      "value": "true"
+                    },
+                    {
+                      "name": "FEAST_FEATURE_VALUE_MONITORING_ENABLED",
+                      "value": "true"
+                    }
+                  ],
+                  "created_at": "2021-02-05T05:26:42.759879Z",
+                  "updated_at": "2021-02-05T05:40:20.092802Z"
+                },
+                "deployment_mode": "",
+                "created_at": "2021-02-05T05:26:42.768235Z",
+                "updated_at": "2021-02-05T05:40:20.091784Z"
+              },
+              "weight": 100
+            }
+          ]
+        },
+        "environment_name": "staging",
+        "created_at": "2021-02-05T08:33:26.204561Z",
+        "updated_at": "2021-07-22T08:13:34.64483Z"
+      }
+    ],
+    "created_at": "2021-02-04T13:05:31.593956Z",
+    "updated_at": "2021-07-22T08:13:34.642949Z"
+  }
+]

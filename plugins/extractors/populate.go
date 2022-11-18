@@ -16,6 +16,7 @@ import (
 	_ "github.com/odpf/meteor/plugins/extractors/gsuite"
 	_ "github.com/odpf/meteor/plugins/extractors/kafka"
 	_ "github.com/odpf/meteor/plugins/extractors/mariadb"
+	_ "github.com/odpf/meteor/plugins/extractors/merlin"
 	_ "github.com/odpf/meteor/plugins/extractors/metabase"
 	_ "github.com/odpf/meteor/plugins/extractors/mongodb"
 	_ "github.com/odpf/meteor/plugins/extractors/mssql"

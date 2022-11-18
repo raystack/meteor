@@ -1,6 +1,6 @@
 [
   {
-    "urn": "urn:caramlstore:test-caramlstore:feature_table:sauron-merchant_uuid_t2_discovery",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:sauron.merchant_uuid_t2_discovery",
     "name": "merchant_uuid_t2_discovery",
     "service": "caramlstore",
     "type": "feature_table",
@@ -88,7 +88,7 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:feature_table:sauron-avg_dispatch_arrival_time_10_mins",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:sauron.avg_dispatch_arrival_time_10_mins",
     "name": "avg_dispatch_arrival_time_10_mins",
     "service": "caramlstore",
     "type": "feature_table",
@@ -136,7 +136,7 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:feature_table:food-tensoba-merchant_uuid_t2_discovery",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:food-tensoba.merchant_uuid_t2_discovery",
     "name": "merchant_uuid_t2_discovery",
     "service": "caramlstore",
     "type": "feature_table",
@@ -224,7 +224,7 @@
     }
   },
   {
-    "urn": "urn:caramlstore:test-caramlstore:feature_table:food-tensoba-avg_dispatch_arrival_time_10_mins",
+    "urn": "urn:caramlstore:test-caramlstore:feature_table:food-tensoba.avg_dispatch_arrival_time_10_mins",
     "name": "avg_dispatch_arrival_time_10_mins",
     "service": "caramlstore",
     "type": "feature_table",

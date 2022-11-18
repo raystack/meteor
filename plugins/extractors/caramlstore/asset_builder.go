@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/extractors/caramlstore/internal/core"
@@ -52,7 +51,7 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 	}
 
 	return &v1beta2.Asset{
-		Urn:     models.NewURN(service, b.scope, typ, b.project+"-"+ft.Spec.Name),
+		Urn:     plugins.CaraMLStoreURN(b.scope, b.project, ft.Spec.Name),
 		Name:    ft.Spec.Name,
 		Service: service,
 		Type:    typ,
@@ -146,7 +145,7 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 			}
 
 			ups = append(ups, &v1beta2.Resource{
-				Urn:     models.NewURN("kafka", plugins.KafkaServersToScope(opts.BootstrapServers), "topic", opts.Topic),
+				Urn:     plugins.KafkaURN(opts.BootstrapServers, opts.Topic),
 				Service: "kafka",
 				Type:    "topic",
 			})

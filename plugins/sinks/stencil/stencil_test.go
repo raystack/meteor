@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -107,7 +106,7 @@ func TestSink(t *testing.T) {
 					Data: table,
 				}
 				err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(asset)})
-				assert.True(t, errors.Is(err, plugins.RetryError{}))
+				assert.ErrorAs(t, err, &plugins.RetryError{})
 			})
 		}
 	})

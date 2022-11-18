@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -170,8 +171,10 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	// while stream is listening via stream.Listen().
 	go func() {
 		defer func() {
-			if r := recover(); r != nil {
-				run.Error = fmt.Errorf("agent run: close stream: panic: %s", r)
+			if rcvr := recover(); rcvr != nil {
+				r.logger.Error("panic recovered")
+				r.logger.Info(string(debug.Stack()))
+				run.Error = fmt.Errorf("agent run: close stream: panic: %s", rcvr)
 			}
 			stream.Close()
 		}()
@@ -280,8 +283,8 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return err
 	}, defaultBatchSize)
 
-	//TODO: the sink closes even though some records remain unpublished
-	//TODO: once fixed, file sink's Close needs to close *File
+	// TODO: the sink closes even though some records remain unpublished
+	// TODO: once fixed, file sink's Close needs to close *File
 	stream.onClose(func() {
 		if err = sink.Close(); err != nil {
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)
