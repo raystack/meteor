@@ -335,7 +335,8 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	tempRows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
-	ri.PageInfo().MaxSize = e.getMaxPageSize()
+	// fetch only the required amount of rows
+	ri.PageInfo().MaxSize = e.config.MaxPreviewRows
 	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
