@@ -8,6 +8,12 @@ source:
   config:
     project_id: google-project-id
     table_pattern: gofood.fact_
+    exclude:
+      datasets:
+        - dataset_a
+        - dataset_b
+      tables:
+        - dataset_c.table_a
     max_page_size: 100
     profile_column: true
     service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
