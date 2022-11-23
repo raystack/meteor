@@ -3,11 +3,10 @@ package plugins
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
-var (
-	ErrEmptyURNScope = errors.New("urn scope is required to generate unique urn")
-)
+var ErrEmptyURNScope = errors.New("urn scope is required to generate unique urn")
 
 // ConfigError contains fields to check error
 type ConfigError struct {
@@ -23,7 +22,20 @@ type InvalidConfigError struct {
 }
 
 func (err InvalidConfigError) Error() string {
-	return fmt.Sprintf("invalid %s config", err.Type)
+	ss := make([]string, 0, len(err.Errors))
+	for _, e := range err.Errors {
+		ss = append(ss, e.Message)
+	}
+
+	var details string
+	if len(ss) != 0 {
+		details = ":\n\t * " + strings.Join(ss, "\n\t * ")
+	}
+
+	if err.Type == "" {
+		return "invalid config" + details
+	}
+	return fmt.Sprintf("invalid %s config", err.Type) + details
 }
 
 func (err InvalidConfigError) HasError() bool {

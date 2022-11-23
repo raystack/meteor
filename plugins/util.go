@@ -53,10 +53,9 @@ func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	if errors.As(err, &validationErr) {
 		var configErrors []ConfigError
 		for _, fieldErr := range validationErr {
-			key := strings.TrimPrefix(fieldErr.Namespace(), "Config.")
 			configErrors = append(configErrors, ConfigError{
-				Key:     key,
-				Message: fieldErr.Error(),
+				Key:     fieldErr.Field(),
+				Message: fmt.Sprintf("validation for field '%s' failed on the '%s' tag", fieldErr.Field(), fieldErr.Tag()),
 			})
 		}
 		return InvalidConfigError{
