@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -27,6 +28,42 @@ func AssertEqualProto(t *testing.T, expected, actual proto.Message) {
 			expected, actual, diff,
 		)
 		assert.Fail(t, msg)
+	}
+}
+
+func AssertEqualProtos(t *testing.T, expected, actual interface{}) {
+	t.Helper()
+
+	defer func() {
+		if r := recover(); r != nil {
+			assert.Fail(t, "assert equal protos: panic recovered", r)
+		}
+	}()
+
+	if reflect.TypeOf(expected).Kind() != reflect.TypeOf(actual).Kind() {
+		msg := fmt.Sprintf(
+			"Mismatched kinds:\n"+
+				"expected: %s\n"+
+				"actual: %s\n",
+			reflect.TypeOf(expected).Kind(), reflect.TypeOf(actual).Kind(),
+		)
+		assert.Fail(t, msg)
+		return
+	}
+
+	if !assert.Len(t, actual, reflect.ValueOf(expected).Len()) {
+		return
+	}
+
+	ev := reflect.ValueOf(expected)
+	av := reflect.ValueOf(actual)
+	switch reflect.TypeOf(expected).Kind() {
+	case reflect.Slice:
+		for i := 0; i < ev.Len(); i++ {
+			AssertEqualProto(
+				t, ev.Index(i).Interface().(proto.Message), av.Index(i).Interface().(proto.Message),
+			)
+		}
 	}
 }
 

@@ -19,11 +19,11 @@ source:
 
 ## Inputs
 
-| Key               | Value    | Example               | Description                                               | Required? |
-|:------------------|:---------|:----------------------|:----------------------------------------------------------|:----------|
-| `url`             | `string` | `caraml-store.com:80` | caraml-store's host URL                                   | ✅         |
-| `max_size_in_mb`  | `int`    | `10`                  | Max MB for gRPC client to receive message. Default is 45. | ❌         |
-| `request_timeout` | `string` | `10s`                 | Timeout for gRPC requests to caraml-store                 | ❌         |
+| Key               | Value    | Example               | Description                                                | Required? |
+|:------------------|:---------|:----------------------|:-----------------------------------------------------------|:----------|
+| `url`             | `string` | `caraml-store.com:80` | caraml-store's host URL                                    | ✅         |
+| `max_size_in_mb`  | `int`    | `10`                  | Max MB for gRPC client to receive message. Default is 45.  | ✘          |
+| `request_timeout` | `string` | `10s`                 | Timeout for gRPC requests to caraml-store. Default is 10s. | ✘         |
 
 ## Outputs
 

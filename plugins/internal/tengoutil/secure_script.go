@@ -13,7 +13,10 @@ const (
 func NewSecureScript(input []byte) *tengo.Script {
 	s := tengo.NewScript(input)
 
-	s.SetImports(stdlib.GetModuleMap(stdlib.AllModuleNames()...))
+	s.SetImports(stdlib.GetModuleMap(
+		// `os` is excluded, should not be importable from script.
+		"math", "text", "times", "rand", "fmt", "json", "base64", "hex", "enum",
+	))
 	s.SetMaxAllocs(maxAllocs)
 	s.SetMaxConstObjects(maxConsts)
 

@@ -7,7 +7,7 @@ supported script engine.
 Refer Tengo documentation for script language syntax and supported functionality
 \- https://github.com/d5/tengo/tree/v2.13.0#references
 . [Tengo standard library modules][tengo-stdlib] can also be imported and used
-if requried.
+if required.
 
 ## Usage
 
@@ -27,6 +27,11 @@ processors:
 | `engine` | `string` | `"tengo"`                                                      | Script engine. Only `"tengo"` is supported currently | ✅         |
 | `script` | `string` | `asset.labels = merge({script_engine: "tengo"}, asset.labels)` | [Tengo][tengo] script.                               | ✅         |
 
+### Notes
+
+- Tengo is the only supported script engine.
+- Tengo's `os` stdlib module cannot be imported and used in the script.
+
 ### Script Globals
 
 #### `asset`
@@ -45,7 +50,7 @@ structure for `asset.data` will be one of the following:
 - [`Job`][proton-job]
 - [`Metric`][proton-metric]
 - [`Model`][proton-model]
-- [`Service`][proton-service]
+- [`Application`][proton-application]
 - [`Table`][proton-table]
 - [`Topic`][proton-topic]
 - [`User`][proton-user]
@@ -242,7 +247,7 @@ for information on contributing to this module.
 
 [proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L73
 
-[proton-service]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/service.proto#L11
+[proton-application]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/application.proto#L11
 
 [proton-table]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/table.proto#L14
 

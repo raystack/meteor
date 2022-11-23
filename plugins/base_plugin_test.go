@@ -54,6 +54,9 @@ func TestBasePluginValidate(t *testing.T) {
 		invalidConfig := struct {
 			FieldA string `mapstructure:"field_a" validate:"required"`
 			FieldB string `mapstructure:"field_b" validate:"url"`
+			Nested struct {
+				FieldC string `mapstructure:"field_c" validate:"required"`
+			} `mapstructure:"nested"`
 		}{}
 
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &invalidConfig)
@@ -66,6 +69,7 @@ func TestBasePluginValidate(t *testing.T) {
 			Errors: []plugins.ConfigError{
 				{Key: "field_a", Message: "validation for field 'field_a' failed on the 'required' tag"},
 				{Key: "field_b", Message: "validation for field 'field_b' failed on the 'url' tag"},
+				{Key: "nested.field_c", Message: "validation for field 'nested.field_c' failed on the 'required' tag"},
 			},
 		})
 	})
