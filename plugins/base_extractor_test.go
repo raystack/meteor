@@ -1,3 +1,6 @@
+//go:build plugins
+// +build plugins
+
 package plugins_test
 
 import (
