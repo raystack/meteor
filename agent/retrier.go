@@ -40,7 +40,7 @@ func (r *retrier) retry(ctx context.Context, operation func() error, notify func
 			return err
 		}
 		// if err is RetryError, returns err directly to retry
-		if errors.Is(err, plugins.RetryError{}) {
+		if errors.As(err, &plugins.RetryError{}) {
 			return err
 		}
 		// if err is not RetryError, wraps error to prevent retrying

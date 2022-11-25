@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -9,12 +10,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func LoadJSONIntoProto(t *testing.T, filePath string, m proto.Message) {
+func LoadJSON(t *testing.T, filePath string, v interface{}) {
 	t.Helper()
 
 	data, err := os.ReadFile(filePath)
 	require.NoError(t, err)
 
-	err = protojson.Unmarshal(data, m)
+	if m, ok := v.(proto.Message); ok {
+		err = protojson.Unmarshal(data, m)
+	} else {
+		err = json.Unmarshal(data, v)
+	}
 	require.NoError(t, err)
 }

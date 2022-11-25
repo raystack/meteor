@@ -1,0 +1,172 @@
+{
+  "id": 47,
+  "model_id": 1376,
+  "model": {
+    "id": 1376,
+    "name": "inca-restaurant-image",
+    "project_id": 100,
+    "mlflow_experiment_id": 1466,
+    "type": "pyfunc",
+    "mlflow_url": "",
+    "endpoints": null,
+    "created_at": "2022-05-25T04:57:24.972027Z",
+    "updated_at": "2022-11-10T06:13:02.181028Z"
+  },
+  "mlflow_run_id": "f190512242584707b79831ee3d5e406c",
+  "mlflow_url": "http://mlflow.company.com/#/experiments/1466/runs/f190512242584707b79831ee3d5e406c",
+  "artifact_uri": "gs://mlp/mlflow/1466/f190512242584707b79831ee3d5e406c/artifacts",
+  "endpoints": [
+    {
+      "id": "8f7c20c7-01c9-4542-8a38-be1d804d49f2",
+      "version_id": 47,
+      "model_id": 1376,
+      "status": "serving",
+      "url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
+      "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
+      "monitoring_url": "https://lens.company.com/graph/d/GZwEmWzeM/merlin-overview-dashboard?var-cluster=s-company-models-v2&var-model=inca-restaurant-image&var-model_version=inca-restaurant-image-47&var-project=inca-restaurant",
+      "environment": {
+        "id": 1,
+        "name": "staging",
+        "cluster": "s-company-models-v2",
+        "is_default": true,
+        "region": "id",
+        "gcp_project": "staging",
+        "max_cpu": "8",
+        "max_memory": "8Gi",
+        "default_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "default_transformer_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "is_prediction_job_enabled": false,
+        "is_default_prediction_job": null,
+        "default_prediction_job_resource_request": null,
+        "created_at": "2020-04-20T16:21:52.496669Z",
+        "updated_at": "2022-11-18T06:44:52.976654Z"
+      },
+      "environment_name": "staging",
+      "message": "",
+      "resource_request": {
+        "min_replica": 0,
+        "max_replica": 2,
+        "cpu_request": "2",
+        "memory_request": "1Gi"
+      },
+      "env_vars": null,
+      "transformer": {
+        "id": "16911",
+        "enabled": false,
+        "version_endpoint_id": "8f7c20c7-01c9-4542-8a38-be1d804d49f2",
+        "transformer_type": "custom",
+        "image": "",
+        "resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "500m",
+          "memory_request": "512Mi"
+        },
+        "env_vars": [],
+        "created_at": "2022-11-04T06:28:18.513204Z",
+        "updated_at": "2022-11-04T06:31:28.404372Z"
+      },
+      "logger": {
+        "model": {"enabled": false, "mode": "all"},
+        "transformer": {"enabled": false, "mode": "all"}
+      },
+      "deployment_mode": "serverless",
+      "autoscaling_policy": {"metrics_type": "concurrency", "target_value": 1},
+      "protocol": "HTTP_JSON",
+      "created_at": "2022-11-04T06:28:18.536545Z",
+      "updated_at": "2022-11-04T06:31:28.402672Z"
+    },
+    {
+      "id": "41fe8c2f-a570-4aa1-8228-0f7db368b32d",
+      "version_id": 47,
+      "model_id": 1376,
+      "status": "terminated",
+      "url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
+      "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
+      "monitoring_url": "https://lens.company.com/graph/d/JZiMaVZnk/merlin-overview-dashboard?var-cluster=s-company-global-models-v2&var-model=inca-restaurant-image&var-model_version=inca-restaurant-image-47&var-project=inca-restaurant",
+      "environment": {
+        "id": 2,
+        "name": "global-staging",
+        "cluster": "s-company-global-models-v2",
+        "is_default": null,
+        "region": "gl",
+        "gcp_project": "staging",
+        "max_cpu": "8",
+        "max_memory": "8Gi",
+        "default_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "default_transformer_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "is_prediction_job_enabled": true,
+        "is_default_prediction_job": true,
+        "default_prediction_job_resource_request": {
+          "driver_cpu_request": "2",
+          "driver_memory_request": "2Gi",
+          "executor_replica": 3,
+          "executor_cpu_request": "2",
+          "executor_memory_request": "2Gi"
+        },
+        "created_at": "2020-04-20T16:21:52.504704Z",
+        "updated_at": "2022-11-17T10:55:35.781333Z"
+      },
+      "environment_name": "global-staging",
+      "message": "",
+      "resource_request": {
+        "min_replica": 0,
+        "max_replica": 2,
+        "cpu_request": "2",
+        "memory_request": "1Gi"
+      },
+      "env_vars": null,
+      "transformer": {
+        "id": "16701",
+        "enabled": false,
+        "version_endpoint_id": "41fe8c2f-a570-4aa1-8228-0f7db368b32d",
+        "transformer_type": "custom",
+        "image": "",
+        "resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "500m",
+          "memory_request": "512Mi"
+        },
+        "env_vars": [],
+        "created_at": "2022-10-28T07:09:12.230198Z",
+        "updated_at": "2022-11-10T06:13:07.192331Z"
+      },
+      "logger": {
+        "model": {"enabled": false, "mode": "all"},
+        "transformer": {"enabled": false, "mode": "all"}
+      },
+      "deployment_mode": "serverless",
+      "autoscaling_policy": {"metrics_type": "concurrency", "target_value": 1},
+      "protocol": "HTTP_JSON",
+      "created_at": "2022-10-28T06:12:22.623595Z",
+      "updated_at": "2022-11-10T06:13:07.190693Z"
+    }
+  ],
+  "properties": null,
+  "labels": {"env": "staging", "ver": "2.1.0"},
+  "python_version": "3.7.*",
+  "custom_predictor": null,
+  "created_at": "2022-10-28T06:11:52.148118Z",
+  "updated_at": "2022-10-28T06:11:52.148118Z"
+}

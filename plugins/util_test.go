@@ -55,6 +55,39 @@ func TestBigQueryTableFQNToURN(t *testing.T) {
 	}
 }
 
+func TestKafkaURN(t *testing.T) {
+	cases := []struct {
+		name     string
+		servers  string
+		topic    string
+		expected string
+	}{
+		{
+			name:     "Simple",
+			servers:  "celestial-dragons-prodstream.yonkou.io:9999",
+			topic:    "staging_feast09_mixed_granularity_demand_forecast_3es",
+			expected: "urn:kafka:celestial-dragons-prodstream.yonkou.io:topic:staging_feast09_mixed_granularity_demand_forecast_3es",
+		},
+		{
+			name:     "MultipleBootstrapServers",
+			servers:  "2-my-kafka.company.com:9999,1-my-kafka.company.com:9999",
+			topic:    "staging_feast09_mixed_granularity_demand_forecast_3es",
+			expected: "urn:kafka:1-my-kafka.company.com,2-my-kafka.company.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es",
+		},
+		{
+			name:     "SlugBootstrapServer",
+			servers:  "1-my-kafka",
+			topic:    "staging_feast09_mixed_granularity_demand_forecast_3es",
+			expected: "urn:kafka:1-my-kafka:topic:staging_feast09_mixed_granularity_demand_forecast_3es",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, plugins.KafkaURN(tc.servers, tc.topic))
+		})
+	}
+}
+
 func TestKafkaServersToScope(t *testing.T) {
 	cases := map[string]string{
 		"int-dagstream-kafka.yonkou.io:9999":                      "int-dagstream-kafka.yonkou.io",
@@ -69,4 +102,12 @@ func TestKafkaServersToScope(t *testing.T) {
 			assert.Equal(t, expected, scope)
 		})
 	}
+}
+
+func TestCaraMLStoreURN(t *testing.T) {
+	assert.Equal(
+		t,
+		"urn:caramlstore:my_scope:feature_table:my_project.my_ft",
+		plugins.CaraMLStoreURN("my_scope", "my_project", "my_ft"),
+	)
 }

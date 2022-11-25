@@ -16,7 +16,6 @@ import (
 	"github.com/odpf/meteor/plugins"
 	h "github.com/odpf/meteor/plugins/sinks/http"
 	testutils "github.com/odpf/meteor/test/utils"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -122,7 +121,7 @@ func TestSink(t *testing.T) {
 				assert.NoError(t, err)
 				defer httpSink.Close()
 				err = httpSink.Sink(context.TODO(), getExpectedVal(t))
-				assert.True(t, errors.Is(err, plugins.RetryError{}))
+				assert.ErrorAs(t, err, &plugins.RetryError{})
 				port += 2
 			})
 		}

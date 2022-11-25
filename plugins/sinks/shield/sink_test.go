@@ -19,7 +19,7 @@ import (
 
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
-	shield "github.com/odpf/meteor/plugins/sinks/shield"
+	"github.com/odpf/meteor/plugins/sinks/shield"
 	shieldProto "github.com/odpf/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 
@@ -102,7 +102,7 @@ func TestSink(t *testing.T) {
 
 		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		require.Error(t, err)
-		assert.True(t, errors.Is(err, plugins.RetryError{}))
+		assert.ErrorAs(t, err, &plugins.RetryError{})
 
 	})
 

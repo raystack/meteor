@@ -1,0 +1,454 @@
+[
+  {
+    "created_at": "2022-05-25T04:57:24.972027Z",
+    "endpoints": [
+      {
+        "created_at": "2022-11-04T06:31:28.372368Z",
+        "environment": {
+          "cluster": "s-company-models-v2",
+          "created_at": "2020-04-20T16:21:52.496669Z",
+          "default_prediction_job_resource_request": null,
+          "default_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "default_transformer_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "gcp_project": "staging",
+          "id": 1,
+          "is_default": true,
+          "is_default_prediction_job": null,
+          "is_prediction_job_enabled": false,
+          "max_cpu": "8",
+          "max_memory": "8Gi",
+          "name": "staging",
+          "region": "id",
+          "updated_at": "2022-11-10T12:17:04.445183Z"
+        },
+        "environment_name": "staging",
+        "id": 569,
+        "model": null,
+        "model_id": 1376,
+        "protocol": "HTTP_JSON",
+        "rule": {
+          "destinations": [
+            {
+              "version_endpoint": {
+                "autoscaling_policy": {
+                  "metrics_type": "concurrency",
+                  "target_value": 1
+                },
+                "created_at": "2022-11-04T06:28:18.536545Z",
+                "deployment_mode": "serverless",
+                "env_vars": null,
+                "environment": {
+                  "cluster": "s-company-models-v2",
+                  "created_at": "2020-04-20T16:21:52.496669Z",
+                  "default_prediction_job_resource_request": null,
+                  "default_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "default_transformer_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "gcp_project": "staging",
+                  "id": 1,
+                  "is_default": true,
+                  "is_default_prediction_job": null,
+                  "is_prediction_job_enabled": false,
+                  "max_cpu": "8",
+                  "max_memory": "8Gi",
+                  "name": "staging",
+                  "region": "id",
+                  "updated_at": "2022-11-04T06:30:30.935493Z"
+                },
+                "environment_name": "staging",
+                "id": "8f7c20c7-01c9-4542-8a38-be1d804d49f2",
+                "logger": {
+                  "model": {"enabled": false, "mode": "all"},
+                  "transformer": {"enabled": false, "mode": "all"}
+                },
+                "message": "",
+                "model_id": 1376,
+                "protocol": "HTTP_JSON",
+                "resource_request": {
+                  "cpu_request": "2",
+                  "max_replica": 2,
+                  "memory_request": "1Gi",
+                  "min_replica": 0
+                },
+                "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
+                "status": "running",
+                "transformer": {
+                  "created_at": "2022-11-04T06:28:18.513204Z",
+                  "enabled": false,
+                  "env_vars": [],
+                  "id": "16911",
+                  "image": "",
+                  "resource_request": {
+                    "cpu_request": "500m",
+                    "max_replica": 2,
+                    "memory_request": "512Mi",
+                    "min_replica": 0
+                  },
+                  "transformer_type": "custom",
+                  "updated_at": "2022-11-04T06:30:30.939953Z",
+                  "version_endpoint_id": "8f7c20c7-01c9-4542-8a38-be1d804d49f2"
+                },
+                "updated_at": "2022-11-04T06:30:30.937905Z",
+                "url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
+                "version_id": 47
+              },
+              "version_endpoint_id": "8f7c20c7-01c9-4542-8a38-be1d804d49f2",
+              "weight": 100
+            }
+          ]
+        },
+        "status": "serving",
+        "updated_at": "2022-11-04T06:31:28.372368Z",
+        "url": "inca-restaurant-image.inca-restaurant.models.company.com"
+      },
+      {
+        "created_at": "2022-05-25T06:53:28.075479Z",
+        "environment": {
+          "cluster": "s-company-global-models-v2",
+          "created_at": "2020-04-20T16:21:52.504704Z",
+          "default_prediction_job_resource_request": {
+            "driver_cpu_request": "2",
+            "driver_memory_request": "2Gi",
+            "executor_cpu_request": "2",
+            "executor_memory_request": "2Gi",
+            "executor_replica": 3
+          },
+          "default_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "default_transformer_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "gcp_project": "staging",
+          "id": 2,
+          "is_default": null,
+          "is_default_prediction_job": true,
+          "is_prediction_job_enabled": true,
+          "max_cpu": "8",
+          "max_memory": "8Gi",
+          "name": "global-staging",
+          "region": "gl",
+          "updated_at": "2022-11-10T06:13:07.188409Z"
+        },
+        "environment_name": "global-staging",
+        "id": 443,
+        "model": null,
+        "model_id": 1376,
+        "protocol": "HTTP_JSON",
+        "rule": {
+          "destinations": [
+            {
+              "version_endpoint": {
+                "autoscaling_policy": {
+                  "metrics_type": "concurrency",
+                  "target_value": 1
+                },
+                "created_at": "2022-10-28T06:12:22.623595Z",
+                "deployment_mode": "serverless",
+                "env_vars": null,
+                "environment": {
+                  "cluster": "s-company-global-models-v2",
+                  "created_at": "2020-04-20T16:21:52.504704Z",
+                  "default_prediction_job_resource_request": {
+                    "driver_cpu_request": "2",
+                    "driver_memory_request": "2Gi",
+                    "executor_cpu_request": "2",
+                    "executor_memory_request": "2Gi",
+                    "executor_replica": 3
+                  },
+                  "default_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "default_transformer_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "gcp_project": "staging",
+                  "id": 2,
+                  "is_default": null,
+                  "is_default_prediction_job": true,
+                  "is_prediction_job_enabled": true,
+                  "max_cpu": "8",
+                  "max_memory": "8Gi",
+                  "name": "global-staging",
+                  "region": "gl",
+                  "updated_at": "2022-11-04T06:33:09.44217Z"
+                },
+                "environment_name": "global-staging",
+                "id": "41fe8c2f-a570-4aa1-8228-0f7db368b32d",
+                "logger": {
+                  "model": {"enabled": false, "mode": "all"},
+                  "transformer": {"enabled": false, "mode": "all"}
+                },
+                "message": "",
+                "model_id": 1376,
+                "protocol": "HTTP_JSON",
+                "resource_request": {
+                  "cpu_request": "2",
+                  "max_replica": 2,
+                  "memory_request": "1Gi",
+                  "min_replica": 0
+                },
+                "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
+                "status": "running",
+                "transformer": {
+                  "created_at": "2022-10-28T07:09:12.230198Z",
+                  "enabled": false,
+                  "env_vars": [],
+                  "id": "16701",
+                  "image": "",
+                  "resource_request": {
+                    "cpu_request": "500m",
+                    "max_replica": 2,
+                    "memory_request": "512Mi",
+                    "min_replica": 0
+                  },
+                  "transformer_type": "custom",
+                  "updated_at": "2022-11-04T06:33:09.446768Z",
+                  "version_endpoint_id": "41fe8c2f-a570-4aa1-8228-0f7db368b32d"
+                },
+                "updated_at": "2022-11-04T06:33:09.44496Z",
+                "url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
+                "version_id": 47
+              },
+              "version_endpoint_id": "41fe8c2f-a570-4aa1-8228-0f7db368b32d",
+              "weight": 100
+            }
+          ]
+        },
+        "status": "terminated",
+        "updated_at": "2022-11-10T06:13:02.185052Z",
+        "url": "inca-restaurant-image.inca-restaurant.models.company.com"
+      }
+    ],
+    "id": 1376,
+    "mlflow_experiment_id": 1466,
+    "mlflow_url": "http://mlflow.company.com/#/experiments/1466",
+    "name": "inca-restaurant-image",
+    "project_id": 100,
+    "type": "pyfunc",
+    "updated_at": "2022-11-10T06:13:02.181028Z"
+  },
+  {
+    "created_at": "2020-06-23T14:40:23.168186Z",
+    "endpoints": [
+      {
+        "created_at": "2020-06-23T14:48:16.864671Z",
+        "environment": {
+          "cluster": "s-company-models-v2",
+          "created_at": "2020-04-20T16:21:52.496669Z",
+          "default_prediction_job_resource_request": null,
+          "default_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "default_transformer_resource_request": {
+            "cpu_request": "2",
+            "max_replica": 4,
+            "memory_request": "1Gi",
+            "min_replica": 0
+          },
+          "gcp_project": "staging",
+          "id": 1,
+          "is_default": true,
+          "is_default_prediction_job": null,
+          "is_prediction_job_enabled": false,
+          "max_cpu": "8",
+          "max_memory": "8Gi",
+          "name": "staging",
+          "region": "id",
+          "updated_at": "2022-11-10T12:17:04.445183Z"
+        },
+        "environment_name": "staging",
+        "id": 63,
+        "model": null,
+        "model_id": 284,
+        "protocol": "HTTP_JSON",
+        "rule": {
+          "destinations": [
+            {
+              "version_endpoint": {
+                "autoscaling_policy": {
+                  "metrics_type": "concurrency",
+                  "target_value": 1
+                },
+                "created_at": "2022-11-09T15:23:47.296498Z",
+                "deployment_mode": "serverless",
+                "env_vars": [
+                  {"name": "WORKERS", "value": "1"},
+                  {"name": "SERVICE_TYPE", "value": "car"},
+                  {"name": "PEAK_HOURS", "value": "6,7,8,16,17,18,19"},
+                  {"name": "COUNTRY", "value": "id"},
+                  {"name": "MODEL_VERSION", "value": "B"}
+                ],
+                "environment": {
+                  "cluster": "s-company-models-v2",
+                  "created_at": "2020-04-20T16:21:52.496669Z",
+                  "default_prediction_job_resource_request": null,
+                  "default_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "default_transformer_resource_request": {
+                    "cpu_request": "2",
+                    "max_replica": 4,
+                    "memory_request": "1Gi",
+                    "min_replica": 0
+                  },
+                  "gcp_project": "staging",
+                  "id": 1,
+                  "is_default": true,
+                  "is_default_prediction_job": null,
+                  "is_prediction_job_enabled": false,
+                  "max_cpu": "8",
+                  "max_memory": "8Gi",
+                  "name": "staging",
+                  "region": "id",
+                  "updated_at": "2022-11-09T15:33:56.806113Z"
+                },
+                "environment_name": "staging",
+                "id": "e355ce59-eb2b-4c75-883d-c517ad530cf0",
+                "message": "",
+                "model_id": 284,
+                "protocol": "HTTP_JSON",
+                "resource_request": {
+                  "cpu_request": "2",
+                  "max_replica": 2,
+                  "memory_request": "200Mi",
+                  "min_replica": 0
+                },
+                "service_name": "id-car-b-default-582.jaeger.models.company.com",
+                "status": "running",
+                "transformer": {
+                  "created_at": "2022-11-09T15:23:47.27563Z",
+                  "enabled": true,
+                  "env_vars": [
+                    {
+                      "name": "APP_NAME",
+                      "value": "jaeger-cancellation-id-car-b"
+                    },
+                    {"name": "GOOGLE_CLOUD_PROJECT", "value": "staging"},
+                    {"name": "COUNTRY", "value": "id"},
+                    {"name": "MODEL_VERSION", "value": "B"},
+                    {"name": "SERVICE_TYPE", "value": "car"},
+                    {"name": "PEAK_HOURS", "value": "6,7,8,16,17,18,19"},
+                    {
+                      "name": "FEAST_SERVING_HOST",
+                      "value": "online-serving.s.feast.company.com"
+                    },
+                    {"name": "FEAST_SERVING_PORT", "value": "15010"},
+                    {"name": "FEAST_PROJECT", "value": "jaeger"},
+                    {"name": "FEAST_CACHE_ENABLED", "value": "True"},
+                    {"name": "FEAST_BATCH_SIZE", "value": "90"},
+                    {"name": "FEAST_CACHE_DURATION_SECOND", "value": "60"},
+                    {
+                      "name": "FEAST_FEATURE_STATUS_MONITORING_ENABLED",
+                      "value": "True"
+                    },
+                    {
+                      "name": "FEAST_FEATURE_VALUE_MONITORING_ENABLED",
+                      "value": "False"
+                    },
+                    {"name": "JAEGER_SAMPLER_TYPE", "value": "probabilistic"},
+                    {"name": "JAEGER_SAMPLER_PARAM", "value": "0.01"},
+                    {"name": "JAEGER_DISABLED", "value": "False"},
+                    {
+                      "name": "MLFLOW_TRACKING_URI",
+                      "value": "http://jaeger.mlflow.global.company.com/"
+                    },
+                    {
+                      "name": "MLFLOW_RUN_ID",
+                      "value": "543f674167704d94bbc03025e50b78b7"
+                    },
+                    {"name": "MLFLOW_DOWNLOAD_PATH", "value": "/data"},
+                    {
+                      "name": "ORDER_FEATURE_CONFIG_PATH",
+                      "value": "/data/order_features.json"
+                    },
+                    {
+                      "name": "FEAST_FEATURE_CONFIG_PATH",
+                      "value": "/data/features.json"
+                    },
+                    {
+                      "name": "PUBLIC_HOLIDAY_FILE",
+                      "value": "/data/public_holidays_feast_0_9.csv"
+                    },
+                    {"name": "INIT_HEAP_SIZE_IN_MB", "value": "300"},
+                    {
+                      "name": "STANDARD_TRANSFORMER_CONFIG",
+                      "value": "{\"transformerConfig\":{\"preprocess\":{\"inputs\":[{\"tables\":[{\"name\":\"customer_order\",\"columns\":[{\"name\":\"order_id\",\"fromJson\":{\"jsonPath\":\"$.order_id\"}},{\"name\":\"service_area_id\",\"fromJson\":{\"jsonPath\":\"$.service_area_id\"}},{\"name\":\"order_time\",\"fromJson\":{\"jsonPath\":\"$.order_time\"}},{\"name\":\"start_latitude\",\"fromJson\":{\"jsonPath\":\"$.bid.from.latitude\"}},{\"name\":\"start_longitude\",\"fromJson\":{\"jsonPath\":\"$.bid.from.longitude\"}},{\"name\":\"end_latitude\",\"fromJson\":{\"jsonPath\":\"$.bid.to.latitude\"}},{\"name\":\"end_longitude\",\"fromJson\":{\"jsonPath\":\"$.bid.to.longitude\"}}]},{\"name\":\"driver_order\",\"baseTable\":{\"fromJson\":{\"jsonPath\":\"$.drivers\"}},\"columns\":[{\"name\":\"order_time\",\"fromJson\":{\"jsonPath\":\"$.order_time\"}},{\"name\":\"start_latitude\",\"fromJson\":{\"jsonPath\":\"$.bid.from.latitude\"}},{\"name\":\"start_longitude\",\"fromJson\":{\"jsonPath\":\"$.bid.from.longitude\"}},{\"name\":\"driver_latitude\",\"fromJson\":{\"jsonPath\":\"$.drivers[*].driver_location.latitude\"}},{\"name\":\"driver_longitude\",\"fromJson\":{\"jsonPath\":\"$.drivers[*].driver_location.longitude\"}},{\"name\":\"driver_elevation\",\"fromJson\":{\"jsonPath\":\"$.drivers[*].driver_location.elevation\"}},{\"name\":\"driver_gps_accuracy\",\"fromJson\":{\"jsonPath\":\"$.drivers[*].driver_location.gps_accuracy\"}},{\"name\":\"standing_geohash_7\",\"expression\":\"Geohash(\\\"$.drivers[*].driver_location.latitude\\\", \\\"$.drivers[*].driver_location.longitude\\\", 7)\"}]},{\"name\":\"first_customer_location\",\"baseTable\":{\"fromJson\":{\"jsonPath\":\"$.drivers[*].first_customer_drop_off_location\"}},\"columns\":[{\"name\":\"driver_id\",\"fromJson\":{\"jsonPath\":\"$.drivers[*].driver_id\"}}]}]},{\"feast\":[{\"project\":\"jaeger\",\"entities\":[{\"name\":\"origin_geohash_7\",\"valueType\":\"STRING\",\"udf\":\"Geohash(\\\"$.bid.from.latitude\\\", \\\"$.bid.from.longitude\\\", 7)\"}],\"features\":[{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_num_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_prop_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_polar_angle_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_customer_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_polar_angle_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_origin_geohash_acceptance:origin_geohash_7_avg_customer_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"}],\"tableName\":\"origin_geohash_7\",\"source\":\"BIGTABLE\"},{\"project\":\"jaeger\",\"entities\":[{\"name\":\"destination_geohash_7\",\"valueType\":\"STRING\",\"udf\":\"Geohash(\\\"$.bid.to.latitude\\\", \\\"$.bid.to.longitude\\\", 7)\"}],\"features\":[{\"name\":\"jaeger_car_destination_geohash_acceptance:destination_geohash_7_num_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_destination_geohash_acceptance:destination_geohash_7_prop_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_destination_geohash_acceptance:destination_geohash_7_avg_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_destination_geohash_acceptance:destination_geohash_7_avg_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"}],\"tableName\":\"destination_geohash_7\",\"source\":\"BIGTABLE\"},{\"project\":\"jaeger\",\"entities\":[{\"name\":\"standing_geohash_7\",\"valueType\":\"STRING\",\"udf\":\"Geohash(\\\"$.drivers.driver_location.latitude\\\", \\\"$.drivers.driver_location.longitude\\\", 7)\"}],\"features\":[{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_num_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_prop_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_avg_polar_angle_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_avg_customer_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_avg_polar_angle_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_standing_geohash_acceptance:standing_geohash_7_avg_customer_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"}],\"tableName\":\"standing_geohash_7\",\"source\":\"BIGTABLE\"},{\"project\":\"jaeger\",\"entities\":[{\"name\":\"driver_id\",\"valueType\":\"STRING\",\"jsonPath\":\"$.drivers.driver_id\"}],\"features\":[{\"name\":\"jaeger_car_driver_acceptance:driver_id_num_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_prop_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_customer_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_customer_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_accepted_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_accepted_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_accepted_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_rej_ignore_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_rej_ignore_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_standing_rej_ignore_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_accepted_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_accepted_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_accepted_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_rej_ignore_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_rej_ignore_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_origin_rej_ignore_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_accepted_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_accepted_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_accepted_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_rej_ignore_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_rej_ignore_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_destination_rej_ignore_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_donut_count_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_donut_count_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_num_accepted_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_prop_accepted_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_distance_accepted_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_customer_distance_accepted_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_distance_rej_ignore_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_avg_customer_distance_rej_ignore_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_donut_count_accepted_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_driver_acceptance:driver_id_donut_count_rej_ignore_recent\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"}],\"tableName\":\"driver_id\",\"source\":\"BIGTABLE\"},{\"project\":\"jaeger\",\"entities\":[{\"name\":\"customer_id\",\"valueType\":\"STRING\",\"jsonPath\":\"$.customer_id\"}],\"features\":[{\"name\":\"jaeger_car_customer_acceptance:customer_id_num_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_prop_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_avg_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_avg_customer_distance_accepted\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_avg_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_avg_customer_distance_rej_ignore\",\"valueType\":\"FLOAT\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_accepted_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_accepted_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_accepted_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_rej_ignore_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_rej_ignore_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_origin_rej_ignore_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_accepted_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_accepted_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_accepted_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_rej_ignore_1\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_rej_ignore_2\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"},{\"name\":\"jaeger_car_customer_acceptance:customer_id_destination_rej_ignore_3\",\"valueType\":\"INT64\",\"defaultValue\":\"-1\"}],\"tableName\":\"customer_id\",\"source\":\"BIGTABLE\"}]}],\"transformations\":[{\"tableJoin\":{\"leftTable\":\"driver_order\",\"rightTable\":\"standing_geohash_7\",\"outputTable\":\"driver_tb1\",\"how\":\"LEFT\",\"onColumn\":\"standing_geohash_7\"}},{\"tableJoin\":{\"leftTable\":\"driver_tb1\",\"rightTable\":\"driver_id\",\"outputTable\":\"driver_tb2\",\"how\":\"LEFT\",\"onColumn\":\"driver_id\"}},{\"tableJoin\":{\"leftTable\":\"driver_tb2\",\"rightTable\":\"first_customer_location\",\"outputTable\":\"driver_tb3\",\"how\":\"LEFT\",\"onColumn\":\"driver_id\"}},{\"tableJoin\":{\"leftTable\":\"origin_geohash_7\",\"rightTable\":\"destination_geohash_7\",\"outputTable\":\"customer_feast_tb1\",\"how\":\"CONCAT\"}},{\"tableJoin\":{\"leftTable\":\"customer_feast_tb1\",\"rightTable\":\"customer_id\",\"outputTable\":\"customer_feast_tb2\",\"how\":\"CONCAT\"}},{\"tableTransformation\":{\"inputTable\":\"driver_tb3\",\"outputTable\":\"driver_tb3\",\"steps\":[{\"updateColumns\":[{\"column\":\"customer_distance\",\"expression\":\"map(HaversineDistance(driver_tb3.Col('driver_latitude'), driver_tb3.Col('driver_longitude'), driver_tb3.Col('start_latitude'), driver_tb3.Col('start_longitude')), {# * 1000})\"},{\"column\":\"polar_angle\",\"expression\":\"PolarAngle(driver_tb3.Col('driver_latitude'), driver_tb3.Col('driver_longitude'),driver_tb3.Col('start_latitude'), driver_tb3.Col('start_longitude'))\"}]}]}}],\"outputs\":[{\"jsonOutput\":{\"jsonTemplate\":{\"fields\":[{\"fieldName\":\"driver_features\",\"fromTable\":{\"tableName\":\"driver_tb3\",\"format\":\"RECORD\"}},{\"fieldName\":\"customer_features\",\"fromTable\":{\"tableName\":\"customer_order\",\"format\":\"RECORD\"}},{\"fieldName\":\"customer_feast_features\",\"fromTable\":{\"tableName\":\"customer_feast_tb2\",\"format\":\"RECORD\"}},{\"fieldName\":\"bid\",\"fromJson\":{\"jsonPath\":\"$.bid\"}},{\"fieldName\":\"order_details\",\"expression\":\"JsonExtract(\\\"$.details\\\", \\\"$\\\")\"}]}}}]},\"postprocess\":{}}}"
+                    },
+                    {
+                      "name": "FEAST_FEATURE_TABLE_SPECS_JSONS",
+                      "value": "[{\"name\":\"jaeger_car_origin_geohash_acceptance\",\"project\":\"jaeger\",\"maxAge\":\"3455990s\",\"entities\":[\"origin_geohash_7\"]},{\"name\":\"jaeger_car_destination_geohash_acceptance\",\"project\":\"jaeger\",\"maxAge\":\"3455990s\",\"entities\":[\"destination_geohash_7\"]},{\"name\":\"jaeger_car_standing_geohash_acceptance\",\"project\":\"jaeger\",\"maxAge\":\"3455990s\",\"entities\":[\"standing_geohash_7\"]},{\"name\":\"jaeger_car_driver_acceptance\",\"project\":\"jaeger\",\"maxAge\":\"3455990s\",\"entities\":[\"driver_id\"]},{\"name\":\"jaeger_car_customer_acceptance\",\"project\":\"jaeger\",\"maxAge\":\"3455990s\",\"entities\":[\"customer_id\"]}]"
+                    }
+                  ],
+                  "id": "17069",
+                  "image": "asia.gcr.io/staging/merlin-transformer:0.24.0-rc3",
+                  "resource_request": {
+                    "cpu_request": "4",
+                    "max_replica": 4,
+                    "memory_request": "4Gi",
+                    "min_replica": 0
+                  },
+                  "transformer_type": "standard",
+                  "updated_at": "2022-11-09T15:33:56.809769Z",
+                  "version_endpoint_id": "e355ce59-eb2b-4c75-883d-c517ad530cf0"
+                },
+                "updated_at": "2022-11-09T15:33:56.808307Z",
+                "url": "http://id-car-b-default-582.jaeger.models.company.com/v1/models/id-car-b-default-582",
+                "version_id": 582
+              },
+              "version_endpoint_id": "e355ce59-eb2b-4c75-883d-c517ad530cf0",
+              "weight": 100
+            }
+          ]
+        },
+        "status": "serving",
+        "updated_at": "2022-11-09T15:34:07.651591Z",
+        "url": "id-car-b-default.jaeger.models.company.com"
+      }
+    ],
+    "id": 284,
+    "mlflow_experiment_id": 287,
+    "mlflow_url": "http://mlflow.company.com/#/experiments/287",
+    "name": "id-car-b-default",
+    "project_id": 100,
+    "type": "pyfunc",
+    "updated_at": "2022-11-09T15:34:07.647932Z"
+  }
+]

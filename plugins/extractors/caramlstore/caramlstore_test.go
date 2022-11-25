@@ -167,7 +167,7 @@ func TestExtract(t *testing.T) {
 			Filter: &core.ListEntitiesRequest_Filter{Project: "dobu"},
 		}).Return(&core.ListEntitiesResponse{}, nil)
 		var featureTablesResp core.ListFeatureTablesResponse
-		testutils.LoadJSONIntoProto(t, "testdata/mocked-feature-tables-sauron.json", &featureTablesResp)
+		testutils.LoadJSON(t, "testdata/mocked-feature-tables-sauron.json", &featureTablesResp)
 		m.EXPECT().ListFeatureTables(testutils.OfTypeContext(), &core.ListFeatureTablesRequest{
 			Filter: &core.ListFeatureTablesRequest_Filter{Project: "dobu"},
 		}).Return(&featureTablesResp, nil)
@@ -197,23 +197,23 @@ func TestExtract(t *testing.T) {
 			)
 
 		var entitiesResp core.ListEntitiesResponse
-		testutils.LoadJSONIntoProto(t, "testdata/mocked-entities-sauron.json", &entitiesResp)
+		testutils.LoadJSON(t, "testdata/mocked-entities-sauron.json", &entitiesResp)
 		mockServer.EXPECT().ListEntities(testutils.OfTypeContext(), &core.ListEntitiesRequest{
 			Filter: &core.ListEntitiesRequest_Filter{Project: "sauron"},
 		}).Return(&entitiesResp, nil)
 
 		var featureTablesResp core.ListFeatureTablesResponse
-		testutils.LoadJSONIntoProto(t, "testdata/mocked-feature-tables-sauron.json", &featureTablesResp)
+		testutils.LoadJSON(t, "testdata/mocked-feature-tables-sauron.json", &featureTablesResp)
 		mockServer.EXPECT().ListFeatureTables(testutils.OfTypeContext(), &core.ListFeatureTablesRequest{
 			Filter: &core.ListFeatureTablesRequest_Filter{Project: "sauron"},
 		}).Return(&featureTablesResp, nil)
 
-		testutils.LoadJSONIntoProto(t, "testdata/mocked-entities-food-tensoba.json", &entitiesResp)
+		testutils.LoadJSON(t, "testdata/mocked-entities-food-tensoba.json", &entitiesResp)
 		mockServer.EXPECT().ListEntities(testutils.OfTypeContext(), &core.ListEntitiesRequest{
 			Filter: &core.ListEntitiesRequest_Filter{Project: "food-tensoba"},
 		}).Return(&entitiesResp, nil)
 
-		testutils.LoadJSONIntoProto(t, "testdata/mocked-feature-tables-food-tensoba.json", &featureTablesResp)
+		testutils.LoadJSON(t, "testdata/mocked-feature-tables-food-tensoba.json", &featureTablesResp)
 		mockServer.EXPECT().ListFeatureTables(testutils.OfTypeContext(), &core.ListFeatureTablesRequest{
 			Filter: &core.ListFeatureTablesRequest_Filter{Project: "food-tensoba"},
 		}).Return(&featureTablesResp, nil)

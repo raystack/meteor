@@ -1,0 +1,96 @@
+{
+  "id": 2,
+  "model_id": 80,
+  "model": {
+    "id": 80,
+    "name": "resource-request",
+    "project_id": 1,
+    "mlflow_experiment_id": 83,
+    "type": "sklearn",
+    "mlflow_url": "",
+    "endpoints": null,
+    "created_at": "2020-04-23T10:07:40.105711Z",
+    "updated_at": "2022-06-14T07:12:09.536419Z"
+  },
+  "mlflow_run_id": "061ew38v3b7kp088s9b49kzr68v5ixvm3",
+  "mlflow_url": "http://mlflow.company.com/#/experiments/83/runs/061ew38v3b7kp088s9b49kzr68v5ixvm3",
+  "artifact_uri": "gs://mlp/mlflow/692/061ew38v3b7kp088s9b49kzr68v5ixvm3/artifacts/model",
+  "endpoints": [
+    {
+      "id": "01fee5b9-1fd9-4664-8c2d-52073af405f8",
+      "version_id": 2,
+      "model_id": 80,
+      "status": "terminated",
+      "url": "http://resource-request-2.sample.models.company.com/v1/models/resource-request-2",
+      "service_name": "resource-request-2-predictor-default.sample.models.company.com",
+      "monitoring_url": "https://lens.company.com/graph/d/yqCUcuYQQ/merlin-overview-dashboard?var-cluster=s-company-models-v2&var-model=resource-request&var-model_version=resource-request-2&var-project=sample",
+      "environment": {
+        "id": 1,
+        "name": "staging",
+        "cluster": "s-company-models-v2",
+        "is_default": true,
+        "region": "id",
+        "gcp_project": "company-staging",
+        "max_cpu": "8",
+        "max_memory": "8Gi",
+        "default_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "default_transformer_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "is_prediction_job_enabled": false,
+        "is_default_prediction_job": null,
+        "default_prediction_job_resource_request": null,
+        "created_at": "2020-04-20T16:21:52.496669Z",
+        "updated_at": "2022-11-18T02:38:14.852768Z"
+      },
+      "environment_name": "staging",
+      "message": "",
+      "resource_request": {
+        "min_replica": 0,
+        "max_replica": 2,
+        "cpu_request": "1",
+        "memory_request": "1Gi"
+      },
+      "env_vars": null,
+      "transformer": {
+        "id": "11930",
+        "enabled": false,
+        "version_endpoint_id": "01fee5b9-1fd9-4664-8c2d-52073af405f8",
+        "transformer_type": "custom",
+        "image": "",
+        "resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "500m",
+          "memory_request": "512Mi"
+        },
+        "env_vars": [],
+        "created_at": "2022-05-30T07:52:32.790496Z",
+        "updated_at": "2022-06-14T07:12:13.513532Z"
+      },
+      "logger": {
+        "model": {"enabled": false, "mode": "all"},
+        "transformer": {"enabled": false, "mode": "all"}
+      },
+      "deployment_mode": "serverless",
+      "autoscaling_policy": null,
+      "protocol": "",
+      "created_at": "2022-05-30T07:43:21.252389Z",
+      "updated_at": "2022-06-14T07:12:13.512746Z"
+    }
+  ],
+  "properties": null,
+  "labels": null,
+  "python_version": "3.7.*",
+  "custom_predictor": null,
+  "created_at": "2022-05-30T07:43:18.120248Z",
+  "updated_at": "2022-05-30T07:43:18.120248Z"
+}

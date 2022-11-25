@@ -65,11 +65,6 @@ func (e RetryError) Unwrap() error {
 	return e.Err
 }
 
-func (e RetryError) Is(target error) bool {
-	_, ok := target.(RetryError)
-	return ok
-}
-
 func NewRetryError(err error) error {
 	if err == nil {
 		return nil

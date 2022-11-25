@@ -1,0 +1,111 @@
+{
+  "id": 7,
+  "model_id": 689,
+  "model": {
+    "id": 689,
+    "name": "pyfunc-standard-transfo",
+    "project_id": 1,
+    "mlflow_experiment_id": 692,
+    "type": "pyfunc",
+    "mlflow_url": "",
+    "endpoints": null,
+    "created_at": "2021-02-04T13:05:31.593956Z",
+    "updated_at": "2021-07-22T08:13:34.642949Z"
+  },
+  "mlflow_run_id": "061ew38v3b7kp088s9b49kzr68v5ixvm3",
+  "mlflow_url": "http://mlflow.company.com/#/experiments/692/runs/061ew38v3b7kp088s9b49kzr68v5ixvm3",
+  "artifact_uri": "gs://s-gods-mlp/mlflow/692/061ew38v3b7kp088s9b49kzr68v5ixvm3/artifacts",
+  "endpoints": [
+    {
+      "id": "81dbbb50-8cea-48cf-85c9-2ccdfcb91d24",
+      "version_id": 7,
+      "model_id": 689,
+      "status": "terminated",
+      "url": "http://pyfunc-standard-transfo-7.sample.models.company.com/v1/models/pyfunc-standard-transfo-7",
+      "service_name": "pyfunc-standard-transfo-7-predictor-default.sample.models.company.com",
+      "monitoring_url": "https://lens.company.com/graph/d/GZwEmWzeM/merlin-overview-dashboard?var-cluster=s-company-models-v2&var-model=pyfunc-standard-transfo&var-model_version=pyfunc-standard-transfo-7&var-project=sample",
+      "environment": {
+        "id": 1,
+        "name": "staging",
+        "cluster": "s-company-models-v2",
+        "is_default": true,
+        "region": "id",
+        "gcp_project": "staging",
+        "max_cpu": "8",
+        "max_memory": "8Gi",
+        "default_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "default_transformer_resource_request": {
+          "min_replica": 0,
+          "max_replica": 2,
+          "cpu_request": "1",
+          "memory_request": "1Gi"
+        },
+        "is_prediction_job_enabled": false,
+        "is_default_prediction_job": null,
+        "default_prediction_job_resource_request": null,
+        "created_at": "2020-04-20T16:21:52.496669Z",
+        "updated_at": "2022-11-18T02:38:14.852768Z"
+      },
+      "environment_name": "staging",
+      "message": "",
+      "resource_request": {
+        "min_replica": 0,
+        "max_replica": 4,
+        "cpu_request": "2",
+        "memory_request": "1Gi"
+      },
+      "env_vars": [
+        {"name": "MODEL_NAME", "value": "pyfunc-standard-transfo-7"},
+        {
+          "name": "MODEL_DIR",
+          "value": "gs://s-gods-mlp/mlflow/692/061ew38v3b7kp088s9b49kzr68v5ixvm3/artifacts/model"
+        },
+        {"name": "WORKERS", "value": "1"}
+      ],
+      "transformer": {
+        "id": "1707",
+        "enabled": true,
+        "version_endpoint_id": "81dbbb50-8cea-48cf-85c9-2ccdfcb91d24",
+        "transformer_type": "standard",
+        "image": "asia.gcr.io/staging/merlin-transformer:v0.10.0-rc2",
+        "resource_request": {
+          "min_replica": 0,
+          "max_replica": 1,
+          "cpu_request": "1",
+          "memory_request": "200Mi"
+        },
+        "env_vars": [
+          {"name": "LOG_LEVEL", "value": "DEBUG"},
+          {
+            "name": "STANDARD_TRANSFORMER_CONFIG",
+            "value": "{\"transformerConfig\":{\"feast\":[{\"project\":\"default\",\"entities\":[{\"name\":\"merchant_id\",\"valueType\":\"STRING\",\"jsonPath\":\"$.merchants[*].id\"}],\"features\":[{\"name\":\"merchant_t1_discovery:t1_estimate\",\"valueType\":\"DOUBLE\",\"defaultValue\":\"0\"}]}]}}"
+          },
+          {"name": "FEAST_FEATURE_STATUS_MONITORING_ENABLED", "value": "true"},
+          {"name": "FEAST_FEATURE_VALUE_MONITORING_ENABLED", "value": "true"}
+        ],
+        "created_at": "2021-02-05T05:26:42.759879Z",
+        "updated_at": "2021-07-22T08:13:38.013914Z"
+      },
+      "logger": {
+        "model": {"enabled": true, "mode": "all"},
+        "transformer": null
+      },
+      "deployment_mode": "serverless",
+      "autoscaling_policy": null,
+      "protocol": "",
+      "created_at": "2021-02-05T05:26:42.768235Z",
+      "updated_at": "2021-07-22T08:13:38.012912Z"
+    }
+  ],
+  "properties": null,
+  "labels": null,
+  "python_version": "3.7.*",
+  "custom_predictor": null,
+  "created_at": "2021-02-05T05:26:38.212696Z",
+  "updated_at": "2021-02-05T05:26:38.212696Z"
+}
