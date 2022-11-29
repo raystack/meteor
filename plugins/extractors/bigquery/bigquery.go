@@ -200,7 +200,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 		}
 
 		if IsExcludedTable(ds.DatasetID, table.TableID, e.config.Exclude.Tables) {
-			e.logger.Debug(fmt.Sprintf("excluding table from bigquery extract: %v.%v", ds.DatasetID, table.TableID))
+			e.logger.Debug("excluding table from bigquery extract", "dataset_id", ds.DatasetID, "table_id", table.TableID)
 			continue
 		}
 
