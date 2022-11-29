@@ -158,7 +158,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			return errors.Wrap(err, "failed to fetch dataset")
 		}
 		if IsExcludedDataset(ds.DatasetID, e.config.Exclude.Datasets) {
-			e.logger.Debug(fmt.Sprintf("excluding dataset from bigquery extract: %v", ds.DatasetID))
+			e.logger.Debug("excluding dataset from bigquery extract", "dataset_id", ds.DatasetID)
 			continue
 		}
 		e.extractTable(ctx, ds, emit)
