@@ -176,7 +176,7 @@ func (e *Extractor) startWorkers(
 func (e *Extractor) extractProject(ctx context.Context, prj merlin.Project, emit plugins.Emit) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			e.logger.Error("panic recovered")
+			e.logger.Error("panic recovered", "err", r)
 			e.logger.Info(string(debug.Stack()))
 			if e, ok := r.(error); ok {
 				err = fmt.Errorf("extract project '%d': panic: %w", prj.ID, e)
