@@ -130,14 +130,15 @@ func (s *stream) Close() {
 	}
 }
 
-func (s *stream) runMiddlewares(d models.Record) (res models.Record, err error) {
-	res = d
+func (s *stream) runMiddlewares(d models.Record) (models.Record, error) {
+	res := d
 	for _, middleware := range s.middlewares {
-		res, err = middleware(d)
+		var err error
+		res, err = middleware(res)
 		if err != nil {
-			return
+			return models.Record{}, err
 		}
 	}
 
-	return
+	return res, nil
 }
