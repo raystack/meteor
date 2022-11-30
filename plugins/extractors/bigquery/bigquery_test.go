@@ -53,3 +53,108 @@ func TestInit(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to decode base64 service account")
 	})
 }
+
+func TestIsExcludedTable(t *testing.T) {
+	type args struct {
+		datasetID      string
+		tableID        string
+		excludedTables []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "should return false when excluded table list is nil",
+			args: args{
+				datasetID:      "dataset_a",
+				tableID:        "table_b",
+				excludedTables: nil,
+			},
+			want: false,
+		},
+		{
+			name: "should return false when excluded table list is empty",
+			args: args{
+				datasetID:      "dataset_a",
+				tableID:        "table_b",
+				excludedTables: []string{},
+			},
+			want: false,
+		},
+		{
+			name: "should return false if table is not in excluded list",
+			args: args{
+				datasetID:      "dataset_a",
+				tableID:        "table_b",
+				excludedTables: []string{"ds1.table1", "playground.test_weekly"},
+			},
+			want: false,
+		},
+		{
+			name: "should return true if table is in excluded list",
+			args: args{
+				datasetID:      "dataset_a",
+				tableID:        "table_b",
+				excludedTables: []string{"ds1.table1", "playground.test_weekly", "dataset_a.table_b"},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, bigquery.IsExcludedTable(tt.args.datasetID, tt.args.tableID, tt.args.excludedTables), "IsExcludedTable(%v, %v, %v)", tt.args.datasetID, tt.args.tableID, tt.args.excludedTables)
+		})
+	}
+}
+
+func TestIsExcludedDataset(t *testing.T) {
+	type args struct {
+		datasetID        string
+		excludedDatasets []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "should return false is list is empty",
+			args: args{
+				datasetID:        "dataset_a",
+				excludedDatasets: []string{},
+			},
+			want: false,
+		},
+		{
+			name: "should return false is list is nil",
+			args: args{
+				datasetID:        "dataset_a",
+				excludedDatasets: nil,
+			},
+			want: false,
+		},
+		{
+			name: "should return false is dataset is not in excluded list",
+			args: args{
+				datasetID:        "dataset_a",
+				excludedDatasets: []string{"dataset_b", "dataset_c"},
+			},
+			want: false,
+		},
+		{
+			name: "should return true is dataset is in excluded list",
+			args: args{
+				datasetID:        "dataset_a",
+				excludedDatasets: []string{"dataset_a", "dataset_b", "dataset_c"},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, bigquery.IsExcludedDataset(tt.args.datasetID, tt.args.excludedDatasets), "IsExcludedDataset(%v, %v)", tt.args.datasetID, tt.args.excludedDatasets)
+		})
+	}
+}

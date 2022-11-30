@@ -5,6 +5,7 @@ import (
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"strings"
 	"sync"
@@ -36,11 +37,19 @@ type Config struct {
 	ServiceAccountJSON   string   `mapstructure:"service_account_json"`
 	MaxPageSize          int      `mapstructure:"max_page_size"`
 	TablePattern         string   `mapstructure:"table_pattern"`
+	Exclude              Exclude  `mapstructure:"exclude"`
 	IncludeColumnProfile bool     `mapstructure:"include_column_profile"`
 	MaxPreviewRows       int      `mapstructure:"max_preview_rows" default:"30"`
 	IsCollectTableUsage  bool     `mapstructure:"collect_table_usage" default:"false"`
 	UsagePeriodInDay     int64    `mapstructure:"usage_period_in_day" default:"7"`
 	UsageProjectIDs      []string `mapstructure:"usage_project_ids"`
+}
+
+type Exclude struct {
+	// list of datasetIDs
+	Datasets []string `mapstructure:"datasets"`
+	// list of tableNames in format - datasetID.tableID
+	Tables []string `mapstructure:"tables"`
 }
 
 const (
@@ -50,6 +59,12 @@ const (
 var sampleConfig = `
 project_id: google-project-id
 table_pattern: gofood.fact_
+exclude:
+  datasets:
+	- dataset_a
+	- dataset_b
+  tables:
+	- dataset_c.table_a
 max_page_size: 100
 include_column_profile: true
 # Only one of service_account_base64 / service_account_json is needed. 
@@ -142,6 +157,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		if err != nil {
 			return errors.Wrap(err, "failed to fetch dataset")
 		}
+		if IsExcludedDataset(ds.DatasetID, e.config.Exclude.Datasets) {
+			e.logger.Debug("excluding dataset from bigquery extract", "dataset_id", ds.DatasetID)
+			continue
+		}
 		e.extractTable(ctx, ds, emit)
 	}
 
@@ -177,6 +196,11 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 			break
 		} else if err != nil {
 			e.logger.Error("failed to get table, skipping table", "err", err)
+			continue
+		}
+
+		if IsExcludedTable(ds.DatasetID, table.TableID, e.config.Exclude.Tables) {
+			e.logger.Debug("excluding table from bigquery extract", "dataset_id", ds.DatasetID, "table_id", table.TableID)
 			continue
 		}
 
@@ -311,7 +335,14 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	tempRows := []interface{}{}
 	totalRows := 0
 	ri := t.Read(ctx)
-	ri.PageInfo().MaxSize = e.getMaxPageSize()
+	// fetch only the required amount of rows
+	maxPageSize := e.getMaxPageSize()
+	if maxPageSize > e.config.MaxPreviewRows {
+		ri.PageInfo().MaxSize = e.config.MaxPreviewRows
+	} else {
+		ri.PageInfo().MaxSize = maxPageSize
+	}
+
 	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
 		err = ri.Next(&row)
@@ -444,6 +475,27 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 	default:
 		return "NULLABLE"
 	}
+}
+
+func IsExcludedDataset(datasetID string, excludedDatasets []string) bool {
+	for _, d := range excludedDatasets {
+		if datasetID == d {
+			return true
+		}
+	}
+
+	return false
+}
+
+func IsExcludedTable(datasetID, tableID string, excludedTables []string) bool {
+	tableName := fmt.Sprintf("%s.%s", datasetID, tableID)
+	for _, t := range excludedTables {
+		if tableName == t {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getMaxPageSize returns max_page_size if configured in recipe, otherwise returns default value
