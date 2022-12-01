@@ -54,7 +54,7 @@ func TestInit(t *testing.T) {
 	})
 }
 
-func TestMain(t *testing.T) {
+func TestSink(t *testing.T) {
 	t.Run("should return no error with for valid ndjson config", func(t *testing.T) {
 		assert.NoError(t, sinkValidSetup(t, validConfig))
 	})
@@ -83,11 +83,15 @@ func TestMain(t *testing.T) {
 }
 
 func sinkInvalidPath(t *testing.T, config map[string]interface{}) error {
+	t.Helper()
+
 	fileSink := f.New(testUtils.Logger)
 	return fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 }
 
 func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
+	t.Helper()
+
 	fileSink := f.New(testUtils.Logger)
 	err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 	assert.NoError(t, err)
@@ -97,6 +101,8 @@ func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
 }
 
 func getExpectedVal(t *testing.T) []models.Record {
+	t.Helper()
+	
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
