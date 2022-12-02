@@ -19,6 +19,7 @@ type stream struct {
 	middlewares []streamMiddleware
 	subscribers []*subscriber
 	onCloses    []func()
+	mu          sync.Mutex
 	closed      bool
 	err         error
 }
@@ -29,7 +30,7 @@ func newStream() *stream {
 
 // subscribe() will register callback with a batch size to the emitter.
 // Calling this will not start listening yet, use broadcast() to start sending data to subscriber.
-func (s *stream) subscribe(callback func(batchedData []models.Record) error, batchSize int) *stream {
+func (s *stream) subscribe(callback func(batch []models.Record) error, batchSize int) *stream {
 	s.subscribers = append(s.subscribers, &subscriber{
 		callback:  callback,
 		batchSize: batchSize,
@@ -50,8 +51,8 @@ func (s *stream) onClose(callback func()) *stream {
 // This process is blocking, so most times you would want to call this inside a goroutine.
 func (s *stream) broadcast() error {
 	var wg sync.WaitGroup
+	wg.Add(len(s.subscribers))
 	for _, l := range s.subscribers {
-		wg.Add(1)
 		go func(l *subscriber) {
 			defer func() {
 				if r := recover(); r != nil {
@@ -92,8 +93,7 @@ func (s *stream) broadcast() error {
 func (s *stream) push(data models.Record) {
 	data, err := s.runMiddlewares(data)
 	if err != nil {
-		s.err = errors.Wrap(err, "emitter: error running middleware")
-		s.Close()
+		s.closeWithError(errors.Wrap(err, "emitter: error running middleware"))
 		return
 	}
 
@@ -110,12 +110,17 @@ func (s *stream) setMiddleware(m streamMiddleware) *stream {
 }
 
 func (s *stream) closeWithError(err error) {
+	s.mu.Lock()
 	s.err = err
+	s.mu.Unlock()
 	s.Close()
 }
 
 // Close the emitter and signalling all subscriber of the event.
 func (s *stream) Close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.closed {
 		return
 	}
