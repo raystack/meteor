@@ -11,8 +11,8 @@ import (
 
 var (
 	emptyConfigPath = ""
-	username        = "admin"
-	password        = "1234"
+	username        = "johnsmith@abc.com"
+	password        = "TempPa$sword"
 )
 
 func TestReaderRead(t *testing.T) {
@@ -307,6 +307,8 @@ func TestReaderRead(t *testing.T) {
 }
 
 func compareRecipes(t *testing.T, expected, actual recipe.Recipe) {
+	t.Helper()
+
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, len(expected.Sinks), len(actual.Sinks))
 	assert.Equal(t, len(expected.Processors), len(actual.Processors))
