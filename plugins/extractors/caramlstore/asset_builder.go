@@ -83,17 +83,11 @@ func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.Fe
 			return nil, fmt.Errorf("entity '%s' not found in project '%s", e, b.project)
 		}
 
-		labels := map[string]string{
-			"value_type":  entity.Spec.ValueType.String(),
-			"description": entity.Spec.Description,
-		}
-		for k, v := range entity.Spec.Labels {
-			labels[k] = v
-		}
-
 		entities = append(entities, &v1beta2.FeatureTable_Entity{
-			Name:   entity.Spec.Name,
-			Labels: labels,
+			Name:        entity.Spec.Name,
+			Description: entity.Spec.Description,
+			Type:        entity.Spec.ValueType.String(),
+			Labels:      entity.Spec.Labels,
 		})
 	}
 

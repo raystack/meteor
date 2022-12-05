@@ -10,10 +10,8 @@
       "entities": [
         {
           "name": "merchant_uuid",
-          "labels": {
-            "description": "merchant uuid",
-            "value_type": "STRING"
-          }
+          "description": "merchant uuid",
+          "type": "STRING"
         }
       ],
       "features": [
@@ -98,10 +96,8 @@
       "entities": [
         {
           "name": "merchant_uuid",
-          "labels": {
-            "description": "merchant uuid",
-            "value_type": "STRING"
-          }
+          "description": "merchant uuid",
+          "type": "STRING"
         }
       ],
       "features": [
@@ -146,10 +142,8 @@
       "entities": [
         {
           "name": "merchant_uuid",
-          "labels": {
-            "description": "merchant uuid",
-            "value_type": "STRING"
-          }
+          "description": "merchant uuid",
+          "type": "STRING"
         }
       ],
       "features": [
@@ -234,10 +228,8 @@
       "entities": [
         {
           "name": "merchant_uuid",
-          "labels": {
-            "description": "merchant uuid",
-            "value_type": "STRING"
-          }
+          "description": "merchant uuid",
+          "type": "STRING"
         }
       ],
       "features": [
