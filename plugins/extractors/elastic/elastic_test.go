@@ -240,7 +240,7 @@ func getExpectedVal(t *testing.T) []models.Record {
 
 func matchRecords(t *testing.T, expected, actual []models.Record) {
 	if actual[0].Data().Name == "index2" {
-		//swap index order
+		// swap index order
 		temp := actual[0]
 		actual[0] = actual[1]
 		actual[1] = temp

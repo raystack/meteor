@@ -21,15 +21,17 @@ copy-config:
 test:
 	go test ./... -coverprofile=coverage.out
 
-test-coverage: test
-	go tool cover -html=coverage.out
-
 test-e2e:
 	go test ./test/e2e -tags=integration -count=1
 
 test-plugins:
 	@echo " > Testing plugins with tag 'plugins'"
-	go test ./plugins... -tags=plugins -count=1
+	go test ./plugins... -tags=plugins -coverprofile=coverage-plugins.out -parallel=1
+
+test-coverage: # test test-plugins
+	cp coverage.out coverage-all.out
+	tail -n +2 coverage-plugins.out >> coverage-all.out
+	go tool cover -html=coverage-all.out
 
 generate-proto: ## regenerate protos
 	@echo " > cloning protobuf from odpf/proton"
