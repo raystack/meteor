@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -52,8 +53,8 @@ func New(logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
+func (s *Sink) Init(ctx context.Context, config plugins.Config) (error) {
+	if err := s.BasePlugin.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -62,53 +63,53 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 	}
 
 	s.format = s.config.Format
+	var (
+		f   *os.File
+		err error
+	)
 	if s.config.Overwrite {
-		s.File, err = os.Create(s.config.Path)
-		return err
+		f, err = os.Create(s.config.Path)
+	} else {
+		f, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	}
-	s.File, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return err
 	}
-	return
+
+	s.File = f
+	return nil
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	var data []*assetsv1beta2.Asset
+	data := make([]*assetsv1beta2.Asset, 0, len(batch))
 	for _, record := range batch {
 		data = append(data, record.Data())
 	}
+
 	if s.format == "ndjson" {
-		err := s.ndjsonOut(data)
-		if err != nil {
-			return err
-		}
-		return nil
+		return s.ndjsonOut(data)
 	}
-	err = s.yamlOut(data)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return s.yamlOut(data)
 }
 
 func (s *Sink) Close() (err error) {
-	// return s.File.Close()
-	return nil
+	return s.File.Close()
 }
 
 func (s *Sink) ndjsonOut(data []*assetsv1beta2.Asset) error {
-	result := ""
+	var result bytes.Buffer
 	for _, asset := range data {
 		jsonBytes, err := models.ToJSON(asset)
 		if err != nil {
 			return fmt.Errorf("error marshaling asset (%s): %w", asset.Urn, err)
 		}
 
-		result += string(jsonBytes) + "\n"
+		result.Write(jsonBytes)
+		result.WriteRune('\n')
 	}
 
-	if err := s.writeBytes([]byte(result)); err != nil {
+	if err := s.writeBytes(result.Bytes()); err != nil {
 		return fmt.Errorf("error writing to file: %w", err)
 	}
 
@@ -120,16 +121,13 @@ func (s *Sink) yamlOut(data []*assetsv1beta2.Asset) error {
 	if err != nil {
 		return err
 	}
-	err = s.writeBytes(ymlByte)
-	return err
+	
+	return s.writeBytes(ymlByte)
 }
 
 func (s *Sink) writeBytes(b []byte) error {
 	_, err := s.File.Write(b)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Sink) validateFilePath(path string) error {

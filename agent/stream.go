@@ -20,6 +20,7 @@ type stream struct {
 	subscribers []*subscriber
 	onCloses    []func()
 	mu          sync.Mutex
+	shutdown    bool
 	closed      bool
 	err         error
 }
@@ -116,8 +117,24 @@ func (s *stream) closeWithError(err error) {
 	s.Close()
 }
 
+func (s *stream) Shutdown() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.shutdown {
+		return
+	}
+
+	for _, l := range s.subscribers {
+		close(l.channel)
+	}
+	s.shutdown = true
+}
+
 // Close the emitter and signalling all subscriber of the event.
 func (s *stream) Close() {
+	s.Shutdown()
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -125,14 +142,10 @@ func (s *stream) Close() {
 		return
 	}
 
-	for _, l := range s.subscribers {
-		close(l.channel)
-	}
-	s.closed = true
-
 	for _, onClose := range s.onCloses {
 		onClose()
 	}
+	s.closed = true
 }
 
 func (s *stream) runMiddlewares(d models.Record) (models.Record, error) {

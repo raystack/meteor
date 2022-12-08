@@ -174,12 +174,13 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 				r.logger.Info(string(debug.Stack()))
 				run.Error = fmt.Errorf("agent run: close stream: panic: %s", rcvr)
 			}
-			stream.Close()
+			stream.Shutdown()
 		}()
 		if err := runExtractor(); err != nil {
 			run.Error = errors.Wrap(err, "failed to run extractor")
 		}
 	}()
+	defer stream.Close()
 
 	// start listening.
 	// this process is blocking
@@ -270,8 +271,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return nil
 	}, defaultBatchSize)
 
-	// TODO: the sink closes even though some records remain unpublished
-	// TODO: once fixed, file sink's Close needs to close *File
 	stream.onClose(func() {
 		if err := sink.Close(); err != nil {
 			r.logger.Warn("error closing sink", "sink", sr.Name, "error", err)

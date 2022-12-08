@@ -22,6 +22,7 @@ import (
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	_ "github.com/odpf/meteor/plugins/extractors" // populate extractors registry
 	_ "github.com/odpf/meteor/plugins/processors" // populate processors registry
+	_ "github.com/odpf/meteor/plugins/sinks"      // populate sinks registry
 )
 
 var (
@@ -862,6 +863,36 @@ func TestAgentRun(t *testing.T) {
 		utils.AssertEqualProto(t, expected, records[0].Data())
 	})
 
+	t.Run("should close stream after sink finishes writing records", func(t *testing.T) {
+		r := agent.NewAgent(agent.Config{
+			ExtractorFactory: registry.Extractors,
+			ProcessorFactory: registry.Processors,
+			SinkFactory:      registry.Sinks,
+			Logger:           utils.Logger,
+			StopOnSinkError:  true,
+		})
+
+		run := r.Run(ctx, recipe.Recipe{
+			Name:    "sink_close-test",
+			Version: "v1beta1",
+			Source: recipe.PluginRecipe{
+				Name:  "application_yaml",
+				Scope: "application-test",
+				Config: map[string]interface{}{
+					"file": "../plugins/extractors/application_yaml/testdata/application.detailed.yaml",
+				},
+			},
+			Sinks: []recipe.PluginRecipe{{
+				Name: "file",
+				Config: map[string]interface{}{
+					"path":      "./application_yaml-sink[yaml].out",
+					"format":    "yaml",
+					"overwrite": true,
+				},
+			}},
+		})
+		assert.NoError(t, run.Error)
+	})
 }
 
 func TestAgentRunMultiple(t *testing.T) {
