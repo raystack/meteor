@@ -91,6 +91,6 @@ Refer to
 the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
 for information on contributing to this module.
 
-[proton-asset]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/asset.proto#L14
+[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
 
-[proton-application]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/application.proto#L11
+[proton-application]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/application.proto#L11

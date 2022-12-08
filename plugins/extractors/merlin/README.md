@@ -116,10 +116,10 @@ for information on contributing to this module.
 
 [google-default-auth]: https://cloud.google.com/docs/authentication/production#automatically
 
-[proton-asset]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/asset.proto#L14
+[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
 
-[proton-model]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/model.proto#L73
+[proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L73
 
-[proton-modelversion]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/model.proto#L31
+[proton-modelversion]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L31
 
 [caraml-store]: https://github.com/caraml-dev/caraml-store

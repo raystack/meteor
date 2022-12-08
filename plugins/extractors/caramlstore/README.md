@@ -64,5 +64,5 @@ for information on contributing to this module.
 
 [caraml-store]: https://github.com/caraml-dev/caraml-store
 [coreservice.proto]: https://github.com/caraml-dev/caraml-store/blob/v0.1.1/caraml-store-protobuf/src/main/proto/feast/core/CoreService.proto#L12
-[proton-asset]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/asset.proto#L14
-[proton-featuretable]: https://github.com/odpf/proton/blob/5267e1f/odpf/assets/v1beta2/feature_table.proto#L32
+[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
+[proton-featuretable]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/feature_table.proto#L32
