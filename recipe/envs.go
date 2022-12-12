@@ -39,7 +39,7 @@ func populateDataFromLocal() map[string]string {
 	for _, envvar := range os.Environ() {
 		keyval := strings.SplitN(envvar, "=", 2) // "sampleKey=sample=Value" returns ["sampleKey", "sample=value"]
 		key := keyval[0]
-		val := os.ExpandEnv(keyval[1])
+		val := keyval[1]
 
 		key, ok := mapToMeteorKey(key)
 		if !ok {
