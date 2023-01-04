@@ -253,6 +253,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		if err != nil {
 			e.logger.Warn("error building preview", "err", err, "table", tableFQN)
 		}
+
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
@@ -306,14 +307,19 @@ func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata
 }
 
 func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) (col *v1beta2.Column) {
+	attributesMap := map[string]interface{}{
+		"mode": e.getColumnMode(field),
+	}
+	if len(e.getPolicyTagList(field)) > 0 {
+		attributesMap["policy_tags"] = e.getPolicyTagList(field)
+	}
+
 	col = &v1beta2.Column{
 		Name:        field.Name,
 		Description: field.Description,
 		DataType:    string(field.Type),
 		IsNullable:  !(field.Required || field.Repeated),
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"mode": e.getColumnMode(field),
-		}),
+		Attributes:  utils.TryParseMapToProto(attributesMap),
 	}
 
 	if e.config.IncludeColumnProfile {
@@ -475,6 +481,13 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 	default:
 		return "NULLABLE"
 	}
+}
+
+func (e *Extractor) getPolicyTagList(col *bigquery.FieldSchema) []string {
+	if col.PolicyTags == nil {
+		return []string{}
+	}
+	return col.PolicyTags.Names
 }
 
 func IsExcludedDataset(datasetID string, excludedDatasets []string) bool {
