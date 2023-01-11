@@ -73,15 +73,6 @@ func New(logger log.Logger) *Extractor {
 	return &e
 }
 
-// Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	if err := e.BaseExtractor.Init(ctx, config); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	tmpl, err := template.ParseFiles(e.config.File)
 	if err != nil {

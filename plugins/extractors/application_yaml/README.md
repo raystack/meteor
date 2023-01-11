@@ -18,7 +18,7 @@ source:
 | Key          | Value    | Example           | Description                                                                                                            | Required? |
 |:-------------|:---------|:------------------|:-----------------------------------------------------------------------------------------------------------------------|:----------|
 | `file`       | `string` | `meteor.app.yaml` | File path of `application.yaml`                                                                                        | ✅         |
-| `env_prefix` | `string` | `CI`              | Prefix for environment variables. These are made available as variables in `application.yaml` with the prefix trimmed. | ❌         |
+| `env_prefix` | `string` | `CI`              | Prefix for environment variables. These are made available as variables in `application.yaml` with the prefix trimmed. | ✘         |
 
 ### `application.yaml` format
 
