@@ -2,10 +2,12 @@ package kafka
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	_ "embed" // used to print the embedded assets
-
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"os"
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -27,7 +29,29 @@ var defaultTopics = map[string]byte{
 
 // Config holds the set of configuration for the kafka extractor
 type Config struct {
-	Broker string `mapstructure:"broker" validate:"required"`
+	Broker string     `mapstructure:"broker" validate:"required"`
+	Auth   AuthConfig `mapstructure:"auth_config"`
+}
+
+type AuthConfig struct {
+	TLS struct {
+		// Whether to use TLS when connecting to the broker
+		// (defaults to false).
+		Enabled bool `mapstructure:"enabled"`
+
+		// controls whether a client verifies the server's certificate chain and host name
+		// defaults to false
+		InsecureSkipVerify bool `mapstructure:"insecure_skip_verify"`
+
+		// certificate file for client authentication
+		CertFile *string `mapstructure:"cert_file"`
+
+		// key file for client authentication
+		KeyFile *string `mapstructure:"key_file"`
+
+		// certificate authority file for TLS client authentication
+		CAFile *string `mapstructure:"ca_file"`
+	} `mapstructure:"tls"`
 }
 
 var sampleConfig = `broker: "localhost:9092"`
@@ -65,8 +89,20 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
+	// create default dialer
+	dialer := kafka.DefaultDialer
+
+	if e.config.Auth.TLS.Enabled {
+		tlsConfig, err := e.createTLSConfig()
+		if err != nil {
+			return errors.Wrap(err, "failed to create tls config")
+		}
+
+		dialer.TLS = tlsConfig
+	}
+
 	// create connection
-	e.conn, err = kafka.Dial("tcp", e.config.Broker)
+	e.conn, err = dialer.Dial("tcp", e.config.Broker)
 	if err != nil {
 		return errors.Wrap(err, "failed to create connection")
 	}
@@ -112,6 +148,36 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	return
+}
+
+func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
+	tlsConfig = &tls.Config{
+		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
+	}
+
+	authConfig := e.config.Auth.TLS
+	if *authConfig.CertFile != "" && *authConfig.KeyFile != "" && *authConfig.CAFile != "" {
+		cert, err := tls.LoadX509KeyPair(*authConfig.CertFile, *authConfig.KeyFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to create cert")
+		}
+
+		caCert, err := os.ReadFile(*authConfig.CAFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read ca cert file")
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		tlsConfig = &tls.Config{
+			Certificates:       []tls.Certificate{cert},
+			RootCAs:            caCertPool,
+			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
+		}
+	}
+
+	return tlsConfig, nil
 }
 
 // Build topic metadata model using a topic and number of partitions
