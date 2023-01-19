@@ -3,11 +3,11 @@ module github.com/odpf/meteor
 go 1.16
 
 require (
-	cloud.google.com/go v0.103.0 // indirect
-	cloud.google.com/go/bigquery v1.8.0
+	cloud.google.com/go/bigquery v1.44.0
 	cloud.google.com/go/bigtable v1.10.1
-	cloud.google.com/go/logging v1.4.2
-	cloud.google.com/go/storage v1.24.0
+	cloud.google.com/go/datacatalog v1.10.0
+	cloud.google.com/go/logging v1.6.1
+	cloud.google.com/go/storage v1.27.0
 	github.com/AlecAivazis/survey/v2 v2.3.2
 	github.com/ClickHouse/clickhouse-go v1.4.5
 	github.com/MakeNowJust/heredoc v1.0.0
@@ -32,7 +32,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v37 v37.0.0
 	github.com/gopherjs/gopherjs v0.0.0-20210503212227-fb464eba2686 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -59,7 +59,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.11.0
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.1
 	github.com/subosito/gotenv v1.4.0 // indirect
 	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.mongodb.org/mongo-driver v1.7.0
@@ -67,13 +67,12 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462 // indirect
-	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
+	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/sys v0.0.0-20220730100132-1609e554cd39 // indirect
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467 // indirect
-	google.golang.org/api v0.90.0
-	google.golang.org/genproto v0.0.0-20220728213248-dd149ef739b9
-	google.golang.org/grpc v1.48.0
+	google.golang.org/api v0.107.0
+	google.golang.org/genproto v0.0.0-20230113154510-dbe35b8444a5
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1

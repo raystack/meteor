@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
@@ -11,6 +12,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/bigquery"
+	datacatalog "cloud.google.com/go/datacatalog/apiv1"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -95,10 +97,11 @@ var info = plugins.Info{
 // Extractor manages the communication with the bigquery service
 type Extractor struct {
 	plugins.BaseExtractor
-	logger    log.Logger
-	client    *bigquery.Client
-	config    Config
-	galClient *auditlog.AuditLog
+	logger          log.Logger
+	client          *bigquery.Client
+	config          Config
+	galClient       *auditlog.AuditLog
+	policyTagClient *datacatalog.PolicyTagManagerClient
 }
 
 func New(logger log.Logger) *Extractor {
@@ -138,6 +141,11 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		if errL != nil {
 			e.logger.Error("failed to create google audit log client", "err", errL)
 		}
+	}
+
+	e.policyTagClient, err = e.createPolicyTagClient(ctx)
+	if err != nil {
+		e.logger.Error("failed to create policy tag manager client", "err", err)
 	}
 
 	return
@@ -184,6 +192,15 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 	}
 
 	return bigquery.NewClient(ctx, e.config.ProjectID, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+}
+
+func (e *Extractor) createPolicyTagClient(ctx context.Context) (*datacatalog.PolicyTagManagerClient, error) {
+	policyManager, err := datacatalog.NewPolicyTagManagerClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+	if err != nil {
+		return nil, err
+	}
+
+	return policyManager, nil
 }
 
 // Create big query client
@@ -310,8 +327,10 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	attributesMap := map[string]interface{}{
 		"mode": e.getColumnMode(field),
 	}
-	if len(e.getPolicyTagList(field)) > 0 {
-		attributesMap["policy_tags"] = e.getPolicyTagList(field)
+
+	colPolicyTags := e.getPolicyTagList(ctx, field)
+	if len(colPolicyTags) > 0 {
+		attributesMap["policy_tags"] = colPolicyTags
 	}
 
 	col = &v1beta2.Column{
@@ -483,11 +502,29 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 	}
 }
 
-func (e *Extractor) getPolicyTagList(col *bigquery.FieldSchema) []string {
+func (e *Extractor) getPolicyTagList(ctx context.Context, col *bigquery.FieldSchema) []interface{} {
+	pt := make([]string, 0)
 	if col.PolicyTags == nil {
-		return []string{}
+		return nil
 	}
-	return col.PolicyTags.Names
+	for _, name := range col.PolicyTags.Names {
+		if e.policyTagClient != nil {
+			policyTag, err := e.policyTagClient.GetPolicyTag(ctx, &datacatalogpb.GetPolicyTagRequest{Name: name})
+			if err != nil {
+				e.logger.Error("error fetching policy_tag", "policy_tag", name, "err", err)
+			} else {
+				pt = append(pt, fmt.Sprintf("policy_tag:%s:%s", policyTag.DisplayName, policyTag.Name))
+			}
+		}
+	}
+
+	// convert to []interface{}, so that it can be constructed into a proto
+	ptSlice := make([]interface{}, len(pt))
+	for i, s := range pt {
+		ptSlice[i] = s
+	}
+
+	return ptSlice
 }
 
 func IsExcludedDataset(datasetID string, excludedDatasets []string) bool {
