@@ -503,28 +503,22 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 }
 
 func (e *Extractor) getPolicyTagList(ctx context.Context, col *bigquery.FieldSchema) []interface{} {
-	pt := make([]string, 0)
-	if col.PolicyTags == nil {
+	if col.PolicyTags == nil || e.policyTagClient == nil {
 		return nil
 	}
+
+	pt := make([]interface{}, 0, len(col.PolicyTags.Names))
 	for _, name := range col.PolicyTags.Names {
-		if e.policyTagClient != nil {
-			policyTag, err := e.policyTagClient.GetPolicyTag(ctx, &datacatalogpb.GetPolicyTagRequest{Name: name})
-			if err != nil {
-				e.logger.Error("error fetching policy_tag", "policy_tag", name, "err", err)
-			} else {
-				pt = append(pt, fmt.Sprintf("policy_tag:%s:%s", policyTag.DisplayName, policyTag.Name))
-			}
+		policyTag, err := e.policyTagClient.GetPolicyTag(ctx, &datacatalogpb.GetPolicyTagRequest{Name: name})
+		if err != nil {
+			e.logger.Error("error fetching policy_tag", "policy_tag", name, "err", err)
+			continue
 		}
+
+		pt = append(pt, fmt.Sprintf("policy_tag:%s:%s", policyTag.DisplayName, policyTag.Name))
 	}
 
-	// convert to []interface{}, so that it can be constructed into a proto
-	ptSlice := make([]interface{}, len(pt))
-	for i, s := range pt {
-		ptSlice[i] = s
-	}
-
-	return ptSlice
+	return pt
 }
 
 func IsExcludedDataset(datasetID string, excludedDatasets []string) bool {
