@@ -181,6 +181,17 @@ func TestAsMap(t *testing.T) {
 	}
 }
 
+func TestAsStructWithTag(t *testing.T) {
+	type V struct {
+		Duration time.Duration `myspltag:"duration"`
+	}
+	input := map[string]interface{}{"duration": "5s"}
+	var v V
+	err := AsStructWithTag("myspltag", input, &v)
+	assert.NoError(t, err)
+	assert.Equal(t, V{Duration: time.Second * 5}, v)
+}
+
 func TestAsStruct(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -383,7 +394,7 @@ func TestAsStruct(t *testing.T) {
 				"type":           "table",
 				"data":           map[string]interface{}{},
 			},
-			expected: &v1beta2.Asset{},
+			expected:    &v1beta2.Asset{},
 			expectedErr: "invalid keys: does-not-exist",
 		},
 		{

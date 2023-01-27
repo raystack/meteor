@@ -4,8 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+	"sync"
 
 	"github.com/d5/tengo/v2"
+	"github.com/go-playground/validator/v10"
+	"github.com/mcuadros/go-defaults"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
@@ -15,9 +20,11 @@ import (
 )
 
 func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plugins.Emit) error {
-	s := tengoutil.NewSecureScript(([]byte)(e.config.Script.Source))
-	if err := declareGlobals(s, res, emit); err != nil {
-		return fmt.Errorf("declare globals: %w", err)
+	s, err := tengoutil.NewSecureScript(
+		([]byte)(e.config.Script.Source), e.scriptGlobals(ctx, res, emit),
+	)
+	if err != nil {
+		return err
 	}
 
 	c, err := s.Compile()
@@ -32,8 +39,8 @@ func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plu
 	return nil
 }
 
-func declareGlobals(s *tengo.Script, res interface{}, emit plugins.Emit) error {
-	for name, v := range map[string]interface{}{
+func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plugins.Emit) map[string]interface{} {
+	return map[string]interface{}{
 		"response": res,
 		"new_asset": &tengo.UserFunction{
 			Name:  "new_asset",
@@ -43,18 +50,17 @@ func declareGlobals(s *tengo.Script, res interface{}, emit plugins.Emit) error {
 			Name:  "emit",
 			Value: emitWrapper(emit),
 		},
+		"execute_request": &tengo.UserFunction{
+			Name:  "execute_request",
+			Value: executeRequestWrapper(ctx, e.config.Concurrency, e.executeRequest),
+		},
 		"exit": &tengo.UserFunction{
 			Name: "exit",
 			Value: func(...tengo.Object) (tengo.Object, error) {
 				return nil, errUserExit
 			},
 		},
-	} {
-		if err := s.Add(name, v); err != nil {
-			return fmt.Errorf("declare script globals: %w", err)
-		}
 	}
-	return nil
 }
 
 func newAssetWrapper() tengo.CallableFunc {
@@ -103,6 +109,120 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 	}
 }
 
+func executeRequestWrapper(ctx context.Context, concurrency int, executeRequest executeRequestFunc) tengo.CallableFunc {
+	type job struct {
+		i      int
+		reqCfg RequestConfig
+	}
+	requestsChan := func(ctx context.Context, reqs []RequestConfig) <-chan job {
+		ch := make(chan job)
+
+		go func() {
+			defer close(ch)
+
+			for i, r := range reqs {
+				select {
+				case <-ctx.Done():
+					return
+
+				case ch <- job{i, r}:
+				}
+			}
+		}()
+
+		return ch
+	}
+
+	type result struct {
+		resp interface{}
+		err  error
+	}
+	processJobs := func(ctx context.Context, n int, ch <-chan job) []result {
+		var wg sync.WaitGroup
+		wg.Add(concurrency)
+
+		results := make([]result, n)
+		work := func() {
+			defer wg.Done()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+
+				case j, ok := <-ch:
+					if !ok {
+						return
+					}
+
+					resp, err := executeRequest(ctx, j.reqCfg)
+					if err != nil {
+						results[j.i] = result{err: fmt.Errorf("execute request #%d: %w", j.i, err)}
+						continue
+					}
+
+					results[j.i] = result{resp: resp}
+				}
+			}
+		}
+
+		for i := 0; i < concurrency; i++ {
+			go work()
+		}
+
+		wg.Wait()
+		return results
+	}
+
+	validate := validator.New()
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("mapstructure"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+	return func(args ...tengo.Object) (tengo.Object, error) {
+		if len(args) < 1 {
+			return nil, tengo.ErrWrongNumArguments
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		reqs, err := argsToRequestConfigs(args, validate)
+		if err != nil {
+			return nil, fmt.Errorf("execute request: %w", err)
+		}
+
+		results := processJobs(ctx, len(reqs), requestsChan(ctx, reqs))
+
+		var ret tengo.Array
+		for i, res := range results {
+			if res.err != nil {
+				ret.Value = append(ret.Value, &tengo.Error{
+					Value: &tengo.Map{
+						Value: map[string]tengo.Object{
+							"request": args[i],
+							"error":   &tengo.String{Value: res.err.Error()},
+						},
+					},
+				})
+				continue
+			}
+
+			o, err := tengo.FromInterface(res.resp)
+			if err != nil {
+				return nil, fmt.Errorf("execute request: translate response: %s: %w", args[i], err)
+			}
+
+			ret.Value = append(ret.Value, o)
+		}
+
+		return &ret, nil
+	}
+}
+
 func newAsset(typeURLs map[string]string, typ string) (tengo.Object, error) {
 	u, ok := typeURLs[typ]
 	if !ok {
@@ -119,6 +239,24 @@ func newAsset(typeURLs map[string]string, typ string) (tengo.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func argsToRequestConfigs(args []tengo.Object, validate *validator.Validate) ([]RequestConfig, error) {
+	reqs := make([]RequestConfig, 0, len(args))
+	for _, arg := range args {
+		var r RequestConfig
+		defaults.SetDefaults(&r)
+		if err := structmap.AsStructWithTag("mapstructure", tengo.ToInterface(arg), &r); err != nil {
+			return nil, fmt.Errorf("map arg to request config: %s: %w", arg, err)
+		}
+
+		if err := validate.Struct(r); err != nil {
+			return nil, fmt.Errorf("validate request config: %s, %w", arg, err)
+		}
+
+		reqs = append(reqs, r)
+	}
+	return reqs, nil
 }
 
 func knownTypeURLs() map[string]string {

@@ -70,8 +70,10 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
 		return fmt.Errorf("script processor init: %w", err)
 	}
 
-	s := tengoutil.NewSecureScript(([]byte)(p.config.Script))
-	if err := p.declareGlobals(s); err != nil {
+	s, err := tengoutil.NewSecureScript(([]byte)(p.config.Script), map[string]interface{}{
+		"asset": map[string]interface{}{},
+	})
+	if err != nil {
 		return fmt.Errorf("script processor init: %w", err)
 	}
 
@@ -107,15 +109,4 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 	}
 
 	return models.NewRecord(transformed), nil
-}
-
-func (p *Processor) declareGlobals(s *tengo.Script) error {
-	for name, v := range map[string]interface{}{
-		"asset": map[string]interface{}{},
-	} {
-		if err := s.Add(name, v); err != nil {
-			return fmt.Errorf("declare script globals: %w", err)
-		}
-	}
-	return nil
 }

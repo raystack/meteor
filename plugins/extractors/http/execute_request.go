@@ -7,31 +7,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
-func (e *Extractor) executeRequest(ctx context.Context) (interface{}, error) {
-	cfg := e.config
+type executeRequestFunc func(ctx context.Context, reqCfg RequestConfig) (map[string]interface{}, error)
 
-	ctx, cancel := context.WithTimeout(ctx, cfg.Request.Timeout)
-	defer cancel()
+func makeRequestExecutor(successCodes []int, httpClient *http.Client) executeRequestFunc {
+	return func(ctx context.Context, reqCfg RequestConfig) (map[string]interface{}, error) {
+		ctx, cancel := context.WithTimeout(ctx, reqCfg.Timeout)
+		defer cancel()
 
-	req, err := buildRequest(ctx, cfg)
-	if err != nil {
-		return nil, err
+		req, err := buildRequest(ctx, reqCfg)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := httpClient.Do(req)
+		defer drainBody(resp)
+		if err != nil {
+			return nil, fmt.Errorf("do request: %w", err)
+		}
+
+		return handleResponse(successCodes, resp)
 	}
-
-	resp, err := e.http.Do(req)
-	defer drainBody(resp)
-	if err != nil {
-		return nil, fmt.Errorf("do request: %w", err)
-	}
-
-	return handleResponse(cfg, resp)
 }
 
-func buildRequest(ctx context.Context, cfg Config) (*http.Request, error) {
-	reqCfg := cfg.Request
-
+func buildRequest(ctx context.Context, reqCfg RequestConfig) (*http.Request, error) {
 	body, err := asReader(reqCfg.Body)
 	if err != nil {
 		return nil, fmt.Errorf("encode request body: %w", err)
@@ -72,17 +73,26 @@ func addQueryParams(req *http.Request, params []QueryParam) {
 	req.URL.RawQuery = q.Encode()
 }
 
-func handleResponse(cfg Config, resp *http.Response) (interface{}, error) {
-	if !has(cfg.SuccessCodes, resp.StatusCode) {
+func handleResponse(successCodes []int, resp *http.Response) (map[string]interface{}, error) {
+	if !has(successCodes, resp.StatusCode) {
 		return nil, fmt.Errorf("unsuccessful request: response status code: %d", resp.StatusCode)
 	}
 
-	var res interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+	h := make(map[string]interface{}, len(resp.Header))
+	for k := range resp.Header {
+		h[strings.ToLower(k)] = resp.Header.Get(k)
+	}
+
+	var body interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
-	return res, nil
+	return map[string]interface{}{
+		"status_code": resp.StatusCode,
+		"header":      h,
+		"body":        body,
+	}, nil
 }
 
 func asReader(v interface{}) (io.Reader, error) {
