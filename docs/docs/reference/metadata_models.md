@@ -6,15 +6,15 @@ extractors please visit [here](extractors.md). We are currently using the
 following metadata models:
 
 - [Bucket][proton-bucket]: Used for metadata being extracted from buckets.
-  Buckets are the basic containers in google cloud services, or Amazon S3, etc
-  that are used fot data storage, and quite popular because of their features of
+  Buckets are the basic containers in Google cloud services, or Amazon S3, etc.,
+  that are used for data storage, and quite popular because of their features of
   access management, aggregation of usage and services and ease of
   configurations. Currently, Meteor provides a metadata extractor for the
   buckets mentioned [here](extractors.md#bucket)
 
 - [Dashboard][proton-dashboard]: Dashboards are an essential part of data
-  analysis and are used to track, analyze and visualize. These Dashboard
-  metadata model includes some basic fields like `urn` and `source`, etc and a
+  analysis and are used to track, analyze, and visualize. These Dashboard
+  metadata model includes some basic fields like `urn` and `source`, etc., and a
   list of `Chart`. There are multiple dashboards that are essential for Data
   Analysis such as metabase, grafana, tableau, etc. Please refer to the list of
   'Dashboard' extractors meteor currently
