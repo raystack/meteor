@@ -2,7 +2,6 @@ package gcs
 
 import (
     "context"
-	"fmt"
 	"strings"
 	"time"
 	"encoding/base64"
@@ -125,7 +124,9 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch{
 		data = append(data, record.Data())
    	}
-	s.writeData(data)
+	if err= s.writeData(data); err!=nil{
+		return errors.Wrap(err, "error in writing data to the object")
+	}
 	return nil
 }
 
@@ -134,10 +135,10 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error){
 		jsonBytes, _ := models.ToJSON(asset)
 
 		if _, err := s.writer.Write(jsonBytes); err != nil {
-			fmt.Errorf("error in writing json data to an object %w", err)
+			return errors.Wrap(err,"error in writing json data to an object")
 		}
 		if _,err := s.writer.Write([]byte("\n")); err!=nil{
-			fmt.Errorf("error in writing newline %w", err)
+			return errors.Wrap(err, "error in writing newline")
 		}
 	}
 	return nil
@@ -145,7 +146,7 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error){
 
 func (s *Sink) Close() (err error) { 
 	if err := s.writer.Close(); err != nil {
-		fmt.Errorf("error closing the writer %w", err)
+		return errors.Wrap(err, "error closing the writer")
 	} 
 	return 
 }
