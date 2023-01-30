@@ -21,7 +21,7 @@ sinks:
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "xxxxxxx",
-        "client_x509_cert_url": "xxxxxxx"
+        "client_x509_cert_url": "xxxxxxx",
       }
 ```
 

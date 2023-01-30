@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"encoding/base64"
+	_ "embed"
 
 	"cloud.google.com/go/storage"
 	"github.com/odpf/meteor/models"
@@ -18,6 +19,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+//go:embed README.md
+var summary string
 
 type Config struct {
 	ProjectID          string `mapstructure:"project_id" validate:"required"`
@@ -28,9 +31,25 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description:  "saves blob files to google cloud storage bucket",
+	Description:  "saves data in google cloud storage bucket",
+	Summary:     summary,
 	SampleConfig: heredoc.Doc(`
-	#test output
+	project_id: google-project-id
+	path: bucket_name/target_folder
+	object_prefix : github-users
+	service_account_base64: ____base64_encoded_service_account____
+    service_account_json: |-
+      {
+       "type": "service_account",
+       "private_key_id": "xxxxxxx",
+       "private_key": "xxxxxxx",
+       "client_email": "xxxxxxx",
+       "client_id": "xxxxxxx",
+       "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+       "token_uri": "https://oauth2.googleapis.com/token",
+       "auth_provider_x509_cert_url": "xxxxxxx",
+       "client_x509_cert_url": "xxxxxxx"
+     }
 	`),
 	Tags:         []string{"gcs", "sink"},
 }

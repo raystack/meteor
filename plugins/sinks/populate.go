@@ -8,4 +8,5 @@ import (
 	_ "github.com/odpf/meteor/plugins/sinks/kafka"
 	_ "github.com/odpf/meteor/plugins/sinks/shield"
 	_ "github.com/odpf/meteor/plugins/sinks/stencil"
+	_ "github.com/odpf/meteor/plugins/sinks/gcs"
 )
