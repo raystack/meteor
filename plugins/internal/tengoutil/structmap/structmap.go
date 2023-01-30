@@ -42,12 +42,17 @@ func AsMap(v interface{}) (interface{}, error) {
 }
 
 func AsStruct(input, output interface{}) error {
+	return AsStructWithTag("json", input, output)
+}
+
+func AsStructWithTag(tagName string, input, output interface{}) error {
 	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			checkAssetDataHookFunc(),
 			stringToTimestampHookFunc(time.RFC3339),
 			timeToTimestampHookFunc(),
 			mapstructure.StringToTimeHookFunc(time.RFC3339),
+			mapstructure.StringToTimeDurationHookFunc(),
 			mapToAttributesHookFunc(),
 			mapToAnyPBHookFunc(),
 		),
@@ -55,7 +60,7 @@ func AsStruct(input, output interface{}) error {
 		ErrorUnused:      true,
 		ZeroFields:       true,
 		Result:           output,
-		TagName:          "json",
+		TagName:          tagName,
 	})
 	if err != nil {
 		return fmt.Errorf("structmap: decode into %T: create decoder: %w", output, err)

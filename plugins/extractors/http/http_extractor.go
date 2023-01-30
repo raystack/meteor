@@ -30,21 +30,24 @@ var summary string
 
 // Config holds the set of configuration for the HTTP extractor.
 type Config struct {
-	Request struct {
-		URL         string            `mapstructure:"url" validate:"required,url"`
-		QueryParams []QueryParam      `mapstructure:"query_params" validate:"dive"`
-		Method      string            `mapstructure:"method" validate:"oneof=GET POST" default:"GET"`
-		Headers     map[string]string `mapstructure:"headers"`
-		ContentType string            `mapstructure:"content_type" validate:"required,oneof=application/json"`
-		Accept      string            `mapstructure:"accept" validate:"required,oneof=application/json"`
-		Body        interface{}       `mapstructure:"body"`
-		Timeout     time.Duration     `mapstructure:"timeout" validate:"min=1ms" default:"5s"`
-	} `mapstructure:"request"`
-	SuccessCodes []int `mapstructure:"success_codes" validate:"dive,gte=200,lt=300" default:"[200]"`
+	Request      RequestConfig `mapstructure:"request"`
+	SuccessCodes []int         `mapstructure:"success_codes" validate:"dive,gte=200,lt=300" default:"[200]"`
+	Concurrency  int           `mapstructure:"concurrency" validate:"gte=1,lte=100" default:"5"`
 	Script       struct {
 		Engine string `mapstructure:"engine" validate:"required,oneof=tengo"`
 		Source string `mapstructure:"source" validate:"required"`
 	} `mapstructure:"script"`
+}
+
+type RequestConfig struct {
+	URL         string            `mapstructure:"url" validate:"required,url"`
+	QueryParams []QueryParam      `mapstructure:"query_params" validate:"dive"`
+	Method      string            `mapstructure:"method" validate:"oneof=GET POST" default:"GET"`
+	Headers     map[string]string `mapstructure:"headers"`
+	ContentType string            `mapstructure:"content_type" validate:"required,oneof=application/json"`
+	Accept      string            `mapstructure:"accept" validate:"required,oneof=application/json"`
+	Body        interface{}       `mapstructure:"body"`
+	Timeout     time.Duration     `mapstructure:"timeout" validate:"min=1ms" default:"5s"`
 }
 
 type QueryParam struct {
@@ -83,9 +86,9 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 
-	logger log.Logger
-	config Config
-	http   *http.Client
+	logger         log.Logger
+	config         Config
+	executeRequest executeRequestFunc
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -104,7 +107,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	e.http = &http.Client{}
+	e.executeRequest = makeRequestExecutor(e.config.SuccessCodes, &http.Client{})
 	return nil
 }
 
@@ -112,7 +115,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // executes the script. The script has access to the response and can use the
 // same to 'emit' assets from within the script.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
-	res, err := e.executeRequest(ctx)
+	res, err := e.executeRequest(ctx, e.config.Request)
 	if err != nil {
 		return fmt.Errorf("http extractor: execute request: %w", err)
 	}
