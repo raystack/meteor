@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"embed"
-	"os"
+	_ "embed"
+	"io"
 	"strings"
 	"text/template"
 
@@ -11,10 +11,10 @@ import (
 )
 
 //go:embed recipe.yaml
-var file embed.FS
+var RecipeTemplate string
 
-// templateData represents the template for generating a recipe.
-type templateData struct {
+// TemplateData represents the template for generating a recipe.
+type TemplateData struct {
 	Name    string
 	Version string
 	Source  struct {
@@ -26,7 +26,7 @@ type templateData struct {
 	Processors map[string]string
 }
 
-var templateFuncs = map[string]interface{}{
+var TemplateFuncs = map[string]interface{}{
 	"indent": indent,
 	"rawfmt": rawfmt,
 }
@@ -42,8 +42,8 @@ type RecipeParams struct {
 }
 
 // Recipe checks if the recipe is valid and returns a Template
-func Recipe(p RecipeParams) error {
-	tem := templateData{
+func Recipe(p RecipeParams) (*TemplateData, error) {
+	tem := &TemplateData{
 		Name:    p.Name,
 		Version: recipeVersions[len(recipeVersions)-1],
 	}
@@ -54,7 +54,7 @@ func Recipe(p RecipeParams) error {
 
 		sourceInfo, err := registry.Extractors.Info(p.Source)
 		if err != nil {
-			return errors.Wrap(err, "failed to provide extractor information")
+			return nil, errors.Wrap(err, "failed to provide extractor information")
 		}
 
 		tem.Source.SampleConfig = sourceInfo.SampleConfig
@@ -64,7 +64,7 @@ func Recipe(p RecipeParams) error {
 		for _, sink := range p.Sinks {
 			info, err := registry.Sinks.Info(sink)
 			if err != nil {
-				return errors.Wrap(err, "failed to provide sink information")
+				return nil, errors.Wrap(err, "failed to provide sink information")
 			}
 			tem.Sinks[sink] = info.SampleConfig
 		}
@@ -74,16 +74,25 @@ func Recipe(p RecipeParams) error {
 		for _, procc := range p.Processors {
 			info, err := registry.Processors.Info(procc)
 			if err != nil {
-				return errors.Wrap(err, "failed to provide processor information")
+				return nil, errors.Wrap(err, "failed to provide processor information")
 			}
 			tem.Processors[procc] = info.SampleConfig
 		}
 	}
 
+	return tem, nil
+}
+
+// RecipeWriteTo build and apply recipe to provided io writer
+func RecipeWriteTo(p RecipeParams, writer io.Writer) error {
+	tem, err := Recipe(p)
+	if err != nil {
+		return err
+	}
 	tmpl := template.Must(
-		template.New("recipe.yaml").Funcs(templateFuncs).ParseFS(file, "*"),
+		template.New("recipe.yaml").Funcs(TemplateFuncs).Parse(RecipeTemplate),
 	)
-	if err := tmpl.Execute(os.Stdout, tem); err != nil {
+	if err := tmpl.Execute(writer, *tem); err != nil {
 		return errors.Wrap(err, "failed to execute template")
 	}
 	return nil
