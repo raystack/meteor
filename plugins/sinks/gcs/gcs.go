@@ -7,11 +7,9 @@ import (
 	"encoding/base64"
 	_ "embed"
 
-	"cloud.google.com/go/storage"
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
 	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"google.golang.org/api/option"
 	"github.com/odpf/meteor/registry"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/salt/log"
@@ -56,9 +54,8 @@ var info = plugins.Info{
 type Sink struct {
 	plugins.BasePlugin
 	logger log.Logger
-	client *storage.Client
+	client GCSClient
 	config Config
-	writer *storage.Writer
 }
 
 func New(logger log.Logger) plugins.Syncer {
@@ -75,33 +72,36 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 		return err
 	}
 
-	s.client, err = s.createClient(ctx)
-	if err != nil {
-		return errors.Wrap(err, "failed to create client")
+	if err:= s.validateServiceAccountKey(); err!=nil{
+		return err
 	}
 
-	s.writer = s.createWriter(ctx) 
-	return
+	bucketname, objectname := s.resolveBucketandObjectNames()
+
+	if s.client, err = newGCSClient(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil{
+		return err
+	}
+
+	return nil
 }
 
-func (s *Sink) createClient(ctx context.Context) (*storage.Client, error) {
+func (s *Sink) validateServiceAccountKey() error {
+
 	if s.config.ServiceAccountBase64 == "" && s.config.ServiceAccountJSON == "" {
-		s.logger.Info("credentials are not specified, creating GCS client using default credentials...")
-		return storage.NewClient(ctx)
+		return errors.New("credentials are not specified, failed to create client")
 	}
 
 	if s.config.ServiceAccountBase64 != "" {
 		serviceAccountJSON, err := base64.StdEncoding.DecodeString(s.config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
-			return nil, errors.Wrap(err, "failed to decode base64 service account")
+			return errors.Wrap(err, "failed to decode base64 service account")
 		}
 		s.config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
-
-	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(s.config.ServiceAccountJSON)))
+	return nil
 }
 
-func (s *Sink) createWriter(ctx context.Context) (*storage.Writer){
+func (s *Sink) resolveBucketandObjectNames() (string, string) {
 	dirs := strings.Split(s.config.Path, "/")
 	bucketname := dirs[0]
 	timestamp := time.Now().Format("2006.01.02 15:04:05")
@@ -110,12 +110,12 @@ func (s *Sink) createWriter(ctx context.Context) (*storage.Writer){
 		s.config.ObjectPrefix = s.config.ObjectPrefix+"-"
 	}
 	
-	filepath := s.config.ObjectPrefix + timestamp +".ndjson"
+	objectname := s.config.ObjectPrefix + timestamp +".ndjson"
 	if len(dirs) > 1 {
-	   filepath = dirs[len(dirs)-1] + "/" + s.config.ObjectPrefix + timestamp + ".ndjson"
+	   objectname = dirs[len(dirs)-1] + "/" + s.config.ObjectPrefix + timestamp + ".ndjson"
     }
 
-	return s.client.Bucket(bucketname).Object(filepath).NewWriter(ctx)
+	return bucketname, objectname
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
@@ -134,21 +134,22 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error){
 	for _, asset := range data{	
 		jsonBytes, _ := models.ToJSON(asset)
 
-		if _, err := s.writer.Write(jsonBytes); err != nil {
-			return errors.Wrap(err,"error in writing json data to an object")
+		if err := s.client.WriteData(jsonBytes); err!=nil{
+			return err
 		}
-		if _,err := s.writer.Write([]byte("\n")); err!=nil{
-			return errors.Wrap(err, "error in writing newline")
+	
+		if err := s.client.WriteData([]byte("\n")); err!=nil{
+			return err
 		}
 	}
 	return nil
 }
 
 func (s *Sink) Close() (err error) { 
-	if err := s.writer.Close(); err != nil {
-		return errors.Wrap(err, "error closing the writer")
+	if err := s.client.Close(); err != nil {
+		return err
 	} 
-	return 
+	return nil
 }
 
 func init() {
