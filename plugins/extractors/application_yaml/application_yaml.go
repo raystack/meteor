@@ -56,7 +56,7 @@ var info = plugins.Info{
 	Description:  "Application metadata from YAML file",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"application", "file", "extractor"},
+	Tags:         []string{"application", "file"},
 }
 
 // Extractor is the extractor instance for application YAML file.

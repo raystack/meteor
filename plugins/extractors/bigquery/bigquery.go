@@ -1,7 +1,6 @@
 package bigquery
 
 import (
-	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
@@ -10,6 +9,8 @@ import (
 	"html/template"
 	"strings"
 	"sync"
+
+	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 
 	"cloud.google.com/go/bigquery"
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
@@ -90,7 +91,7 @@ usage_period_in_day: 7`
 var info = plugins.Info{
 	Description:  "Big Query table metadata and metrics",
 	SampleConfig: sampleConfig,
-	Tags:         []string{"gcp", "table", "extractor"},
+	Tags:         []string{"gcp", "table"},
 	Summary:      summary,
 }
 

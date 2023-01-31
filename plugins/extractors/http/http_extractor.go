@@ -74,7 +74,7 @@ var sampleConfig = heredoc.Doc(`
 `)
 
 var info = plugins.Info{
-	Description:  "Generic Extractor capable of using the HTTP response from an external API for constructing 0 or more assets",
+	Description:  "Assets metadata from an external HTTP API",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"http", "extractor"},
