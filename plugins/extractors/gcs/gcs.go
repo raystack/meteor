@@ -47,7 +47,7 @@ service_account_json: |-
   }`
 
 var info = plugins.Info{
-	Description:  "Online file storage web service for storing and accessing data.",
+	Description:  "Online file storage service By Google",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"gcp", "extractor"},

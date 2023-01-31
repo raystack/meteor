@@ -49,7 +49,7 @@ var info = plugins.Info{
 	Description:  "Merlin ML models metadata",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"merlin", "ml", "model", "extractor"},
+	Tags:         []string{"merlin", "ml", "model"},
 }
 
 // Extractor manages the communication with the Merlin service.

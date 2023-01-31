@@ -32,7 +32,7 @@ var info = plugins.Info{
 	Description:  "Optimus' jobs metadata",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"optimus", "bigquery", "job", "extractor"},
+	Tags:         []string{"optimus", "bigquery"},
 }
 
 // Extractor manages the communication with the bigquery service

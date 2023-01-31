@@ -40,7 +40,7 @@ var info = plugins.Info{
 	Description:  "CaraML store ML feature metadata",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"caraml", "caramlstore", "ml", "feature", "extractor"},
+	Tags:         []string{"caraml", "ml", "feature"},
 }
 
 // Extractor manages the communication with the CaraML Store service

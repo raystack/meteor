@@ -31,7 +31,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Compressed, high-performance, proprietary data storage system.",
+	Description: "Compressed, high-performance, data storage system.",
 	Summary:     summary,
 	Tags:        []string{"gcp", "extractor"},
 	SampleConfig: `
