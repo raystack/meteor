@@ -1,6 +1,6 @@
 # GCS
 
-Sinks json data to a file in `ndjson` format in a Google Cloud Storage bucket
+Sinks json data to a file as ndjson format in Google Cloud Storage bucket
 
 ## Usage
 ```yaml

@@ -75,9 +75,9 @@ func TestSink(t *testing.T) {
 		jsonBytes, _ := models.ToJSON(data)
 
 		ctx := context.TODO()
-		client := new(mockClient)
-		client.On("WriteData", jsonBytes).Return(nil)
-		client.On("WriteData", []byte("\n")).Return(nil)
+		writer := new(mockWriter)
+		writer.On("WriteData", jsonBytes).Return(nil)
+		writer.On("WriteData", []byte("\n")).Return(nil)
 
 		gcsSink := g.New(testUtils.Logger)
 
@@ -96,17 +96,17 @@ func TestSink(t *testing.T) {
 	})
 }
 
-type mockClient struct {
+type mockWriter struct {
 	mock.Mock
 }
 
-func (m *mockClient) WriteData(jsonBytes []byte) error {
+func (m *mockWriter) WriteData(jsonBytes []byte) error {
 	args := m.Called(jsonBytes)
 
 	return args.Error(0)
 }
 
-func (m *mockClient) Close() error {
+func (m *mockWriter) Close() error {
 	args := m.Called()
 
 	return args.Error(0)

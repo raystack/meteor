@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
@@ -54,7 +55,7 @@ var info = plugins.Info{
 type Sink struct {
 	plugins.BasePlugin
 	logger log.Logger
-	client GCSClient
+	writer Writer
 	config Config
 }
 
@@ -78,7 +79,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 	bucketname, objectname := s.resolveBucketandObjectNames()
 
-	if s.client, err = newGCSClient(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
+	if s.writer, err = newWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
 		return err
 	}
 
@@ -86,7 +87,6 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 }
 
 func (s *Sink) validateServiceAccountKey() error {
-
 	if s.config.ServiceAccountBase64 == "" && s.config.ServiceAccountJSON == "" {
 		return errors.New("credentials are not specified, failed to create client")
 	}
@@ -104,15 +104,18 @@ func (s *Sink) validateServiceAccountKey() error {
 func (s *Sink) resolveBucketandObjectNames() (string, string) {
 	dirs := strings.Split(s.config.Path, "/")
 	bucketname := dirs[0]
-	timestamp := time.Now().Format("2006.01.02 15:04:05")
+	timestamp := time.Now().Format(time.RFC3339)
 
-	if s.config.ObjectPrefix != "" {
-		s.config.ObjectPrefix = s.config.ObjectPrefix + "-"
+	objectprefix := s.config.ObjectPrefix 
+	
+	if objectprefix != "" && objectprefix[len(objectprefix)-1] !='-'{
+		objectprefix = fmt.Sprintf("%s-", objectprefix)
 	}
-
-	objectname := s.config.ObjectPrefix + timestamp + ".ndjson"
+	
+	objectname := fmt.Sprintf("%s%s.ndjson", objectprefix, timestamp)
+	
 	if len(dirs) > 1 {
-		objectname = dirs[len(dirs)-1] + "/" + s.config.ObjectPrefix + timestamp + ".ndjson"
+		objectname = fmt.Sprintf("%s/%s%s.ndjson", dirs[len(dirs)-1], objectprefix, timestamp)
 	}
 
 	return bucketname, objectname
@@ -134,11 +137,11 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error) {
 	for _, asset := range data {
 		jsonBytes, _ := models.ToJSON(asset)
 
-		if err := s.client.WriteData(jsonBytes); err != nil {
+		if err := s.writer.WriteData(jsonBytes); err != nil {
 			return err
 		}
 
-		if err := s.client.WriteData([]byte("\n")); err != nil {
+		if err := s.writer.WriteData([]byte("\n")); err != nil {
 			return err
 		}
 	}
@@ -146,10 +149,7 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error) {
 }
 
 func (s *Sink) Close() (err error) {
-	if err := s.client.Close(); err != nil {
-		return err
-	}
-	return nil
+	return s.writer.Close()
 }
 
 func init() {
