@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"os"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -89,13 +90,13 @@ func NewRecipeCmd() *cobra.Command {
 				}
 			}
 
-			return generator.Recipe(generator.RecipeParams{
+			return generator.RecipeWriteTo(generator.RecipeParams{
 				Name:       args[0],
 				Source:     extractor,
 				Scope:      scope,
 				Sinks:      sinkList,
 				Processors: procList,
-			})
+			}, os.Stdout)
 		},
 	}
 
