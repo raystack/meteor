@@ -49,7 +49,7 @@ var sampleConfig = heredoc.Doc(`
 `)
 
 var info = plugins.Info{
-	Description:  "Transform the extracted asset with the configured Tengo script",
+	Description:  "Transform the asset with a Tengo script",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"processor", "transform", "script"},

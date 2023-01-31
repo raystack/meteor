@@ -27,7 +27,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "save output to a file",
+	Description: "Save output to a file",
 	Summary:     summary,
 	Tags:        []string{"file", "json", "yaml", "sink"},
 	SampleConfig: heredoc.Doc(`
@@ -53,7 +53,7 @@ func New(logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (error) {
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 	if err := s.BasePlugin.Init(ctx, config); err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *Sink) yamlOut(data []*assetsv1beta2.Asset) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return s.writeBytes(ymlByte)
 }
 

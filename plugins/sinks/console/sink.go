@@ -17,9 +17,9 @@ var summary string
 
 var info = plugins.Info{
 	Description:  "Log to standard output",
-	SampleConfig: "",
 	Summary:      summary,
 	Tags:         []string{"log", "sink"},
+	SampleConfig: "",
 }
 
 type Sink struct {
@@ -67,9 +67,7 @@ func (s *Sink) process(asset *assetsv1beta2.Asset) error {
 
 func init() {
 	if err := registry.Sinks.Register("console", func() plugins.Syncer {
-		return &Sink{
-			logger: plugins.GetLog(),
-		}
+		return New(plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}
