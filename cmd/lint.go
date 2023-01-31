@@ -56,7 +56,6 @@ func LintCmd() *cobra.Command {
 			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
 			plugins.SetLog(lg)
 
-			cs := term.NewColorScheme()
 			runner := agent.NewAgent(agent.Config{
 				ExtractorFactory: registry.Extractors,
 				ProcessorFactory: registry.Processors,
@@ -70,8 +69,8 @@ func LintCmd() *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				fmt.Println(cs.Yellowf("No recipe found in [%s]", args[0]))
-				fmt.Println(cs.Blue("\nUse 'meteor gen recipe' to generate a new recipe."))
+				fmt.Println(term.Yellowf("No recipe found in [%s]", args[0]))
+				fmt.Println(term.Blue("\nUse 'meteor gen recipe' to generate a new recipe."))
 				return nil
 			}
 
@@ -82,15 +81,15 @@ func LintCmd() *cobra.Command {
 				var icon string
 
 				if len(errs) == 0 {
-					icon = cs.SuccessIcon()
+					icon = term.SuccessIcon()
 					success++
 				} else {
-					icon = cs.FailureIcon()
+					icon = term.FailureIcon()
 					printLintErrors(errs, recipe)
 					failures++
 				}
 
-				row = []string{fmt.Sprintf("%s  %s", icon, recipe.Name), cs.Greyf("(%d errors, 0 warnings)", len(errs))}
+				row = []string{fmt.Sprintf("%s  %s", icon, recipe.Name), term.Greyf("(%d errors, 0 warnings)", len(errs))}
 				report = append(report, row)
 			}
 

@@ -52,8 +52,6 @@ func ListExtCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cs := term.NewColorScheme()
-
 			extractors := registry.Extractors.List()
 			fmt.Printf(" \nShowing %d of %d extractors\n \n", len(extractors), len(extractors))
 
@@ -61,7 +59,9 @@ func ListExtCmd() *cobra.Command {
 			index := 1
 
 			for n, i := range extractors {
-				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				report = append(report, []string{
+					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+				})
 				index++
 			}
 			printer.Table(os.Stdout, report)
@@ -92,15 +92,15 @@ func ListSinksCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cs := term.NewColorScheme()
-
 			sinks := registry.Sinks.List()
 			fmt.Printf(" \nShowing %d of %d sinks\n \n", len(sinks), len(sinks))
 
 			report := [][]string{}
 			index := 1
 			for n, i := range sinks {
-				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				report = append(report, []string{
+					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+				})
 				index++
 			}
 			printer.Table(os.Stdout, report)
@@ -131,8 +131,6 @@ func ListProccCmd() *cobra.Command {
 			"group:core": "true",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			cs := term.NewColorScheme()
-
 			processors := registry.Processors.List()
 			fmt.Printf(" \nShowing %d of %d processors\n \n", len(processors), len(processors))
 
@@ -140,7 +138,9 @@ func ListProccCmd() *cobra.Command {
 			index := 1
 
 			for n, i := range processors {
-				report = append(report, []string{cs.Greenf("#%02d", index), n, i.Description, cs.Greyf(" (%s)", strings.Join(i.Tags, ", "))})
+				report = append(report, []string{
+					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+				})
 				index++
 			}
 			printer.Table(os.Stdout, report)

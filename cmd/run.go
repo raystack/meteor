@@ -71,7 +71,6 @@ func RunCmd() *cobra.Command {
 				return err
 			}
 
-			cs := term.NewColorScheme()
 			runner := agent.NewAgent(agent.Config{
 				ExtractorFactory:     registry.Extractors,
 				ProcessorFactory:     registry.Processors,
@@ -93,7 +92,7 @@ func RunCmd() *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				fmt.Println(cs.WarningIcon(), cs.Yellowf("No recipe found in [%s]", args[0]))
+				fmt.Println(term.WarningIcon(), term.Yellowf("No recipe found in [%s]", args[0]))
 				return nil
 			}
 
@@ -113,10 +112,10 @@ func RunCmd() *cobra.Command {
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					failures++
-					row = append(row, cs.FailureIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Name), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
+					row = append(row, term.FailureIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf(strconv.Itoa(run.RecordCount)))
 				} else {
 					success++
-					row = append(row, cs.SuccessIcon(), run.Recipe.Name, cs.Grey(run.Recipe.Source.Name), cs.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), cs.Greyf(strconv.Itoa(run.RecordCount)))
+					row = append(row, term.SuccessIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf(strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
 				if err = bar.Add(1); err != nil {
