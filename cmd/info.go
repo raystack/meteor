@@ -160,11 +160,9 @@ func InfoProccCmd() *cobra.Command {
 }
 
 func inform(typ string, summary string, err error) error {
-	cs := term.NewColorScheme()
-
 	if err != nil {
-		fmt.Println(cs.Redf("ERROR:"), cs.Redf(err.Error()))
-		fmt.Println(cs.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
+		fmt.Println(term.Redf("ERROR:"), term.Redf(err.Error()))
+		fmt.Println(term.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
 		return nil
 	}
 
