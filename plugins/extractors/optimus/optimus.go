@@ -11,7 +11,7 @@ import (
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/meteor/utils"
-	pb "github.com/odpf/optimus/api/proto/odpf/optimus/core/v1beta1"
+	pb "github.com/odpf/optimus/protos/odpf/optimus/core/v1beta1"
 	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
