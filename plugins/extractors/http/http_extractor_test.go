@@ -293,7 +293,7 @@ func TestExtract(t *testing.T) {
 						body := response.body
 						asset := new_asset("user")
 						// URN format: "urn:{service}:{scope}:{type}:{id}"
-						asset.urn = format("urn:%s:staging:user:%s", "my_usr_svc", body.employee_id)
+						asset.urn = format("urn:%s:%s:user:%s", "my_usr_svc", recipe_scope, body.employee_id)
 						asset.name = body.fullname
 						asset.service = "my_usr_svc"
 						// asset.type = "user" // not required, new_asset("user") sets the field.
@@ -322,7 +322,7 @@ func TestExtract(t *testing.T) {
 				)
 			},
 			expected: []*v1beta2.Asset{{
-				Urn:     "urn:my_usr_svc:staging:user:395f8292-d48b-431b-9e2d-63b3dcd4b986",
+				Urn:     "urn:my_usr_svc:test-http:user:395f8292-d48b-431b-9e2d-63b3dcd4b986",
 				Name:    "Van Stump",
 				Service: "my_usr_svc",
 				Type:    "user",

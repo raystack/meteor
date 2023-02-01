@@ -20,12 +20,16 @@ import (
 )
 
 func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plugins.Emit) error {
+	scriptCfg := e.config.Script
 	s, err := tengoutil.NewSecureScript(
-		([]byte)(e.config.Script.Source), e.scriptGlobals(ctx, res, emit),
+		([]byte)(scriptCfg.Source), e.scriptGlobals(ctx, res, emit),
 	)
 	if err != nil {
 		return err
 	}
+
+	s.SetMaxAllocs(scriptCfg.MaxAllocs)
+	s.SetMaxConstObjects(scriptCfg.MaxConstObjects)
 
 	c, err := s.Compile()
 	if err != nil {
@@ -41,7 +45,8 @@ func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plu
 
 func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plugins.Emit) map[string]interface{} {
 	return map[string]interface{}{
-		"response": res,
+		"recipe_scope": &tengo.String{Value: e.UrnScope},
+		"response":     res,
 		"new_asset": &tengo.UserFunction{
 			Name:  "new_asset",
 			Value: newAssetWrapper(),
