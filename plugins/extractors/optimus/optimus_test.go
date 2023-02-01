@@ -11,7 +11,7 @@ import (
 	"github.com/odpf/meteor/plugins/extractors/optimus"
 	"github.com/odpf/meteor/test/mocks"
 	testutils "github.com/odpf/meteor/test/utils"
-	pb "github.com/odpf/optimus/api/proto/odpf/optimus/core/v1beta1"
+	pb "github.com/odpf/optimus/protos/odpf/optimus/core/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
