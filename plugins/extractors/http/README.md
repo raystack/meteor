@@ -57,13 +57,15 @@ source:
 
 ## Inputs
 
-| Key             | Value    | Example                                | Description                                                                                     | Required? |
-|:----------------|:---------|:---------------------------------------|:------------------------------------------------------------------------------------------------|:----------|
-| `request`       | `Object` | see [Request](#request)                | The configuration for constructing and sending HTTP request.                                    | ✅         |
-| `success_codes` | `[]int`  | `[200]`                                | The list of status codes that would be considered as a successful response. Default is `[200]`. | ✘         |
-| `concurrency`   | `int`    | `5`                                    | Number of concurrent child requests to execute. Default is `5`                                  | ✘         |
-| `script.engine` | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅         |
-| `script.source` | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more assets.                           | ✅         |
+| Key                        | Value    | Example                                | Description                                                                                     | Required? |
+|:---------------------------|:---------|:---------------------------------------|:------------------------------------------------------------------------------------------------|:----------|
+| `request`                  | `Object` | see [Request](#request)                | The configuration for constructing and sending HTTP request.                                    | ✅         |
+| `success_codes`            | `[]int`  | `[200]`                                | The list of status codes that would be considered as a successful response. Default is `[200]`. | ✘         |
+| `concurrency`              | `int`    | `5`                                    | Number of concurrent child requests to execute. Default is `5`                                  | ✘         |
+| `script.engine`            | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅         |
+| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more assets.                           | ✅         |
+| `script.max_allocs`        | `int`    | 10000                                  | The max number of object allocations allowed during the script run time. Default is `5000`.     | ✘         |
+| `script.max_const_objects` | `int`    | 1000                                   | The maximum number of constant objects in the compiled script. Default is `500`.                | ✘         |
 
 ### Request
 
@@ -91,6 +93,29 @@ source:
 - Tengo's `os` stdlib module cannot be imported and used in the script.
 
 ### Script Globals
+
+- [`recipe_scope`](#recipe_scope)
+- [`response`](#response)
+- [`new_asset(string): Asset`](#new_assetstring-asset)
+- [`emit(Asset)`](#emitasset)
+- [`execute_request(...requests): []Response`](#executerequestrequests-response)
+- [`exit`](#exit)
+
+#### `recipe_scope`
+
+The value of the scope specified in the recipe (string).
+
+With the following example recipe:
+
+```yaml
+source:
+  scope: integration
+  type: http
+  config:
+  #...
+```
+
+The value of `recipe_scope` will be `integration`.
 
 #### `response`
 
@@ -150,7 +175,7 @@ asset.data.full_name = "Daiyamondo Jozu"
 Takes an asset and emits the asset that can then be consumed by the
 processor/sink.
 
-#### `execute_request(...requests)`
+#### `execute_request(...requests): []Response`
 
 Takes 1 or more requests and executes the requests with the concurrency defined
 in the recipe. The results are returned as an array. Each item in the array can
@@ -315,8 +340,8 @@ source:
         }
 ```
 
-This would emit a 'User' asset for each user object in `response.data`. Note 
-that the response headers can be accessed under `response.header` and can be 
+This would emit a 'User' asset for each user object in `response.data`. Note
+that the response headers can be accessed under `response.header` and can be
 used as needed.
 
 ## Caveats

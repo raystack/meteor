@@ -34,8 +34,10 @@ type Config struct {
 	SuccessCodes []int         `mapstructure:"success_codes" validate:"dive,gte=200,lt=300" default:"[200]"`
 	Concurrency  int           `mapstructure:"concurrency" validate:"gte=1,lte=100" default:"5"`
 	Script       struct {
-		Engine string `mapstructure:"engine" validate:"required,oneof=tengo"`
-		Source string `mapstructure:"source" validate:"required"`
+		Engine          string `mapstructure:"engine" validate:"required,oneof=tengo"`
+		Source          string `mapstructure:"source" validate:"required"`
+		MaxAllocs       int64  `mapstructure:"max_allocs" validate:"gt=100" default:"5000"`
+		MaxConstObjects int    `mapstructure:"max_const_objects" validate:"gt=10" default:"500"`
 	} `mapstructure:"script"`
 }
 
