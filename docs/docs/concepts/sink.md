@@ -53,7 +53,7 @@ sinks:
   - name: gcs
     config:
      project_id: google-project-id
-     path: bucket_name/target_folder
+     url: gcs://bucket_name/target_folder
      object_prefix : github-users
      service_account_base64: <base64 encoded service account key>
      service_account_json:

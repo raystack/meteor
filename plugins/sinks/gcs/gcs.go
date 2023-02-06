@@ -4,9 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"encoding/base64"
-	"strings"
-	"time"
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/odpf/meteor/models"
@@ -22,7 +22,7 @@ var summary string
 
 type Config struct {
 	ProjectID            string `mapstructure:"project_id" validate:"required"`
-	Path                 string `mapstructure:"path" validate:"required"`
+	URL                  string `mapstructure:"url" validate:"required"`
 	ObjectPrefix         string `mapstructure:"object_prefix"`
 	ServiceAccountJSON   string `mapstructure:"service_account_json"`
 	ServiceAccountBase64 string `mapstructure:"service_account_base64"`
@@ -33,7 +33,7 @@ var info = plugins.Info{
 	Summary:     summary,
 	SampleConfig: heredoc.Doc(`
 	project_id: google-project-id
-	path: bucket_name/target_folder
+	url: gcs://bucket_name/target_folder
 	object_prefix : github-users
 	service_account_base64: ____base64_encoded_service_account____
     service_account_json: |-
@@ -77,7 +77,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 		return err
 	}
 
-	bucketname, objectname := s.resolveBucketandObjectNames()
+	bucketname, objectname := s.resolveBucketPath()
 
 	if s.writer, err = newWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
 		return err
@@ -101,21 +101,23 @@ func (s *Sink) validateServiceAccountKey() error {
 	return nil
 }
 
-func (s *Sink) resolveBucketandObjectNames() (string, string) {
-	dirs := strings.Split(s.config.Path, "/")
-	bucketname := dirs[0]
+func (s *Sink) resolveBucketPath() (string, string) {
+	result, _ := url.Parse(s.config.URL)
+
+	bucketname := result.Host
+	path := result.Path[1:]
 	timestamp := time.Now().Format(time.RFC3339)
 
-	objectprefix := s.config.ObjectPrefix 
-	
-	if objectprefix != "" && objectprefix[len(objectprefix)-1] !='-'{
+	objectprefix := s.config.ObjectPrefix
+
+	if objectprefix != "" && objectprefix[len(objectprefix)-1] != '-' {
 		objectprefix = fmt.Sprintf("%s-", objectprefix)
 	}
-	
+
 	objectname := fmt.Sprintf("%s%s.ndjson", objectprefix, timestamp)
-	
-	if len(dirs) > 1 {
-		objectname = fmt.Sprintf("%s/%s%s.ndjson", dirs[len(dirs)-1], objectprefix, timestamp)
+
+	if path != "" {
+		objectname = fmt.Sprintf("%s/%s%s.ndjson", path, objectprefix, timestamp)
 	}
 
 	return bucketname, objectname
@@ -148,7 +150,7 @@ func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error) {
 	return nil
 }
 
-func (s *Sink) Close() (err error) {
+func (s *Sink) Close() error {
 	return s.writer.Close()
 }
 

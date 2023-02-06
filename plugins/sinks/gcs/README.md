@@ -8,7 +8,7 @@ sinks:
   - name: gcs
     config:
      project_id: google-project-id
-     path: bucket_name/target_folder
+     url: gcs://bucket_name/target_folder
      object_prefix : github-users
      service_account_base64: <base64 encoded service account key>
      service_account_json:
@@ -30,7 +30,7 @@ sinks:
 | Key | Value | Example | Description |  |
 | :-- | :---- | :------ | :---------- | :-- |
 |`project_id` | `string` | `google-project-id` | Google Cloud Storage Project ID  | *required*|
-| `path` | `string` | `bucket_name/target_folder` | the path of the folder where new object is to be put | *required* |
+| `url` | `string` | `gcs://bucket_name/target_folder` | the URL with bucket name and path of the folder with format `gcs://<bucket_name>/<optional_folder_path>` | *required* |
 | `object_prefix` | `string` | `github-users` | the .ndjson file name prefix where json data will be inserted with timestamp </b></b> Note: If prefix is not provided, the output data will be put in a `timestamp.ndjson` file in the provided path. Otherwise in the given example the output file will be `github-users-timestamp.ndjson`| *optional* |
 | `service_account_base64` | `string` | `ewog....fQo=` |  Service Account Key in base64 encoded string. Takes precedence over `service_account_json` value | *optional* |
 | `service_account_json` | `string` | `{"private_key": .., "private_id": ...}` |   Service Account Key in JSON string | *optional* |

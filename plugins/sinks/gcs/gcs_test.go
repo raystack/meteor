@@ -20,7 +20,7 @@ import (
 
 var validConfig = map[string]interface{}{
 	"project_id":             "google-project-id",
-	"path":                   "bucket_name/target_folder",
+	"url":                    "gcs://bucket_name/target_folder",
 	"object_prefix":          "github-users",
 	"service_account_base64": "base 64 encoded key",
 }
@@ -40,7 +40,7 @@ func TestInit(t *testing.T) {
 		gcsSink := g.New(testUtils.Logger)
 		actualError := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"project_id": "google-project-id",
-			"path":       "bucket_name/target_folder",
+			"url":        "gcs://bucket_name/target_folder",
 		}})
 		assert.ErrorContains(t, actualError, "credentials are not specified, failed to create client")
 	})
@@ -50,7 +50,7 @@ func TestInit(t *testing.T) {
 		gcsSink := g.New(testUtils.Logger)
 		actualError := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"project_id":             "google-project-id",
-			"path":                   "bucket_name/target_folder",
+			"url":                    "gcs://bucket_name/target_folder",
 			"service_account_base64": "----", // invalid
 		}})
 		assert.ErrorContains(t, actualError, "failed to decode base64 service account")
@@ -58,7 +58,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestSink(t *testing.T) {
-	
+
 	t.Run("should write data in bucket and return nil error on success", func(t *testing.T) {
 		u := &v1beta2.User{
 			FullName: "John Doe",
@@ -83,7 +83,7 @@ func TestSink(t *testing.T) {
 
 		err := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"project_id":           "google-project-id",
-			"path":                 "bucket_name/target_folder",
+			"url":                  "gcs://bucket_name/target_folder",
 			"service_account_json": `{"type": "service_account"}`,
 		}})
 		if err != nil {
