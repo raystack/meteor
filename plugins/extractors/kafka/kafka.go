@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"os"
+	"time"
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -44,13 +45,13 @@ type AuthConfig struct {
 		InsecureSkipVerify bool `mapstructure:"insecure_skip_verify"`
 
 		// certificate file for client authentication
-		CertFile *string `mapstructure:"cert_file"`
+		CertFile string `mapstructure:"cert_file"`
 
 		// key file for client authentication
-		KeyFile *string `mapstructure:"key_file"`
+		KeyFile string `mapstructure:"key_file"`
 
 		// certificate authority file for TLS client authentication
-		CAFile *string `mapstructure:"ca_file"`
+		CAFile string `mapstructure:"ca_file"`
 	} `mapstructure:"tls"`
 }
 
@@ -90,7 +91,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// create default dialer
-	dialer := kafka.DefaultDialer
+	dialer := &kafka.Dialer{
+		Timeout:   10 * time.Second,
+		DualStack: true,
+	}
 
 	if e.config.Auth.TLS.Enabled {
 		tlsConfig, err := e.createTLSConfig()
@@ -102,7 +106,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// create connection
-	e.conn, err = dialer.Dial("tcp", e.config.Broker)
+	e.conn, err = dialer.DialContext(ctx, "tcp", e.config.Broker)
 	if err != nil {
 		return errors.Wrap(err, "failed to create connection")
 	}
@@ -151,30 +155,31 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
-	tlsConfig = &tls.Config{
-		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
+	authConfig := e.config.Auth.TLS
+
+	if authConfig.CertFile == "" || authConfig.KeyFile == "" || authConfig.CAFile == "" {
+		return &tls.Config{
+			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
+		}, nil
 	}
 
-	authConfig := e.config.Auth.TLS
-	if *authConfig.CertFile != "" && *authConfig.KeyFile != "" && *authConfig.CAFile != "" {
-		cert, err := tls.LoadX509KeyPair(*authConfig.CertFile, *authConfig.KeyFile)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to create cert")
-		}
+	cert, err := tls.LoadX509KeyPair(authConfig.CertFile, authConfig.KeyFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create cert")
+	}
 
-		caCert, err := os.ReadFile(*authConfig.CAFile)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to read ca cert file")
-		}
+	caCert, err := os.ReadFile(authConfig.CAFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read ca cert file")
+	}
 
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
 
-		tlsConfig = &tls.Config{
-			Certificates:       []tls.Certificate{cert},
-			RootCAs:            caCertPool,
-			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
-		}
+	tlsConfig = &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caCertPool,
+		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
 	}
 
 	return tlsConfig, nil
