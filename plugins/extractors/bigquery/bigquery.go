@@ -257,10 +257,37 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	tableURN := plugins.BigQueryURN(t.ProjectID, t.DatasetID, t.TableID)
 
 	tableProfile := e.buildTableProfile(tableURN, tableStats)
-
 	var partitionField string
+	partitionData := make(map[string]interface{}, 0)
 	if md.TimePartitioning != nil {
-		partitionField = md.TimePartitioning.Field
+		timePartitionMap := make(map[string]interface{}, 0)
+		if md.TimePartitioning.Field != "" {
+			partitionField = md.TimePartitioning.Field
+		} else {
+			partitionField = "_PARTITIONTIME"
+		}
+		timePartitionMap["partition_by"] = string(md.TimePartitioning.Type)
+		timePartitionMap["partition_expire"] = md.TimePartitioning.Expiration.Seconds()
+		partitionData["time_partition"] = timePartitionMap
+	}
+
+	if md.RangePartitioning != nil {
+		rangePartitionMap := make(map[string]interface{}, 0)
+		partitionField = md.RangePartitioning.Field
+		rangePartitionMap["start"] = md.RangePartitioning.Range.Start
+		rangePartitionMap["end"] = md.RangePartitioning.Range.End
+		rangePartitionMap["interval"] = md.RangePartitioning.Range.Interval
+		partitionData["range_partition"] = rangePartitionMap
+	}
+	partitionData["partition_field"] = partitionField
+	partitionData["require_partition_filter"] = md.RequirePartitionFilter
+
+	var clusteringFields []interface{}
+	if md.Clustering != nil && len(md.Clustering.Fields) > 0 {
+		clusteringFields = make([]interface{}, len(md.Clustering.Fields))
+		for idx, field := range md.Clustering.Fields {
+			clusteringFields[idx] = field
+		}
 	}
 
 	var previewFields []string
@@ -284,7 +311,8 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 			"dataset":             t.DatasetID,
 			"project":             t.ProjectID,
 			"type":                string(md.Type),
-			"partition_field":     partitionField,
+			"partition_data":      partitionData,
+			"clustering_fields":   clusteringFields,
 		}),
 		CreateTime: timestamppb.New(md.CreationTime),
 		UpdateTime: timestamppb.New(md.LastModifiedTime),
