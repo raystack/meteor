@@ -270,9 +270,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		timePartitionMap["partition_by"] = string(md.TimePartitioning.Type)
 		timePartitionMap["partition_expire_seconds"] = md.TimePartitioning.Expiration.Seconds()
 		partitionData["time_partition"] = timePartitionMap
-	}
-
-	if md.RangePartitioning != nil {
+	} else if md.RangePartitioning != nil {
 		rangePartitionMap := make(map[string]interface{}, 0)
 		partitionData["partition_field"] = md.RangePartitioning.Field
 		rangePartitionMap["start"] = md.RangePartitioning.Range.Start
