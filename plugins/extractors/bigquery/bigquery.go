@@ -258,25 +258,24 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 
 	tableProfile := e.buildTableProfile(tableURN, tableStats)
 	var partitionField string
-	partitionData := make(map[string]interface{}, 0)
+	partitionData := make(map[string]interface{})
 	if md.TimePartitioning != nil {
-		timePartitionMap := make(map[string]interface{}, 0)
 		partitionField = md.TimePartitioning.Field
-		if md.TimePartitioning.Field != "" {
-			partitionData["partition_field"] = partitionField
-		} else {
-			partitionData["partition_field"] = "_PARTITIONTIME"
+		if partitionField == "" {
+			partitionField = "_PARTITIONTIME"
 		}
-		timePartitionMap["partition_by"] = string(md.TimePartitioning.Type)
-		timePartitionMap["partition_expire_seconds"] = md.TimePartitioning.Expiration.Seconds()
-		partitionData["time_partition"] = timePartitionMap
+		partitionData["partition_field"] = partitionField
+		partitionData["time_partition"] = map[string]interface{}{
+			"partition_by":             string(md.TimePartitioning.Type),
+			"partition_expire_seconds": md.TimePartitioning.Expiration.Seconds(),
+		}
 	} else if md.RangePartitioning != nil {
-		rangePartitionMap := make(map[string]interface{}, 0)
 		partitionData["partition_field"] = md.RangePartitioning.Field
-		rangePartitionMap["start"] = md.RangePartitioning.Range.Start
-		rangePartitionMap["end"] = md.RangePartitioning.Range.End
-		rangePartitionMap["interval"] = md.RangePartitioning.Range.Interval
-		partitionData["range_partition"] = rangePartitionMap
+		partitionData["range_partition"] = map[string]interface{}{
+			"start":    md.RangePartitioning.Range.Start,
+			"end":      md.RangePartitioning.Range.End,
+			"interval": md.RangePartitioning.Range.Interval,
+		}
 	}
 	partitionData["require_partition_filter"] = md.RequirePartitionFilter
 
