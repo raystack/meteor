@@ -261,25 +261,25 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	partitionData := make(map[string]interface{}, 0)
 	if md.TimePartitioning != nil {
 		timePartitionMap := make(map[string]interface{}, 0)
+		partitionField = md.TimePartitioning.Field
 		if md.TimePartitioning.Field != "" {
-			partitionField = md.TimePartitioning.Field
+			partitionData["partition_field"] = partitionField
 		} else {
-			partitionField = "_PARTITIONTIME"
+			partitionData["partition_field"] = "_PARTITIONTIME"
 		}
 		timePartitionMap["partition_by"] = string(md.TimePartitioning.Type)
-		timePartitionMap["partition_expire"] = md.TimePartitioning.Expiration.Seconds()
+		timePartitionMap["partition_expire_seconds"] = md.TimePartitioning.Expiration.Seconds()
 		partitionData["time_partition"] = timePartitionMap
 	}
 
 	if md.RangePartitioning != nil {
 		rangePartitionMap := make(map[string]interface{}, 0)
-		partitionField = md.RangePartitioning.Field
+		partitionData["partition_field"] = md.RangePartitioning.Field
 		rangePartitionMap["start"] = md.RangePartitioning.Range.Start
 		rangePartitionMap["end"] = md.RangePartitioning.Range.End
 		rangePartitionMap["interval"] = md.RangePartitioning.Range.Interval
 		partitionData["range_partition"] = rangePartitionMap
 	}
-	partitionData["partition_field"] = partitionField
 	partitionData["require_partition_filter"] = md.RequirePartitionFilter
 
 	var clusteringFields []interface{}
@@ -298,7 +298,6 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		if err != nil {
 			e.logger.Warn("error building preview", "err", err, "table", tableFQN)
 		}
-
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
