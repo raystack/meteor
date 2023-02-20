@@ -46,6 +46,33 @@ sinks:
         path: "./dir/sample.yaml"
         format: "yaml"
 ```
+## GCS
+
+`Google Cloud Storage`
+
+Sinks json data to a file as ndjson format in Google Cloud Storage bucket
+
+```yaml
+sinks:
+  - name: gcs
+    config:
+     project_id: google-project-id
+     url:  gcs://bucket_name/target_folder
+     object_prefix : github-users
+     service_account_base64: <base64 encoded service account key>
+     service_account_json:
+      {
+        "type": "service_account",
+        "private_key_id": "xxxxxxx",
+        "private_key": "xxxxxxx",
+        "client_email": "xxxxxxx",
+        "client_id": "xxxxxxx",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "xxxxxxx",
+        "client_x509_cert_url": "xxxxxxx",
+      }
+```
 
 ## http
 
