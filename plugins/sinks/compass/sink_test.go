@@ -16,13 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	testUtils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
-
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
 	"github.com/odpf/meteor/plugins/sinks/compass"
+	testUtils "github.com/odpf/meteor/test/utils"
+	"github.com/odpf/meteor/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -213,6 +212,10 @@ func TestSink(t *testing.T) {
 						},
 					},
 				}),
+				Labels: map[string]string{
+					"labelA": "valueLabelA",
+					"labelB": "valueLabelB",
+				},
 			},
 			config: map[string]interface{}{
 				"host": host,
@@ -235,6 +238,10 @@ func TestSink(t *testing.T) {
 								"is_nullable": true,
 							},
 						},
+					},
+					Labels: map[string]string{
+						"labelA": "valueLabelA",
+						"labelB": "valueLabelB",
 					},
 				},
 			},
