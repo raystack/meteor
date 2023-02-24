@@ -226,27 +226,27 @@ func (s *Sink) buildOwners(asset *v1beta2.Asset) (owners []Owner) {
 	return
 }
 
-func (s *Sink) buildLabels(asset *v1beta2.Asset) (labels map[string]string, err error) {
-	if s.config.Labels == nil {
-		return
+func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
+	total := len(s.config.Labels) + len(asset.Labels)
+	if total == 0 {
+		return nil, nil
 	}
 
-	labels = asset.GetLabels()
-	if labels == nil {
-		labels = make(map[string]string)
+	labels := make(map[string]string, total)
+	for k, v := range asset.Labels {
+		labels[k] = v
 	}
+
 	for key, template := range s.config.Labels {
-		var value string
-		value, err = s.buildLabelValue(template, asset)
+		value, err := s.buildLabelValue(template, asset)
 		if err != nil {
-			err = errors.Wrapf(err, "could not find \"%s\"", template)
-			return
+			return nil, errors.Wrapf(err, "could not find %q", template)
 		}
 
 		labels[key] = value
 	}
 
-	return
+	return labels, nil
 }
 
 func (s *Sink) buildLabelValue(template string, asset *v1beta2.Asset) (value string, err error) {
@@ -271,12 +271,12 @@ func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, asset *
 		attr := utils.GetAttributes(asset)
 		v, ok := attr[field2]
 		if !ok {
-			err = fmt.Errorf("could not find \"%s\" field on attributes", field2)
+			err = fmt.Errorf("could not find %q field on attributes", field2)
 			return
 		}
 		value, ok = v.(string)
 		if !ok {
-			err = fmt.Errorf("\"%s\" field is not a string", field2)
+			err = fmt.Errorf("%q field is not a string", field2)
 			return
 		}
 		return
@@ -289,7 +289,7 @@ func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, asset *
 		var ok bool
 		value, ok = labels[field2]
 		if !ok {
-			err = fmt.Errorf("could not find \"%s\" from labels", field2)
+			err = fmt.Errorf("could not find %q from labels", field2)
 			return
 		}
 
