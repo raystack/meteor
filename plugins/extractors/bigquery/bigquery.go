@@ -298,7 +298,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
-		Columns:       e.buildColumns(ctx, md),
+		Columns:       e.buildColumns(ctx, md.Schema, md),
 		PreviewFields: previewFields,
 		PreviewRows:   previewRows,
 		Profile:       tableProfile,
@@ -329,8 +329,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 }
 
 // Extract table schema
-func (e *Extractor) buildColumns(ctx context.Context, tm *bigquery.TableMetadata) []*v1beta2.Column {
-	schema := tm.Schema
+func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm *bigquery.TableMetadata) []*v1beta2.Column {
 	var wg sync.WaitGroup
 
 	wg.Add(len(schema))
@@ -364,6 +363,10 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		DataType:    string(field.Type),
 		IsNullable:  !(field.Required || field.Repeated),
 		Attributes:  utils.TryParseMapToProto(attributesMap),
+	}
+
+	if field.Schema != nil {
+		col.Columns = e.buildColumns(ctx, field.Schema, tm)
 	}
 
 	if e.config.IncludeColumnProfile {
