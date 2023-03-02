@@ -518,7 +518,17 @@ func TestSetAttributes(t *testing.T) {
 					"d": true,
 				},
 			},
-			expectedErr: "could not find matching model",
+			expected: &v1beta2.Asset{
+				Data: testutils.BuildAny(t, &v1beta2.Application{
+					Attributes: TryParseMapToProto(map[string]interface{}{
+						"a": 1,
+						"b": "2",
+						"c": map[string]interface{}{
+							"d": true,
+						},
+					}),
+				}),
+			},
 		},
 		{
 			name: "FeatureTable",
@@ -532,7 +542,17 @@ func TestSetAttributes(t *testing.T) {
 					"d": true,
 				},
 			},
-			expectedErr: "could not find matching model",
+			expected: &v1beta2.Asset{
+				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{
+					Attributes: TryParseMapToProto(map[string]interface{}{
+						"a": 1,
+						"b": "2",
+						"c": map[string]interface{}{
+							"d": true,
+						},
+					}),
+				}),
+			},
 		},
 		{
 			name: "TableWithAttrs",
