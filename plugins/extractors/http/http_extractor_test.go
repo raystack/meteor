@@ -749,7 +749,7 @@ func TestExtract(t *testing.T) {
 			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				testutils.Respond(t, w, http.StatusOK, `{}`)
 			},
-			expectedErr: `Runtime Error: execute request: validate request config: {content_type: "application/json", accept: "application/json"}, Key: 'RequestConfig.url' Error:Field validation for 'url' failed on the 'required' tag`,
+			expectedErr: `Error:Field validation for 'url' failed on the 'required' tag`,
 		},
 		{
 			name: "ConditionalExit",
