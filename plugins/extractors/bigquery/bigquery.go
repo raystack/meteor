@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"cloud.google.com/go/bigquery"
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
@@ -12,7 +13,6 @@ import (
 
 	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 
-	"cloud.google.com/go/bigquery"
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
@@ -365,7 +365,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		Attributes:  utils.TryParseMapToProto(attributesMap),
 	}
 
-	if field.Schema != nil {
+	if len(field.Schema) > 0 {
 		col.Columns = e.buildColumns(ctx, field.Schema, tm)
 	}
 
