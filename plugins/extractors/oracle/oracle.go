@@ -23,7 +23,7 @@ var summary string
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `connection_url: oracle://username:passwd@localhost:1521/xe`

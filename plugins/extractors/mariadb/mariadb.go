@@ -31,7 +31,7 @@ var defaultDBList = []string{
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
@@ -139,10 +139,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
 		Urn:     models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name: tableName,
-		Type: "table",
+		Name:    tableName,
+		Type:    "table",
 		Service: "mariadb",
-		Data: data,
+		Data:    data,
 	}))
 	return
 }

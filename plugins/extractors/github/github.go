@@ -21,8 +21,8 @@ var summary string
 
 // Config holds the set of configuration for the extractor
 type Config struct {
-	Org   string `mapstructure:"org" validate:"required"`
-	Token string `mapstructure:"token" validate:"required"`
+	Org   string `json:"org" yaml:"org" mapstructure:"org" validate:"required"`
+	Token string `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
 }
 
 var sampleConfig = `
@@ -96,8 +96,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		emit(models.NewRecord(&v1beta2.Asset{
 			Urn:     models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),
 			Service: "github",
-			Type: "user",
-			Data: u,
+			Type:    "user",
+			Data:    u,
 		}))
 	}
 

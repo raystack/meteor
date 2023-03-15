@@ -22,9 +22,9 @@ import (
 var summary string
 
 type Config struct {
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	Host     string `mapstructure:"host" validate:"required"`
+	User     string `json:"user" yaml:"user" mapstructure:"user"`
+	Password string `json:"password" yaml:"password" mapstructure:"password"`
+	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
 }
 
 var sampleConfig = `

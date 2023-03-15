@@ -33,7 +33,7 @@ var defaultDBList = []string{
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `connection_url: "sqlserver://admin:pass123@localhost:3306/"`

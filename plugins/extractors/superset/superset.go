@@ -25,10 +25,10 @@ var summary string
 
 // Config holds the set of configuration for the superset extractor
 type Config struct {
-	Username string `mapstructure:"username" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
-	Provider string `mapstructure:"provider" validate:"required"`
+	Username string `json:"username" yaml:"username" mapstructure:"username" validate:"required"`
+	Password string `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
+	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Provider string `json:"provider" yaml:"provider" mapstructure:"provider" validate:"required"`
 }
 
 var sampleConfig = `

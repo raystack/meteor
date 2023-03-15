@@ -23,7 +23,7 @@ var summary string
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
 }
 
 var sampleConfig = `connection_url: "user:password@my_organization-my_account/mydb"`

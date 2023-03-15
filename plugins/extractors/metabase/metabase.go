@@ -34,11 +34,11 @@ var info = plugins.Info{
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	Host          string `mapstructure:"host" validate:"required"`
-	InstanceLabel string `mapstructure:"instance_label" validate:"required"`
-	Username      string `mapstructure:"username" validate:"required_without=SessionID"`
-	Password      string `mapstructure:"password"`
-	SessionID     string `mapstructure:"session_id"`
+	Host          string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	InstanceLabel string `json:"instance_label" yaml:"instance_label" mapstructure:"instance_label" validate:"required"`
+	Username      string `json:"username" yaml:"username" mapstructure:"username" validate:"required_without=SessionID"`
+	Password      string `json:"password" yaml:"password" mapstructure:"password"`
+	SessionID     string `json:"session_id" yaml:"session_id" mapstructure:"session_id"`
 }
 
 // Extractor manages the extraction of data

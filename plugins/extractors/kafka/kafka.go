@@ -30,8 +30,8 @@ var defaultTopics = map[string]byte{
 
 // Config holds the set of configuration for the kafka extractor
 type Config struct {
-	Broker string     `mapstructure:"broker" validate:"required"`
-	Auth   AuthConfig `mapstructure:"auth_config"`
+	Broker string     `json:"broker" yaml:"broker" mapstructure:"broker" validate:"required"`
+	Auth   AuthConfig `json:"auth_config" yaml:"auth_config" mapstructure:"auth_config"`
 }
 
 type AuthConfig struct {

@@ -36,13 +36,13 @@ var info = plugins.Info{
 
 // Config that holds a set of configuration for tableau extractor
 type Config struct {
-	Host      string `mapstructure:"host" validate:"required"`
-	Version   string `mapstructure:"version" validate:"required"` // float as string
-	Username  string `mapstructure:"username"`
-	Password  string `mapstructure:"password" validate:"required_with=Username"`
-	AuthToken string `mapstructure:"auth_token" validate:"required_without=Username"`
-	SiteID    string `mapstructure:"site_id" validate:"required_without=Username"`
-	Sitename  string `mapstructure:"sitename"`
+	Host      string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Version   string `json:"version" yaml:"version" mapstructure:"version" validate:"required"` // float as string
+	Username  string `json:"username" yaml:"username" mapstructure:"username"`
+	Password  string `json:"password" yaml:"password" mapstructure:"password" validate:"required_with=Username"`
+	AuthToken string `json:"auth_token" yaml:"auth_token" mapstructure:"auth_token" validate:"required_without=Username"`
+	SiteID    string `json:"site_id" yaml:"site_id" mapstructure:"site_id" validate:"required_without=Username"`
+	Sitename  string `json:"sitename" yaml:"sitename" mapstructure:"sitename"`
 }
 
 // Extractor manages the extraction of data

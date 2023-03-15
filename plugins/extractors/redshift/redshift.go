@@ -22,11 +22,11 @@ var summary string
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	ClusterID string `mapstructure:"cluster_id" validate:"required"`
-	DBName    string `mapstructure:"db_name" validate:"required"`
-	DBUser    string `mapstructure:"db_user" validate:"required"`
-	AWSRegion string `mapstructure:"aws_region" validate:"required"`
-	Exclude   string `mapstructure:"exclude"`
+	ClusterID string `json:"cluster_id" yaml:"cluster_id" mapstructure:"cluster_id" validate:"required"`
+	DBName    string `json:"db_name" yaml:"db_name" mapstructure:"db_name" validate:"required"`
+	DBUser    string `json:"db_user" yaml:"db_user" mapstructure:"db_user" validate:"required"`
+	AWSRegion string `json:"aws_region" yaml:"aws_region" mapstructure:"aws_region" validate:"required"`
+	Exclude   string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
 var sampleConfig = `
