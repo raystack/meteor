@@ -22,7 +22,6 @@ var summary string
 var sampleConfig = `
 host: https://server.tableau.com
 version: "3.12"
-identifier: my-tableau
 username: meteor_user
 password: xxxxxxxxxx
 sitename: testdev550928

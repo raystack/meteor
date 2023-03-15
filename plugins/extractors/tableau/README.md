@@ -12,7 +12,6 @@ source:
   config:
     host: http://server.tableau.com
     version: 3.12
-    identifier: my-tableau
     username: meteor_user
     password: xxxxxxxxxx
 ```
