@@ -1,9 +1,11 @@
 [
   {
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.Model",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
       "attributes": {
-        "endpoint_urls": ["resource-request.sample.models.company.com"],
+        "endpoint_urls": [
+          "resource-request.sample.models.company.com"
+        ],
         "mlflow_experiment_id": 83,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/83",
         "project_id": 1
@@ -25,7 +27,9 @@
             "mlflow_run_url": "http://mlflow.company.com/#/experiments/83/runs/061ew38v3b7kp088s9b49kzr68v5ixvm3",
             "monitoring_url": "",
             "service_name": "resource-request-2-predictor-default.sample.models.company.com",
-            "transformer": {"enabled": false},
+            "transformer": {
+              "enabled": false
+            },
             "version_endpoint_url": "http://resource-request-2.sample.models.company.com/v1/models/resource-request-2",
             "weight": 100
           },
@@ -36,7 +40,10 @@
         }
       ]
     },
-    "labels": {"stream": "roger", "team": "pirates"},
+    "labels": {
+      "stream": "roger",
+      "team": "pirates"
+    },
     "lineage": {},
     "name": "resource-request",
     "owners": [
@@ -56,9 +63,11 @@
   },
   {
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.Model",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
       "attributes": {
-        "endpoint_urls": ["pyfunc-standard-transfo.sample.models.company.com"],
+        "endpoint_urls": [
+          "pyfunc-standard-transfo.sample.models.company.com"
+        ],
         "mlflow_experiment_id": 692,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/692",
         "project_id": 1
@@ -105,7 +114,10 @@
         }
       ]
     },
-    "labels": {"stream": "roger", "team": "pirates"},
+    "labels": {
+      "stream": "roger",
+      "team": "pirates"
+    },
     "lineage": {},
     "name": "pyfunc-standard-transfo",
     "owners": [
@@ -125,7 +137,7 @@
   },
   {
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.Model",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
       "attributes": {
         "endpoint_urls": [
           "inca-restaurant-image.inca-restaurant.models.company.com",
@@ -152,12 +164,17 @@
             "mlflow_run_url": "http://mlflow.company.com/#/experiments/1466/runs/f190512242584707b79831ee3d5e406c",
             "monitoring_url": "",
             "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
-            "transformer": {"enabled": false},
+            "transformer": {
+              "enabled": false
+            },
             "version_endpoint_url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
             "weight": 100
           },
           "create_time": "2022-10-28T06:11:52.148118Z",
-          "labels": {"env": "staging", "ver": "2.1.0"},
+          "labels": {
+            "env": "staging",
+            "ver": "2.1.0"
+          },
           "status": "running",
           "update_time": "2022-10-28T06:11:52.148118Z",
           "version": "47"
@@ -174,19 +191,27 @@
             "mlflow_run_url": "http://mlflow.company.com/#/experiments/1466/runs/f190512242584707b79831ee3d5e406c",
             "monitoring_url": "",
             "service_name": "inca-restaurant-image-47.inca-restaurant.models.company.com",
-            "transformer": {"enabled": false},
+            "transformer": {
+              "enabled": false
+            },
             "version_endpoint_url": "http://inca-restaurant-image-47.inca-restaurant.models.company.com/v1/models/inca-restaurant-image-47",
             "weight": 100
           },
           "create_time": "2022-10-28T06:11:52.148118Z",
-          "labels": {"env": "staging", "ver": "2.1.0"},
+          "labels": {
+            "env": "staging",
+            "ver": "2.1.0"
+          },
           "status": "running",
           "update_time": "2022-10-28T06:11:52.148118Z",
           "version": "47"
         }
       ]
     },
-    "labels": {"stream": "whitebeard", "team": "pirates"},
+    "labels": {
+      "stream": "whitebeard",
+      "team": "pirates"
+    },
     "lineage": {},
     "name": "inca-restaurant-image",
     "owners": [
@@ -202,9 +227,11 @@
   },
   {
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.Model",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
       "attributes": {
-        "endpoint_urls": ["id-car-b-default.jaeger.models.company.com"],
+        "endpoint_urls": [
+          "id-car-b-default.jaeger.models.company.com"
+        ],
         "mlflow_experiment_id": 287,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/287",
         "project_id": 100
@@ -275,7 +302,10 @@
         }
       ]
     },
-    "labels": {"stream": "whitebeard", "team": "pirates"},
+    "labels": {
+      "stream": "whitebeard",
+      "team": "pirates"
+    },
     "lineage": {
       "upstreams": [
         {

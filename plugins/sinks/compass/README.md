@@ -10,7 +10,7 @@ sinks:
   config:
     host: https://compass.com
     headers:
-      compass-User-Email: meteor@odpf.io
+      compass-User-Email: meteor@gotocompany.com
       Header-1: value11,value12
     labels:
       myCustom: $properties.attributes.myCustomField

@@ -38,8 +38,8 @@ engine.
 
 [More details][script-readme]
 
-[labels-readme]: https://github.com/odpf/meteor/blob/main/plugins/processors/labels/README.md
+[labels-readme]: https://github.com/goto/meteor/blob/main/plugins/processors/labels/README.md
 
-[script-readme]: https://github.com/odpf/meteor/blob/main/plugins/processors/script/README.md
+[script-readme]: https://github.com/goto/meteor/blob/main/plugins/processors/script/README.md
 
 [tengo]: https://github.com/d5/tengo

@@ -6,7 +6,7 @@ package sqlparser
 import (
 	"testing"
 
-	"github.com/alecthomas/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseSimpleJoin(t *testing.T) {

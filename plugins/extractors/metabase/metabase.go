@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/utils"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 )

@@ -6,10 +6,10 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
+	pb "github.com/goto/optimus/protos/gotocompany/optimus/core/v1beta1"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	pb "github.com/odpf/optimus/protos/odpf/optimus/core/v1beta1"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"

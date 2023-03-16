@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/recipe"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/recipe"
 )
 
 func recipeToPluginConfig(pr recipe.PluginRecipe) plugins.Config {

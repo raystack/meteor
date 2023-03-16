@@ -29,7 +29,7 @@ required (except the `os` module).
 
 ```yaml
 source:
-  scope: odpf
+  scope: gotocompany
   type: http
   config:
     request:
@@ -358,29 +358,29 @@ Refer to
 the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
 for information on contributing to this module.
 
-[proton-bucket]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/bucket.proto#L13
+[proton-bucket]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/bucket.proto#L13
 
-[proton-dashboard]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/dashboard.proto#L14
+[proton-dashboard]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/dashboard.proto#L14
 
-[proton-experiment]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/experiment.proto#L15
+[proton-experiment]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/experiment.proto#L15
 
-[proton-featuretable]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/feature_table.proto#L32
+[proton-featuretable]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/feature_table.proto#L32
 
-[proton-group]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/group.proto#L12
+[proton-group]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/group.proto#L12
 
-[proton-job]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/job.proto#L13
+[proton-job]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/job.proto#L13
 
-[proton-metric]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/metric.proto#L13
+[proton-metric]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/metric.proto#L13
 
-[proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L17
+[proton-model]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/model.proto#L17
 
-[proton-application]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/application.proto#L11
+[proton-application]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/application.proto#L11
 
-[proton-table]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/table.proto#L14
+[proton-table]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/table.proto#L14
 
-[proton-topic]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/topic.proto#L14
+[proton-topic]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/topic.proto#L14
 
-[proton-user]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/user.proto#L15
+[proton-user]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/user.proto#L15
 
 [tengo]: https://github.com/d5/tengo
 

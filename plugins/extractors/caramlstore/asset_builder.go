@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/caramlstore/internal/core"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

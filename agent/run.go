@@ -1,6 +1,6 @@
 package agent
 
-import "github.com/odpf/meteor/recipe"
+import "github.com/goto/meteor/recipe"
 
 // TaskType is the type of task
 type TaskType string

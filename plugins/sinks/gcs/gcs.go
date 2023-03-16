@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/models"
-	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	assetsv1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 )
 

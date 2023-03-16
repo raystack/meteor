@@ -7,16 +7,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/utils"
+	"github.com/goto/salt/log"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 )
 
 //go:embed README.md
@@ -40,7 +40,7 @@ service_account_json: {
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
     "client_x509_cert_url": "XXXXXX"
 }
-user_email: user@odpf.com`
+user_email: user@gotocompany.com`
 
 var info = plugins.Info{
 	Description:  "User list from Google Workspace",

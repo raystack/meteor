@@ -17,7 +17,7 @@ sinks:
 
 `compass`
 
-Upload metadata to a given `type` in [Compass](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/compass/README.md). Request will be sent via HTTP to a given host.
+Upload metadata to a given `type` in [Compass](https://github.com/goto/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/goto/compass/README.md). Request will be sent via HTTP to a given host.
 
 ### Sample usage of compass sink
 
@@ -95,7 +95,7 @@ sinks:
 
 `stencil`
 
-Upload metadata of a given schema `format` in the existing `namespace_id` present in [Stencil](https://github.com/odpf/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/odpf/stencil/README.md). Request will be sent via HTTP to a given host.
+Upload metadata of a given schema `format` in the existing `namespace_id` present in [Stencil](https://github.com/goto/meteor/tree/cb12c3ecf8904cf3f4ce365ca8981ccd132f35d0/docs/reference/github.com/goto/stencil/README.md). Request will be sent via HTTP to a given host.
 
 ```yaml
 sinks:
@@ -120,7 +120,7 @@ sinks:
   config:
     host: shield.com
     headers:
-      X-Shield-Email: meteor@odpf.io
+      X-Shield-Email: meteor@gotocompany.com
       X-Other-Header: value1, value2
 ```
 

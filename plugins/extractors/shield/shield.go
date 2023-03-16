@@ -5,12 +5,12 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
-	sh "github.com/odpf/shield/proto/v1beta1"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
+	sh "github.com/goto/shield/proto/v1beta1"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -66,9 +66,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.client.Close()
 
-	listUsers, err := e.client.ListUsers(ctx, &sh.ListUsersRequest{
-		Fields: nil,
-	})
+	listUsers, err := e.client.ListUsers(ctx, &sh.ListUsersRequest{})
 	if err != nil {
 		return fmt.Errorf("error fetching users: %w", err)
 	}

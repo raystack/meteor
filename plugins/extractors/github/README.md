@@ -6,7 +6,7 @@
 source:
   name: github
   config:
-    org: odpf
+    org: goto
     token: github_token
 ```
 
@@ -14,7 +14,7 @@ source:
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `org` | `string` | `odpf` | Name of github organisation | *required* |
+| `org` | `string` | `goto` | Name of github organisation | *required* |
 | `token` | `string` | `kdfljdfljoijj` | Github API access token | *required* |
 
 ## Outputs

@@ -17,10 +17,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.18'
+          go-version: '1.20'
       # See https://github.com/golangci/golangci-lint-action#how-to-use
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50
+          version: v1.51
           args: --timeout=5m

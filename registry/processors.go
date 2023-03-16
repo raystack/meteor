@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/odpf/meteor/plugins"
+	"github.com/goto/meteor/plugins"
 	"github.com/pkg/errors"
 )
 

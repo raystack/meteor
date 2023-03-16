@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/odpf/meteor/registry"
+	"github.com/goto/meteor/registry"
 	"github.com/pkg/errors"
 )
 

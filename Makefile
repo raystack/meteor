@@ -1,7 +1,7 @@
-NAME="github.com/odpf/meteor"
+NAME="github.com/goto/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
-PROTON_COMMIT := "8990712599f715240a3fbe9ce034a204b4a32245"
+PROTON_COMMIT := "5b5dc727b525925bcec025b355983ca61d7ccf68"
 .PHONY: all build clean test
 
 all: build
@@ -34,9 +34,9 @@ test-coverage: # test test-plugins
 	go tool cover -html=coverage-all.out
 
 generate-proto: ## regenerate protos
-	@echo " > cloning protobuf from odpf/proton"
+	@echo " > cloning protobuf from goto/proton"
 	@echo " > generating protobuf"
-	@buf generate --template buf.gen.yaml https://github.com/odpf/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --path odpf/assets/v1beta2
+	@buf generate --template buf.gen.yaml https://github.com/goto/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --path gotocompany/assets/v1beta2
 	@echo " > protobuf compilation finished"
 
 lint: ## Lint with golangci-lint

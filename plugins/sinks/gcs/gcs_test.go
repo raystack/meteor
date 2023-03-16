@@ -7,12 +7,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	g "github.com/odpf/meteor/plugins/sinks/gcs"
-	testUtils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	g "github.com/goto/meteor/plugins/sinks/gcs"
+	testUtils "github.com/goto/meteor/test/utils"
+	"github.com/goto/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -62,10 +62,10 @@ func TestSink(t *testing.T) {
 	t.Run("should write data in bucket and return nil error on success", func(t *testing.T) {
 		u := &v1beta2.User{
 			FullName: "John Doe",
-			Email:    "john.doe@odpf.com",
+			Email:    "john.doe@gotocompany.com",
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"org_unit_path": "/",
-				"aliases":       "doe.john@odpf.com,johndoe@odpf.com",
+				"aliases":       "doe.john@gotocompany.com,johndoe@gotocompany.com",
 			}),
 		}
 		user, _ := anypb.New(u)

@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/mitchellh/mapstructure"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoregistry"

@@ -7,22 +7,22 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/recipe"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/test/mocks"
-	"github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/agent"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/recipe"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	_ "github.com/odpf/meteor/plugins/extractors" // populate extractors registry
-	_ "github.com/odpf/meteor/plugins/processors" // populate processors registry
-	_ "github.com/odpf/meteor/plugins/sinks"      // populate sinks registry
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	_ "github.com/goto/meteor/plugins/extractors" // populate extractors registry
+	_ "github.com/goto/meteor/plugins/processors" // populate processors registry
+	_ "github.com/goto/meteor/plugins/sinks"      // populate sinks registry
 )
 
 var (

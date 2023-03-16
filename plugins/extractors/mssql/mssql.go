@@ -9,16 +9,16 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/odpf/salt/log"
+	"github.com/goto/salt/log"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
 
-	"github.com/odpf/meteor/plugins/sqlutil"
+	"github.com/goto/meteor/plugins/sqlutil"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 )
 
 //go:embed README.md

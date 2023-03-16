@@ -12,14 +12,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins/sinks/stencil"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins/sinks/stencil"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/odpf/meteor/plugins"
-	testUtils "github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/plugins"
+	testUtils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 

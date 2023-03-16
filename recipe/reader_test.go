@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/recipe"
+	"github.com/goto/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 )
 

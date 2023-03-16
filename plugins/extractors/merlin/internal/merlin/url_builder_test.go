@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/odpf/meteor/plugins/extractors/merlin/internal/merlin"
+	"github.com/goto/meteor/plugins/extractors/merlin/internal/merlin"
 	"github.com/stretchr/testify/assert"
 )
 

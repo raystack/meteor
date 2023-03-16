@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	testutils "github.com/odpf/meteor/test/utils"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 )

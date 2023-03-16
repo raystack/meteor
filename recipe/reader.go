@@ -8,8 +8,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/odpf/meteor/generator"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/generator"
+	"github.com/goto/salt/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,7 +31,7 @@ func NewReader(lg log.Logger, pathToConfig string) *Reader {
 	return reader
 }
 
-//  Read loads the list of recipes from a give file or directory path.
+// Read loads the list of recipes from a give file or directory path.
 func (r *Reader) Read(path string) (recipes []Recipe, err error) {
 	fi, err := os.Stat(path)
 	if err != nil {

@@ -1,7 +1,7 @@
 package models
 
 import (
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 )
 
 // Record represents the metadata of a record

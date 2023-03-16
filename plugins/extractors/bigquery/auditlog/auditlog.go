@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/odpf/salt/log"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"

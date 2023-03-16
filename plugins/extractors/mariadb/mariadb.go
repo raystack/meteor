@@ -7,15 +7,15 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql" // used to register the mariadb driver
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins/sqlutil"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins/sqlutil"
 )
 
 //go:embed README.md
@@ -139,10 +139,10 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
 		Urn:     models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name: tableName,
-		Type: "table",
+		Name:    tableName,
+		Type:    "table",
 		Service: "mariadb",
-		Data: data,
+		Data:    data,
 	}))
 	return
 }

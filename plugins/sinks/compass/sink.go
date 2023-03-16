@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/utils"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -40,7 +40,7 @@ var info = plugins.Info{
 	host: https://compass.com
 	# Additional HTTP headers send to compass, multiple headers value are separated by a comma
 	headers:
-	  Compass-User-Email: meteor@odpf.io
+	  Compass-User-Email: meteor@gotocompany.com
 	  X-Other-Header: value1, value2
 	# The labels to pass as payload label of the patch api
 	labels:

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/caramlstore/internal/core"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/utils"
+	"github.com/goto/salt/log"
 	"google.golang.org/grpc/codes"
 )
 

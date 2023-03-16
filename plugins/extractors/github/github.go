@@ -8,11 +8,11 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/google/go-github/v37/github"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 	"golang.org/x/oauth2"
 )
 
@@ -26,7 +26,7 @@ type Config struct {
 }
 
 var sampleConfig = `
-org: odpf
+org: goto
 token: github_token`
 
 var info = plugins.Info{
@@ -96,8 +96,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		emit(models.NewRecord(&v1beta2.Asset{
 			Urn:     models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),
 			Service: "github",
-			Type: "user",
-			Data: u,
+			Type:    "user",
+			Data:    u,
 		}))
 	}
 

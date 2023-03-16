@@ -1,2 +1,2 @@
-{"urn":"elasticsearch.index1","name":"index1","type":"table","data":{"@type":"type.googleapis.com/odpf.assets.v1beta2.Table","profile":{"total_rows":"1"},"columns":[{"name":"SomeStr","data_type":"text"}]}}
-{"urn":"elasticsearch.index2","name":"index2","type":"table","data":{"@type":"type.googleapis.com/odpf.assets.v1beta2.Table","profile":{"total_rows":"1"},"columns":[{"name":"SomeStr","data_type":"text"}]}}
+{"urn":"elasticsearch.index1","name":"index1","type":"table","data":{"@type":"type.googleapis.com/gotocompany.assets.v1beta2.Table","profile":{"total_rows":"1"},"columns":[{"name":"SomeStr","data_type":"text"}]}}
+{"urn":"elasticsearch.index2","name":"index2","type":"table","data":{"@type":"type.googleapis.com/gotocompany.assets.v1beta2.Table","profile":{"total_rows":"1"},"columns":[{"name":"SomeStr","data_type":"text"}]}}

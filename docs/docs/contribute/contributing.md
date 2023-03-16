@@ -31,7 +31,7 @@ Please follow these practices for you change to get merged fast and smoothly:
 * Make sure your local build is running with all the tests and checkstyle passing.
 * If your change is related to user-facing protocols / configurations, you need to make the corresponding change in the documentation as well.
 * Docs live in the code repo under `docs` so that changes to that can be done in the same PR as changes to the code.
-* Adding a new extractor should follow [this guide](https://github.com/odpf/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-extractor).
-* Adding a new processor should follow [this guide](https://github.com/odpf/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-processor).
-* Adding a new sink should follow [this guide](https://github.com/odpf/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-sink).
+* Adding a new extractor should follow [this guide](https://github.com/goto/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-extractor).
+* Adding a new processor should follow [this guide](https://github.com/goto/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-processor).
+* Adding a new sink should follow [this guide](https://github.com/goto/meteor/tree/8cd8885b49271bd7aa5725101f9315278da646d2/docs/contribute/guide.md#adding-a-new-sink).
 

@@ -2,13 +2,13 @@ package tableau
 
 import (
 	"fmt"
-	"github.com/odpf/meteor/plugins"
+	"github.com/goto/meteor/plugins"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/pkg/errors"
 )
 

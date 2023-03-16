@@ -10,15 +10,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 
-	testutils "github.com/odpf/meteor/test/utils"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/pkg/errors"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/metabase"
-	"github.com/odpf/meteor/test/mocks"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/metabase"
+	"github.com/goto/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

@@ -1,11 +1,12 @@
-[{
+[
+    {
         "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-A",
         "type": "job",
         "name": "job-A",
         "service": "optimus",
         "description": "sample description for job-A",
         "data": {
-            "@type": "type.googleapis.com/odpf.assets.v1beta2.Job",
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Job",
             "attributes": {
                 "version": 1,
                 "project": "project-A",
@@ -28,21 +29,27 @@
                 }
             }
         },
-        "owners": [{
-            "email": "john_doe@example.com",
-            "urn": "john_doe@example.com"
-        }],
+        "owners": [
+            {
+                "email": "john_doe@example.com",
+                "urn": "john_doe@example.com"
+            }
+        ],
         "lineage": {
-            "upstreams": [{
-                "urn": "urn:bigquery:src-project:table:src-project:src-dataset.src-table",
-                "type": "table",
-                "service": "bigquery"
-            }],
-            "downstreams": [{
-                "urn": "urn:bigquery:dst-project:table:dst-project:dst-dataset.dst-table",
-                "type": "table",
-                "service": "bigquery"
-            }]
+            "upstreams": [
+                {
+                    "urn": "urn:bigquery:src-project:table:src-project:src-dataset.src-table",
+                    "type": "table",
+                    "service": "bigquery"
+                }
+            ],
+            "downstreams": [
+                {
+                    "urn": "urn:bigquery:dst-project:table:dst-project:dst-dataset.dst-table",
+                    "type": "table",
+                    "service": "bigquery"
+                }
+            ]
         }
     },
     {
@@ -52,7 +59,7 @@
         "type": "job",
         "description": "sample description for job-B",
         "data": {
-            "@type": "type.googleapis.com/odpf.assets.v1beta2.Job",
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Job",
             "attributes": {
                 "version": 1,
                 "project": "project-A",
@@ -75,12 +82,15 @@
                 }
             }
         },
-        "owners": [{
-            "email": "jane_doe@example.com",
-            "urn": "jane_doe@example.com"
-        }],
+        "owners": [
+            {
+                "email": "jane_doe@example.com",
+                "urn": "jane_doe@example.com"
+            }
+        ],
         "lineage": {
-            "upstreams": [{
+            "upstreams": [
+                {
                     "urn": "urn:bigquery:src-b1-project:table:src-b1-project:src-b1-dataset.src-b1-table",
                     "type": "table",
                     "service": "bigquery"
@@ -91,11 +101,13 @@
                     "service": "bigquery"
                 }
             ],
-            "downstreams": [{
-                "urn": "urn:bigquery:dst-b-project:table:dst-b-project:dst-b-dataset.dst-b-table",
-                "type": "table",
-                "service": "bigquery"
-            }]
+            "downstreams": [
+                {
+                    "urn": "urn:bigquery:dst-b-project:table:dst-b-project:dst-b-dataset.dst-b-table",
+                    "type": "table",
+                    "service": "bigquery"
+                }
+            ]
         }
     }
 ]

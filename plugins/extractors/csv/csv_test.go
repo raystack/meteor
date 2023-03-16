@@ -7,14 +7,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/csv"
-	"github.com/odpf/meteor/test/mocks"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/csv"
+	"github.com/goto/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

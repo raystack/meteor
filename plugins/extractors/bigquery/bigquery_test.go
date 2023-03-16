@@ -7,10 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/test/utils"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/bigquery"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/bigquery"
 	"github.com/stretchr/testify/assert"
 )
 

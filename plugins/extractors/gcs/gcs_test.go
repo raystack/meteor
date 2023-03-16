@@ -7,10 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/test/utils"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/gcs"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/gcs"
 	"github.com/stretchr/testify/assert"
 )
 

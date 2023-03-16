@@ -7,8 +7,8 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/generator"
-	"github.com/odpf/meteor/registry"
+	"github.com/goto/meteor/generator"
+	"github.com/goto/meteor/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func NewRecipeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "recipe [name]",
 		Aliases: []string{"r"},
-		Args:    cobra.ExactValidArgs(1),
+		Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		Short:   "Generate a new recipe",
 		Long: heredoc.Doc(`
 			Generate a new recipe.

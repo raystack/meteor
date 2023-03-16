@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/d5/tengo/v2"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins/internal/tengoutil/structmap"
-	testutils "github.com/odpf/meteor/test/utils"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins/internal/tengoutil/structmap"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,4 +4,4 @@ After we are done with running and verifying that the recipes works with the dat
 You may want to automate the process of metadata collection on some regular basis as a cron job.
 One can setup user for the same.
 
-In ODPF we use helm chart to set it up, and you can refer the same [here](https://github.com/odpf/charts).
+In goto company we use helm chart to set it up, and you can refer the same [here](https://github.com/goto/charts).

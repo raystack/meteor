@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	h "github.com/odpf/meteor/plugins/sinks/http"
-	testutils "github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	h "github.com/goto/meteor/plugins/sinks/http"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -78,7 +78,7 @@ func TestSink(t *testing.T) {
 		assert.Error(t, err)
 
 		// change value of url in config
-		config["url"] = "https://random-incorrect-url.odpf.com"
+		config["url"] = "https://random-incorrect-url.gotocompany.com"
 		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 		assert.NoError(t, err)
 		err = httpSink.Sink(context.TODO(), getExpectedVal(t))

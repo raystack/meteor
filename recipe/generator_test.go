@@ -6,7 +6,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/odpf/meteor/recipe"
+	"github.com/goto/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"

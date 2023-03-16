@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	testutils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	testutils "github.com/goto/meteor/test/utils"
+	"github.com/goto/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -93,7 +93,7 @@ func TestAsMap(t *testing.T) {
 			},
 			expected: map[string]interface{}{
 				"data": map[string]interface{}{
-					"@type":       "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+					"@type":       "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
 					"create_time": "2022-09-19T22:42:04Z",
 					"entities": []interface{}{
 						map[string]interface{}{
@@ -148,7 +148,7 @@ func TestAsMap(t *testing.T) {
 			},
 			expected: map[string]interface{}{
 				"data": map[string]interface{}{
-					"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+					"@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
 					"columns": []interface{}{
 						map[string]interface{}{"data_type": "int", "name": "applicantid"},
 						map[string]interface{}{"data_type": "text", "name": "first_name"},
@@ -269,7 +269,7 @@ func TestAsStruct(t *testing.T) {
 			output: &v1beta2.Asset{},
 			input: map[string]interface{}{
 				"data": map[string]interface{}{
-					"@type":       "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+					"@type":       "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
 					"create_time": "2022-09-19T22:42:04Z",
 					"entities": []interface{}{
 						map[string]interface{}{
@@ -340,7 +340,7 @@ func TestAsStruct(t *testing.T) {
 			output: &v1beta2.Asset{},
 			input: map[string]interface{}{
 				"data": map[string]interface{}{
-					"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+					"@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
 					"columns": []interface{}{
 						map[string]interface{}{"data_type": "int", "name": "applicantid"},
 						map[string]interface{}{"data_type": "text", "name": "first_name"},
@@ -402,7 +402,7 @@ func TestAsStruct(t *testing.T) {
 			output: &v1beta2.Asset{},
 			input: map[string]interface{}{
 				"data": map[string]interface{}{
-					"@type": "type.googleapis.com/odpf.assets.v1beta2.DoesNotExist",
+					"@type": "type.googleapis.com/gotocompany.assets.v1beta2.DoesNotExist",
 				},
 			},
 			expected:    &v1beta2.Asset{},

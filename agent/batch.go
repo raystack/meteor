@@ -3,7 +3,7 @@ package agent
 import (
 	"errors"
 
-	"github.com/odpf/meteor/models"
+	"github.com/goto/meteor/models"
 )
 
 // batch contains the configuration for a batch

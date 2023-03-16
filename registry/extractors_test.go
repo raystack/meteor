@@ -3,9 +3,9 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/test/mocks"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

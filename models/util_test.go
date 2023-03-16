@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/odpf/meteor/models"
+	"github.com/goto/meteor/models"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,8 +3,8 @@ package utils
 import (
 	"testing"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	testutils "github.com/odpf/meteor/test/utils"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 

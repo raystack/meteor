@@ -1,8 +1,8 @@
 package bigquery
 
 import (
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins/extractors/bigquery/auditlog"
 )
 
 func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats) (tp *v1beta2.TableProfile) {

@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	assetsv1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 

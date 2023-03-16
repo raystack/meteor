@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	auditpb "google.golang.org/genproto/googleapis/cloud/audit"

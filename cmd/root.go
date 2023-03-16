@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/salt/cmdx"
+	"github.com/goto/salt/cmdx"
 	"github.com/spf13/cobra"
 )
 
@@ -23,10 +23,10 @@ func New() *cobra.Command {
 			"group:core": "true",
 			"help:learn": heredoc.Doc(`
 				Use 'meteor <command> <subcommand> --help' for more information about a command.
-				Read the manual at https://odpf.github.io/meteor/
+				Read the manual at https://goto.github.io/meteor/
 			`),
 			"help:feedback": heredoc.Doc(`
-				Open an issue here https://github.com/odpf/meteor/issues
+				Open an issue here https://github.com/goto/meteor/issues
 			`),
 		},
 	}

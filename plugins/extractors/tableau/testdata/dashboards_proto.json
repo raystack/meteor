@@ -5,7 +5,7 @@
         "service": "tableau",
         "type": "dashboard",
         "data": {
-            "@type": "type.googleapis.com/odpf.assets.v1beta2.Dashboard",
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Dashboard",
             "attributes": {
                 "id": "d74564cf-931c-2df2-fd8f-8b974fbc0b14",
                 "name": "Regional",
@@ -189,7 +189,7 @@
         "type": "dashboard",
         "description": "A sample superstore",
         "data": {
-            "@type": "type.googleapis.com/odpf.assets.v1beta2.Dashboard",
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Dashboard",
             "charts": [
                 {
                     "attributes": {
@@ -489,7 +489,7 @@
         "service": "tableau",
         "type": "dashboard",
         "data": {
-            "@type": "type.googleapis.com/odpf.assets.v1beta2.Dashboard",
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Dashboard",
             "charts": [
                 {
                     "urn": "urn:tableau:test-tableau:sheet:3250190d-e1f8-3e1e-e43e-3485ea87990e",

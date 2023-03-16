@@ -1,6 +1,6 @@
 project_name: meteor
 
-release:  
+release:
   prerelease: auto
   draft: true
 
@@ -15,9 +15,9 @@ builds:
     binary: meteor
     flags: [-a]
     ldflags:
-      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} 
-      - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
-      - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
+      - -X github.com/goto/meteor/cmd.Version={{.Tag}}
+      - -X github.com/goto/meteor/cmd.BuildCommit={{.FullCommit}}
+      - -X github.com/goto/meteor/cmd.BuildDate={{.Date}}
     goos: [linux]
     goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
@@ -27,9 +27,9 @@ builds:
     binary: meteor
     flags: [-a]
     ldflags:
-      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} 
-      - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
-      - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
+      - -X github.com/goto/meteor/cmd.Version={{.Tag}}
+      - -X github.com/goto/meteor/cmd.BuildCommit={{.FullCommit}}
+      - -X github.com/goto/meteor/cmd.BuildDate={{.Date}}
     goos: [darwin]
     goarch: [amd64, 386, arm, arm64]
     env:
@@ -39,9 +39,9 @@ builds:
     binary: meteor
     flags: [-a]
     ldflags:
-      - -X github.com/odpf/meteor/cmd.Version={{.Tag}} 
-      - -X github.com/odpf/meteor/cmd.BuildCommit={{.FullCommit}} 
-      - -X github.com/odpf/meteor/cmd.BuildDate={{.Date}}
+      - -X github.com/goto/meteor/cmd.Version={{.Tag}}
+      - -X github.com/goto/meteor/cmd.BuildCommit={{.FullCommit}}
+      - -X github.com/goto/meteor/cmd.BuildDate={{.Date}}
     goos: [windows]
     goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
@@ -59,7 +59,7 @@ archives:
         format: zip
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   name_template: "{{ .Tag }}-next"
@@ -68,28 +68,27 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^build:'
+      - "^docs:"
+      - "^test:"
+      - "^build:"
 
 dockers:
-  -
-    goos: linux
+  - goos: linux
     goarch: amd64
     ids:
       - linux
     dockerfile: Dockerfile
     image_templates:
-      - 'docker.io/odpf/{{.ProjectName}}:latest'
-      - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}'
-      - 'docker.io/odpf/{{.ProjectName}}:{{ .Version }}-amd64'
+      - "docker.io/gotocompany/{{.ProjectName}}:latest"
+      - "docker.io/gotocompany/{{.ProjectName}}:{{ .Version }}"
+      - "docker.io/gotocompany/{{.ProjectName}}:{{ .Version }}-amd64"
 
 brews:
   - name: meteor
-    homepage: "https://github.com/odpf/meteor"
+    homepage: "https://github.com/goto/meteor"
     description: "Metadata collection tool."
     tap:
-      owner: odpf
+      owner: goto
       name: homebrew-tap
     license: "Apache 2.0"
     folder: Formula
@@ -99,6 +98,5 @@ brews:
     install: |-
       bin.install "meteor"
     commit_author:
-      name: Ravi Suhag
-      email: suhag.ravi@gmail.com
-      
+      name: github-actions[bot]
+      email: 41898282+github-actions[bot]@users.noreply.github.com

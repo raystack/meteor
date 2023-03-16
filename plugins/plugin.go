@@ -3,7 +3,7 @@ package plugins
 import (
 	"context"
 
-	"github.com/odpf/meteor/models"
+	"github.com/goto/meteor/models"
 )
 
 // PluginType is the type of plugin.

@@ -3,8 +3,8 @@ package agent
 import (
 	"time"
 
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 )
 
 type Config struct {

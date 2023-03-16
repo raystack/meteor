@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice/redshiftdataapiserviceiface"
-	"github.com/odpf/meteor/plugins/extractors/redshift"
+	"github.com/goto/meteor/plugins/extractors/redshift"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

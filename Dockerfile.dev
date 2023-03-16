@@ -1,4 +1,4 @@
-FROM golang:1.16-stretch as base
+FROM golang:1.20 as base
 WORKDIR /build/
 COPY . .
 RUN ["make", "build-dev"]

@@ -5,29 +5,29 @@
   url: ""
   description: ""
   data:
-    typeurl: type.googleapis.com/odpf.assets.v1beta2.Table
+    typeurl: type.googleapis.com/gotocompany.assets.v1beta2.Table
     value:
-        - 10
-        - 2
-        - 8
-        - 1
-        - 18
-        - 15
-        - 10
-        - 7
-        - 83
-        - 111
-        - 109
-        - 101
-        - 83
-        - 116
-        - 114
-        - 26
-        - 4
-        - 116
-        - 101
-        - 120
-        - 116
+      - 10
+      - 2
+      - 8
+      - 1
+      - 18
+      - 15
+      - 10
+      - 7
+      - 83
+      - 111
+      - 109
+      - 101
+      - 83
+      - 116
+      - 114
+      - 26
+      - 4
+      - 116
+      - 101
+      - 120
+      - 116
   owners: []
   lineage: null
   labels: {}
@@ -41,29 +41,29 @@
   url: ""
   description: ""
   data:
-    typeurl: type.googleapis.com/odpf.assets.v1beta2.Table
+    typeurl: type.googleapis.com/gotocompany.assets.v1beta2.Table
     value:
-        - 10
-        - 2
-        - 8
-        - 1
-        - 18
-        - 15
-        - 10
-        - 7
-        - 83
-        - 111
-        - 109
-        - 101
-        - 83
-        - 116
-        - 114
-        - 26
-        - 4
-        - 116
-        - 101
-        - 120
-        - 116
+      - 10
+      - 2
+      - 8
+      - 1
+      - 18
+      - 15
+      - 10
+      - 7
+      - 83
+      - 111
+      - 109
+      - 101
+      - 83
+      - 116
+      - 114
+      - 26
+      - 4
+      - 116
+      - 101
+      - 120
+      - 116
   owners: []
   lineage: null
   labels: {}

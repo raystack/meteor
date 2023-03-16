@@ -10,14 +10,14 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/odpf/meteor/models"
+	"github.com/goto/meteor/models"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/sqlutil"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sqlutil"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 )
 
 //go:embed README.md

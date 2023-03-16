@@ -20,4 +20,4 @@ jobs:
         push: true
         file: "./Dockerfile.dev"
         tags: |
-            odpf/meteor:dev
+            gotocompany/meteor:dev

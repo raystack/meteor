@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
 	grpcmw "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/odpf/meteor/plugins/extractors/caramlstore/internal/core"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

@@ -68,7 +68,7 @@ Consider a [`FeatureTable`][proton-featuretable] asset with the following data:
   "service": "caramlstore",
   "type": "feature_table",
   "data": {
-    "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+    "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
     "namespace": "sauron",
     "entities": [
       {
@@ -166,7 +166,7 @@ With this script, the output from the processor would have the following asset:
   "service": "caramlstore",
   "type": "feature_table",
   "data": {
-    "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+    "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
     "namespace": "sauron",
     "entities": [
       {
@@ -229,29 +229,29 @@ for information on contributing to this module.
 
 [tengo-stdlib]: https://github.com/d5/tengo/blob/v2.13.0/docs/stdlib.md
 
-[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
+[proton-asset]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/asset.proto#L14
 
-[proton-bucket]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/bucket.proto#L13
+[proton-bucket]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/bucket.proto#L13
 
-[proton-dashboard]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/dashboard.proto#L14
+[proton-dashboard]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/dashboard.proto#L14
 
-[proton-experiment]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/experiment.proto#L15
+[proton-experiment]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/experiment.proto#L15
 
-[proton-featuretable]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/feature_table.proto#L32
+[proton-featuretable]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/feature_table.proto#L32
 
-[proton-group]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/group.proto#L12
+[proton-group]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/group.proto#L12
 
-[proton-job]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/job.proto#L13
+[proton-job]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/job.proto#L13
 
-[proton-metric]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/metric.proto#L13
+[proton-metric]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/metric.proto#L13
 
-[proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L73
+[proton-model]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/model.proto#L73
 
-[proton-application]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/application.proto#L11
+[proton-application]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/application.proto#L11
 
-[proton-table]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/table.proto#L14
+[proton-table]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/table.proto#L14
 
-[proton-topic]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/topic.proto#L14
+[proton-topic]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/topic.proto#L14
 
-[proton-user]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/user.proto#L15
+[proton-user]: https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/user.proto#L15
 

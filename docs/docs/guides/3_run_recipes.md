@@ -21,11 +21,11 @@ $ meteor run .
 
 ```bash
 # run meteor for specified recipes
-$ docker run --rm odpf/meteor meteor run recipe.yml
+$ docker run --rm gotocompany/meteor meteor run recipe.yml
 
 # run all recipes in the specified directory
-$ docker run --rm odpf/meteor meteor run _recipes/
+$ docker run --rm gotocompany/meteor meteor run _recipes/
 
 # run all recipes in the current directory
-$ docker run --rm odpf/meteor meteor run .
+$ docker run --rm gotocompany/meteor meteor run .
 ```

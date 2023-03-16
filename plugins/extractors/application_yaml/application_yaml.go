@@ -12,10 +12,10 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
 	"gopkg.in/yaml.v3"
 )
 

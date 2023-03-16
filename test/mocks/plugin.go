@@ -3,11 +3,11 @@ package mocks
 import (
 	"context"
 
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
+	"github.com/goto/meteor/models"
+	"github.com/goto/meteor/plugins"
 	"github.com/stretchr/testify/mock"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 )
 
 type Plugin struct {

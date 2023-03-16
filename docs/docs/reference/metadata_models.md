@@ -72,8 +72,8 @@ implementation please refer [here][proton-assets].
 
 ```golang
 import(
-    assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
-    "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+    assetsv1beta1 "github.com/goto/meteor/models/gotocompany/assets/v1beta1"
+    "github.com/goto/meteor/models/gotocompany/assets/facets/v1beta1"
 )
 
 func main(){
@@ -102,22 +102,22 @@ func main(){
 [//]: # (@formatter:on)
 
 
-[proton-bucket]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/bucket.proto
+[proton-bucket]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/bucket.proto
 
-[proton-dashboard]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/dashboard.proto
+[proton-dashboard]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/dashboard.proto
 
-[proton-user]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/user.proto
+[proton-user]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/user.proto
 
-[proton-table]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/table.proto
+[proton-table]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/table.proto
 
-[proton-job]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/job.proto
+[proton-job]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/job.proto
 
-[proton-topic]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/topic.proto
+[proton-topic]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/topic.proto
 
-[proton-featuretable]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/feature_table.proto
+[proton-featuretable]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/feature_table.proto
 
-[proton-application]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/application.proto
+[proton-application]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/application.proto
 
-[proton-model]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/model.proto
+[proton-model]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2/model.proto
 
-[proton-assets]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2
+[proton-assets]: https://github.com/goto/proton/tree/main/gotocompany/assets/v1beta2

@@ -6,10 +6,10 @@ package bigquery
 import (
 	"testing"
 
-	"github.com/alecthomas/assert"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/bigquery/auditlog"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/bigquery/auditlog"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildTableProfile(t *testing.T) {

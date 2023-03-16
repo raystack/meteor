@@ -19,7 +19,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.18'
+        go-version: '1.20'
         cache: true
         check-latest: true
     - name: Get release tag
@@ -43,4 +43,4 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Push Images
-      run: docker push docker.io/odpf/meteor:latest
+      run: docker push docker.io/gotocompany/meteor:latest

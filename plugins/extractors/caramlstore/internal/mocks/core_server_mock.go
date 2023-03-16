@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	core "github.com/odpf/meteor/plugins/extractors/caramlstore/internal/core"
+	core "github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
 	mock "github.com/stretchr/testify/mock"
 )
 

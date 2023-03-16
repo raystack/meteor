@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/models"
-	assetsv1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
-	sh "github.com/odpf/shield/proto/v1beta1"
+	"github.com/goto/meteor/models"
+	assetsv1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
+	sh "github.com/goto/shield/proto/v1beta1"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -36,7 +36,7 @@ var info = plugins.Info{
 	host: shield.com:5556
 	# Additional headers send to shield, multiple headers value are separated by a comma
 	headers:
-	  X-Shield-Email: meteor@odpf.io
+	  X-Shield-Email: meteor@gotocompany.com
       X-Other-Header: value1, value2
 	`),
 }

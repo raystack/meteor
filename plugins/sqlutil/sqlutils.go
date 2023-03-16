@@ -3,7 +3,7 @@ package sqlutil
 import (
 	"database/sql"
 
-	"github.com/odpf/salt/log"
+	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 )
 

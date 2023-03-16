@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/tableau"
-	"github.com/odpf/meteor/test/mocks"
-	testutils "github.com/odpf/meteor/test/utils"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/tableau"
+	"github.com/goto/meteor/test/mocks"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 

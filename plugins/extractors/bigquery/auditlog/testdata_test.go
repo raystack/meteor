@@ -4,7 +4,7 @@
 package auditlog
 
 import (
-	"github.com/odpf/meteor/plugins"
+	"github.com/goto/meteor/plugins"
 	loggingpb "google.golang.org/genproto/googleapis/cloud/bigquery/logging/v1"
 )
 

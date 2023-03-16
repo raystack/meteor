@@ -5,7 +5,7 @@
     "service": "caramlstore",
     "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
       "namespace": "sauron",
       "entities": [
         {
@@ -91,7 +91,7 @@
     "service": "caramlstore",
     "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
       "namespace": "sauron",
       "entities": [
         {
@@ -137,7 +137,7 @@
     "service": "caramlstore",
     "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
       "namespace": "food-tensoba",
       "entities": [
         {
@@ -223,7 +223,7 @@
     "service": "caramlstore",
     "type": "feature_table",
     "data": {
-      "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.FeatureTable",
       "namespace": "food-tensoba",
       "entities": [
         {

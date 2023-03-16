@@ -7,15 +7,15 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/registry"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/registry"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/salt/log"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/salt/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )

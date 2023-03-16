@@ -10,12 +10,12 @@ import (
 
 	"github.com/d5/tengo/v2"
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/tengoutil"
+	"github.com/goto/meteor/plugins/internal/tengoutil/structmap"
 	"github.com/mcuadros/go-defaults"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/internal/tengoutil"
-	"github.com/odpf/meteor/plugins/internal/tengoutil/structmap"
 	"google.golang.org/protobuf/proto"
 )
 

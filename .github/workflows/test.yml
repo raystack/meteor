@@ -14,7 +14,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.18'
+          go-version: '1.20'
           cache: true
       - name: Install dependencies
         run: sudo apt-get install build-essential
@@ -38,7 +38,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.18'
+          go-version: '1.20'
           cache: true
       - name: Install dependencies
         run: sudo apt-get install build-essential
@@ -59,7 +59,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.18'
+          go-version: '1.20'
           cache: true
       - name: Download coverage
         uses: actions/download-artifact@v3

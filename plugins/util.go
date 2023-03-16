@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/goto/meteor/models"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/meteor/models"
 )
 
 var validate *validator.Validate
