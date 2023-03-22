@@ -25,9 +25,9 @@ var summary string
 
 // Config holds the set of configuration for the extractor
 type Config struct {
-	ProjectID          string `mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON string `mapstructure:"service_account_json"`
-	ExtractBlob        bool   `mapstructure:"extract_blob"`
+	ProjectID          string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
+	ServiceAccountJSON string `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
+	ExtractBlob        bool   `json:"extract_blob" yaml:"extract_blob" mapstructure:"extract_blob"`
 }
 
 var sampleConfig = `

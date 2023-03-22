@@ -23,8 +23,8 @@ import (
 var summary string
 
 type Config struct {
-	ServiceAccountJSON string `mapstructure:"service_account_json" validate:"required"`
-	UserEmail          string `mapstructure:"user_email" validate:"required"`
+	ServiceAccountJSON string `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json" validate:"required"`
+	UserEmail          string `json:"user_email" yaml:"user_email" mapstructure:"user_email" validate:"required"`
 }
 
 var sampleConfig = `

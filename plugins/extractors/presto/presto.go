@@ -25,8 +25,8 @@ var summary string
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-	Exclude       string `mapstructure:"exclude_catalog"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       string `json:"exclude_catalog" yaml:"exclude_catalog" mapstructure:"exclude_catalog"`
 }
 
 var sampleConfig = `

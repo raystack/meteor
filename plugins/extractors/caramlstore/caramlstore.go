@@ -29,9 +29,9 @@ var summary string
 
 // Config holds the set of configuration for the CaraML Store extractor
 type Config struct {
-	URL            string        `mapstructure:"url" validate:"required"`
-	MaxSizeInMB    int           `mapstructure:"max_size_in_mb"`
-	RequestTimeout time.Duration `mapstructure:"request_timeout" validate:"min=1ms" default:"10s"`
+	URL            string        `json:"url" yaml:"url" mapstructure:"url" validate:"required"`
+	MaxSizeInMB    int           `json:"max_size_in_mb" yaml:"max_size_in_mb" mapstructure:"max_size_in_mb"`
+	RequestTimeout time.Duration `json:"request_timeout" yaml:"request_timeout" mapstructure:"request_timeout" validate:"min=1ms" default:"10s"`
 }
 
 var sampleConfig = `url: caraml-store.com:80`

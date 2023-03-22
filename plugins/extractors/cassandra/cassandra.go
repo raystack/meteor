@@ -37,10 +37,10 @@ const (
 
 // Config holds the set of configuration for the cassandra extractor
 type Config struct {
-	UserID   string `mapstructure:"user_id" validate:"required"`
-	Password string `mapstructure:"password" validate:"required"`
-	Host     string `mapstructure:"host" validate:"required"`
-	Port     int    `mapstructure:"port" validate:"required"`
+	UserID   string `json:"user_id" yaml:"user_id" mapstructure:"user_id" validate:"required"`
+	Password string `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
+	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Port     int    `json:"port" yaml:"port" mapstructure:"port" validate:"required"`
 }
 
 var sampleConfig = `

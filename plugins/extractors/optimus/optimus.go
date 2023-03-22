@@ -22,8 +22,8 @@ var summary string
 
 // Config holds the set of configuration for the bigquery extractor
 type Config struct {
-	Host        string `mapstructure:"host" validate:"required"`
-	MaxSizeInMB int    `mapstructure:"max_size_in_mb"`
+	Host        string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	MaxSizeInMB int    `json:"max_size_in_mb" yaml:"max_size_in_mb" mapstructure:"max_size_in_mb"`
 }
 
 var sampleConfig = `host: optimus.com:80`

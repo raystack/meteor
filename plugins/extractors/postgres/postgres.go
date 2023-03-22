@@ -31,8 +31,8 @@ var defaultDBList = []string{"information_schema", "root", "postgres"}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
-	Exclude       string `mapstructure:"exclude"`
+	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
 var sampleConfig = `

@@ -26,9 +26,9 @@ import (
 var summary string
 
 type Config struct {
-	Host    string            `mapstructure:"host" validate:"required"`
-	Headers map[string]string `mapstructure:"headers"`
-	Labels  map[string]string `mapstructure:"labels"`
+	Host    string            `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Headers map[string]string `json:"headers" yaml:"headers" mapstructure:"headers"`
+	Labels  map[string]string `json:"labels" yaml:"labels" mapstructure:"labels"`
 }
 
 var info = plugins.Info{

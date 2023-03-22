@@ -33,10 +33,10 @@ var summary string
 
 // Config holds the set of configuration for the Merlin extractor.
 type Config struct {
-	URL                  string        `mapstructure:"url" validate:"required"`
-	ServiceAccountBase64 string        `mapstructure:"service_account_base64"`
-	RequestTimeout       time.Duration `mapstructure:"request_timeout" validate:"min=1ms" default:"10s"`
-	WorkerCount          int           `mapstructure:"worker_count" validate:"min=1" default:"5"`
+	URL                  string        `json:"url" yaml:"url" mapstructure:"url" validate:"required"`
+	ServiceAccountBase64 string        `json:"service_account_base64" yaml:"service_account_base64" mapstructure:"service_account_base64"`
+	RequestTimeout       time.Duration `json:"request_timeout" yaml:"request_timeout" mapstructure:"request_timeout" validate:"min=1ms" default:"10s"`
+	WorkerCount          int           `json:"worker_count" yaml:"worker_count" mapstructure:"worker_count" validate:"min=1" default:"5"`
 }
 
 var sampleConfig = heredoc.Doc(`

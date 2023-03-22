@@ -25,8 +25,8 @@ var summary string
 
 // Config holds the set of configuration for the redash extractor
 type Config struct {
-	BaseURL string `mapstructure:"base_url" validate:"required"`
-	ApiKey  string `mapstructure:"api_key" validate:"required"`
+	BaseURL string `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
+	ApiKey  string `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
 }
 
 var sampleConfig = `

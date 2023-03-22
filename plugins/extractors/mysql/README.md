@@ -7,7 +7,6 @@ source:
   name: mysql
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
-    identifier: my-mysql
 ```
 
 ## Inputs

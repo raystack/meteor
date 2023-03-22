@@ -13,8 +13,8 @@ sinks:
       compass-User-Email: meteor@odpf.io
       Header-1: value11,value12
     labels:
-      myCustom: $properties.attributes.myCustomField
-      sampleLabel: $properties.labels.sampleLabelField
+      myCustom: $attributes.myCustomField
+      sampleLabel: $labels.sampleLabelField
 ```
 
 ## Contributing

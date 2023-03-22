@@ -27,7 +27,7 @@ const (
 
 // Config holds the configurations for the bigtable extractor
 type Config struct {
-	ProjectID string `mapstructure:"project_id" validate:"required"`
+	ProjectID string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
 }
 
 var info = plugins.Info{

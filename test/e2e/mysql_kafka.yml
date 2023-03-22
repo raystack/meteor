@@ -4,7 +4,6 @@ source:
   name: mysql
   config:
     connection_url: root:admin@tcp(127.0.0.1:3306)/
-    identifier: test_db
 sinks:
   - name: kafka
     config:
