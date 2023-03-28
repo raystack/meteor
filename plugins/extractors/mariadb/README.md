@@ -7,34 +7,42 @@ source:
   type: mariadb
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
+    exclude:
+      databases:
+        - database_a
+        - database_b
+      tables:
+        - database_c.table_a
 ```
 
 ## Inputs
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mariadb server | *required* |
+| Key                 | Value      | Example                                        | Description                      |            |
+| :------------------ | :--------- | :--------------------------------------------- | :------------------------------- | :--------- |
+| `connection_url`    | `string`   | `admin:pass123@tcp(localhost:3306)/`           | URL to access the mariadb server | _required_ |
+| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]`                 | List of databases to be excluded | _optional_ |
+| `exclude.tables`    | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded    | _optional_ |
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `mariadb` |
-| `description` | `table description` |
-| `profile.total_rows` | `1100` |
-| `schema` | [][Column](#column) |
+| Field                | Sample Value           |
+| :------------------- | :--------------------- |
+| `resource.urn`       | `my_database.my_table` |
+| `resource.name`      | `my_table`             |
+| `resource.service`   | `mariadb`              |
+| `description`        | `table description`    |
+| `profile.total_rows` | `1100`                 |
+| `schema`             | [][column](#column)    |
 
 ### Column
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
+| Field         | Sample Value         |
+| :------------ | :------------------- |
+| `name`        | `total_price`        |
 | `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `11` |
+| `data_type`   | `decimal`            |
+| `is_nullable` | `true`               |
+| `length`      | `11`                 |
 
 ## Contributing
 
