@@ -168,10 +168,16 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 // Check if collection is default or in user's exclude list
 func (e *Extractor) isExcludedCollection(collName string, dbName string, excludedCollections []string) bool {
 	collectionName := fmt.Sprintf("%s.%s", dbName, collName)
-	excludedCollections = append(excludedCollections, defaultCollections...)
 
+	// check if collection is in the user's exclude list (dbName.CollectionName)
 	for _, c := range excludedCollections {
 		if c == collectionName {
+			return true
+		}
+	}
+	// check if collection is default mongo collection (like *.system.version, *.system.users)
+	for _, c := range defaultCollections {
+		if c == collName {
 			return true
 		}
 	}
