@@ -9,6 +9,7 @@ import (
 
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -25,9 +26,10 @@ var summary string
 
 // Config holds the set of configuration for the extractor
 type Config struct {
-	ProjectID          string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON string `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
-	ExtractBlob        bool   `json:"extract_blob" yaml:"extract_blob" mapstructure:"extract_blob"`
+	ProjectID          string   `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
+	ServiceAccountJSON string   `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
+	ExtractBlob        bool     `json:"extract_blob" yaml:"extract_blob" mapstructure:"extract_blob"`
+	Exclude            []string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
 var sampleConfig = `
@@ -44,7 +46,8 @@ service_account_json: |-
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "xxxxxxx",
     "client_x509_cert_url": "xxxxxxx"
-  }`
+  }
+exclude: [bucket_a,bucket_b]`
 
 var info = plugins.Info{
 	Description:  "Online file storage service By Google",
@@ -57,9 +60,10 @@ var info = plugins.Info{
 // from the google cloud storage
 type Extractor struct {
 	plugins.BaseExtractor
-	client *storage.Client
-	logger log.Logger
-	config Config
+	client          *storage.Client
+	logger          log.Logger
+	excludedBuckets map[string]bool
+	config          Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -79,6 +83,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
+	// build excluded buckets map
+	e.excludedBuckets = sqlutil.BuildBoolMap(e.config.Exclude)
+
 	// create client
 	e.client, err = e.createClient(ctx)
 	if err != nil {
@@ -97,6 +104,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		if err != nil {
 			return errors.Wrapf(err, "failed to iterate over %s", bucket.Name)
+		}
+
+		// skip excluded buckets
+		if e.excludedBuckets[bucket.Name] {
+			continue
 		}
 
 		var blobs []*v1beta2.Blob
