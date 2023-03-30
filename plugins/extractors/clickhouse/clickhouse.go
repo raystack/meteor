@@ -13,6 +13,7 @@ import (
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 )
@@ -22,10 +23,19 @@ var summary string
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
-var sampleConfig = `connection_url: "tcp://localhost:3306?username=admin&password=pass123&debug=true"`
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
+	Tables    []string `json:"tables" yaml:"tables" mapstructure:"tables"`
+}
+
+var sampleConfig = `connection_url: "tcp://localhost:3306?username=admin&password=pass123&debug=true"
+exclude:
+  databases: [database_a, database_b]
+  tables: [dataset_c.table_a]`
 
 var info = plugins.Info{
 	Description:  "Column-oriented DBMS for online analytical processing.",
@@ -38,9 +48,11 @@ var info = plugins.Info{
 // and logger interface for the extractor
 type Extractor struct {
 	plugins.BaseExtractor
-	config Config
-	logger log.Logger
-	db     *sql.DB
+	config      Config
+	logger      log.Logger
+	excludedDBs map[string]bool
+	excludedTbl map[string]bool
+	db          *sql.DB
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -58,6 +70,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
+
+	// initialize excluded databases and tables
+	e.excludedDBs = sqlutil.BuildBoolMap(e.config.Exclude.Databases)
+	e.excludedTbl = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
 	if e.db, err = sql.Open("clickhouse", e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create a client")
@@ -89,6 +105,11 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 		err = res.Scan(&tableName, &dbName)
 		if err != nil {
 			return
+		}
+
+		// skip excluded databases and tables
+		if e.excludedDBs[dbName] || e.excludedTbl[fmt.Sprintf("%s.%s", dbName, tableName)] {
+			continue
 		}
 
 		var columns []*v1beta2.Column

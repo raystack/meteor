@@ -6,33 +6,38 @@
 source:
   name: clickhouse
   config:
-    connection_url: tcp://localhost:3306?username=admin&password=pass123&debug=true
+    connection_url: clickhouse://username:password@clickhouse-server:9000
+    exclude:
+      databases: [database_a, database_b]
+      tables: [database_c.table_a]
 ```
 
 ## Inputs
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `tcp://localhost:3306?username=admin&password=pass123&debug=true` | URL to access the clickhouse server | *required* |
+| Key                 | Value      | Example                                                           | Description                         |            |
+| :------------------ | :--------- | :---------------------------------------------------------------- | :---------------------------------- | :--------- |
+| `connection_url`    | `string`   | `tcp://localhost:3306?username=admin&password=pass123&debug=true` | URL to access the clickhouse server | _required_ |
+| `exclude.databases` | `[]string` | `[database_a`, `database_b]`                                      | List of databases to be excluded    | _optional_ |
+| `exclude.tables`    | `[]string` | `[database_c.table_a, database_c.table_b]`                        | List of tables to be excluded       | _optional_ |
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `clickhouse` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+| Field                | Sample Value           |
+| :------------------- | :--------------------- |
+| `resource.urn`       | `my_database.my_table` |
+| `resource.name`      | `my_table`             |
+| `resource.service`   | `clickhouse`           |
+| `description`        | `table description`    |
+| `profile.total_rows` | `2100`                 |
+| `schema`             | [][column](#column)    |
 
 ### Column
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
+| Field         | Sample Value         |
+| :------------ | :------------------- |
+| `name`        | `total_price`        |
 | `description` | `item's total price` |
-| `data_type` | `String` |
+| `data_type`   | `String`             |
 
 ## Contributing
 
