@@ -153,10 +153,9 @@ func (e *Extractor) extractTables(database string) (err error) {
 	for rows.Next() {
 		var createdOn, name, databaseName, schemaName, kind, comment, clusterBy, owner, autoClustering, changeTracking, isExternal string
 		var bytes, rowsCount, retentionTime int
-		var x, y, z sql.RawBytes
 
 		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsCount,
-			&bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal, &x, &y, &z); err != nil {
+			&bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
 			return err
 		}
 
