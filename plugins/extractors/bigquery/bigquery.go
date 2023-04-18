@@ -1,7 +1,6 @@
 package bigquery
 
 import (
-	"cloud.google.com/go/bigquery"
 	"context"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
@@ -11,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
-
+	"cloud.google.com/go/bigquery"
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
+	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
