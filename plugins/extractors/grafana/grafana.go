@@ -12,6 +12,7 @@ import (
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 )
@@ -21,13 +22,22 @@ var summary string
 
 // Config holds the set of configuration for the grafana extractor
 type Config struct {
-	BaseURL string `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
-	APIKey  string `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
+	BaseURL string  `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
+	APIKey  string  `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
+	Exclude Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+type Exclude struct {
+	Dashboards []string `json:"dashboards" yaml:"dashboards" mapstructure:"dashboards"`
+	Panels     []string `json:"panels" yaml:"panels" mapstructure:"panels"`
 }
 
 var sampleConfig = `
 base_url: grafana_server
-api_key: your_api_key`
+api_key: your_api_key
+exclude:
+  dashboards: [dashboard_uid_1, dashboard_uid_2]
+  panels: [dashboard_uid_3.panel_id_1]`
 
 var info = plugins.Info{
 	Description:  "Dashboard list from Grafana server.",
@@ -39,9 +49,11 @@ var info = plugins.Info{
 // Extractor manages the communication with the Grafana Server
 type Extractor struct {
 	plugins.BaseExtractor
-	client *Client
-	config Config
-	logger log.Logger
+	client             *Client
+	config             Config
+	excludedDashboards map[string]bool
+	excludedPanels     map[string]bool
+	logger             log.Logger
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -59,6 +71,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
+
+	// build excluded dashboards and panels map
+	e.excludedDashboards = sqlutil.BuildBoolMap(e.config.Exclude.Dashboards)
+	e.excludedPanels = sqlutil.BuildBoolMap(e.config.Exclude.Panels)
 
 	// build client
 	e.client = NewClient(&http.Client{}, e.config)
@@ -79,6 +95,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
+		// skip excluded dashboard uids
+		if e.excludedDashboards[dashboardDetail.Dashboard.UID] {
+			continue
+		}
 		dashboard, err := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
 		if err != nil {
 			return errors.Wrap(err, "failed to build Any struct")
@@ -91,10 +111,16 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 // grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
 func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) (*v1beta2.Asset, error) {
-	charts := make([]*v1beta2.Chart, len(dashboard.Dashboard.Panels))
-	for i, panel := range dashboard.Dashboard.Panels {
+	charts := make([]*v1beta2.Chart, 0)
+	for _, panel := range dashboard.Dashboard.Panels {
+
+		// skip excluded panel ids
+		panelUID := fmt.Sprintf("%s.%d", dashboard.Dashboard.UID, panel.ID)
+		if e.excludedPanels[panelUID] {
+			continue
+		}
 		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
-		charts[i] = &c
+		charts = append(charts, &c)
 	}
 	data, err := anypb.New(&v1beta2.Dashboard{
 		Charts: charts,

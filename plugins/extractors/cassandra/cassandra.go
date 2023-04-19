@@ -10,7 +10,6 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/odpf/meteor/models"
-	_ "github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins/sqlutil"
 
@@ -37,10 +36,16 @@ const (
 
 // Config holds the set of configuration for the cassandra extractor
 type Config struct {
-	UserID   string `json:"user_id" yaml:"user_id" mapstructure:"user_id" validate:"required"`
-	Password string `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
-	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
-	Port     int    `json:"port" yaml:"port" mapstructure:"port" validate:"required"`
+	UserID   string  `json:"user_id" yaml:"user_id" mapstructure:"user_id" validate:"required"`
+	Password string  `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
+	Host     string  `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Port     int     `json:"port" yaml:"port" mapstructure:"port" validate:"required"`
+	Exclude  Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+type Exclude struct {
+	Keyspaces []string `json:"keyspaces" yaml:"keyspaces" mapstructure:"keyspaces"`
+	Tables    []string `json:"tables" yaml:"tables" mapstructure:"tables"`
 }
 
 var sampleConfig = `
@@ -61,6 +66,7 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 	excludedKeyspaces map[string]bool
+	excludeTables     map[string]bool
 	logger            log.Logger
 	config            Config
 	session           *gocql.Session
@@ -84,7 +90,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// build excluded database list
-	e.excludedKeyspaces = sqlutil.BuildBoolMap(defaultKeyspaceList)
+	excludedKeyspacesList := append(defaultKeyspaceList, e.config.Exclude.Keyspaces...)
+	e.excludedKeyspaces = sqlutil.BuildBoolMap(excludedKeyspacesList)
+	e.excludeTables = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
 	// connect to cassandra
 	cluster := gocql.NewCluster(e.config.Host)
@@ -143,6 +151,9 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 		var tableName string
 		if err = scanner.Scan(&tableName); err != nil {
 			return errors.Wrapf(err, "failed to iterate over %s", tableName)
+		}
+		if e.isExcludedTable(keyspace, tableName) {
+			continue
 		}
 		if err = e.processTable(keyspace, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")
@@ -209,6 +220,12 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 // isExcludedKeyspace checks if the given db is in the list of excluded keyspaces
 func (e *Extractor) isExcludedKeyspace(keyspace string) bool {
 	_, ok := e.excludedKeyspaces[keyspace]
+	return ok
+}
+
+func (e *Extractor) isExcludedTable(keyspace, table string) bool {
+	tableName := fmt.Sprintf("%s.%s", keyspace, table)
+	_, ok := e.excludeTables[tableName]
 	return ok
 }
 

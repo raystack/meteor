@@ -31,10 +31,23 @@ var defaultCollections = []string{
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
-var sampleConfig = `connection_url: "mongodb://admin:pass123@localhost:3306"`
+type Exclude struct {
+	Databases   []string `json:"databases" yaml:"databases" mapstructure:"databases"`
+	Collections []string `json:"collections" yaml:"collections" mapstructure:"collections"`
+}
+
+var sampleConfig = `
+connection_url: "mongodb://admin:pass123@localhost:3306"
+exclude:
+  databases:
+	- database_a
+	- database_b
+  collections:
+	- dataset_c.table_a`
 
 var info = plugins.Info{
 	Description:  "Collection metadata from MongoDB Server",
@@ -47,10 +60,9 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 	// internal states
-	client   *mongo.Client
-	excluded map[string]bool
-	logger   log.Logger
-	config   Config
+	client *mongo.Client
+	logger log.Logger
+	config Config
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -68,9 +80,6 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
-	// build excluded list
-	e.buildExcludedCollections()
-
 	// setup client
 	if e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL); err != nil {
 		return errors.Wrap(err, "failed to create client")
@@ -87,6 +96,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	for _, dbName := range databases {
+		if e.isExcludedDB(dbName, e.config.Exclude.Databases) {
+			continue
+		}
+
 		database := e.client.Database(dbName)
 		if err := e.extractCollections(ctx, database, emit); err != nil {
 			return errors.Wrap(err, "failed to extract collections")
@@ -108,8 +121,8 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 	// or else test might fail
 	sort.Strings(collections)
 	for _, collectionName := range collections {
-		// skip if collection is default mongo
-		if e.isDefaultCollection(collectionName) {
+		// skip if collection is default mongo or is in the user's exclude collection list
+		if e.isExcludedCollection(collectionName, db.Name(), e.config.Exclude.Collections) {
 			continue
 		}
 
@@ -152,20 +165,35 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 	return
 }
 
-// Build a map of excluded collections using list of collection names
-func (e *Extractor) buildExcludedCollections() {
-	excluded := make(map[string]bool)
-	for _, collection := range defaultCollections {
-		excluded[collection] = true
+// Check if collection is default or in user's exclude list
+func (e *Extractor) isExcludedCollection(collName string, dbName string, excludedCollections []string) bool {
+	collectionName := fmt.Sprintf("%s.%s", dbName, collName)
+
+	// check if collection is in the user's exclude list (dbName.CollectionName)
+	for _, c := range excludedCollections {
+		if c == collectionName {
+			return true
+		}
+	}
+	// check if collection is default mongo collection (like *.system.version, *.system.users)
+	for _, c := range defaultCollections {
+		if c == collName {
+			return true
+		}
 	}
 
-	e.excluded = excluded
+	return false
 }
 
-// Check if collection is default using stored map
-func (e *Extractor) isDefaultCollection(collectionName string) bool {
-	_, ok := e.excluded[collectionName]
-	return ok
+// isExcludedDB checks if the given db is in the list of excluded databases
+func (e *Extractor) isExcludedDB(dbName string, excludeDatabases []string) bool {
+	for _, d := range excludeDatabases {
+		if d == dbName {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Create mongo client and tries to connect

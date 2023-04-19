@@ -9,6 +9,7 @@ import (
 
 	"github.com/odpf/meteor/models"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"github.com/snowflakedb/gosnowflake"
@@ -23,7 +24,13 @@ var summary string
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
+	Tables    []string `json:"tables" yaml:"tables" mapstructure:"tables"`
 }
 
 var sampleConfig = `connection_url: "user:password@my_organization-my_account/mydb"`
@@ -39,6 +46,8 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger        log.Logger
 	config        Config
+	excludedDbs   map[string]bool
+	excludedTbl   map[string]bool
 	httpTransport http.RoundTripper
 	db            *sql.DB
 	emit          plugins.Emit
@@ -73,6 +82,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	if err = e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
+
+	// build excluded database list
+	e.excludedDbs = sqlutil.BuildBoolMap(e.config.Exclude.Databases)
+	e.excludedTbl = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
 	if e.httpTransport == nil {
 		// create snowflake client
@@ -112,6 +125,10 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 		if err = dbs.Scan(&createdOn, &name, &isDefault, &isCurrent, &origin, &owner, &comment, &options, &retentionTime); err != nil {
 			return fmt.Errorf("failed to scan database %s: %w", name, err)
 		}
+		// skip excluded databases
+		if e.excludedDbs[name] {
+			continue
+		}
 		if err = e.extractTables(name); err != nil {
 			return fmt.Errorf("failed to extract tables from %s: %w", name, err)
 		}
@@ -140,6 +157,12 @@ func (e *Extractor) extractTables(database string) (err error) {
 		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsCount,
 			&bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
 			return err
+		}
+
+		// skip excluded tables
+		TableName := fmt.Sprintf("%s.%s", database, name)
+		if e.excludedTbl[TableName] {
+			continue
 		}
 		if err = e.processTable(database, name); err != nil {
 			return err

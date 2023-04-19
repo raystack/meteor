@@ -5,12 +5,14 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 	"reflect"
+	"strings"
 
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/odpf/meteor/models"
 	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/odpf/meteor/plugins"
+	"github.com/odpf/meteor/plugins/sqlutil"
 	"github.com/odpf/meteor/registry"
 	"github.com/odpf/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -28,9 +30,12 @@ var defaultDBList = []string{
 // Config holds the connection URL for the extractor
 type Config struct {
 	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
-var sampleConfig = `connection_url: http://admin:pass123@localhost:3306/`
+var sampleConfig = `
+connection_url: http://admin:pass123@localhost:3306/
+exclude: database_a,database_b`
 
 var info = plugins.Info{
 	Description:  "Table metadata from CouchDB server,",
@@ -67,7 +72,8 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// build excluded database list
-	e.buildExcludedDBs()
+	excludedList := append(defaultDBList, strings.Split(e.config.Exclude, ",")...)
+	e.excludedDbs = sqlutil.BuildBoolMap(excludedList)
 
 	// create client
 	e.client, err = kivik.New("couch", e.config.ConnectionURL)
@@ -90,6 +96,9 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	for _, dbName := range res {
+		if e.isExcludedDB(dbName) {
+			continue
+		}
 		if err := e.extractTables(ctx, dbName); err != nil {
 			return err
 		}
@@ -99,10 +108,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 // Extract tables from a given database
 func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error) {
-	// skip if database is default
-	if e.isExcludedDB(dbName) {
-		return
-	}
 	e.db = e.client.DB(ctx, dbName)
 
 	// extract documents
@@ -174,15 +179,6 @@ func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns [
 		})
 	}
 	return
-}
-
-func (e *Extractor) buildExcludedDBs() {
-	excludedMap := make(map[string]bool)
-	for _, db := range defaultDBList {
-		excludedMap[db] = true
-	}
-
-	e.excludedDbs = excludedMap
 }
 
 func (e *Extractor) isExcludedDB(database string) bool {

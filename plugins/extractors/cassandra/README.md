@@ -10,34 +10,39 @@ source:
     password: 1234
     host: localhost
     port: 9042
+    exclude:
+      keyspaces: [mykeyspace]
+      tables: [mykeyspace_2.tableName_1]
 ```
 
 ## Inputs
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `user_id` | `string` | `admin` | User ID to access the cassandra server| *required* |
-| `password` | `string` | `1234` | Password for the cassandra Server | *required* |
-| `host` | `string` | `127.0.0.1` | The Host address at which server is running | *required* |
-| `port` | `int` | `9042` | The Port number at which server is running | *required* |
+| Key                 | Value      | Example                 | Description                                    |            |
+| :------------------ | :--------- | :---------------------- | :--------------------------------------------- | :--------- |
+| `user_id`           | `string`   | `admin`                 | User ID to access the cassandra server         | _required_ |
+| `password`          | `string`   | `1234`                  | Password for the cassandra Server              | _required_ |
+| `host`              | `string`   | `127.0.0.1`             | The Host address at which server is running    | _required_ |
+| `port`              | `int`      | `9042`                  | The Port number at which server is running     | _required_ |
+| `exclude.keyspcaes` | `[]string` | `[keyspace1,keyspace2]` | List of keyspaces to be excluded from crawling | _optional_ |
+| `exclude.tables`    | `[]string` | `[keyspace3.table1]`    | List of tables to be excluded from crawling    | _optional_ |
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_keyspace.my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `cassandra` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+| Field                | Sample Value           |
+| :------------------- | :--------------------- |
+| `resource.urn`       | `my_keyspace.my_table` |
+| `resource.name`      | `my_table`             |
+| `resource.service`   | `cassandra`            |
+| `description`        | `table description`    |
+| `profile.total_rows` | `2100`                 |
+| `schema`             | [][column](#column)    |
 
 ### Column
 
-| Field | Sample Value |
-| :---- | :---- |
+| Field  | Sample Value  |
+| :----- | :------------ |
 | `name` | `total_price` |
-| `type` | `text` |
+| `type` | `text`        |
 
 ## Contributing
 

@@ -31,10 +31,20 @@ var defaultDBList = []string{
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
-var sampleConfig = `connection_url: "admin:pass123@tcp(localhost:3306)/"`
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
+	Tables    []string `json:"tables" yaml:"tables" mapstructure:"tables"`
+}
+
+var sampleConfig = `
+connection_url: admin:pass123@tcp(localhost:3306)/
+exclude:
+  databases: [database_a,database_b]
+  tables: [table_a,table_b]`
 
 var info = plugins.Info{
 	Description:  "Table metadata from Mariadb server.",
@@ -47,6 +57,7 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 	excludedDbs map[string]bool
+	excludedTbl map[string]bool
 	logger      log.Logger
 	config      Config
 	db          *sql.DB
@@ -69,8 +80,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		return err
 	}
 
-	// build excluded database list
-	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
+	// build excluded database and tables list
+	excludeDBList := append(defaultDBList, e.config.Exclude.Databases...)
+	e.excludedDbs = sqlutil.BuildBoolMap(excludeDBList)
+	e.excludedTbl = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
 	// create mariadb client
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
@@ -93,6 +106,10 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 	// Iterate through all tables and databases
 	for _, database := range dbs {
+		// skip excluded databases
+		if e.isExcludedDB(database) {
+			continue
+		}
 		if err := e.extractTables(database); err != nil {
 			return errors.Wrapf(err, "failed to extract tables from %s", database)
 		}
@@ -102,11 +119,6 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 // extractTables extracts tables from a given database
 func (e *Extractor) extractTables(database string) (err error) {
-	// skip if database is default
-	if e.isExcludedDB(database) {
-		return
-	}
-
 	// extract tables
 	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
@@ -116,6 +128,10 @@ func (e *Extractor) extractTables(database string) (err error) {
 	// get list of tables
 	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
+		// skip excluded tables
+		if e.isExcludedTable(tableName, database) {
+			continue
+		}
 		if err := e.processTable(database, tableName); err != nil {
 			return errors.Wrap(err, "failed to process table")
 		}
@@ -181,6 +197,13 @@ func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, 
 // isExcludedDB checks if the database is in the excluded list
 func (e *Extractor) isExcludedDB(database string) bool {
 	_, ok := e.excludedDbs[database]
+	return ok
+}
+
+// isExcludedTable checks if the given table is in the list of excluded tables
+func (e *Extractor) isExcludedTable(tableName, database string) bool {
+	tableName = fmt.Sprintf("%s.%s", database, tableName)
+	_, ok := e.excludedTbl[tableName]
 	return ok
 }
 

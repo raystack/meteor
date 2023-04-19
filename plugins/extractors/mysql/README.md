@@ -7,6 +7,12 @@ source:
   name: mysql
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
+    exclude:
+      databases:
+        - database_a
+        - database_b
+      tables:
+        - database_c.table_a
 ```
 
 ## Inputs
@@ -14,7 +20,8 @@ source:
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
 | `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mysql server | *required* |
-| `identifier` | `string` | `my-mysql` | Instance alias, the value will be used as part of the urn component | *required* |
+| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]` | List of databases to be excluded | *optional* |
+| `exclude.tables` | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded | *optional* |
 
 ## Outputs
 
