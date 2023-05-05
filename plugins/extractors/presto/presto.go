@@ -10,14 +10,13 @@ import (
 
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"github.com/goto/meteor/plugins/sqlutil"
-
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	_ "github.com/prestodb/presto-go-client/presto" // presto driver
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -161,7 +160,8 @@ func (e *Extractor) processTable(db *sql.DB, catalog string, database string, ta
 		return result, fmt.Errorf("failed to extract columns: %w", err)
 	}
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

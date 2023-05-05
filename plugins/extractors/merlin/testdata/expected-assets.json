@@ -1,7 +1,9 @@
 [
   {
+    "create_time": null,
     "data": {
       "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
+      "algorithm": "",
       "attributes": {
         "endpoint_urls": [
           "resource-request.sample.models.company.com"
@@ -13,6 +15,7 @@
       "create_time": "2020-04-23T10:07:40.105711Z",
       "flavor": "sklearn",
       "namespace": "one-piece",
+      "status": "",
       "update_time": "2022-06-14T07:12:09.536419Z",
       "versions": [
         {
@@ -34,36 +37,50 @@
             "weight": 100
           },
           "create_time": "2022-05-30T07:43:18.120248Z",
+          "labels": {},
+          "signature": null,
           "status": "running",
           "update_time": "2022-05-30T07:43:18.120248Z",
           "version": "2"
         }
       ]
     },
+    "description": "",
+    "event": null,
     "labels": {
       "stream": "roger",
       "team": "pirates"
     },
-    "lineage": {},
+    "lineage": {
+      "downstreams": [],
+      "upstreams": []
+    },
     "name": "resource-request",
     "owners": [
       {
         "email": "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com",
+        "name": "",
+        "role": "",
         "urn": "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com"
       },
       {
         "email": "gol.d.roger@onepiece.com",
+        "name": "",
+        "role": "",
         "urn": "gol.d.roger@onepiece.com"
       }
     ],
     "service": "merlin",
     "type": "model",
+    "update_time": null,
     "url": "resource-request.sample.models.company.com",
     "urn": "urn:merlin:test-merlin:model:1.80"
   },
   {
+    "create_time": null,
     "data": {
       "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
+      "algorithm": "",
       "attributes": {
         "endpoint_urls": [
           "pyfunc-standard-transfo.sample.models.company.com"
@@ -75,6 +92,7 @@
       "create_time": "2021-02-04T13:05:31.593956Z",
       "flavor": "pyfunc",
       "namespace": "one-piece",
+      "status": "",
       "update_time": "2021-07-22T08:13:34.642949Z",
       "versions": [
         {
@@ -108,36 +126,50 @@
             "weight": 100
           },
           "create_time": "2021-02-05T05:26:38.212696Z",
+          "labels": {},
+          "signature": null,
           "status": "running",
           "update_time": "2021-02-05T05:26:38.212696Z",
           "version": "7"
         }
       ]
     },
+    "description": "",
+    "event": null,
     "labels": {
       "stream": "roger",
       "team": "pirates"
     },
-    "lineage": {},
+    "lineage": {
+      "downstreams": [],
+      "upstreams": []
+    },
     "name": "pyfunc-standard-transfo",
     "owners": [
       {
         "email": "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com",
+        "name": "",
+        "role": "",
         "urn": "s-ds-gitlab-runner@company-staging.iam.gserviceaccount.com"
       },
       {
         "email": "gol.d.roger@onepiece.com",
+        "name": "",
+        "role": "",
         "urn": "gol.d.roger@onepiece.com"
       }
     ],
     "service": "merlin",
     "type": "model",
+    "update_time": null,
     "url": "pyfunc-standard-transfo.sample.models.company.com",
     "urn": "urn:merlin:test-merlin:model:1.689"
   },
   {
+    "create_time": null,
     "data": {
       "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
+      "algorithm": "",
       "attributes": {
         "endpoint_urls": [
           "inca-restaurant-image.inca-restaurant.models.company.com",
@@ -150,6 +182,7 @@
       "create_time": "2022-05-25T04:57:24.972027Z",
       "flavor": "pyfunc",
       "namespace": "strongest-man",
+      "status": "",
       "update_time": "2022-11-10T06:13:02.181028Z",
       "versions": [
         {
@@ -175,6 +208,7 @@
             "env": "staging",
             "ver": "2.1.0"
           },
+          "signature": null,
           "status": "running",
           "update_time": "2022-10-28T06:11:52.148118Z",
           "version": "47"
@@ -202,32 +236,43 @@
             "env": "staging",
             "ver": "2.1.0"
           },
+          "signature": null,
           "status": "running",
           "update_time": "2022-10-28T06:11:52.148118Z",
           "version": "47"
         }
       ]
     },
+    "description": "",
+    "event": null,
     "labels": {
       "stream": "whitebeard",
       "team": "pirates"
     },
-    "lineage": {},
+    "lineage": {
+      "downstreams": [],
+      "upstreams": []
+    },
     "name": "inca-restaurant-image",
     "owners": [
       {
         "email": "edward.newgate@onepiece.com",
+        "name": "",
+        "role": "",
         "urn": "edward.newgate@onepiece.com"
       }
     ],
     "service": "merlin",
     "type": "model",
+    "update_time": null,
     "url": "inca-restaurant-image.inca-restaurant.models.company.com",
     "urn": "urn:merlin:test-merlin:model:100.1376"
   },
   {
+    "create_time": null,
     "data": {
       "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Model",
+      "algorithm": "",
       "attributes": {
         "endpoint_urls": [
           "id-car-b-default.jaeger.models.company.com"
@@ -239,6 +284,7 @@
       "create_time": "2020-06-23T14:40:23.168186Z",
       "flavor": "pyfunc",
       "namespace": "strongest-man",
+      "status": "",
       "update_time": "2022-11-09T15:34:07.647932Z",
       "versions": [
         {
@@ -296,39 +342,49 @@
             "weight": 100
           },
           "create_time": "2022-11-09T15:23:26.716082Z",
+          "labels": {},
+          "signature": null,
           "status": "running",
           "update_time": "2022-11-09T15:23:26.716082Z",
           "version": "582"
         }
       ]
     },
+    "description": "",
+    "event": null,
     "labels": {
       "stream": "whitebeard",
       "team": "pirates"
     },
     "lineage": {
+      "downstreams": [],
       "upstreams": [
         {
+          "name": "",
           "service": "caramlstore",
           "type": "feature_table",
           "urn": "urn:caramlstore:test-merlin:feature_table:jaeger.jaeger_car_customer_acceptance"
         },
         {
+          "name": "",
           "service": "caramlstore",
           "type": "feature_table",
           "urn": "urn:caramlstore:test-merlin:feature_table:jaeger.jaeger_car_destination_geohash_acceptance"
         },
         {
+          "name": "",
           "service": "caramlstore",
           "type": "feature_table",
           "urn": "urn:caramlstore:test-merlin:feature_table:jaeger.jaeger_car_driver_acceptance"
         },
         {
+          "name": "",
           "service": "caramlstore",
           "type": "feature_table",
           "urn": "urn:caramlstore:test-merlin:feature_table:jaeger.jaeger_car_origin_geohash_acceptance"
         },
         {
+          "name": "",
           "service": "caramlstore",
           "type": "feature_table",
           "urn": "urn:caramlstore:test-merlin:feature_table:jaeger.jaeger_car_standing_geohash_acceptance"
@@ -339,11 +395,14 @@
     "owners": [
       {
         "email": "edward.newgate@onepiece.com",
+        "name": "",
+        "role": "",
         "urn": "edward.newgate@onepiece.com"
       }
     ],
     "service": "merlin",
     "type": "model",
+    "update_time": null,
     "url": "id-car-b-default.jaeger.models.company.com",
     "urn": "urn:merlin:test-merlin:model:100.284"
   }

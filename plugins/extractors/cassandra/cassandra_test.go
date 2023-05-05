@@ -10,19 +10,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/gocql/gocql"
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/cassandra"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -57,7 +56,7 @@ func TestMain(m *testing.M) {
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		//create a new session
+		// create a new session
 		cluster := gocql.NewCluster(host)
 		cluster.Authenticator = gocql.PasswordAuthenticator{
 			Username: "cassandra",
@@ -92,7 +91,7 @@ func TestMain(m *testing.M) {
 
 // TestEmptyHosts tests that the extractor returns an error if no hosts are provided
 func TestEmptyHosts(t *testing.T) {
-	//connect to cassandra
+	// connect to cassandra
 	cluster := gocql.NewCluster("")
 	cluster.Keyspace = ""
 	cluster.Consistency = gocql.Quorum
@@ -140,7 +139,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllData())
 	})
 }
 
@@ -157,7 +156,7 @@ func setup() (err error) {
 		return errors.Wrap(err, "fail to create database")
 	}
 
-	//create and populate tables
+	// create and populate tables
 	err = execute([]string{
 		fmt.Sprintf(`CREATE TABLE %s.applicant (applicantid int PRIMARY KEY, last_name text, first_name text);`, keyspace),
 		fmt.Sprintf(`INSERT INTO %s.applicant (applicantid, last_name, first_name) VALUES (1, 'test1', 'test11');`, keyspace),
@@ -181,13 +180,8 @@ func execute(queries []string) (err error) {
 	return
 }
 
-// newExtractor returns a new extractor
-func newExtractor() *cassandra.Extractor {
-	return cassandra.New(utils.Logger)
-}
-
 // getExpected returns the expected result
-func getExpected() []models.Record {
+func getExpected() []*v1beta2.Asset {
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -203,6 +197,7 @@ func getExpected() []models.Record {
 				DataType: "text",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
@@ -223,25 +218,26 @@ func getExpected() []models.Record {
 				DataType: "int",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
 	}
 
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".applicant",
 			Name:    "applicant",
 			Type:    "table",
 			Service: "cassandra",
 			Data:    table1,
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".jobs",
 			Name:    "jobs",
 			Type:    "table",
 			Data:    table2,
 			Service: "cassandra",
-		}),
+		},
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -43,6 +44,7 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 		Namespace:  b.project,
 		Entities:   entities,
 		Features:   b.buildFeatures(ft),
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		CreateTime: ft.Meta.CreatedTimestamp,
 		UpdateTime: ft.Meta.LastUpdatedTimestamp,
 	})

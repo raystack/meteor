@@ -5,25 +5,23 @@ package mysql_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"database/sql"
-
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/mysql"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var db *sql.DB
@@ -109,7 +107,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(t), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
 	})
 }
 
@@ -152,7 +150,7 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []models.Record {
+func getExpected(t *testing.T) []*v1beta2.Asset {
 	data1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -177,9 +175,10 @@ func getExpected(t *testing.T) []models.Record {
 				Length:      255,
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
 	data2, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
@@ -205,24 +204,25 @@ func getExpected(t *testing.T) []models.Record {
 				Length:      0,
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.applicant",
 			Name:    "applicant",
 			Type:    "table",
 			Data:    data1,
 			Service: "mysql",
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.jobs",
 			Name:    "jobs",
 			Type:    "table",
 			Data:    data2,
 			Service: "mysql",
-		}),
+		},
 	}
 }

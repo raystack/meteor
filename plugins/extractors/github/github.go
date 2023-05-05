@@ -4,16 +4,16 @@ import (
 	"context"
 	_ "embed" // used to print the embedded assets
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/google/go-github/v37/github"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -84,10 +84,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 		u, err := anypb.New(&v1beta2.User{
-			Email:    usr.GetEmail(),
-			Username: usr.GetLogin(),
-			FullName: usr.GetName(),
-			Status:   "active",
+			Email:      usr.GetEmail(),
+			Username:   usr.GetLogin(),
+			FullName:   usr.GetName(),
+			Status:     "active",
+			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		})
 		if err != nil {
 			e.logger.Error("error creating Any struct: %w", err)

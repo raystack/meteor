@@ -13,19 +13,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/elastic"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -133,7 +132,7 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
-		matchRecords(t, getExpectedVal(t), emitter.Get())
+		utils.AssertEqualProtos(t, getExpectedVal(t), utils.SortedAssets(emitter.GetAllData()))
 	})
 }
 
@@ -191,7 +190,7 @@ func newExtractor() *elastic.Extractor {
 	return elastic.New(utils.Logger)
 }
 
-func getExpectedVal(t *testing.T) []models.Record {
+func getExpectedVal(t *testing.T) []*v1beta2.Asset {
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -202,6 +201,7 @@ func getExpectedVal(t *testing.T) []models.Record {
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 1,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		t.Fatal("error creating Any struct for test: %w", err)
@@ -216,34 +216,25 @@ func getExpectedVal(t *testing.T) []models.Record {
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 1,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		t.Fatal("error creating Any struct for test: %w", err)
 	}
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:elasticsearch:test-elasticsearch:index:index1",
 			Name:    "index1",
 			Type:    "table",
 			Data:    table1,
 			Service: "elasticsearch",
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:elasticsearch:test-elasticsearch:index:index2",
 			Name:    "index2",
 			Type:    "table",
 			Data:    table2,
 			Service: "elasticsearch",
-		}),
+		},
 	}
-}
-
-func matchRecords(t *testing.T, expected, actual []models.Record) {
-	if actual[0].Data().Name == "index2" {
-		// swap index order
-		temp := actual[0]
-		actual[0] = actual[1]
-		actual[1] = temp
-	}
-	assert.Equal(t, expected, actual)
 }

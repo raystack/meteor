@@ -5,21 +5,19 @@ package postgres_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"testing"
 
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	"github.com/goto/meteor/test/utils"
-	ut "github.com/goto/meteor/utils"
-
-	"database/sql"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/postgres"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	testUtils "github.com/goto/meteor/test/utils"
+	ut "github.com/goto/meteor/utils"
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -106,7 +104,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		testUtils.AssertAssetsWithJSON(t, getExpected(t), emitter.GetAllData())
+		testUtils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
 	})
 }
 

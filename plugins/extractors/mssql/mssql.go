@@ -6,19 +6,16 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"github.com/goto/salt/log"
-
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/goto/meteor/models"
-	"github.com/goto/meteor/plugins"
-	"github.com/goto/meteor/registry"
-
-	"github.com/goto/meteor/plugins/sqlutil"
-
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sqlutil"
+	"github.com/goto/meteor/registry"
+	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -121,7 +118,8 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		return errors.Wrap(err, "failed to get columns")
 	}
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

@@ -8,14 +8,14 @@ import (
 	"net/http"
 
 	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	"github.com/snowflakedb/gosnowflake"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 	"google.golang.org/protobuf/types/known/anypb"
-
-	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -157,7 +157,8 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		return fmt.Errorf("failed to extract columns from %s.%s: %w", database, tableName, err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

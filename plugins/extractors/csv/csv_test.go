@@ -7,15 +7,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/csv"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestInit(t *testing.T) {
@@ -54,21 +53,20 @@ func TestExtract(t *testing.T) {
 				{Name: "age"},
 				{Name: "phone"},
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal("error creating Any struct for test: %w", err)
 		}
-		expected := []models.Record{
-			models.NewRecord(&v1beta2.Asset{
-				Urn:     "urn:csv:test-csv:file:test.csv",
-				Name:    "test.csv",
-				Service: "csv",
-				Type:    "table",
-				Data:    table,
-			}),
-		}
+		expected := []*v1beta2.Asset{{
+			Urn:     "urn:csv:test-csv:file:test.csv",
+			Name:    "test.csv",
+			Service: "csv",
+			Type:    "table",
+			Data:    table,
+		}}
 
-		assert.Equal(t, expected, emitter.Get())
+		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
 	})
 
 	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
@@ -93,6 +91,7 @@ func TestExtract(t *testing.T) {
 				{Name: "transaction_id"},
 				{Name: "total_price"},
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal("error creating Any struct for test: %w", err)
@@ -103,26 +102,27 @@ func TestExtract(t *testing.T) {
 				{Name: "age"},
 				{Name: "phone"},
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal("error creating Any struct for test: %w", err)
 		}
-		expected := []models.Record{
-			models.NewRecord(&v1beta2.Asset{
+		expected := []*v1beta2.Asset{
+			{
 				Urn:     "urn:csv:test-csv:file:test-2.csv",
 				Name:    "test-2.csv",
 				Service: "csv",
 				Type:    "table",
 				Data:    table1,
-			}),
-			models.NewRecord(&v1beta2.Asset{
+			},
+			{
 				Urn:     "urn:csv:test-csv:file:test.csv",
 				Name:    "test.csv",
 				Service: "csv",
 				Type:    "table",
 				Data:    table2,
-			}),
+			},
 		}
-		assert.Equal(t, expected, emitter.Get())
+		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
 	})
 }

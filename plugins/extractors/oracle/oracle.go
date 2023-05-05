@@ -6,17 +6,16 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	"github.com/goto/meteor/plugins/sqlutil"
-
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
 	_ "github.com/sijms/go-ora/v2"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var summary string
@@ -152,6 +151,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 		Profile: &v1beta2.TableProfile{
 			TotalRows: rowCount,
 		},
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

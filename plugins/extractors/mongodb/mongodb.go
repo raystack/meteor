@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -136,6 +136,7 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		Profile: &v1beta2.TableProfile{
 			TotalRows: totalRows,
 		},
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build Any struct")

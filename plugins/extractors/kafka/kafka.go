@@ -5,8 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	_ "embed" // used to print the embedded assets
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
 	"os"
 	"time"
 
@@ -14,9 +12,11 @@ import (
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
-	"github.com/segmentio/kafka-go"
-
 	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
+	"github.com/segmentio/kafka-go"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -191,6 +191,7 @@ func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (asset *v1
 		Profile: &v1beta2.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),
 		},
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)

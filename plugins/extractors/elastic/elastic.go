@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -122,7 +122,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 		table, err := anypb.New(&v1beta2.Table{
-			Columns: columns,
+			Columns:    columns,
+			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 			Profile: &v1beta2.TableProfile{
 				TotalRows: int64(docCount),
 			},

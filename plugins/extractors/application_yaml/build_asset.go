@@ -7,6 +7,7 @@ import (
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -19,6 +20,7 @@ func buildAsset(scope string, svc Application) (*v1beta2.Asset, error) {
 	data, err := anypb.New(&v1beta2.Application{
 		Id:         svc.ID,
 		Version:    svc.Version,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		CreateTime: toTimestamp(svc.CreateTime),
 		UpdateTime: toTimestamp(svc.UpdateTime),
 	})

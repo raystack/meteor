@@ -15,6 +15,7 @@ import (
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -180,7 +181,8 @@ func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *v
 		return result, nil
 	}
 	data, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

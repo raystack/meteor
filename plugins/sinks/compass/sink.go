@@ -174,17 +174,16 @@ func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error)
 func (s *Sink) buildCompassData(anyData *anypb.Any) (map[string]interface{}, error) {
 	var mapData map[string]interface{}
 
-	marshaler := &protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-	bytes, err := marshaler.Marshal(anyData)
+	data, err := protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(anyData)
 	if err != nil {
-		return mapData, errors.Wrap(err, "error marshaling asset data")
+		return nil, errors.Wrap(err, "error marshaling asset data")
 	}
 
-	err = json.Unmarshal(bytes, &mapData)
-	if err != nil {
-		return mapData, errors.Wrap(err, "error unmarshalling to mapdata")
+	if err := json.Unmarshal(data, &mapData); err != nil {
+		return nil, errors.Wrap(err, "error unmarshalling to mapdata")
 	}
 
 	return mapData, nil

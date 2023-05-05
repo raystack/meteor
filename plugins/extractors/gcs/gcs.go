@@ -16,6 +16,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -139,6 +140,7 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	bkt, err := anypb.New(&v1beta2.Bucket{
 		Location:    b.Location,
 		StorageType: b.StorageClass,
+		Attributes:  &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		CreateTime:  timestamppb.New(b.Created),
 		Blobs:       blobs,
 	})

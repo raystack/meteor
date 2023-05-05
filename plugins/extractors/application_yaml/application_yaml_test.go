@@ -15,6 +15,7 @@ import (
 	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -141,7 +142,7 @@ func TestExtract(t *testing.T) {
 				Name:    "test",
 				Type:    "application",
 				Service: "application_yaml",
-				Data:    testutils.BuildAny(t, &v1beta2.Application{Id: "test-id"}),
+				Data:    testutils.BuildAny(t, &v1beta2.Application{Id: "test-id", Attributes: &structpb.Struct{}}),
 				Lineage: &v1beta2.Lineage{},
 			}},
 		},
@@ -163,6 +164,7 @@ func TestExtract(t *testing.T) {
 				Data: testutils.BuildAny(t, &v1beta2.Application{
 					Id:         "test-id",
 					Version:    "c23sdf6",
+					Attributes: &structpb.Struct{},
 					CreateTime: ts("2006-01-02T15:04:05Z"),
 					UpdateTime: ts("2006-01-02T15:04:05Z"),
 				}),
@@ -205,8 +207,9 @@ func TestExtract(t *testing.T) {
 				Url:         "http://company.com/myteam/test",
 				Description: "My incredible project",
 				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Id:      "test-id",
-					Version: "c23sdf6",
+					Id:         "test-id",
+					Attributes: &structpb.Struct{},
+					Version:    "c23sdf6",
 				}),
 				Owners: []*v1beta2.Owner{{
 					Urn:   "123",
@@ -239,8 +242,9 @@ func TestExtract(t *testing.T) {
 				Url:         "http://company.com/myteam/test",
 				Description: "My incredible project",
 				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Id:      "test-id",
-					Version: "c23sdf6",
+					Id:         "test-id",
+					Attributes: &structpb.Struct{},
+					Version:    "c23sdf6",
 				}),
 				Owners: []*v1beta2.Owner{{
 					Urn:   "123",
@@ -268,7 +272,7 @@ func TestExtract(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			testutils.AssertAssetsWithJSON(t, tc.expected, emitter.GetAllData())
+			testutils.AssertEqualProtos(t, tc.expected, emitter.GetAllData())
 		})
 	}
 }

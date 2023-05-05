@@ -5,25 +5,23 @@ package oracle_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"database/sql"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/oracle"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	_ "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var db *sql.DB
@@ -106,7 +104,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(t), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
 	})
 }
 
@@ -157,7 +155,7 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []models.Record {
+func getExpected(t *testing.T) []*v1beta2.Asset {
 	data1, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 3,
@@ -180,9 +178,10 @@ func getExpected(t *testing.T) []models.Record {
 				Length:     22,
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
 	data2, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
@@ -207,24 +206,25 @@ func getExpected(t *testing.T) []models.Record {
 				Length:     22,
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:oracle:test-oracle:table:XE.EMPLOYEE",
 			Name:    "EMPLOYEE",
 			Service: "Oracle",
 			Type:    "table",
 			Data:    data1,
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:oracle:test-oracle:table:XE.DEPARTMENT",
 			Name:    "DEPARTMENT",
 			Service: "Oracle",
 			Type:    "table",
 			Data:    data2,
-		}),
+		},
 	}
 }

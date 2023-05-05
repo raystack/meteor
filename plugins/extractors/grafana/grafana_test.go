@@ -11,15 +11,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/grafana"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var testServer *httptest.Server
@@ -76,6 +75,7 @@ func TestExtract(t *testing.T) {
 					DashboardSource: "grafana",
 				},
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal("error creating Any struct for test: %w", err)
@@ -107,12 +107,13 @@ func TestExtract(t *testing.T) {
 					DashboardSource: "grafana",
 				},
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal("error creating Any struct for test: %w", err)
 		}
-		expectedData := []models.Record{
-			models.NewRecord(&v1beta2.Asset{
+		expected := []*v1beta2.Asset{
+			{
 				Urn:         "urn:grafana:test-grafana:dashboard:HzK8qNW7z",
 				Name:        "new-dashboard-copy",
 				Service:     "grafana",
@@ -120,8 +121,8 @@ func TestExtract(t *testing.T) {
 				Description: "",
 				Type:        "dashboard",
 				Data:        data1,
-			}),
-			models.NewRecord(&v1beta2.Asset{
+			},
+			{
 				Urn:         "urn:grafana:test-grafana:dashboard:5WsKOvW7z",
 				Name:        "test-dashboard-updated",
 				Service:     "grafana",
@@ -129,7 +130,7 @@ func TestExtract(t *testing.T) {
 				Description: "this is description for testing",
 				Type:        "dashboard",
 				Data:        data2,
-			}),
+			},
 		}
 
 		ctx := context.TODO()
@@ -149,7 +150,7 @@ func TestExtract(t *testing.T) {
 		err = extractor.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.EqualValues(t, expectedData, emitter.Get())
+		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
 	})
 }
 

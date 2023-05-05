@@ -1,113 +1,136 @@
 [
     {
-        "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-A",
-        "type": "job",
-        "name": "job-A",
-        "service": "optimus",
-        "description": "sample description for job-A",
+        "create_time": null,
         "data": {
             "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Job",
             "attributes": {
-                "version": 1,
-                "project": "project-A",
-                "namespace": "namespace-A",
-                "owner": "john_doe@example.com",
-                "startDate": "2019-09-16",
+                "catchUp": false,
+                "dependsOnPast": false,
                 "endDate": "",
                 "interval": "0 19 * * *",
-                "dependsOnPast": false,
-                "catchUp": false,
-                "taskName": "bq2bq",
-                "windowSize": "48h",
-                "windowOffset": "24h",
-                "windowTruncateTo": "d",
+                "namespace": "namespace-A",
+                "owner": "john_doe@example.com",
+                "project": "project-A",
                 "sql": "SELECT * FROM projectA.datasetB.tableC",
+                "startDate": "2019-09-16",
                 "task": {
-                    "name": "task-A",
                     "description": "task's description",
-                    "image": "task's image"
-                }
-            }
+                    "image": "task's image",
+                    "name": "task-A"
+                },
+                "taskName": "bq2bq",
+                "version": 1,
+                "windowOffset": "24h",
+                "windowSize": "48h",
+                "windowTruncateTo": "d"
+            },
+            "create_time": null,
+            "update_time": null
         },
+        "description": "sample description for job-A",
+        "event": null,
+        "labels": {},
+        "lineage": {
+            "downstreams": [
+                {
+                    "name": "",
+                    "service": "bigquery",
+                    "type": "table",
+                    "urn": "urn:bigquery:dst-project:table:dst-project:dst-dataset.dst-table"
+                }
+            ],
+            "upstreams": [
+                {
+                    "name": "",
+                    "service": "bigquery",
+                    "type": "table",
+                    "urn": "urn:bigquery:src-project:table:src-project:src-dataset.src-table"
+                }
+            ]
+        },
+        "name": "job-A",
         "owners": [
             {
                 "email": "john_doe@example.com",
+                "name": "",
+                "role": "",
                 "urn": "john_doe@example.com"
             }
         ],
-        "lineage": {
-            "upstreams": [
-                {
-                    "urn": "urn:bigquery:src-project:table:src-project:src-dataset.src-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ],
-            "downstreams": [
-                {
-                    "urn": "urn:bigquery:dst-project:table:dst-project:dst-dataset.dst-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ]
-        }
-    },
-    {
-        "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-B",
-        "name": "job-B",
         "service": "optimus",
         "type": "job",
-        "description": "sample description for job-B",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-A"
+    },
+    {
+        "create_time": null,
         "data": {
             "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Job",
             "attributes": {
-                "version": 1,
-                "project": "project-A",
-                "namespace": "namespace-A",
-                "owner": "jane_doe@example.com",
-                "startDate": "2021-01-01",
+                "catchUp": true,
+                "dependsOnPast": false,
                 "endDate": "",
                 "interval": "0 19 1 * *",
-                "dependsOnPast": false,
-                "catchUp": true,
-                "taskName": "bq2bq",
-                "windowSize": "720h",
-                "windowOffset": "-720h",
-                "windowTruncateTo": "M",
+                "namespace": "namespace-A",
+                "owner": "jane_doe@example.com",
+                "project": "project-A",
                 "sql": "SELECT * FROM projectZ.datasetY.tableX",
+                "startDate": "2021-01-01",
                 "task": {
-                    "name": "task-B",
                     "description": "task's description B",
-                    "image": "task's image B"
-                }
-            }
+                    "image": "task's image B",
+                    "name": "task-B"
+                },
+                "taskName": "bq2bq",
+                "version": 1,
+                "windowOffset": "-720h",
+                "windowSize": "720h",
+                "windowTruncateTo": "M"
+            },
+            "create_time": null,
+            "update_time": null
         },
+        "description": "sample description for job-B",
+        "event": null,
+        "labels": {},
+        "lineage": {
+            "downstreams": [
+                {
+                    "name": "",
+                    "service": "bigquery",
+                    "type": "table",
+                    "urn": "urn:bigquery:dst-b-project:table:dst-b-project:dst-b-dataset.dst-b-table"
+                }
+            ],
+            "upstreams": [
+                {
+                    "name": "",
+                    "service": "bigquery",
+                    "type": "table",
+                    "urn": "urn:bigquery:src-b1-project:table:src-b1-project:src-b1-dataset.src-b1-table"
+                },
+                {
+                    "name": "",
+                    "service": "bigquery",
+                    "type": "table",
+                    "urn": "urn:bigquery:src-b2-project:table:src-b2-project:src-b2-dataset.src-b2-table"
+                }
+            ]
+        },
+        "name": "job-B",
         "owners": [
             {
                 "email": "jane_doe@example.com",
+                "name": "",
+                "role": "",
                 "urn": "jane_doe@example.com"
             }
         ],
-        "lineage": {
-            "upstreams": [
-                {
-                    "urn": "urn:bigquery:src-b1-project:table:src-b1-project:src-b1-dataset.src-b1-table",
-                    "type": "table",
-                    "service": "bigquery"
-                },
-                {
-                    "urn": "urn:bigquery:src-b2-project:table:src-b2-project:src-b2-dataset.src-b2-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ],
-            "downstreams": [
-                {
-                    "urn": "urn:bigquery:dst-b-project:table:dst-b-project:dst-b-dataset.dst-b-table",
-                    "type": "table",
-                    "service": "bigquery"
-                }
-            ]
-        }
+        "service": "optimus",
+        "type": "job",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-B"
     }
 ]

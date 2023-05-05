@@ -9,7 +9,11 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/goto/meteor/agent"
 	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	_ "github.com/goto/meteor/plugins/extractors" // populate extractors registry
+	_ "github.com/goto/meteor/plugins/processors" // populate processors registry
+	_ "github.com/goto/meteor/plugins/sinks"      // populate sinks registry
 	"github.com/goto/meteor/recipe"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/test/mocks"
@@ -17,12 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	_ "github.com/goto/meteor/plugins/extractors" // populate extractors registry
-	_ "github.com/goto/meteor/plugins/processors" // populate processors registry
-	_ "github.com/goto/meteor/plugins/sinks"      // populate sinks registry
 )
 
 var (
@@ -841,6 +841,7 @@ func TestAgentRun(t *testing.T) {
 			Data: utils.BuildAny(t, &v1beta2.Application{
 				Id:         "test-id",
 				Version:    "c23sdf6",
+				Attributes: &structpb.Struct{},
 				CreateTime: ts(t, "2006-01-02T15:04:05Z"),
 				UpdateTime: ts(t, "2006-01-02T15:04:05Z"),
 			}),

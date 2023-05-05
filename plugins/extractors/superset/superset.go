@@ -18,6 +18,7 @@ import (
 	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -110,7 +111,8 @@ func (e *Extractor) buildDashboard(id int) (asset *v1beta2.Asset, err error) {
 		return
 	}
 	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: chart,
+		Charts:     chart,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		return nil, err

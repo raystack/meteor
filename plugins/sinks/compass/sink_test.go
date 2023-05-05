@@ -13,16 +13,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/sinks/compass"
-	testUtils "github.com/goto/meteor/test/utils"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/goto/meteor/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -43,7 +43,7 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				compassSink := compass.New(newMockHTTPClient(config, http.MethodPatch, url, compass.RequestPayload{}), testUtils.Logger)
+				compassSink := compass.New(newMockHTTPClient(config, http.MethodPatch, url, compass.RequestPayload{}), testutils.Logger)
 				err := compassSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 
 				assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -63,7 +63,7 @@ func TestSink(t *testing.T) {
 		client.SetupResponse(404, compassError)
 		ctx := context.TODO()
 
-		compassSink := compass.New(client, testUtils.Logger)
+		compassSink := compass.New(client, testutils.Logger)
 		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": host,
 		}})
@@ -92,7 +92,7 @@ func TestSink(t *testing.T) {
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
-				compassSink := compass.New(client, testUtils.Logger)
+				compassSink := compass.New(client, testutils.Logger)
 				err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 					"host": host,
 				}})
@@ -121,7 +121,7 @@ func TestSink(t *testing.T) {
 			Service:     "kafka",
 			Type:        "topic",
 			Description: "topic information",
-			Data: testUtils.BuildAny(t, &v1beta2.Topic{
+			Data: testutils.BuildAny(t, &v1beta2.Topic{
 				Attributes: utils.TryParseMapToProto(map[string]interface{}{
 					"attrA": "valueAttrA",
 					"attrB": "valueAttrB",
@@ -177,7 +177,7 @@ func TestSink(t *testing.T) {
 			client := newMockHTTPClient(c, http.MethodPatch, url, testPayload)
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
-			compassSink := compass.New(client, testUtils.Logger)
+			compassSink := compass.New(client, testutils.Logger)
 			err := compassSink.Init(ctx, plugins.Config{RawConfig: c})
 			if err != nil {
 				t.Fatal(err)
@@ -202,7 +202,7 @@ func TestSink(t *testing.T) {
 				Type:        "topic",
 				Description: "topic information",
 				Url:         "http://test.com",
-				Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Data: testutils.BuildAny(t, &v1beta2.Table{
 					Columns: []*v1beta2.Column{
 						{
 							Name:        "id",
@@ -211,6 +211,7 @@ func TestSink(t *testing.T) {
 							IsNullable:  true,
 						},
 					},
+					Attributes: &structpb.Struct{},
 				}),
 				Labels: map[string]string{
 					"labelA": "valueLabelA",
@@ -232,12 +233,22 @@ func TestSink(t *testing.T) {
 						"@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
 						"columns": []map[string]interface{}{
 							{
+								"length":      "0",
 								"name":        "id",
 								"description": "It is the ID",
 								"data_type":   "INT",
 								"is_nullable": true,
+								"attributes":  nil,
+								"columns":     []interface{}{},
+								"profile":     nil,
 							},
 						},
+						"create_time":    nil,
+						"preview_fields": []interface{}{},
+						"preview_rows":   nil,
+						"profile":        nil,
+						"update_time":    nil,
+						"attributes":     map[string]interface{}{},
 					},
 					Labels: map[string]string{
 						"labelA": "valueLabelA",
@@ -254,7 +265,7 @@ func TestSink(t *testing.T) {
 				Service:     "kafka",
 				Type:        "topic",
 				Description: "topic information",
-				Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Data: testutils.BuildAny(t, &v1beta2.Table{
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{
 						"attrA": "valueAttrA",
 						"attrB": "valueAttrB",
@@ -285,6 +296,12 @@ func TestSink(t *testing.T) {
 							"attrA": "valueAttrA",
 							"attrB": "valueAttrB",
 						},
+						"columns":        []interface{}{},
+						"create_time":    nil,
+						"preview_fields": []interface{}{},
+						"preview_rows":   nil,
+						"profile":        nil,
+						"update_time":    nil,
 					},
 				},
 			},
@@ -296,7 +313,7 @@ func TestSink(t *testing.T) {
 				Name:    "my-topic",
 				Service: "kafka",
 				Type:    "topic",
-				Data: testUtils.BuildAny(t, &v1beta2.Table{
+				Data: testutils.BuildAny(t, &v1beta2.Table{
 					Attributes: utils.TryParseMapToProto(map[string]interface{}{
 						"newFoo": "newBar",
 					}),
@@ -327,6 +344,12 @@ func TestSink(t *testing.T) {
 						"attributes": map[string]interface{}{
 							"newFoo": "newBar",
 						},
+						"columns":        []interface{}{},
+						"create_time":    nil,
+						"preview_fields": []interface{}{},
+						"preview_rows":   nil,
+						"profile":        nil,
+						"update_time":    nil,
 					},
 				},
 			},
@@ -527,7 +550,7 @@ func TestSink(t *testing.T) {
 			client.SetupResponse(200, "")
 			ctx := context.TODO()
 
-			compassSink := compass.New(client, testUtils.Logger)
+			compassSink := compass.New(client, testutils.Logger)
 			err := compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
 			require.NoError(t, err)
 
@@ -586,6 +609,8 @@ func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
 }
 
 func (m *mockHTTPClient) Assert(t *testing.T) {
+	t.Helper()
+
 	assert.Equal(t, m.Method, m.req.Method)
 	actualURL := fmt.Sprintf(
 		"%s://%s%s",
@@ -609,10 +634,11 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 		}
 	}
 
-	expectedBytes, err := json.Marshal(m.RequestPayload)
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(m.RequestPayload); err != nil {
 		t.Error(err)
 	}
 
-	assert.Equal(t, string(expectedBytes), string(bodyBytes))
+	testutils.AssertJSONEq(t, buf.Bytes(), bodyBytes)
 }

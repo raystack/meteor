@@ -12,6 +12,7 @@ import (
 	"github.com/goto/salt/log"
 	sh "github.com/goto/shield/proto/v1beta1"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -92,6 +93,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 					Role:     []string{role.Role.GetName()},
 				},
 			},
+			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 			CreateTime: user.GetCreatedAt(),
 			UpdateTime: user.GetUpdatedAt(),
 		})
