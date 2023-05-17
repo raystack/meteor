@@ -52,7 +52,7 @@ considered active if it has an endpoint.
 | `namespace`                        | `{project.name}`                                                       | `integration-test`                                            |
 | `flavor`                           | `model.type`                                                           | `pyfunc`                                                      |
 | `versions`                         | [`[]ModelVersion`](#modelversion)                                      |                                                               |
-| `attributes.project_id`            | `project.id`                                                           | `23`                                                          |
+| `attributes.merlin_project_id`     | `project.id`                                                           | `23`                                                          |
 | `attributes.mlflow_experiment_id`  | `model.mlflow_experiment_id`                                           | `721`                                                         |
 | `attributes.mlflow_experiment_url` | `model.mlflow_url`                                                     | `http://mlflow.mycompany.com/#/experiments/721`               |
 | `attributes.endpoint_urls[]`       | `model.endpoints[].url`                                                | `["tensorflow-sample.integration-test.models.mycompany.com"]` |
