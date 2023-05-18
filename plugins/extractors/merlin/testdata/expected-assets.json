@@ -8,9 +8,9 @@
         "endpoint_urls": [
           "resource-request.sample.models.company.com"
         ],
+        "merlin_project_id": 1,
         "mlflow_experiment_id": 83,
-        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/83",
-        "merlin_project_id": 1
+        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/83"
       },
       "create_time": "2020-04-23T10:07:40.105711Z",
       "flavor": "sklearn",
@@ -74,7 +74,7 @@
     "type": "model",
     "update_time": null,
     "url": "resource-request.sample.models.company.com",
-    "urn": "urn:merlin:test-merlin:model:1.80"
+    "urn": "urn:merlin:test-merlin:model:one-piece.resource-request"
   },
   {
     "create_time": null,
@@ -85,9 +85,9 @@
         "endpoint_urls": [
           "pyfunc-standard-transfo.sample.models.company.com"
         ],
+        "merlin_project_id": 1,
         "mlflow_experiment_id": 692,
-        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/692",
-        "merlin_project_id": 1
+        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/692"
       },
       "create_time": "2021-02-04T13:05:31.593956Z",
       "flavor": "pyfunc",
@@ -163,7 +163,7 @@
     "type": "model",
     "update_time": null,
     "url": "pyfunc-standard-transfo.sample.models.company.com",
-    "urn": "urn:merlin:test-merlin:model:1.689"
+    "urn": "urn:merlin:test-merlin:model:one-piece.pyfunc-standard-transfo"
   },
   {
     "create_time": null,
@@ -175,9 +175,9 @@
           "inca-restaurant-image.inca-restaurant.models.company.com",
           "inca-restaurant-image.inca-restaurant.models.company.com"
         ],
+        "merlin_project_id": 100,
         "mlflow_experiment_id": 1466,
-        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/1466",
-        "merlin_project_id": 100
+        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/1466"
       },
       "create_time": "2022-05-25T04:57:24.972027Z",
       "flavor": "pyfunc",
@@ -266,7 +266,7 @@
     "type": "model",
     "update_time": null,
     "url": "inca-restaurant-image.inca-restaurant.models.company.com",
-    "urn": "urn:merlin:test-merlin:model:100.1376"
+    "urn": "urn:merlin:test-merlin:model:strongest-man.inca-restaurant-image"
   },
   {
     "create_time": null,
@@ -277,9 +277,9 @@
         "endpoint_urls": [
           "id-car-b-default.jaeger.models.company.com"
         ],
+        "merlin_project_id": 100,
         "mlflow_experiment_id": 287,
-        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/287",
-        "merlin_project_id": 100
+        "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/287"
       },
       "create_time": "2020-06-23T14:40:23.168186Z",
       "flavor": "pyfunc",
@@ -404,6 +404,6 @@
     "type": "model",
     "update_time": null,
     "url": "id-car-b-default.jaeger.models.company.com",
-    "urn": "urn:merlin:test-merlin:model:100.284"
+    "urn": "urn:merlin:test-merlin:model:strongest-man.id-car-b-default"
   }
 ]
