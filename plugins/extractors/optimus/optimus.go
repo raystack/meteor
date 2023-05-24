@@ -196,24 +196,25 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 func (e *Extractor) buildLineage(task *pb.JobTask) (upstreams, downstreams []*v1beta2.Resource, err error) {
 	upstreams, err = e.buildUpstreams(task)
 	if err != nil {
-		err = errors.Wrap(err, "error building upstreams")
-		return
+		return nil, nil, fmt.Errorf("build upstreams: %w", err)
 	}
+
 	downstreams, err = e.buildDownstreams(task)
 	if err != nil {
-		err = errors.Wrap(err, "error building downstreams")
-		return
+		return nil, nil, fmt.Errorf("build downstreams: %w", err)
 	}
 
-	return
+	return upstreams, downstreams, nil
 }
 
-func (e *Extractor) buildUpstreams(task *pb.JobTask) (upstreams []*v1beta2.Resource, err error) {
+func (e *Extractor) buildUpstreams(task *pb.JobTask) ([]*v1beta2.Resource, error) {
+	var upstreams []*v1beta2.Resource
 	for _, dependency := range task.Dependencies {
-		var urn string
-		urn, err = e.mapURN(dependency.Dependency)
+		urn, err := plugins.BigQueryTableFQNToURN(
+			strings.TrimPrefix(dependency.Dependency, "bigquery://"),
+		)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		upstreams = append(upstreams, &v1beta2.Resource{
@@ -223,48 +224,26 @@ func (e *Extractor) buildUpstreams(task *pb.JobTask) (upstreams []*v1beta2.Resou
 		})
 	}
 
-	return
+	return upstreams, nil
 }
 
-func (e *Extractor) buildDownstreams(task *pb.JobTask) (downstreams []*v1beta2.Resource, err error) {
-	if task.Destination == nil {
-		return
+func (e *Extractor) buildDownstreams(task *pb.JobTask) ([]*v1beta2.Resource, error) {
+	if task.Destination == nil || task.Destination.Destination == "" {
+		return nil, nil
 	}
 
-	var urn string
-	urn, err = e.mapURN(task.Destination.Destination)
+	urn, err := plugins.BigQueryTableFQNToURN(
+		strings.TrimPrefix(task.Destination.Destination, "bigquery://"),
+	)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	downstreams = append(downstreams, &v1beta2.Resource{
+	return []*v1beta2.Resource{{
 		Urn:     urn,
 		Type:    "table",
 		Service: "bigquery",
-	})
-
-	return
-}
-
-func (e *Extractor) mapURN(optimusURN string) (tableURN string, err error) {
-	err = fmt.Errorf("could not map urn \"%s\"", optimusURN)
-
-	// sample optimusURN = "bigquery://projectA:datasetB.tableC"
-	bigqueryID := strings.TrimPrefix(optimusURN, "bigquery://") // "projectA:datasetB.tableC"
-
-	comps := strings.Split(bigqueryID, ":") // ["projectA", "datasetB.tableC"]
-	if len(comps) != 2 {
-		return
-	}
-	projectID := comps[0]                          // "projectA"
-	datasetTableID := strings.Split(comps[1], ".") // ["datasetB", "tableC"]
-	if len(comps) != 2 {
-		return
-	}
-	datasetID := datasetTableID[0] // "datasetB"
-	tableID := datasetTableID[1]   // "tableC"
-
-	return plugins.BigQueryURN(projectID, datasetID, tableID), nil
+	}}, nil
 }
 
 func strOrNil(s string) interface{} {

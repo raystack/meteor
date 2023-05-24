@@ -132,5 +132,55 @@
         "update_time": null,
         "url": "",
         "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-B"
+    },
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Job",
+            "attributes": {
+                "catchUp": true,
+                "dependsOnPast": false,
+                "endDate": null,
+                "interval": "0 19 1 * *",
+                "namespace": "namespace-A",
+                "owner": "jane_doe@example.com",
+                "project": "project-A",
+                "sql": "SELECT * FROM projectZ.datasetY.tableX",
+                "startDate": "2021-01-01",
+                "task": {
+                    "description": "task's description C",
+                    "image": "task's image C",
+                    "name": "task-C"
+                },
+                "taskName": "gcs2bq",
+                "version": 1,
+                "windowOffset": "-720h",
+                "windowSize": "720h",
+                "windowTruncateTo": "M"
+            },
+            "create_time": null,
+            "update_time": null
+        },
+        "description": "sample description for job-C",
+        "event": null,
+        "labels": {},
+        "lineage": {
+            "downstreams": [],
+            "upstreams": []
+        },
+        "name": "job-C",
+        "owners": [
+            {
+                "email": "jane_doe@example.com",
+                "name": "",
+                "role": "",
+                "urn": "jane_doe@example.com"
+            }
+        ],
+        "service": "optimus",
+        "type": "job",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:optimus:test-optimus:job:project-A.namespace-A.job-C"
     }
 ]
