@@ -557,7 +557,11 @@ func TestAgentRun(t *testing.T) {
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
 		extr.On("Init", mockCtx, buildPluginConfig(validRecipe.Source)).Return(nil).Once()
-		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.Emit")).Return(nil)
+		extr.On("Extract", mockCtx, mock.AnythingOfType("plugins.Emit")).
+			Run(func(mock.Arguments) {
+				time.Sleep(2 * time.Millisecond)
+			}).
+			Return(nil)
 		ef := registry.NewExtractorFactory()
 		if err := ef.Register("test-extractor", newExtractor(extr)); err != nil {
 			t.Fatal(err)
@@ -565,7 +569,11 @@ func TestAgentRun(t *testing.T) {
 
 		proc := mocks.NewProcessor()
 		proc.On("Init", mockCtx, buildPluginConfig(validRecipe.Processors[0])).Return(nil).Once()
-		proc.On("Process", mockCtx, data[0]).Return(data[0], nil)
+		proc.On("Process", mockCtx, data[0]).
+			Run(func(mock.Arguments) {
+				time.Sleep(2 * time.Millisecond)
+			}).
+			Return(data[0], nil)
 		defer proc.AssertExpectations(t)
 		pf := registry.NewProcessorFactory()
 		if err := pf.Register("test-processor", newProcessor(proc)); err != nil {
@@ -574,7 +582,11 @@ func TestAgentRun(t *testing.T) {
 
 		sink := mocks.NewSink()
 		sink.On("Init", mockCtx, buildPluginConfig(validRecipe.Sinks[0])).Return(nil).Once()
-		sink.On("Sink", mockCtx, data).Return(nil)
+		sink.On("Sink", mockCtx, data).
+			Run(func(mock.Arguments) {
+				time.Sleep(2 * time.Millisecond)
+			}).
+			Return(nil)
 		sink.On("Close").Return(nil)
 		defer sink.AssertExpectations(t)
 		sf := registry.NewSinkFactory()
@@ -596,6 +608,7 @@ func TestAgentRun(t *testing.T) {
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.NoError(t, run.Error)
+		assert.NotEmpty(t, run.DurationInMs)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
@@ -947,6 +960,9 @@ func TestAgentRunMultiple(t *testing.T) {
 		runs := r.RunMultiple(ctx, recipeList)
 
 		assert.Len(t, runs, len(recipeList))
+		for i := range runs {
+			runs[i].DurationInMs = 0
+		}
 		assert.Equal(t, []agent.Run{
 			{Recipe: validRecipe, RecordCount: len(data), Success: true},
 			{Recipe: validRecipe2, RecordCount: len(data), Success: true},
