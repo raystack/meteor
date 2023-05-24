@@ -17,6 +17,15 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+// Register the extractor to catalog
+func init() {
+	if err := registry.Extractors.Register("optimus", func() plugins.Extractor {
+		return New(plugins.GetLog(), newClient())
+	}); err != nil {
+		panic(err)
+	}
+}
+
 //go:embed README.md
 var summary string
 
@@ -141,8 +150,8 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 			"project":          project,
 			"namespace":        namespace,
 			"owner":            jobSpec.Owner,
-			"startDate":        jobSpec.StartDate,
-			"endDate":          jobSpec.EndDate,
+			"startDate":        strOrNil(jobSpec.StartDate),
+			"endDate":          strOrNil(jobSpec.EndDate),
 			"interval":         jobSpec.Interval,
 			"dependsOnPast":    jobSpec.DependsOnPast,
 			"catchUp":          jobSpec.CatchUp,
@@ -258,11 +267,10 @@ func (e *Extractor) mapURN(optimusURN string) (tableURN string, err error) {
 	return plugins.BigQueryURN(projectID, datasetID, tableID), nil
 }
 
-// Register the extractor to catalog
-func init() {
-	if err := registry.Extractors.Register("optimus", func() plugins.Extractor {
-		return New(plugins.GetLog(), newClient())
-	}); err != nil {
-		panic(err)
+func strOrNil(s string) interface{} {
+	if s == "" {
+		return nil
 	}
+
+	return s
 }
