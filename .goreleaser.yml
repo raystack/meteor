@@ -2,7 +2,6 @@ project_name: meteor
 
 release:
   prerelease: auto
-  draft: true
 
 before:
   hooks:
