@@ -34,3 +34,4 @@ meteor-plugin-*
 /dist
 
 .playground
+.tools

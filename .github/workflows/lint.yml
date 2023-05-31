@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   golangci:
     runs-on: ubuntu-latest
@@ -15,12 +19,13 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: '1.20'
+          cache: false
       # See https://github.com/golangci/golangci-lint-action#how-to-use
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.51
-          args: --timeout=5m
+          version: v1.52.2
+          args: --config=".golangci-prod.toml" --new-from-rev=HEAD~1 --max-same-issues=0 --max-issues-per-linter=0

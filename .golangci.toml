@@ -1,0 +1,421 @@
+# Configuration for golangci-lint@v1.52.2
+# See https://golangci-lint.run/usage/configuration/#config-file
+
+# Options for analysis running
+[run]
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout = "10m"
+
+  # If set we pass it to "go list -mod={option}". From "go help modules":
+  # If invoked with -mod=readonly, the go command is disallowed from the implicit
+  # automatic updating of go.mod described above. Instead, it fails when any changes
+  # to go.mod are needed. This setting is most useful to check that go.mod does
+  # not need updates, such as in a continuous integration and testing system.
+  # If invoked with -mod=vendor, the go command assumes that the vendor
+  # directory holds the correct copies of dependencies and ignores
+  # the dependency descriptions in go.mod.
+  #
+  # Allowed values: readonly|vendor|mod
+  # By default, it isn't set.
+  modules-download-mode = "readonly"
+
+# output configuration options
+[output]
+  # Make issues output unique by line.
+  # Default: true
+  uniq-by-line = false
+
+# See https://golangci-lint.run/usage/linters/
+[linters]
+  # Disable-all coupled with enable scales well with updates to golangci-lint
+  disable-all = true
+
+  enable = [
+    # https://github.com/kisielk/errcheck
+    # errcheck is a program for checking for unchecked errors in Go code. These
+    # unchecked errors can be critical bugs in some cases.
+    "errcheck",
+
+    # https://github.com/dominikh/go-tools/tree/master/simple
+    # Linter for Go source code that specializes in simplifying code.
+    "gosimple",
+
+    # https://pkg.go.dev/cmd/vet
+    # Vet examines Go source code and reports suspicious constructs, such as
+    # Printf calls whose arguments do not align with the format string.
+    "govet",
+
+    # https://github.com/gordonklaus/ineffassign
+    # Detects when assignments to existing variables are not used.
+    "ineffassign",
+
+    # https://staticcheck.io/
+    # It's a set of rules from staticcheck. It's not the same thing as the
+    # staticcheck binary. The author of staticcheck doesn't support or approve
+    # the use of staticcheck as a library inside golangci-lint.
+    "staticcheck",
+
+    # https://github.com/timakin/bodyclose
+    # checks whether HTTP response body is closed successfully.
+    "bodyclose",
+
+    # https://github.com/mibk/dupl
+    # Tool for code clone detection.
+    "dupl",
+
+    # https://github.com/Antonboom/errname
+    # Checks that sentinel errors are prefixed with the Err and error types are
+    # suffixed with the Error.
+    "errname",
+
+    # https://github.com/polyfloyd/go-errorlint
+    # errorlint is a linter for that can be used to find code that will cause
+    # problems with the error wrapping scheme introduced in Go 1.13.
+    "errorlint",
+
+    # https://github.com/daixiang0/gci
+    # Gci controls Go package import order and makes it always deterministic.
+    "gci",
+
+    # https://github.com/leighmcculloch/gocheckcompilerdirectives
+    # Checks that go compiler directive comments (//go:) are valid.
+    "gocheckcompilerdirectives",
+
+    # https://github.com/jgautheron/goconst
+    # Finds repeated strings that could be replaced by a constant.
+    "goconst",
+
+    # https://github.com/mvdan/gofumpt
+    # Gofumpt checks whether code was gofumpt-ed.
+    "gofumpt",
+
+    # https://github.com/walle/lll
+    # Reports long lines.
+    "lll",
+
+    # https://github.com/client9/misspell
+    # Finds commonly misspelled English words in comments.
+    "misspell",
+
+    # https://github.com/junk1tm/musttag
+    # enforce field tags in (un)marshaled structs.
+    "musttag",
+
+    # https://github.com/alexkohler/nakedret
+    # Finds naked returns in functions greater than a specified function length.
+    "nakedret",
+
+    # https://github.com/gostaticanalysis/nilerr
+    # Finds the code that returns nil even if it checks that the error is not
+    # nil.
+    "nilerr",
+
+    # https://github.com/sonatard/noctx
+    # noctx finds sending http request without context.Context.
+    "noctx",
+
+    # https://github.com/mgechev/revive
+    # Fast, configurable, extensible, flexible, and beautiful linter for Go.
+    # Drop-in replacement of golint.
+    "revive",
+
+    # https://github.com/jingyugao/rowserrcheck
+    # checks whether Err of rows is checked successfully.
+    "rowserrcheck",
+
+    # https://github.com/ryanrolds/sqlclosecheck
+    # Checks that sql.Rows and sql.Stmt are closed.
+    "sqlclosecheck",
+
+    # https://github.com/dominikh/go-tools/tree/master/stylecheck
+    # Stylecheck is a replacement for golint.
+    "stylecheck",
+
+    # https://github.com/sivchari/tenv
+    # tenv is analyzer that detects using os.Setenv instead of t.Setenv since
+    # Go1.17.
+    "tenv",
+
+    # https://github.com/maratori/testpackage
+    # linter that makes you use a separate _test package.
+    "testpackage",
+
+    # https://github.com/kulti/thelper
+    # thelper detects Go test helpers without t.Helper() call and checks the
+    # consistency of test helpers.
+    "thelper",
+
+    # https://github.com/mdempsky/unconvert
+    # Remove unnecessary type conversions.
+    "unconvert",
+
+    # https://github.com/sashamelentyev/usestdlibvars
+    # A linter that detect the possibility to use variables/constants from the
+    # Go standard library.
+    "usestdlibvars",
+  ]
+
+# All available settings of specific linters
+[linters-settings]
+
+  [linters-settings.errcheck]
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    check-type-assertions = true
+
+  [linters-settings.govet]
+    # Report about shadowed variables.
+    # Default: false
+    check-shadowing = true
+
+    # Enable all analyzers.
+    # Default: false
+    enable-all = true
+
+    # Disable analyzers by name
+    # See https://pkg.go.dev/golang.org/x/tools/go/analysis/passes#section-directories
+    disable = [
+      # (not needed) reports mismatches between assembly files and Go
+      # declarations.
+      "asmdecl",
+      # (dupl staticcheck) detects useless assignments.
+      "assign",
+      # (not needed) detects some violations of the cgo pointer passing rules.
+      "cgocall",
+      # (not needed) detects structs that would use less memory if their fields
+      # were sorted.
+      "fieldalignment",
+      # (not needed) serves as a trivial example and test of the Analysis API.
+      "findcall",
+      # (not needed) reports assembly code that clobbers the frame pointer
+      # before saving it.
+      "framepointer",
+      # (dupl revive struct-tag) defines an Analyzer that checks struct field
+      # tags are well formed.
+      "structtag",
+    ]
+
+  [linters-settings.gci]
+    # Section configuration to compare against.
+    # Section names are case-insensitive and may contain parameters in ().
+    # The default order of sections is `standard > default > custom > blank > dot`,
+    # If `custom-order` is `true`, it follows the order of `sections` option.
+    # Default: ["standard", "default"]
+    sections = [
+      "standard", # Standard section: captures all standard packages.
+      "default", # Default section: contains all imports that could not be matched to another section type.
+      "prefix(source.golabs.io)", # Custom section: groups all imports with the specified Prefix.
+    ]
+
+  [linters-settings.goconst]
+    # Ignore test files.
+    # Default: false
+    ignore-tests = true
+
+  [linters-settings.gofumpt]
+    # Choose whether to use the extra rules.
+    # Default: false
+    extra-rules = true
+
+  [linters-settings.lll]
+    # Max line length, lines longer will be reported.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
+    # Default: 120.
+    line-length = 160
+
+  [linters-settings.misspell]
+    # Correct spellings using locale preferences for US or UK.
+    # Default is to use a neutral variety of English.
+    # Setting locale to US will correct the British spelling of 'colour' to 'color'.
+    locale = "US"
+
+  [linters-settings.revive]
+    # Sets the default severity.
+    # See https://github.com/mgechev/revive#configuration
+    # Default: warning
+    severity = "error"
+
+      # Available rules - https://github.com/mgechev/revive/blob/v1.3.1/RULES_DESCRIPTIONS.md
+      [[linters-settings.revive.rules]]
+        # Reduces redundancies around variable declaration.
+        name = "var-declaration"
+
+      [[linters-settings.revive.rules]]
+        # Warns when a public return is from unexported type.
+        name = "unexported-return"
+
+      [[linters-settings.revive.rules]]
+        # Disallows blank imports.
+        name = "blank-imports"
+
+      [[linters-settings.revive.rules]]
+        # context.Context should be the first argument of a function.
+        name = "context-as-argument"
+
+      [[linters-settings.revive.rules]]
+        # Naming and commenting conventions on exported symbols.
+        name = "exported"
+
+      [[linters-settings.revive.rules]]
+        # Redundant if when returning an error.
+        name = "if-return"
+
+      [[linters-settings.revive.rules]]
+        # Use i++ and i-- instead of i += 1 and i -= 1.
+        name = "increment-decrement"
+
+      [[linters-settings.revive.rules]]
+        # Prevents redundant else statements.
+        name = "indent-error-flow"
+
+      [[linters-settings.revive.rules]]
+        # Specifies the maximum number of arguments a function can receive.
+        name = "argument-limit"
+        arguments = [5]
+
+      [[linters-settings.revive.rules]]
+        # Prevents redundant else statements (extends indent-error-flow).
+        name = "superfluous-else"
+
+      [[linters-settings.revive.rules]]
+        # Warns on methods with names that differ only by capitalization.
+        name = "confusing-naming"
+
+      [[linters-settings.revive.rules]]
+        # Looks for program exits in funcs other than main() or init().
+        name = "deep-exit"
+
+      [[linters-settings.revive.rules]]
+        # Suggests to rename or remove unused function parameters.
+        name = "unused-parameter"
+
+      [[linters-settings.revive.rules]]
+        # Checks common struct tags like json,xml,yaml.
+        name = "struct-tag"
+
+      [[linters-settings.revive.rules]]
+        # Warns on assignments to value-passed method receivers.
+        name = "modifies-value-receiver"
+
+      [[linters-settings.revive.rules]]
+        # Warns on constant logical expressions.
+        name = "constant-logical-expr"
+
+      [[linters-settings.revive.rules]]
+        # Warns on redefinitions of builtin identifiers.
+        name = "redefines-builtin-id"
+
+      [[linters-settings.revive.rules]]
+        # Specifies the maximum number of results a function can return.
+        name = "function-result-limit"
+        arguments = [3]
+
+      [[linters-settings.revive.rules]]
+        # Warns if address of range value is used dangerously.
+        name = "range-val-address"
+
+      [[linters-settings.revive.rules]]
+        # Warns on explicit call to the garbage collector.
+        name = "call-to-gc"
+
+      [[linters-settings.revive.rules]]
+        # Spots identifiers that shadow an import.
+        name = "import-shadowing"
+
+      [[linters-settings.revive.rules]]
+        # Warns on bare returns.
+        name = "bare-return"
+
+      [[linters-settings.revive.rules]]
+        # Suggests to rename or remove unused method receivers.
+        name = "unused-receiver"
+
+      [[linters-settings.revive.rules]]
+        # Spots if-then-else statements that can be refactored to simplify code
+        # reading.
+        name = "early-return"
+
+      [[linters-settings.revive.rules]]
+        # Warns on function calls that will lead to (direct) infinite recursion.
+        name = "unconditional-recursion"
+
+      [[linters-settings.revive.rules]]
+        # Spots if-then-else statements with identical then and else branches.
+        name = "identical-branches"
+
+      [[linters-settings.revive.rules]]
+        # Warns on some defer gotchas.
+        name = "defer"
+
+      [[linters-settings.revive.rules]]
+        # Warns on wrongly named un-exported symbols.
+        name = "unexported-naming"
+
+
+  [linters-settings.rowserrcheck]
+    # database/sql is always checked
+    # Default: []
+    packages = [
+      "github.com/jmoiron/sqlx",
+    ]
+
+  [linters-settings.usestdlibvars]
+    # Suggest the use of http.StatusXX.
+    # covered by stylecheck ST1013.
+    # Default: true
+    http-status-code = false
+    # Suggest the use of time.Month.String().
+    # Default: false
+    time-month = true
+    # Suggest the use of time.Layout.
+    # Default: false
+    time-layout = true
+    # Suggest the use of sql.LevelXX.String().
+    # Default: false
+    sql-isolation-level = true
+    # Suggest the use of tls.SignatureScheme.String().
+    # Default: false
+    tls-signature-scheme = true
+
+[issues]
+  # The list of ids of default excludes to include or disable.
+  # https://golangci-lint.run/usage/false-positives/#default-exclusions
+  # Default: []
+  include = [
+    # staticcheck SA4011: Break statement with no effect.
+    "EXC0005",
+  ]
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  [[issues.exclude-rules]]
+    text = 'declaration of "(err|ctx)" shadows declaration at'
+    linters = ["govet"]
+
+  [[issues.exclude-rules]]
+    text = "can be replaced by http\\.Status.*"
+    linters = ["usestdlibvars"]
+
+  [[issues.exclude-rules]]
+    path = "cli/.*"
+    linters = ["dupl"]
+
+  [[issues.exclude-rules]]
+    # Exclude some linters from running on tests files.
+    path = "_test\\.go"
+    linters = [
+      "dupl",
+      "gosec",
+      "lll",
+      "gocognit",
+      "goconst",
+    ]
+
+  [[issues.exclude-rules]]
+    linters = ["lll"]
+    source = "^//go:generate "
+
+  [[issues.exclude-rules]]
+    path = "_test\\.go"
+    text = "^Error return value is not checked$"
+    linters = ["errcheck"]
