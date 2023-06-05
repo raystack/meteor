@@ -13,7 +13,6 @@ import (
 	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -77,8 +76,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -94,17 +93,19 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	cluster.Consistency = gocql.Quorum
 	cluster.ProtoVersion = 4
 	cluster.Port = e.config.Port
+
+	var err error
 	if e.session, err = cluster.CreateSession(); err != nil {
-		return errors.Wrap(err, "failed to create session")
+		return fmt.Errorf("create session: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is configured and
 // if the connection to the DB is successful
 // and then starts the extraction process
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.session.Close()
 	e.emit = emit
 
@@ -115,24 +116,24 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 	for scanner.Next() {
 		var keyspace string
-		if err = scanner.Scan(&keyspace); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", keyspace)
+		if err := scanner.Scan(&keyspace); err != nil {
+			return fmt.Errorf("iterate over %s: %w", keyspace, err)
 		}
 
 		// skip if database is default
 		if e.isExcludedKeyspace(keyspace) {
 			continue
 		}
-		if err = e.extractTables(keyspace); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", keyspace)
+		if err := e.extractTables(keyspace); err != nil {
+			return fmt.Errorf("extract tables from %s: %w", keyspace, err)
 		}
 	}
 
-	return
+	return nil
 }
 
 // extractTables extract tables from a given keyspace
-func (e *Extractor) extractTables(keyspace string) (err error) {
+func (e *Extractor) extractTables(keyspace string) error {
 	scanner := e.session.
 		Query(`SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?`, keyspace).
 		Iter().
@@ -140,23 +141,22 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 
 	for scanner.Next() {
 		var tableName string
-		if err = scanner.Scan(&tableName); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", tableName)
+		if err := scanner.Scan(&tableName); err != nil {
+			return fmt.Errorf("iterate over %s: %w", tableName, err)
 		}
-		if err = e.processTable(keyspace, tableName); err != nil {
-			return errors.Wrap(err, "failed to process table")
+		if err := e.processTable(keyspace, tableName); err != nil {
+			return fmt.Errorf("process table: %w", err)
 		}
 	}
 
-	return
+	return nil
 }
 
 // processTable build and push table to out channel
-func (e *Extractor) processTable(keyspace string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(keyspace, tableName)
+func (e *Extractor) processTable(keyspace, tableName string) error {
+	columns, err := e.extractColumns(keyspace, tableName)
 	if err != nil {
-		return errors.Wrap(err, "failed to extract columns")
+		return fmt.Errorf("extract columns: %w", err)
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
@@ -164,7 +164,7 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		return fmt.Errorf("create Any struct: %w", err)
 	}
 
 	// push table to channel
@@ -176,11 +176,11 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 		Type:    "table",
 	}))
 
-	return
+	return nil
 }
 
 // extractColumns extract columns from a given table
-func (e *Extractor) extractColumns(keyspace string, tableName string) (columns []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(keyspace, tableName string) ([]*v1beta2.Column, error) {
 	query := `SELECT column_name, type 
               FROM system_schema.columns 
               WHERE keyspace_name = ?
@@ -190,9 +190,10 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 		Iter().
 		Scanner()
 
+	var columns []*v1beta2.Column
 	for scanner.Next() {
 		var fieldName, dataType string
-		if err = scanner.Scan(&fieldName, &dataType); err != nil {
+		if err := scanner.Scan(&fieldName, &dataType); err != nil {
 			e.logger.Error("failed to get fields", "error", err)
 			continue
 		}
@@ -203,7 +204,7 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 		})
 	}
 
-	return
+	return columns, nil
 }
 
 // isExcludedKeyspace checks if the given db is in the list of excluded keyspaces

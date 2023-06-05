@@ -16,7 +16,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 )
 
 //go:embed README.md
@@ -68,18 +67,12 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 }
 
 // Init initializes the sink
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
-		return err
-	}
-
-	return
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	return s.BasePlugin.Init(ctx, config)
 }
 
 // Sink helps to sink record to stencil
-func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
-	var stencilPayload interface{}
-
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		asset := record.Data()
 		if asset.Data == nil {
@@ -93,28 +86,32 @@ func (s *Sink) Sink(_ context.Context, batch []models.Record) (err error) {
 
 		s.logger.Info("sinking record to stencil", "record", asset.GetUrn())
 
+		var (
+			payload interface{}
+			err     error
+		)
 		switch s.config.Format {
 		case "avro":
-			stencilPayload, err = s.buildAvroStencilPayload(asset, &table)
+			payload, err = s.buildAvroStencilPayload(asset, &table)
 		case "json":
-			stencilPayload, err = s.buildJsonStencilPayload(asset, &table)
+			payload, err = s.buildJsonStencilPayload(asset, &table)
 		}
 
 		if err != nil {
-			return errors.Wrap(err, "failed to build stencil payload")
+			return fmt.Errorf("build stencil payload: %w", err)
 		}
-		if err = s.send(asset.GetUrn(), stencilPayload); err != nil {
-			return errors.Wrap(err, "error sending data")
+		if err := s.send(ctx, asset.GetUrn(), payload); err != nil {
+			return fmt.Errorf("send stencil payload: %w", err)
 		}
 
 		s.logger.Info("successfully sunk record to stencil", "record", asset.GetUrn())
 	}
 
-	return
+	return nil
 }
 
 // Close will be called once after everything is done
-func (s *Sink) Close() (err error) { return }
+func (*Sink) Close() error { return nil }
 
 // buildJsonStencilPayload build json stencil payload
 func (s *Sink) buildJsonStencilPayload(asset *v1beta2.Asset, table *v1beta2.Table) (JsonSchema, error) {
@@ -124,7 +121,7 @@ func (s *Sink) buildJsonStencilPayload(asset *v1beta2.Asset, table *v1beta2.Tabl
 		Id:         asset.GetUrn() + ".json",
 		Schema:     "https://json-schema.org/draft/2020-12/schema",
 		Title:      asset.GetName(),
-		Type:       JsonTypeObject,
+		Type:       JSONTypeObject,
 		Properties: jsonProperties,
 	}
 
@@ -146,18 +143,18 @@ func (s *Sink) buildAvroStencilPayload(asset *v1beta2.Asset, table *v1beta2.Tabl
 }
 
 // send helps to pass data to stencil
-func (s *Sink) send(tableURN string, record interface{}) (err error) {
+func (s *Sink) send(ctx context.Context, tableURN string, record interface{}) error {
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
-		return
+		return err
 	}
 
 	// send request
 	schemaID := strings.ReplaceAll(tableURN, "/", ".")
 	url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", s.config.Host, s.config.NamespaceID, schemaID)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return
+		return err
 	}
 
 	if s.config.Format == "json" {
@@ -166,19 +163,20 @@ func (s *Sink) send(tableURN string, record interface{}) (err error) {
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
+	defer plugins.DrainBody(res)
+
 	if res.StatusCode == http.StatusCreated {
-		return
+		return nil
 	}
 
-	var bodyBytes []byte
-	bodyBytes, err = io.ReadAll(res.Body)
+	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return
+		return err
 	}
-	err = fmt.Errorf("stencil returns %d: %v", res.StatusCode, string(bodyBytes))
 
+	err = fmt.Errorf("stencil returns %d: %v", res.StatusCode, string(bodyBytes))
 	switch code := res.StatusCode; {
 	case code >= 500:
 		return plugins.NewRetryError(err)
@@ -197,11 +195,11 @@ func buildJsonProperties(asset *v1beta2.Asset, table *v1beta2.Table) map[string]
 	}
 
 	for _, column := range columns {
-		dataType := typeToJsonSchemaType(service, column.DataType)
-		columnType := []JsonType{dataType}
+		dataType := typeToJSONSchemaType(service, column.DataType)
+		columnType := []JSONType{dataType}
 
 		if column.IsNullable {
-			columnType = append(columnType, JsonTypeNull)
+			columnType = append(columnType, JSONTypeNull)
 		}
 
 		columnRecord[column.Name] = JsonProperty{
@@ -213,51 +211,51 @@ func buildJsonProperties(asset *v1beta2.Asset, table *v1beta2.Table) map[string]
 	return columnRecord
 }
 
-// typeToJsonSchemaType converts particular service type to Json type
-func typeToJsonSchemaType(service string, columnType string) (dataType JsonType) {
-
+// typeToJSONSchemaType converts particular service type to Json type
+func typeToJSONSchemaType(service, columnType string) JSONType {
 	if service == "bigquery" {
 		switch columnType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
-			dataType = JsonTypeString
+			return JSONTypeString
 		case "INT64", "NUMERIC", "FLOAT64", "INT", "FLOAT", "BIGNUMERIC":
-			dataType = JsonTypeNumber
+			return JSONTypeNumber
 		case "BYTES":
-			dataType = JsonTypeArray
+			return JSONTypeArray
 		case "BOOLEAN":
-			dataType = JsonTypeBoolean
+			return JSONTypeBoolean
 		case "RECORD":
-			dataType = JsonTypeObject
+			return JSONTypeObject
 		default:
-			dataType = JsonTypeString
+			return JSONTypeString
 		}
 	}
 	if service == "postgres" {
 		switch columnType {
 		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
-			dataType = JsonTypeNumber
+			return JSONTypeNumber
 		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":
-			dataType = JsonTypeString
+			return JSONTypeString
 		case "boolean":
-			dataType = JsonTypeBoolean
+			return JSONTypeBoolean
 		case "bytea", "integer[]", "character[]", "text[]":
-			dataType = JsonTypeArray
+			return JSONTypeArray
 		default:
-			dataType = JsonTypeString
+			return JSONTypeString
 		}
 	}
 
-	return
+	return ""
 }
 
 // buildAvroFields builds the avro schema fields
-func buildAvroFields(asset *v1beta2.Asset, table *v1beta2.Table) (fields []AvroFields) {
+func buildAvroFields(asset *v1beta2.Asset, table *v1beta2.Table) []AvroFields {
 	service := asset.GetService()
 	columns := table.GetColumns()
 	if len(columns) == 0 {
-		return
+		return nil
 	}
 
+	var fields []AvroFields
 	for _, column := range columns {
 		dataType := typeToAvroSchemaType(service, column.DataType)
 		columnType := []AvroType{dataType}
@@ -276,42 +274,41 @@ func buildAvroFields(asset *v1beta2.Asset, table *v1beta2.Table) (fields []AvroF
 }
 
 // typeToAvroSchemaType converts particular service type to avro type
-func typeToAvroSchemaType(service string, columnType string) (dataType AvroType) {
-
+func typeToAvroSchemaType(service, columnType string) AvroType {
 	if service == "bigquery" {
 		switch columnType {
 		case "STRING", "DATE", "DATETIME", "TIME", "TIMESTAMP", "GEOGRAPHY":
-			dataType = AvroTypeString
+			return AvroTypeString
 		case "INT64", "NUMERIC", "INT", "BIGNUMERIC":
-			dataType = AvroTypeInteger
+			return AvroTypeInteger
 		case "FLOAT64", "FLOAT":
-			dataType = AvroTypeFloat
+			return AvroTypeFloat
 		case "BYTES":
-			dataType = AvroTypeBytes
+			return AvroTypeBytes
 		case "BOOLEAN":
-			dataType = AvroTypeBoolean
+			return AvroTypeBoolean
 		case "RECORD":
-			dataType = AvroTypeRecord
+			return AvroTypeRecord
 		default:
-			dataType = AvroTypeString
+			return AvroTypeString
 		}
 	}
 	if service == "postgres" {
 		switch columnType {
 		case "uuid", "integer", "decimal", "smallint", "bigint", "bit", "bit varying", "numeric", "real", "double precision", "cidr", "inet", "macaddr", "serial", "bigserial", "money":
-			dataType = AvroTypeInteger
+			return AvroTypeInteger
 		case "varchar", "text", "character", "character varying", "date", "time", "timestamp", "interval", "point", "line", "path":
-			dataType = AvroTypeString
+			return AvroTypeString
 		case "boolean":
-			dataType = AvroTypeBoolean
+			return AvroTypeBoolean
 		case "bytea", "integer[]", "character[]", "text[]":
-			dataType = AvroTypeArray
+			return AvroTypeArray
 		default:
-			dataType = AvroTypeString
+			return AvroTypeString
 		}
 	}
 
-	return
+	return ""
 }
 
 // init register the sink to the catalog

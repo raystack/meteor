@@ -1,6 +1,8 @@
 package auditlog
 
 import (
+	"fmt"
+
 	"github.com/goto/meteor/plugins/extractors/bigquery/sqlparser"
 	"github.com/pkg/errors"
 )
@@ -29,21 +31,19 @@ func (b *TableStats) initPopulate() {
 	b.FilterConditions = map[string]map[string]bool{}
 }
 
-func (b *TableStats) Populate(ld *LogData) (err error) {
+func (b *TableStats) Populate(ld *LogData) error {
 	b.processedLog = ld
 
 	// if 0, query is not involving table
 	refTablesURN := b.processedLog.GetReferencedTablesURN()
 	if len(refTablesURN) == 0 {
-		err = errors.New("got empty referenced tables")
-		return
+		return errors.New("empty referenced tables")
 	}
 	// query must be there, otherwise it is not valid
 	sqlQuery, err := b.processedLog.GetQuery()
 	if err != nil {
 		// log query not exist here
-		err = errors.Wrap(err, "can't get query")
-		return
+		return fmt.Errorf("get query: %w", err)
 	}
 
 	jcs := sqlparser.ParseJoinConditions(sqlQuery)
@@ -63,7 +63,7 @@ func (b *TableStats) Populate(ld *LogData) (err error) {
 		b.populateFilterConditions(rt, fcs)
 	}
 
-	return
+	return nil
 }
 
 func (b *TableStats) populateTableUsage(tableURN string) {
@@ -74,7 +74,7 @@ func (b *TableStats) populateTableUsage(tableURN string) {
 	b.TableUsage[tableURN]++
 }
 
-func (b *TableStats) populateJoinDetail(tableURN string, refTablesURN []string, jcs []string) {
+func (b *TableStats) populateJoinDetail(tableURN string, refTablesURN, jcs []string) {
 	if _, exist := b.JoinDetail[tableURN]; !exist {
 		b.JoinDetail[tableURN] = map[string]JoinDetail{}
 	}
@@ -111,7 +111,6 @@ func (b *TableStats) populateJoinDetail(tableURN string, refTablesURN []string, 
 		}
 
 	}
-
 }
 
 func (b *TableStats) populateFilterConditions(tableURN string, fcs []string) {

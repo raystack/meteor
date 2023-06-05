@@ -13,14 +13,13 @@ import (
 )
 
 func TestValidateAuditData(t *testing.T) {
-
 	t.Run("return error if AuditData does not have JobCompletedEvent data", func(t *testing.T) {
 		ld := &LogData{
 			&loggingpb.AuditData{},
 		}
 		err := ld.validateAuditData()
 
-		assert.EqualError(t, err, "can't found jobCompletedEvent field")
+		assert.EqualError(t, err, "jobCompletedEvent field not found")
 	})
 
 	t.Run("return error if JobCompletedEvent does not have Job data", func(t *testing.T) {
@@ -33,7 +32,7 @@ func TestValidateAuditData(t *testing.T) {
 		}
 		err := ld.validateAuditData()
 
-		assert.EqualError(t, err, "can't found jobCompletedEvent.job field")
+		assert.EqualError(t, err, "jobCompletedEvent.job field not found")
 	})
 
 	t.Run("return error if JobCompletedEvent.Job.JobStatistics is nil", func(t *testing.T) {
@@ -85,7 +84,7 @@ func TestValidateAuditData(t *testing.T) {
 		}
 		err := ld.validateAuditData()
 
-		assert.EqualError(t, err, "can't found jobCompletedEvent.job.jobStatus field")
+		assert.EqualError(t, err, "jobCompletedEvent.job.jobStatus field not found")
 	})
 
 	t.Run("return error if JobCompletedEvent.Job.JobStatus's state is empty", func(t *testing.T) {

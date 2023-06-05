@@ -76,7 +76,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -92,7 +93,8 @@ func TestExtract(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"connection_url":  fmt.Sprintf("http://%s@%s", user, host),
 				"exclude_catalog": "memory,jmx,tpcds,tpch", // only system catalog is not excluded
-			}}); err != nil {
+			},
+		}); err != nil {
 			t.Fatal(err)
 		}
 

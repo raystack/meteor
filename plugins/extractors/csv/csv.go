@@ -15,7 +15,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -55,51 +54,51 @@ func New(logger log.Logger) *Extractor {
 	return e
 }
 
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	// build file paths to read from
+	var err error
 	e.filePaths, err = e.buildFilePaths(e.config.Path)
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is configured and
 // returns the extracted data
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	for _, filePath := range e.filePaths {
 		table, err := e.buildTable(filePath)
 		if err != nil {
-			return fmt.Errorf("error building metadata for \"%s\": %s", filePath, err)
+			return fmt.Errorf("build metadata for %q: %w", filePath, err)
 		}
 
 		emit(models.NewRecord(table))
 	}
 
-	return
+	return nil
 }
 
-func (e *Extractor) buildTable(filePath string) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildTable(filePath string) (*v1beta2.Asset, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		err = errors.New("unable to open the csv file")
-		return
+		return nil, fmt.Errorf("open the csv file: %w", err)
 	}
 	defer file.Close()
+
 	content, err := e.readCSVFile(file)
 	if err != nil {
-		err = errors.New("unable to read csv file content")
-		return
+		return nil, fmt.Errorf("read csv file content: %w", err)
 	}
+
 	stat, err := file.Stat()
 	if err != nil {
-		err = errors.New("unable to read csv file stat")
-		return
+		return nil, fmt.Errorf("read csv file stat: %w", err)
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
@@ -107,27 +106,26 @@ func (e *Extractor) buildTable(filePath string) (asset *v1beta2.Asset, err error
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		return
+		return nil, fmt.Errorf("create Any struct for test: %w", err)
 	}
 	fileName := stat.Name()
-	asset = &v1beta2.Asset{
+	return &v1beta2.Asset{
 		Urn:     models.NewURN("csv", e.UrnScope, "file", fileName),
 		Name:    fileName,
 		Service: "csv",
 		Type:    "table",
 		Data:    table,
-	}
-	return
+	}, nil
 }
 
-func (e *Extractor) readCSVFile(r io.Reader) (columns []string, err error) {
+func (*Extractor) readCSVFile(r io.Reader) ([]string, error) {
 	reader := csv.NewReader(r)
 	reader.TrimLeadingSpace = true
 	return reader.Read()
 }
 
-func (e *Extractor) buildColumns(csvColumns []string) (result []*v1beta2.Column) {
+func (*Extractor) buildColumns(csvColumns []string) []*v1beta2.Column {
+	var result []*v1beta2.Column
 	for _, singleColumn := range csvColumns {
 		result = append(result, &v1beta2.Column{
 			Name: singleColumn,
@@ -136,27 +134,29 @@ func (e *Extractor) buildColumns(csvColumns []string) (result []*v1beta2.Column)
 	return result
 }
 
-func (e *Extractor) buildFilePaths(filePath string) (files []string, err error) {
+func (*Extractor) buildFilePaths(filePath string) ([]string, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	if fileInfo.IsDir() {
-		fileInfos, err := os.ReadDir(filePath)
-		if err != nil {
-			return files, err
-		}
-		for _, fileInfo := range fileInfos {
-			ext := filepath.Ext(fileInfo.Name())
-			if ext == ".csv" {
-				files = append(files, path.Join(filePath, fileInfo.Name()))
-			}
-		}
-		return files, err
+	if !fileInfo.IsDir() {
+		return []string{filePath}, nil
 	}
 
-	return []string{filePath}, err
+	fileInfos, err := os.ReadDir(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []string
+	for _, f := range fileInfos {
+		ext := filepath.Ext(f.Name())
+		if ext == ".csv" {
+			files = append(files, path.Join(filePath, f.Name()))
+		}
+	}
+	return files, nil
 }
 
 // Register the extractor to catalog

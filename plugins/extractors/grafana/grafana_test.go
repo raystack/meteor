@@ -21,8 +21,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var testServer *httptest.Server
-var urnScope string = "test-grafana"
+var (
+	testServer *httptest.Server
+	urnScope   string = "test-grafana"
+)
 
 func TestMain(m *testing.M) {
 	testServer = NewTestServer()
@@ -41,7 +43,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"base_url": "",
 				"api_key":  "qwerty123",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -52,7 +55,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"base_url": testServer.URL,
 				"api_key":  "",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})

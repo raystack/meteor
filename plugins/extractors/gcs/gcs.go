@@ -79,61 +79,65 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	// create client
+	var err error
 	e.client, err = e.createClient(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	it := e.client.Buckets(ctx, e.config.ProjectID)
 	for {
 		bucket, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", bucket.Name)
+			return fmt.Errorf("iterate over %s: %w", bucket.Name, err)
 		}
 
 		var blobs []*v1beta2.Blob
 		if e.config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
-				return errors.Wrapf(err, "failed to extract blobs from %s", bucket.Name)
+				return fmt.Errorf("extract blobs from %s: %w", bucket.Name, err)
 			}
 		}
 		asset, err := e.buildBucket(bucket, e.config.ProjectID, blobs)
 		if err != nil {
-			return errors.Wrapf(err, "failed to build bucket")
+			return fmt.Errorf("build bucket: %w", err)
 		}
+
 		emit(models.NewRecord(asset))
 	}
 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*v1beta2.Blob, err error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]*v1beta2.Blob, error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
-	object, err := it.Next()
-	for err == nil {
-		blobs = append(blobs, e.buildBlob(object, projectID))
-		object, err = it.Next()
-	}
-	if err == iterator.Done {
-		err = nil
-	}
+	var blobs []*v1beta2.Blob
+	for {
+		object, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			return blobs, nil
+		}
+		if err != nil {
+			return nil, err
+		}
 
-	return
+		blobs = append(blobs, e.buildBlob(object, projectID))
+	}
 }
 
 func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*v1beta2.Blob) (*v1beta2.Asset, error) {
@@ -181,7 +185,7 @@ func (e *Extractor) createClient(ctx context.Context) (*storage.Client, error) {
 	if e.config.ServiceAccountBase64 != "" {
 		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
-			return nil, errors.Wrap(err, "decode Base64 encoded service account")
+			return nil, fmt.Errorf("decode Base64 encoded service account: %w", err)
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
 		e.config.ServiceAccountJSON = string(serviceAccountJSON)

@@ -5,18 +5,27 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"reflect"
+	"io"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+// init registers the extractor to catalog
+func init() {
+	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
+		return New(plugins.GetLog())
+	}); err != nil {
+		panic(err)
+	}
+}
 
 //go:embed README.md
 var summary string
@@ -58,8 +67,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -71,103 +80,126 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		Username: e.config.User,
 		Password: e.config.Password,
 	}
+	var err error
 	if e.client, err = elasticsearch.NewClient(cfg); err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract extracts the data from the elastic server
 // and collected through the emitter
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	res, err := e.client.Cluster.Health(
 		e.client.Cluster.Health.WithLevel("indices"),
+		e.client.Cluster.Health.WithContext(ctx),
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch cluster information")
+		return fmt.Errorf("fetch cluster info: %w", err)
 	}
-	var r map[string]interface{}
-	err = json.NewDecoder(res.Body).Decode(&r)
-	if err != nil {
-		return
+	defer drainBody(res)
+	var r struct {
+		Indices map[string]interface{} `json:"indices"`
 	}
-	x := reflect.ValueOf(r["indices"]).MapRange()
-	for x.Next() {
-		indexName := x.Key().String()
-		docProperties, err1 := e.listIndexInfo(x.Key().String())
-		if err1 != nil {
-			err = err1
-			return
-		}
-		var columns []*v1beta2.Column
-		for i := range docProperties {
-			columns = append(columns, &v1beta2.Column{
-				Name:     i,
-				DataType: docProperties[i].(map[string]interface{})["type"].(string),
-			})
-		}
-		countRes, err1 := e.client.Search(
-			e.client.Search.WithIndex(x.Key().String()),
-		)
-		if err1 != nil {
-			err = err1
-			return
-		}
-		var t map[string]interface{}
-		err = json.NewDecoder(countRes.Body).Decode(&t)
-		if err != nil {
-			res.Body.Close()
-			return
-		}
-		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
-		table, err := anypb.New(&v1beta2.Table{
-			Columns:    columns,
-			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-			Profile: &v1beta2.TableProfile{
-				TotalRows: int64(docCount),
-			},
-		})
-		if err != nil {
-			err = fmt.Errorf("error creating Any struct for test: %w", err)
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return fmt.Errorf("decode cluster info: %w", err)
+	}
+	for indexName := range r.Indices {
+		if err := e.buildAsset(ctx, indexName, emit); err != nil {
 			return err
 		}
-		emit(models.NewRecord(&v1beta2.Asset{
-			Urn:     models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
-			Name:    indexName,
-			Type:    "table",
-			Service: "elasticsearch",
-			Data:    table,
-		}))
 	}
-	return
+	return nil
+}
+
+func (e *Extractor) buildAsset(ctx context.Context, indexName string, emit plugins.Emit) error {
+	docProperties, err := e.listIndexInfo(indexName)
+	if err != nil {
+		return err
+	}
+	var columns []*v1beta2.Column
+	for field, fieldMapping := range docProperties {
+		var typ string
+		if s, ok := fieldMapping["type"].(string); ok {
+			typ = s
+		}
+		columns = append(columns, &v1beta2.Column{
+			Name:     field,
+			DataType: typ,
+		})
+	}
+
+	countRes, err := e.client.Search(
+		e.client.Search.WithIndex(indexName),
+		e.client.Search.WithContext(ctx),
+	)
+	if err != nil {
+		return err
+	}
+	defer drainBody(countRes)
+
+	var t struct {
+		Hits struct {
+			Hits []interface{} `json:"hits"`
+		} `json:"hits"`
+	}
+	if err := json.NewDecoder(countRes.Body).Decode(&t); err != nil {
+		return err
+	}
+
+	docCount := len(t.Hits.Hits)
+	table, err := anypb.New(&v1beta2.Table{
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
+		Profile: &v1beta2.TableProfile{
+			TotalRows: int64(docCount),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("create Any struct for table: %w", err)
+	}
+
+	emit(models.NewRecord(&v1beta2.Asset{
+		Urn:     models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
+		Name:    indexName,
+		Type:    "table",
+		Service: "elasticsearch",
+		Data:    table,
+	}))
+	return nil
 }
 
 // listIndexInfo returns the properties of the index
-func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, err error) {
-	var r map[string]interface{}
+func (e *Extractor) listIndexInfo(index string) (map[string]map[string]interface{}, error) {
 	res, err := e.client.Indices.GetMapping(
 		e.client.Indices.GetMapping.WithIndex(index),
 	)
 	if err != nil {
-		err = errors.Wrap(err, "failed to retrieve index")
-		return
+		return nil, fmt.Errorf("retrieve index: %w", err)
 	}
-	err = json.NewDecoder(res.Body).Decode(&r)
-	if err != nil {
-		res.Body.Close()
-		return
+	defer drainBody(res)
+
+	var r map[string]struct {
+		Mappings struct {
+			Properties map[string]map[string]interface{} `json:"properties"`
+		} `json:"mappings"`
 	}
-	result = r[index].(map[string]interface{})["mappings"].(map[string]interface{})["properties"].(map[string]interface{})
-	res.Body.Close()
-	return
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+
+	return r[index].Mappings.Properties, nil
 }
 
-// init registers the extractor to catalog
-func init() {
-	if err := registry.Extractors.Register("elastic", func() plugins.Extractor {
-		return New(plugins.GetLog())
-	}); err != nil {
-		panic(err)
+// drainBody drains and closes the response body to avoid the following
+// gotcha:
+// http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#close_http_resp_body
+func drainBody(resp *esapi.Response) {
+	if resp == nil {
+		return
 	}
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+	_ = resp.Body.Close()
 }

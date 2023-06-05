@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
@@ -15,8 +16,6 @@ import (
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"
-
-	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 )
 
 //go:embed README.md
@@ -71,22 +70,23 @@ func New(logger log.Logger, userServiceFactory UsersServiceFactory) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
+	var err error
 	e.userService, err = e.userServiceFactory.BuildUserService(ctx, e.config.UserEmail, e.config.ServiceAccountJSON)
 	if err != nil {
-		return fmt.Errorf("error building user service: %w", err)
+		return fmt.Errorf("build user service: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	e.emit = emit
 	adminUsers, err := e.fetchUsers(ctx)
 	if err != nil {
@@ -116,7 +116,7 @@ func (e *Extractor) buildAsset(gsuiteUser *admin.User) (*v1beta2.Asset, error) {
 		status = "suspended"
 	}
 
-	var userAttributes = make(map[string]interface{})
+	userAttributes := make(map[string]interface{})
 	userAttributes["organizations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Organizations)
 	userAttributes["relations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Relations)
 	userAttributes["custom_schemas"] = e.buildMapFromGsuiteMapRawMessage(gsuiteUser.CustomSchemas)
@@ -153,60 +153,59 @@ func (e *Extractor) fetchUsers(ctx context.Context) (*admin.Users, error) {
 	return users, nil
 }
 
-func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) (result []interface{}) {
+func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) []interface{} {
 	if value == nil {
-		return
+		return nil
 	}
 
 	gsuiteSlice := reflect.ValueOf(value)
 	if gsuiteSlice.Kind() != reflect.Slice {
-		return
+		return nil
 	}
 
 	list, ok := gsuiteSlice.Interface().([]interface{})
 	if !ok {
-		return
+		return nil
 	}
 
+	var result []interface{}
 	for _, item := range list {
 		result = append(result, e.buildMapFromGsuiteMap(item))
 	}
 
-	return
+	return result
 }
 
-func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]interface{}) {
+func (*Extractor) buildMapFromGsuiteMap(value interface{}) map[string]interface{} {
 	if value == nil {
-		return
+		return nil
 	}
 
 	gsuiteMap := reflect.ValueOf(value)
 	if gsuiteMap.Kind() != reflect.Map {
-		return
+		return nil
 	}
 
-	result = make(map[string]interface{})
+	result := make(map[string]interface{})
 	for _, key := range gsuiteMap.MapKeys() {
 		keyString := fmt.Sprintf("%v", key.Interface())
-		value := gsuiteMap.MapIndex(key).Interface()
-
-		result[keyString] = value
+		result[keyString] = gsuiteMap.MapIndex(key).Interface()
 	}
 
-	return
+	return result
 }
 
-func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result map[string]interface{}) {
+func (*Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) map[string]interface{} {
 	if value == nil {
-		return
+		return nil
 	}
 
 	gsuiteMap := reflect.ValueOf(value)
 	if gsuiteMap.Kind() != reflect.Map {
-		return
+		return nil
 	}
 
-	result = make(map[string]interface{})
+	result := make(map[string]interface{})
 	for _, key := range gsuiteMap.MapKeys() {
 		keyString := fmt.Sprintf("%v", key.Interface())
 		value := gsuiteMap.MapIndex(key)
@@ -224,7 +223,7 @@ func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result m
 		result[keyString] = string(json)
 	}
 
-	return
+	return result
 }
 
 // init registers the extractor to catalog

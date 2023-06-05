@@ -1,15 +1,17 @@
 package stencil
 
-type JsonType string
-type AvroType string
+type (
+	JSONType string
+	AvroType string
+)
 
 const (
-	JsonTypeObject  JsonType = "object"
-	JsonTypeString  JsonType = "string"
-	JsonTypeNumber  JsonType = "number"
-	JsonTypeArray   JsonType = "array"
-	JsonTypeBoolean JsonType = "boolean"
-	JsonTypeNull    JsonType = "null"
+	JSONTypeObject  JSONType = "object"
+	JSONTypeString  JSONType = "string"
+	JSONTypeNumber  JSONType = "number"
+	JSONTypeArray   JSONType = "array"
+	JSONTypeBoolean JSONType = "boolean"
+	JSONTypeNull    JSONType = "null"
 
 	AvroTypeNull    AvroType = "null"
 	AvroTypeBoolean AvroType = "boolean"
@@ -28,12 +30,12 @@ type JsonSchema struct {
 	Id         string                  `json:"$id"`
 	Schema     string                  `json:"$schema"`
 	Title      string                  `json:"title"`
-	Type       JsonType                `json:"type"`
+	Type       JSONType                `json:"type"`
 	Properties map[string]JsonProperty `json:"properties"`
 }
 
 type JsonProperty struct {
-	Type        []JsonType `json:"type"`
+	Type        []JSONType `json:"type"`
 	Description string     `json:"description"`
 }
 

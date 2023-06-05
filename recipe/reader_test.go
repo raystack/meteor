@@ -54,7 +54,8 @@ func TestReaderRead(t *testing.T) {
 							Config: map[string]interface{}{},
 						},
 					},
-				}}
+				},
+			}
 
 			assert.Len(t, recipes, len(expectedRecipes))
 			for i, r := range recipes {
@@ -86,7 +87,8 @@ func TestReaderRead(t *testing.T) {
 							Config: map[string]interface{}{},
 						},
 					},
-				}}
+				},
+			}
 
 			assert.Len(t, recipes, len(expectedRecipes))
 			for i, r := range recipes {
@@ -131,7 +133,8 @@ func TestReaderRead(t *testing.T) {
 						Config: map[string]interface{}{},
 					},
 				},
-			}}
+			},
+		}
 
 		assert.Len(t, recipes, len(expectedRecipes))
 		for i, r := range recipes {

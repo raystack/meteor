@@ -110,7 +110,6 @@ func NewRecipeCmd() *cobra.Command {
 	}
 
 	return cmd
-
 }
 
 func recipeSinkSurvey() ([]string, error) {
@@ -124,7 +123,7 @@ func recipeSinkSurvey() ([]string, error) {
 		return []string{}, errors.New("no sinks found")
 	}
 
-	var qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "sink",
 			Prompt: &survey.MultiSelect{
@@ -154,7 +153,7 @@ func recipeProcessorSurvey() ([]string, error) {
 		return []string{}, errors.New("no processors found")
 	}
 
-	var qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "processor",
 			Prompt: &survey.MultiSelect{
@@ -183,7 +182,7 @@ func recipeExtractorSurvey() (string, error) {
 		return "", errors.New("no extractors found")
 	}
 
-	var qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "extractor",
 			Prompt: &survey.Select{

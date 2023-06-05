@@ -9,11 +9,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/goto/meteor/plugins/extractors/snowflake"
-
 	"github.com/dnaeon/go-vcr/v2/cassette"
 	"github.com/dnaeon/go-vcr/v2/recorder"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/snowflake"
 	"github.com/goto/meteor/test/mocks"
 	"github.com/goto/meteor/test/utils"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
@@ -31,7 +30,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -40,7 +40,6 @@ func TestInit(t *testing.T) {
 // after that the extraction of dummy data will not be possible and test will fail.
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
-
 	t.Run("should return mock-data we generated with snowflake", func(t *testing.T) {
 		r, err := recorder.New("fixtures/get_snowflakes_sample_data")
 		if err != nil {
@@ -68,7 +67,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": "testing:Snowtest0512@lrwfgiz-hi47152/SNOWFLAKE_SAMPLE_DATA",
-			}}); err != nil {
+			},
+		}); err != nil {
 			t.Fatal(err)
 		}
 

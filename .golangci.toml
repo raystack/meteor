@@ -57,7 +57,9 @@
 
     # https://github.com/timakin/bodyclose
     # checks whether HTTP response body is closed successfully.
-    "bodyclose",
+    # Disabled due to false positives from
+    # https://github.com/timakin/bodyclose/issues/30
+    # "bodyclose",
 
     # https://github.com/mibk/dupl
     # Tool for code clone detection.
@@ -205,7 +207,6 @@
     sections = [
       "standard", # Standard section: captures all standard packages.
       "default", # Default section: contains all imports that could not be matched to another section type.
-      "prefix(source.golabs.io)", # Custom section: groups all imports with the specified Prefix.
     ]
 
   [linters-settings.goconst]
@@ -393,11 +394,7 @@
     linters = ["govet"]
 
   [[issues.exclude-rules]]
-    text = "can be replaced by http\\.Status.*"
-    linters = ["usestdlibvars"]
-
-  [[issues.exclude-rules]]
-    path = "cli/.*"
+    path = "cmd/.*"
     linters = ["dupl"]
 
   [[issues.exclude-rules]]

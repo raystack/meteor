@@ -65,7 +65,7 @@ func TestProcessorFactoryRegister(t *testing.T) {
 		assert.Equal(t, mocks.NewProcessor(), mock2)  // Same type
 		assert.True(t, mocks.NewProcessor() != mock2) // Different instance
 
-		err = factory.Register("mock1", newProcessor(mocks.NewProcessor())) //error for duplicate processor
+		err = factory.Register("mock1", newProcessor(mocks.NewProcessor())) // error for duplicate processor
 		assert.Error(t, err)
 	})
 }

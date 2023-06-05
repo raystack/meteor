@@ -80,24 +80,24 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	if e.client != nil {
 		// Create session
-		var sess = session.Must(session.NewSession())
+		sess := session.Must(session.NewSession())
 
 		// Initialize the redshift client
 		e.client = redshiftdataapiservice.New(sess, aws.NewConfig().WithRegion(e.config.AWSRegion))
 	}
 
-	return
+	return nil
 }
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	listDB, err := e.GetDBList()
 	if err != nil {
 		return err
@@ -125,8 +125,8 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 }
 
 // GetDBList returns the list of databases in a cluster
-func (e *Extractor) GetDBList() (list []string, err error) {
-	listDbOutput, err := e.client.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
+func (e *Extractor) GetDBList() ([]string, error) {
+	res, err := e.client.ListDatabases(&redshiftdataapiservice.ListDatabasesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		Database:          aws.String(e.config.DBName),
 		DbUser:            aws.String(e.config.DBUser),
@@ -138,16 +138,17 @@ func (e *Extractor) GetDBList() (list []string, err error) {
 		return nil, err
 	}
 
-	for _, db := range listDbOutput.Databases {
-		list = append(list, aws.StringValue(db))
+	var dbs []string
+	for _, db := range res.Databases {
+		dbs = append(dbs, aws.StringValue(db))
 	}
 
-	return list, nil
+	return dbs, nil
 }
 
 // GetTables return the list of tables name
-func (e *Extractor) GetTables(dbName string) (list []string, err error) {
-	listTbOutput, err := e.client.ListTables(&redshiftdataapiservice.ListTablesInput{
+func (e *Extractor) GetTables(dbName string) ([]string, error) {
+	res, err := e.client.ListTables(&redshiftdataapiservice.ListTablesInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(dbName),
 		Database:          aws.String(e.config.DBName),
@@ -162,45 +163,46 @@ func (e *Extractor) GetTables(dbName string) (list []string, err error) {
 		return nil, err
 	}
 
-	for _, table := range listTbOutput.Tables {
-		list = append(list, aws.StringValue(table.Name))
+	var tbls []string
+	for _, table := range res.Tables {
+		tbls = append(tbls, aws.StringValue(table.Name))
 	}
 
-	return list, nil
+	return tbls, nil
 }
 
 // getTableMetadata prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(dbName string, tableName string) (result *v1beta2.Asset, err error) {
-	var columns []*v1beta2.Column
+func (e *Extractor) getTableMetadata(dbName, tableName string) (*v1beta2.Asset, error) {
 	colMetadata, err := e.GetColumn(dbName, tableName)
 	if err != nil {
-		return result, nil
+		return nil, err
 	}
-	columns, err = e.getColumnMetadata(colMetadata)
+
+	columns, err := e.getColumnMetadata(colMetadata)
 	if err != nil {
-		return result, nil
+		return nil, err
 	}
+
 	data, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		err = fmt.Errorf("create Any struct: %w", err)
 		return nil, err
 	}
-	result = &v1beta2.Asset{
+
+	return &v1beta2.Asset{
 		Urn:     models.NewURN("redshift", e.config.ClusterID, "table", fmt.Sprintf("%s.%s.%s", e.config.ClusterID, dbName, tableName)),
 		Name:    tableName,
 		Type:    "table",
 		Service: "redshift",
 		Data:    data,
-	}
-
-	return
+	}, nil
 }
 
 // GetColumn returns the column metadata of particular table in a database
-func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshiftdataapiservice.ColumnMetadata, err error) {
+func (e *Extractor) GetColumn(dbName, tableName string) ([]*redshiftdataapiservice.ColumnMetadata, error) {
 	descTable, err := e.client.DescribeTable(&redshiftdataapiservice.DescribeTableInput{
 		ClusterIdentifier: aws.String(e.config.ClusterID),
 		ConnectedDatabase: aws.String(e.config.DBName),
@@ -220,18 +222,18 @@ func (e *Extractor) GetColumn(dbName string, tableName string) (result []*redshi
 }
 
 // getColumnMetadata prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) (result []*v1beta2.Column, err error) {
-	var tempResults []*v1beta2.Column
+func (*Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) ([]*v1beta2.Column, error) {
+	var cols []*v1beta2.Column
 	for _, column := range columnMetadata {
-		var tempResult v1beta2.Column
-		tempResult.Name = aws.StringValue(column.Name)
-		tempResult.Description = aws.StringValue(column.Label)
-		tempResult.DataType = aws.StringValue(column.TypeName)
-		tempResult.IsNullable = isNullable(aws.Int64Value(column.Nullable))
-		tempResult.Length = aws.Int64Value(column.Length)
-		tempResults = append(tempResults, &tempResult)
+		cols = append(cols, &v1beta2.Column{
+			Name:        aws.StringValue(column.Name),
+			Description: aws.StringValue(column.Label),
+			DataType:    aws.StringValue(column.TypeName),
+			IsNullable:  isNullable(aws.Int64Value(column.Nullable)),
+			Length:      aws.Int64Value(column.Length),
+		})
 	}
-	return tempResults, nil
+	return cols, nil
 }
 
 // Convert nullable int to a boolean

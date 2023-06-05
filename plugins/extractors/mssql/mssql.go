@@ -13,7 +13,6 @@ import (
 	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -63,8 +62,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -72,16 +71,18 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create client
-	if e.db, err = sql.Open("mssql", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+	var err error
+	e.db, err = sql.Open("mssql", e.config.ConnectionURL)
+	if err != nil {
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is ready to extract
 // and then extract and push data into stream
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 	e.emit = emit
 
@@ -103,27 +104,26 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 		for _, tableName := range tables {
 			if err := e.processTable(database, tableName); err != nil {
-				return errors.Wrap(err, "failed to process Table")
+				return fmt.Errorf("process Table: %w", err)
 			}
 		}
 	}
 
-	return
+	return nil
 }
 
 // processTable builds and push table to emitter
-func (e *Extractor) processTable(database string, tableName string) (err error) {
+func (e *Extractor) processTable(database, tableName string) error {
 	columns, err := e.getColumns(database, tableName)
 	if err != nil {
-		return errors.Wrap(err, "failed to get columns")
+		return fmt.Errorf("get columns: %w", err)
 	}
 	table, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-		return err
+		return fmt.Errorf("create Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -134,11 +134,12 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		Data:    table,
 	}))
 
-	return
+	return nil
 }
 
 // getColumns extract columns from the given table
-func (e *Extractor) getColumns(database, tableName string) (columns []*v1beta2.Column, err error) {
+func (e *Extractor) getColumns(database, tableName string) ([]*v1beta2.Column, error) {
+	//nolint:gosec
 	query := fmt.Sprintf(
 		`SELECT COLUMN_NAME, DATA_TYPE, 
 		IS_NULLABLE, coalesce(CHARACTER_MAXIMUM_LENGTH,0) 
@@ -147,10 +148,11 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*v1beta2.C
 		ORDER BY COLUMN_NAME ASC`, database)
 	rows, err := e.db.Query(query, tableName)
 	if err != nil {
-		err = errors.Wrap(err, "failed to execute query")
-		return
+		return nil, fmt.Errorf("execute query: %w", err)
 	}
+	defer rows.Close()
 
+	var columns []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
@@ -165,8 +167,11 @@ func (e *Extractor) getColumns(database, tableName string) (columns []*v1beta2.C
 			Length:     int64(length),
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate result rows: %w", err)
+	}
 
-	return
+	return columns, nil
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases

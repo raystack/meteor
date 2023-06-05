@@ -2,20 +2,21 @@ package metabase
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/pkg/errors"
+	"github.com/goto/meteor/plugins"
 )
 
 type Client interface {
-	Authenticate(host, username, password, sessionID string) error
-	GetDatabase(int) (Database, error)
-	GetTable(int) (Table, error)
-	GetDashboard(int) (Dashboard, error)
-	GetDashboards() ([]Dashboard, error)
+	Authenticate(ctx context.Context, host, username, password, sessionID string) error
+	GetDatabase(context.Context, int) (Database, error)
+	GetTable(context.Context, int) (Table, error)
+	GetDashboard(context.Context, int) (Dashboard, error)
+	GetDashboards(context.Context) ([]Dashboard, error)
 }
 
 type client struct {
@@ -36,7 +37,7 @@ func newClient() *client {
 	}
 }
 
-func (c *client) Authenticate(host, username, password, sessionID string) (err error) {
+func (c *client) Authenticate(ctx context.Context, host, username, password, sessionID string) error {
 	c.host = host
 	c.username = username
 	c.password = password
@@ -45,105 +46,110 @@ func (c *client) Authenticate(host, username, password, sessionID string) (err e
 		return nil
 	}
 
-	c.sessionID, err = c.getSessionID()
+	var err error
+	c.sessionID, err = c.getSessionID(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "error getting sessionID")
-		return
+		return fmt.Errorf("get sessionID: %w", err)
 	}
 
-	return
+	return nil
 }
 
-func (c *client) GetTable(id int) (table Table, err error) {
-	table, ok := c.tableCache[id]
-	if ok {
-		return
+func (c *client) GetTable(ctx context.Context, id int) (Table, error) {
+	if table, ok := c.tableCache[id]; ok {
+		return table, nil
 	}
 
+	var tbl Table
 	url := fmt.Sprintf("%s/api/table/%d", c.host, id)
-	err = c.makeRequest("GET", url, nil, &table)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, "GET", url, nil, &tbl); err != nil {
+		return Table{}, err
 	}
 
-	c.tableCache[id] = table
-	return
+	c.tableCache[id] = tbl
+	return tbl, nil
 }
 
-func (c *client) GetDatabase(id int) (database Database, err error) {
-	database, ok := c.databaseCache[id]
-	if ok {
-		return
+func (c *client) GetDatabase(ctx context.Context, id int) (Database, error) {
+	if db, ok := c.databaseCache[id]; ok {
+		return db, nil
 	}
 
+	var db Database
 	url := fmt.Sprintf("%s/api/database/%d", c.host, id)
-	err = c.makeRequest("GET", url, nil, &database)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, "GET", url, nil, &db); err != nil {
+		return Database{}, err
 	}
 
-	c.databaseCache[id] = database
-	return
+	c.databaseCache[id] = db
+	return db, nil
 }
 
-func (c *client) GetDashboard(id int) (dashboard Dashboard, err error) {
+func (c *client) GetDashboard(ctx context.Context, id int) (Dashboard, error) {
+	var d Dashboard
 	url := fmt.Sprintf("%s/api/dashboard/%d", c.host, id)
-	err = c.makeRequest("GET", url, nil, &dashboard)
-	return
+	if err := c.makeRequest(ctx, "GET", url, nil, &d); err != nil {
+		return Dashboard{}, err
+	}
+
+	return d, nil
 }
 
-func (c *client) GetDashboards() (dashboards []Dashboard, err error) {
+func (c *client) GetDashboards(ctx context.Context) ([]Dashboard, error) {
+	var dd []Dashboard
 	url := fmt.Sprintf("%s/api/dashboard", c.host)
-	err = c.makeRequest("GET", url, nil, &dashboards)
+	if err := c.makeRequest(ctx, "GET", url, nil, &dd); err != nil {
+		return nil, err
+	}
 
-	return
+	return dd, nil
 }
 
-func (c *client) getSessionID() (sessionID string, err error) {
+func (c *client) getSessionID(ctx context.Context) (string, error) {
 	payload := map[string]interface{}{
 		"username": c.username,
 		"password": c.password,
 	}
-	type responseID struct {
+	var data struct {
 		ID string `json:"id"`
 	}
-	var data responseID
-	err = c.makeRequest("POST", c.host+"/api/session", payload, &data)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, "POST", c.host+"/api/session", payload, &data); err != nil {
+		return "", err
 	}
 
 	return data.ID, nil
 }
 
-func (c *client) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+func (c *client) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
-		return errors.Wrap(err, "failed to encode the payload JSON")
+		return fmt.Errorf("encode the payload JSON: %w", err)
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
-		return errors.Wrap(err, "failed to create request")
+		return fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Metabase-Session", c.sessionID)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate response")
+		return fmt.Errorf("generate response: %w", err)
 	}
+	defer plugins.DrainBody(res)
+
 	if res.StatusCode >= 300 {
-		return fmt.Errorf("getting %d status code", res.StatusCode)
+		return fmt.Errorf("response status code %d", res.StatusCode)
 	}
 
-	bytes, err := io.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
+		return fmt.Errorf("read response body: %w", err)
 	}
-	if err = json.Unmarshal(bytes, &data); err != nil {
-		return errors.Wrapf(err, "failed to parse: %s", string(bytes))
+	if err = json.Unmarshal(data, &result); err != nil {
+		return fmt.Errorf("parse response body: %s", string(data))
 	}
 
-	return
+	return nil
 }

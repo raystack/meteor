@@ -2,14 +2,13 @@ package tableau
 
 import (
 	"fmt"
-	"github.com/goto/meteor/plugins"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-	"github.com/pkg/errors"
+	"github.com/goto/meteor/plugins"
 )
 
 // https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api_concepts_connectiontype.htm
@@ -95,19 +94,15 @@ type DatabaseServer struct {
 // sometimes table name can also be the same as full name (e.g. project-id.schema.table1)
 // `project-id.schema.table1`
 // [project-id.schema].[table1]`
-func parseBQTableFullName(fullName string) (splittedFN []string, err error) {
+func parseBQTableFullName(fullName string) ([]string, bool) {
 	omitedChars := "`" + "\\[\\]"
 	re := regexp.MustCompile("[" + omitedChars + "]")
 	cleanedFN := re.ReplaceAllString(fullName, "")
-	splittedFN = strings.Split(cleanedFN, ".")
-	if len(splittedFN) == 3 {
-		return
-	}
-	err = errors.New("unexpected length of splitted full name")
-	return
+	splittedFN := strings.Split(cleanedFN, ".")
+	return splittedFN, len(splittedFN) == 3
 }
 
-func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
+func (dbs *DatabaseServer) CreateResource(tableInfo Table) *v1beta2.Resource {
 	source := mapConnectionTypeToSource(dbs.ConnectionType)
 
 	var urn string
@@ -115,8 +110,8 @@ func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *v1beta2.Re
 	case "bigquery":
 		// bigquery::sample-project/dataset_a/invoice
 		// sometimes table name can be the same as full name (e.g. project-id.schema.table1), so we build URN with the full name instead
-		fullNameSplitted, err := parseBQTableFullName(tableInfo.FullName)
-		if err != nil {
+		fullNameSplitted, ok := parseBQTableFullName(tableInfo.FullName)
+		if !ok {
 			// assume fullNameSplitted[0] is the project ID
 			urn = plugins.BigQueryURN(fullNameSplitted[0], tableInfo.Schema, tableInfo.Name)
 			break
@@ -127,12 +122,11 @@ func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *v1beta2.Re
 		host := fmt.Sprintf("%s:%d", dbs.HostName, dbs.Port)
 		urn = models.NewURN(source, host, "table", fmt.Sprintf("%s.%s", dbs.Name, tableInfo.Name))
 	}
-	resource = &v1beta2.Resource{
+	return &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "table",
 		Service: source,
 	}
-	return
 }
 
 type CloudFile struct {
@@ -146,15 +140,14 @@ type CloudFile struct {
 	RequestURL     string `json:"requestUrl"`
 }
 
-func (cf *CloudFile) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
+func (cf *CloudFile) CreateResource(tableInfo Table) *v1beta2.Resource {
 	source := mapConnectionTypeToSource(cf.ConnectionType)
 	urn := models.NewURN(source, cf.Provider, "bucket", fmt.Sprintf("%s/%s", cf.Name, tableInfo.Name))
-	resource = &v1beta2.Resource{
+	return &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "bucket", // TODO need to check what would be the appropriate type for this
 		Service: source,
 	}
-	return
 }
 
 type File struct {
@@ -165,15 +158,14 @@ type File struct {
 	FilePath       string `json:"filePath"`
 }
 
-func (f *File) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
+func (f *File) CreateResource(tableInfo Table) *v1beta2.Resource {
 	source := mapConnectionTypeToSource(f.ConnectionType)
 	urn := models.NewURN(source, f.FilePath, "bucket", fmt.Sprintf("%s.%s", f.Name, tableInfo.Name))
-	resource = &v1beta2.Resource{
+	return &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "bucket", // TODO need to check what would be the appropriate type for this
 		Service: source,
 	}
-	return
 }
 
 type WebDataConnector struct {
@@ -184,13 +176,12 @@ type WebDataConnector struct {
 	ConnectorURL   string `json:"connectorUrl"`
 }
 
-func (wdc *WebDataConnector) CreateResource(tableInfo Table) (resource *v1beta2.Resource) {
+func (wdc *WebDataConnector) CreateResource(tableInfo Table) *v1beta2.Resource {
 	source := mapConnectionTypeToSource(wdc.ConnectionType)
 	urn := models.NewURN(source, wdc.ConnectorURL, "table", fmt.Sprintf("%s.%s", wdc.Name, tableInfo.Name))
-	resource = &v1beta2.Resource{
+	return &v1beta2.Resource{
 		Urn:     urn,
 		Type:    "table", // TODO need to check what would be the appropriate type for this
 		Service: source,
 	}
-	return
 }

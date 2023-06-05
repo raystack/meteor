@@ -30,7 +30,7 @@ func TestInit(t *testing.T) {
 			}),
 		)
 
-		assert.EqualError(t, err, "failed to create logadmin client: client is nil, failed initiating client")
+		assert.EqualError(t, err, "create logadmin client: invalid character '-' in numeric literal")
 	})
 
 	t.Run("should not return error invalid config if config is not wrong", func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestParsePayload(t *testing.T) {
 
 		ld, err := parsePayload(auditLog)
 
-		assert.EqualError(t, err, "failed to get audit data from metadata: metadata field is nil")
+		assert.EqualError(t, err, "get audit data from metadata: metadata field is nil")
 		assert.Nil(t, ld)
 	})
 }

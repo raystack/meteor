@@ -59,7 +59,8 @@ func NewAgent(config Config) *Agent {
 }
 
 // Validate checks the recipe for linting errors.
-func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
+func (r *Agent) Validate(rcp recipe.Recipe) []error {
+	var errs []error
 	if ext, err := r.extractorFactory.Get(rcp.Source.Name); err != nil {
 		errs = append(errs, err)
 	} else {
@@ -92,7 +93,8 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			errs = append(errs, r.enrichInvalidConfigError(err, p.Name, plugins.PluginTypeProcessor))
 		}
 	}
-	return
+
+	return errs
 }
 
 // RunMultiple executes multiple recipes.
@@ -132,22 +134,22 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
-		run.Error = errors.Wrap(err, "failed to setup extractor")
-		return
+		run.Error = fmt.Errorf("setup extractor: %w", err)
+		return run
 	}
 
 	for _, pr := range recipe.Processors {
 		if err := r.setupProcessor(ctx, pr, stream); err != nil {
-			run.Error = errors.Wrap(err, "failed to setup processor")
-			return
+			run.Error = fmt.Errorf("setup processor: %w", err)
+			return run
 		}
 	}
 
 	for _, sr := range recipe.Sinks {
 		err := r.setupSink(ctx, sr, stream, recipe)
 		if err != nil {
-			run.Error = errors.Wrap(err, "failed to setup sink")
-			return
+			run.Error = fmt.Errorf("setup sink: %w", err)
+			return run
 		}
 	}
 
@@ -191,9 +193,8 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 			func() error { return runExtractor() },
 			retryNotification,
 		)
-
 		if err != nil {
-			run.Error = errors.Wrap(err, "failed to run extractor")
+			run.Error = fmt.Errorf("run extractor: %w", err)
 		}
 	}()
 	defer stream.Close()
@@ -201,27 +202,27 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	// start listening.
 	// this process is blocking
 	if err := stream.broadcast(); err != nil {
-		run.Error = errors.Wrap(err, "failed to broadcast stream")
+		run.Error = fmt.Errorf("broadcast stream: %w", err)
 	}
 
 	// code will reach here stream.Listen() is done.
 	run.RecordCount = (int)(recordCnt)
 	run.Success = run.Error == nil
-	return
+	return run
 }
 
 func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
 	extractor, err := r.extractorFactory.Get(sr.Name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not find extractor \"%s\"", sr.Name)
+		return nil, fmt.Errorf("find extractor %q: %w", sr.Name, err)
 	}
 	if err := extractor.Init(ctx, recipeToPluginConfig(sr)); err != nil {
-		return nil, errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Name)
+		return nil, fmt.Errorf("initiate extractor %q: %w", sr.Name, err)
 	}
 
 	return func() error {
 		if err := extractor.Extract(ctx, str.push); err != nil {
-			return errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
+			return fmt.Errorf("run extractor %q: %w", sr.Name, err)
 		}
 		return nil
 	}, nil
@@ -230,16 +231,16 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str 
 func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream) error {
 	proc, err := r.processorFactory.Get(pr.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
+		return fmt.Errorf("find processor %q: %w", pr.Name, err)
 	}
 	if err := proc.Init(ctx, recipeToPluginConfig(pr)); err != nil {
-		return errors.Wrapf(err, "could not initiate processor \"%s\"", pr.Name)
+		return fmt.Errorf("initiate processor %q: %w", pr.Name, err)
 	}
 
 	str.setMiddleware(func(src models.Record) (models.Record, error) {
 		dst, err := proc.Process(ctx, src)
 		if err != nil {
-			return models.Record{}, errors.Wrapf(err, "error running processor \"%s\"", pr.Name)
+			return models.Record{}, fmt.Errorf("run processor %q: %w", pr.Name, err)
 		}
 
 		return dst, nil
@@ -251,10 +252,10 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) error {
 	sink, err := r.sinkFactory.Get(sr.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+		return fmt.Errorf("find sink %q: %w", sr.Name, err)
 	}
 	if err := sink.Init(ctx, recipeToPluginConfig(sr)); err != nil {
-		return errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+		return fmt.Errorf("initiate sink %q: %w", sr.Name, err)
 	}
 
 	retryNotification := func(e error, d time.Duration) {

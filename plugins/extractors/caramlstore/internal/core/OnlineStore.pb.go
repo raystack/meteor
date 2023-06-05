@@ -77,7 +77,6 @@ func (StoreType) EnumDescriptor() ([]byte, []int) {
 // Feature values will be written to the Store in the form of FeatureRow elements.
 // The way FeatureRow is encoded and decoded when it is written to and read from
 // the Store depends on the type of the Store.
-//
 type OnlineStore struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

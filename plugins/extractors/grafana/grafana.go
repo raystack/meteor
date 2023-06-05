@@ -11,7 +11,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -55,38 +54,39 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	// build client
 	e.client = NewClient(&http.Client{}, e.config)
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is configured and
 // if so, then it extracts the assets from the extractor.
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	uids, err := e.client.SearchAllDashboardUIDs()
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	uids, err := e.client.SearchAllDashboardUIDs(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch dashboards")
+		return fmt.Errorf("fetch dashboards: %w", err)
 	}
-	dashboardDetails, err := e.client.GetAllDashboardDetails(uids)
+
+	dashboardDetails, err := e.client.GetAllDashboardDetails(ctx, uids)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch dashboard details")
+		return fmt.Errorf("fetch dashboard details: %w", err)
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
 		dashboard, err := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
 		if err != nil {
-			return errors.Wrap(err, "failed to build Any struct")
+			return fmt.Errorf("build Any struct: %w", err)
 		}
 		emit(models.NewRecord(dashboard))
 	}
 
-	return
+	return nil
 }
 
 // grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
@@ -115,7 +115,7 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 }
 
 // grafanaPanelToMeteorChart converts a grafana panel to a meteor chart
-func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) v1beta2.Chart {
+func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID, metaURL string) v1beta2.Chart {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL

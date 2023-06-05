@@ -80,7 +80,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -95,7 +96,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", user, pass, host),
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -111,7 +113,7 @@ func TestExtract(t *testing.T) {
 func setup() (err error) {
 	testDB := "test_db"
 
-	var queries = []string{
+	queries := []string{
 		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
 		fmt.Sprintf("CREATE DATABASE %s", testDB),
 		fmt.Sprintf(`DROP ROLE IF EXISTS "%s";`, user),
@@ -126,7 +128,7 @@ func setup() (err error) {
 	}
 	defer userDB.Close()
 
-	var populate = []string{
+	populate := []string{
 		"CREATE TABLE article (id bigserial primary key,name varchar(20) NOT NULL);",
 		"CREATE TABLE post (id bigserial primary key,title varchar(20) NOT NULL);",
 	}

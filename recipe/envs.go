@@ -8,9 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	recipeEnvVarPrefix = "METEOR_"
-)
+var recipeEnvVarPrefix = "METEOR_"
 
 func populateData(pathToConfig string) map[string]string {
 	viper.AddConfigPath(".")
@@ -52,20 +50,16 @@ func populateDataFromLocal() map[string]string {
 	return data
 }
 
-func mapToMeteorKey(rawKey string) (key string, ok bool) {
+func mapToMeteorKey(rawKey string) (string, bool) {
 	// we are doing everything in lowercase for case insensitivity
-	key = strings.ToLower(rawKey)
+	key := strings.ToLower(rawKey)
 	meteorPrefix := strings.ToLower(recipeEnvVarPrefix)
-	keyPrefixLen := len(meteorPrefix)
-
-	isMeteorKeyFormat := len(key) > keyPrefixLen && key[:keyPrefixLen] == meteorPrefix
-	if !isMeteorKeyFormat {
-		return
+	if !strings.HasPrefix(key, meteorPrefix) {
+		return "", false
 	}
-	key = key[keyPrefixLen:] // strips prefix - meteor_user_id becomes user_id
-	ok = true
 
-	return
+	// strips prefix - meteor_user_id becomes user_id
+	return key[len(meteorPrefix):], true
 }
 
 func loadDataFromYaml(path string) map[string]string {
@@ -88,7 +82,7 @@ func loadDataFromYaml(path string) map[string]string {
 	keys := viper.AllKeys()
 	for i := range keys {
 		varConvention := strings.Join(strings.Split(keys[i], "."), "_")
-		data[varConvention] = viper.Get(keys[i]).(string)
+		data[varConvention] = viper.GetString(keys[i])
 	}
 
 	return data

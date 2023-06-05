@@ -7,10 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/bigquery"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +22,8 @@ func TestInit(t *testing.T) {
 			URNScope: "test-bigquery",
 			RawConfig: map[string]interface{}{
 				"wrong-config": "sample-project",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -35,7 +35,8 @@ func TestInit(t *testing.T) {
 			URNScope: "test-bigquery",
 			RawConfig: map[string]interface{}{
 				"project_id": "sample-project",
-			}})
+			},
+		})
 
 		assert.NotEqual(t, plugins.InvalidConfigError{}, err)
 	})
@@ -48,9 +49,10 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"project_id":             "google-project-id",
 				"service_account_base64": "----", // invalid
-			}})
+			},
+		})
 
-		assert.ErrorContains(t, err, "failed to decode base64 service account")
+		assert.ErrorContains(t, err, "decode base64 service account")
 	})
 }
 

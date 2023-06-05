@@ -15,11 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goto/meteor/test/utils"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/superset"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -148,7 +147,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"user_id": "user",
 				"host":    host,
-			}})
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -165,7 +165,8 @@ func TestExtract(t *testing.T) {
 				"password": pass,
 				"host":     host,
 				"provider": provider,
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -224,7 +225,7 @@ func setCsrfToken() (err error) {
 }
 
 // makeRequest helper function to avoid rewriting a request
-func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+func makeRequest(method, url string, payload, data interface{}) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to encode the payload JSON: %w", err)
@@ -234,7 +235,7 @@ func makeRequest(method, url string, payload interface{}, data interface{}) (err
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	var bearer = "Bearer " + accessToken
+	bearer := "Bearer " + accessToken
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", bearer)
 	req.Header.Set("X-CSRFToken", csrfToken)

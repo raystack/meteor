@@ -128,7 +128,8 @@ var testDataLogData3 = &LogData{
 							*
 							(SELECT order_id FROM FROM project1.dataset1.table1 WHERE column_1 IS TRUE)
 							JOIN project3.dataset1.table1
-							USING (somefield,anotherfield)`},
+							USING (somefield,anotherfield)`,
+						},
 					},
 				},
 				JobStatistics: &loggingpb.JobStatistics{

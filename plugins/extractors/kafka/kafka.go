@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	_ "embed" // used to print the embedded assets
+	"fmt"
 	"os"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -23,9 +23,9 @@ import (
 var summary string
 
 // default topics map to skip
-var defaultTopics = map[string]byte{
-	"__consumer_offsets": 0,
-	"_schemas":           0,
+var defaultTopics = map[string]struct{}{
+	"__consumer_offsets": {},
+	"_schemas":           {},
 }
 
 // Config holds the set of configuration for the kafka extractor
@@ -85,8 +85,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -99,39 +99,35 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	if e.config.Auth.TLS.Enabled {
 		tlsConfig, err := e.createTLSConfig()
 		if err != nil {
-			return errors.Wrap(err, "failed to create tls config")
+			return fmt.Errorf("create tls config: %w", err)
 		}
 
 		dialer.TLS = tlsConfig
 	}
 
 	// create connection
+	var err error
 	e.conn, err = dialer.DialContext(ctx, "tcp", e.config.Broker)
 	if err != nil {
-		return errors.Wrap(err, "failed to create connection")
+		return fmt.Errorf("create connection: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.conn.Close()
 
 	partitions, err := e.conn.ReadPartitions()
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch partitions")
+		return fmt.Errorf("fetch partitions: %w", err)
 	}
 
 	// collect topic list from partition list
 	topics := map[string]int{}
 	for _, p := range partitions {
-		_, ok := topics[p.Topic]
-		if !ok {
-			topics[p.Topic] = 0
-		}
-
 		topics[p.Topic]++
 	}
 
@@ -142,22 +138,23 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		if isDefaultTopic {
 			continue
 		}
+
 		asset, err := e.buildAsset(topic, numOfPartitions)
 		if err != nil {
 			e.logger.Error("failed to build asset", "err", err, "topic", topic)
 			continue
 		}
-		record := models.NewRecord(asset)
-		emit(record)
+		emit(models.NewRecord(asset))
 	}
 
-	return
+	return nil
 }
 
-func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
+func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 	authConfig := e.config.Auth.TLS
 
 	if authConfig.CertFile == "" || authConfig.KeyFile == "" || authConfig.CAFile == "" {
+		//nolint:gosec
 		return &tls.Config{
 			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
 		}, nil
@@ -165,28 +162,27 @@ func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
 
 	cert, err := tls.LoadX509KeyPair(authConfig.CertFile, authConfig.KeyFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create cert")
+		return nil, fmt.Errorf("create cert: %w", err)
 	}
 
 	caCert, err := os.ReadFile(authConfig.CAFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read ca cert file")
+		return nil, fmt.Errorf("read ca cert file: %w", err)
 	}
 
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig = &tls.Config{
+	//nolint:gosec
+	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
-	}
-
-	return tlsConfig, nil
+	}, nil
 }
 
 // Build topic metadata model using a topic and number of partitions
-func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (*v1beta2.Asset, error) {
 	topic, err := anypb.New(&v1beta2.Topic{
 		Profile: &v1beta2.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),

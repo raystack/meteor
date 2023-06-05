@@ -118,14 +118,15 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
+	var err error
 	e.client, err = e.createClient(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("create client: %w", err)
 	}
 
 	if e.config.IsCollectTableUsage {
@@ -148,22 +149,21 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		e.logger.Error("failed to create policy tag manager client", "err", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the table is valid and extracts the table schema
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	// Fetch and iterate over datasets
 	it := e.client.Datasets(ctx)
 	it.PageInfo().MaxSize = e.getMaxPageSize()
 	for {
 		ds, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch dataset")
+			return fmt.Errorf("fetch dataset: %w", err)
 		}
 		if IsExcludedDataset(ds.DatasetID, e.config.Exclude.Datasets) {
 			e.logger.Debug("excluding dataset from bigquery extract", "dataset_id", ds.DatasetID)
@@ -172,7 +172,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		e.extractTable(ctx, ds, emit)
 	}
 
-	return
+	return nil
 }
 
 // Create big query client
@@ -185,7 +185,7 @@ func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) 
 	if e.config.ServiceAccountBase64 != "" {
 		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
-			return nil, errors.Wrap(err, "failed to decode base64 service account")
+			return nil, fmt.Errorf("decode base64 service account: %w", err)
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
 		e.config.ServiceAccountJSON = string(serviceAccountJSON)
@@ -241,7 +241,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (*v1beta2.Asset, error) {
 	var tableStats *auditlog.TableStats
 	if e.config.IsCollectTableUsage {
 		// Fetch and extract logs first to build a map
@@ -346,7 +346,7 @@ func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm
 	return columns
 }
 
-func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) (col *v1beta2.Column) {
+func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) *v1beta2.Column {
 	attributesMap := map[string]interface{}{
 		"mode": e.getColumnMode(field),
 	}
@@ -356,7 +356,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		attributesMap["policy_tags"] = colPolicyTags
 	}
 
-	col = &v1beta2.Column{
+	col := &v1beta2.Column{
 		Name:        field.Name,
 		Description: field.Description,
 		DataType:    string(field.Type),
@@ -376,15 +376,15 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		col.Profile = profile
 	}
 
-	return
+	return col
 }
 
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []string, rows *structpb.ListValue, err error) {
 	if e.config.MaxPreviewRows == 0 {
-		return
+		return nil, nil, nil
 	}
 
-	tempRows := []interface{}{}
+	var tempRows []interface{}
 	totalRows := 0
 	ri := t.Read(ctx)
 	// fetch only the required amount of rows
@@ -397,12 +397,12 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 
 	for totalRows < e.config.MaxPreviewRows {
 		var row []bigquery.Value
-		err = ri.Next(&row)
-		if err == iterator.Done {
+		err := ri.Next(&row)
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			return
+			return nil, nil, err
 		}
 
 		// populate row fields once
@@ -416,17 +416,14 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 		var jsonBytes []byte
 		jsonBytes, err = json.Marshal(row)
 		if err != nil {
-			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())
-			return
+			return nil, nil, fmt.Errorf("marshal %q to json: %w", t.FullyQualifiedName(), err)
 		}
 		// sanitize unicode sequence
 		// replace unicode null characters with "null" string to ensure downstream would not have issues dealing with unicode null characters
 		jsonString := strings.ReplaceAll(string(jsonBytes), "\\u0000", "null")
 		jsonBytes = []byte(jsonString)
-		err = json.Unmarshal(jsonBytes, &temp)
-		if err != nil {
-			err = errors.Wrapf(err, "error marshalling \"%s\" to json", t.FullyQualifiedName())
-			return
+		if err = json.Unmarshal(jsonBytes, &temp); err != nil {
+			return nil, nil, fmt.Errorf("marshal %q to json: %w", t.FullyQualifiedName(), err)
 		}
 
 		tempRows = append(tempRows, temp)
@@ -436,17 +433,16 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 
 	rows, err = structpb.NewList(tempRows)
 	if err != nil {
-		err = errors.Wrap(err, "error creating preview list")
-		return
+		return nil, nil, fmt.Errorf("create preview list: %w", err)
 	}
 
-	return
+	return fields, rows, nil
 }
 
-func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (cp *v1beta2.ColumnProfile, err error) {
+func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (*v1beta2.ColumnProfile, error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
-		return
+		return nil, nil
 	}
 
 	// build and run query
@@ -462,7 +458,7 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 	}
 
 	// fetch first row for column profile result
-	type Row struct {
+	var row struct {
 		Min    string  `bigquery:"min"`
 		Max    string  `bigquery:"max"`
 		Avg    float64 `bigquery:"avg"`
@@ -471,14 +467,13 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 		Count  int64   `bigquery:"count"`
 		Top    string  `bigquery:"top"`
 	}
-	var row Row
 	err = it.Next(&row)
-	if err != nil && err != iterator.Done {
-		return
+	if err != nil && errors.Is(err, iterator.Done) {
+		return nil, nil
 	}
 
 	// map row data to column profile
-	cp = &v1beta2.ColumnProfile{
+	return &v1beta2.ColumnProfile{
 		Min:    row.Min,
 		Max:    row.Max,
 		Avg:    row.Avg,
@@ -486,12 +481,10 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 		Unique: row.Unique,
 		Count:  row.Count,
 		Top:    row.Top,
-	}
-
-	return
+	}, nil
 }
 
-func (e *Extractor) buildColumnProfileQuery(col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (query *bigquery.Query, err error) {
+func (e *Extractor) buildColumnProfileQuery(col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (*bigquery.Query, error) {
 	queryTemplate := `SELECT
 		COALESCE(CAST(MIN({{ .ColumnName }}) AS STRING), "") AS min,
 		COALESCE(CAST(MAX({{ .ColumnName }}) AS STRING), "") AS max,
@@ -507,15 +500,13 @@ func (e *Extractor) buildColumnProfileQuery(col *bigquery.FieldSchema, tm *bigqu
 		"TableName":  strings.ReplaceAll(tm.FullID, ":", "."),
 	}
 	temp := template.Must(template.New("query").Parse(queryTemplate))
-	builder := &strings.Builder{}
-	err = temp.Execute(builder, data)
-	if err != nil {
-		return
+	var builder strings.Builder
+	if err := temp.Execute(&builder, data); err != nil {
+		return nil, err
 	}
-	finalQuery := builder.String()
-	query = e.client.Query(finalQuery)
 
-	return
+	finalQuery := builder.String()
+	return e.client.Query(finalQuery), nil
 }
 
 func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {

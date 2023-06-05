@@ -65,7 +65,7 @@ func TestExtractorFactoryRegister(t *testing.T) {
 		assert.Equal(t, mocks.NewExtractor(), mock2)  // Same type
 		assert.True(t, mocks.NewExtractor() != mock2) // Different instance
 
-		err = factory.Register("mock1", newExtractor(mocks.NewExtractor())) //error for duplicate extractor
+		err = factory.Register("mock1", newExtractor(mocks.NewExtractor())) // error for duplicate extractor
 		assert.Error(t, err)
 	})
 }

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/goto/meteor/cmd"
-
 	_ "github.com/goto/meteor/plugins/extractors"
 	_ "github.com/goto/meteor/plugins/processors"
 	_ "github.com/goto/meteor/plugins/sinks"

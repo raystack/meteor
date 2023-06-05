@@ -7,10 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goto/meteor/plugins/extractors/shield"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/shield"
 	"github.com/goto/meteor/test/mocks"
 	testutils "github.com/goto/meteor/test/utils"
 	sh "github.com/goto/shield/proto/v1beta1"
@@ -18,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (

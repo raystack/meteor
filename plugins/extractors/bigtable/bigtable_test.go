@@ -7,10 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-
 	"github.com/goto/meteor/plugins"
 	bt "github.com/goto/meteor/plugins/extractors/bigtable"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +23,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"wrong-config": "sample-project",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -34,7 +34,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"project_id": "",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -48,7 +49,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"project_id":             "google-project-id",
 				"service_account_base64": "----", // invalid
-			}})
+			},
+		})
 
 		assert.ErrorContains(t, err, "decode Base64 encoded service account")
 	})

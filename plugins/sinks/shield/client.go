@@ -35,18 +35,19 @@ type client struct {
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string) (err error) {
+func (c *client) Connect(ctx context.Context, host string) error {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
-		err = fmt.Errorf("error creating connection: %w", err)
-		return
+	var err error
+	c.conn, err = c.createConnection(dialTimeoutCtx, host)
+	if err != nil {
+		return fmt.Errorf("create connection: %w", err)
 	}
 
 	c.ShieldServiceClient = sh.NewShieldServiceClient(c.conn)
 
-	return
+	return nil
 }
 
 func (c *client) Close() error {

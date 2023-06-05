@@ -3,6 +3,7 @@ package tableau
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"net/http"
 
 	"github.com/goto/meteor/models"
@@ -11,7 +12,6 @@ import (
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -81,25 +81,19 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 	return e
 }
 
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
-	err = e.client.Init(ctx, e.config)
-	if err != nil {
-		return
-	}
-
-	return nil
+	return e.client.Init(ctx, e.config)
 }
 
 // Extract collects metadata from the source. The metadata is collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	projects, err := e.client.GetAllProjects(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch list of projects")
-		return
+		return fmt.Errorf("fetch list of projects: %w", err)
 	}
 
 	for _, proj := range projects {
@@ -117,14 +111,14 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			emit(models.NewRecord(dashboard))
 		}
 	}
-	return
+	return nil
 }
 
-func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildDashboard(wb *Workbook) (*v1beta2.Asset, error) {
 	lineages := e.buildLineage(wb.UpstreamTables)
 	dashboardURN := models.NewURN("tableau", e.UrnScope, "workbook", wb.ID)
 	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: e.buildCharts(dashboardURN, wb, lineages),
+		Charts: e.buildCharts(dashboardURN, wb),
 		Attributes: utils.TryParseMapToProto(map[string]interface{}{
 			"id":           wb.ID,
 			"name":         wb.Name,
@@ -140,7 +134,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 	if err != nil {
 		return nil, err
 	}
-	asset = &v1beta2.Asset{
+	return &v1beta2.Asset{
 		Urn:         dashboardURN,
 		Name:        wb.Name,
 		Service:     "tableau",
@@ -155,11 +149,11 @@ func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err erro
 			},
 		},
 		Lineage: lineages,
-	}
-	return
+	}, nil
 }
 
-func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *v1beta2.Lineage) (charts []*v1beta2.Chart) {
+func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook) []*v1beta2.Chart {
+	var charts []*v1beta2.Chart
 	for _, sh := range wb.Sheets {
 		chartURN := models.NewURN("tableau", e.UrnScope, "sheet", sh.ID)
 		charts = append(charts, &v1beta2.Chart{
@@ -175,7 +169,7 @@ func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *v1b
 			UpdateTime: timestamppb.New(sh.UpdatedAt),
 		})
 	}
-	return
+	return charts
 }
 
 // Register the extractor to catalog

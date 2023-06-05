@@ -19,9 +19,7 @@ type Reader struct {
 	log  log.Logger
 }
 
-var (
-	ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
-)
+var ErrInvalidRecipeVersion = errors.New("recipe version is invalid or not found")
 
 // NewReader returns a new Reader.
 func NewReader(lg log.Logger, pathToConfig string) *Reader {
@@ -32,43 +30,42 @@ func NewReader(lg log.Logger, pathToConfig string) *Reader {
 }
 
 // Read loads the list of recipes from a give file or directory path.
-func (r *Reader) Read(path string) (recipes []Recipe, err error) {
+func (r *Reader) Read(path string) ([]Recipe, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
+
 	switch mode := fi.Mode(); {
 	case mode.IsDir():
-		recipes, err = r.readDir(r.log, path)
-		if err != nil {
-			return nil, err
-		}
+		return r.readDir(r.log, path)
+
 	case mode.IsRegular():
 		recipe, err := r.readFile(path)
 		if err != nil {
 			return nil, err
 		}
-		recipes = append(recipes, recipe)
+
+		return []Recipe{recipe}, nil
 	}
-	return
+
+	return nil, nil
 }
 
-func (r *Reader) readFile(path string) (recipe Recipe, err error) {
-	template, err := template.ParseFiles(path)
+func (r *Reader) readFile(path string) (Recipe, error) {
+	tmpl, err := template.ParseFiles(path)
 	if err != nil {
-		return
+		return Recipe{}, err
 	}
 
 	var buff bytes.Buffer
-	err = template.Execute(&buff, r.data)
-	if err != nil {
-		return
+	if err := tmpl.Execute(&buff, r.data); err != nil {
+		return Recipe{}, err
 	}
 
 	var node RecipeNode
-	err = yaml.Unmarshal(buff.Bytes(), &node)
-	if err != nil {
-		return
+	if err := yaml.Unmarshal(buff.Bytes(), &node); err != nil {
+		return Recipe{}, err
 	}
 
 	if node.Name.Value == "" {
@@ -80,23 +77,24 @@ func (r *Reader) readFile(path string) (recipe Recipe, err error) {
 	versions := generator.GetRecipeVersions()
 	err = validateRecipeVersion(node.Version.Value, versions[len(versions)-1])
 	if err != nil {
-		return
+		return Recipe{}, err
 	}
 
-	recipe, err = node.toRecipe()
+	recipe, err := node.toRecipe()
 	if err != nil {
-		return
+		return Recipe{}, err
 	}
 
-	return
+	return recipe, nil
 }
 
-func (r *Reader) readDir(lg log.Logger, path string) (recipes []Recipe, err error) {
+func (r *Reader) readDir(lg log.Logger, path string) ([]Recipe, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
-		return
+		return nil, err
 	}
 
+	var recipes []Recipe
 	for _, entry := range entries {
 		x := filepath.Join(path, entry.Name())
 		recipe, err := r.readFile(x)
@@ -108,12 +106,12 @@ func (r *Reader) readDir(lg log.Logger, path string) (recipes []Recipe, err erro
 		recipes = append(recipes, recipe)
 	}
 
-	return
+	return recipes, nil
 }
 
-func validateRecipeVersion(receivedVersion, expectedVersion string) (err error) {
-	if strings.Compare(receivedVersion, expectedVersion) == 0 {
-		return
+func validateRecipeVersion(receivedVersion, expectedVersion string) error {
+	if receivedVersion != expectedVersion {
+		return ErrInvalidRecipeVersion
 	}
-	return ErrInvalidRecipeVersion
+	return nil
 }

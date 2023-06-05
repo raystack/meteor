@@ -13,7 +13,6 @@ import (
 	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -63,8 +62,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -72,16 +71,18 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create client
-	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+	var err error
+	e.db, err = sql.Open("mysql", e.config.ConnectionURL)
+	if err != nil {
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract extracts the data from the MySQL server
 // and collected through the emitter
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 	e.emit = emit
 
@@ -98,46 +99,45 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 	}
 
-	return
+	return nil
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(database string) error {
 	// skip if database is default
 	if e.isExcludedDB(database) {
-		return
+		return nil
 	}
 
 	// set database
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return errors.Wrapf(err, "failed to iterate over %s", database)
+		return fmt.Errorf("iterate over %s: %w", database, err)
 	}
 
 	// get list of tables
 	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
-			return errors.Wrap(err, "failed to process table")
+			return fmt.Errorf("process table: %w", err)
 		}
 	}
 
-	return
+	return nil
 }
 
 // processTable builds and push table to emitter
-func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	if columns, err = e.extractColumns(tableName); err != nil {
-		return errors.Wrap(err, "failed to extract columns")
+func (e *Extractor) processTable(database, tableName string) error {
+	columns, err := e.extractColumns(tableName)
+	if err != nil {
+		return fmt.Errorf("extract columns: %w", err)
 	}
 	table, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-		return err
+		return fmt.Errorf("create Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -148,11 +148,11 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		Data:    table,
 	}))
 
-	return
+	return nil
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(tableName string) (columns []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(tableName string) ([]*v1beta2.Column, error) {
 	query := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -160,10 +160,11 @@ func (e *Extractor) extractColumns(tableName string) (columns []*v1beta2.Column,
 				ORDER BY COLUMN_NAME ASC`
 	rows, err := e.db.Query(query, tableName)
 	if err != nil {
-		err = errors.Wrap(err, "failed to execute query")
-		return
+		return nil, fmt.Errorf("execute query: %w", err)
 	}
+	defer rows.Close()
 
+	var columns []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
@@ -180,8 +181,11 @@ func (e *Extractor) extractColumns(tableName string) (columns []*v1beta2.Column,
 			Length:      int64(length),
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over columns: %w", err)
+	}
 
-	return
+	return columns, nil
 }
 
 // isExcludedDB checks if the given db is in the list of excluded databases

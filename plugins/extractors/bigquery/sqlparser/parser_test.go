@@ -10,7 +10,6 @@ import (
 )
 
 func TestParseSimpleJoin(t *testing.T) {
-
 	type set map[string]bool
 	newSet := func(values ...string) set {
 		s := make(set)
@@ -93,7 +92,6 @@ func TestParseSimpleJoin(t *testing.T) {
 }
 
 func TestParseSimpleFilter(t *testing.T) {
-
 	type set map[string]bool
 	newSet := func(values ...string) set {
 		s := make(set)

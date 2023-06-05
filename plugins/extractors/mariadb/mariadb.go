@@ -13,7 +13,6 @@ import (
 	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -64,8 +63,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -73,15 +72,16 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedDbs = sqlutil.BuildBoolMap(defaultDBList)
 
 	// create mariadb client
+	var err error
 	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract collects metadata of the database through emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 	e.emit = emit
 
@@ -94,48 +94,48 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 	// Iterate through all tables and databases
 	for _, database := range dbs {
 		if err := e.extractTables(database); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", database)
+			return fmt.Errorf("extract tables from %s: %w", database, err)
 		}
 	}
-	return
+	return nil
 }
 
 // extractTables extracts tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(database string) error {
 	// skip if database is default
 	if e.isExcludedDB(database) {
-		return
+		return nil
 	}
 
 	// extract tables
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute USE query on %s", database)
+		return fmt.Errorf("execute USE query on %s: %w", database, err)
 	}
 
 	// get list of tables
 	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
 		if err := e.processTable(database, tableName); err != nil {
-			return errors.Wrap(err, "failed to process table")
+			return fmt.Errorf("process table: %w", err)
 		}
 	}
-	return
+
+	return nil
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(tableName)
+func (e *Extractor) processTable(database, tableName string) error {
+	columns, err := e.extractColumns(tableName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to extract columns")
+		return fmt.Errorf("extract columns: %w", err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to build Any struct")
+		return fmt.Errorf("build Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -145,11 +145,11 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		Service: "mariadb",
 		Data:    data,
 	}))
-	return
+	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -157,15 +157,17 @@ func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, 
 				ORDER BY COLUMN_NAME ASC;`
 	rows, err := e.db.Query(sqlStr, tableName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to execute a query to extract columns metadata")
+		return nil, fmt.Errorf("execute a query to extract columns metadata: %w", err)
 	}
+	defer rows.Close()
 
+	var result []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
 		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to scan fields from query")
+			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
 		result = append(result, &v1beta2.Column{
@@ -176,6 +178,10 @@ func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, 
 			Length:      int64(length),
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate column metadata results: %w", err)
+	}
+
 	return result, nil
 }
 

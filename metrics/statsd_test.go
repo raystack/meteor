@@ -6,11 +6,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-
 	"github.com/goto/meteor/agent"
 	"github.com/goto/meteor/metrics"
 	"github.com/goto/meteor/recipe"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
@@ -51,13 +50,13 @@ func TestMain(m *testing.M) {
 		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	retryFn := func(resource *dockertest.Resource) (err error) {
+	retryFn := func(resource *dockertest.Resource) error {
 		c, err := metrics.NewStatsdClient("127.0.0.1:" + port)
 		if err != nil {
-			return
+			return err
 		}
 		c.Open()
-		return
+		return nil
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {

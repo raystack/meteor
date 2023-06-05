@@ -503,8 +503,8 @@ func TestExtract(t *testing.T) {
 							{Name: "merchant_avg_dispatch_arrival_time_10m", DataType: "FLOAT"},
 							{Name: "ongoing_accepted_orders", DataType: "INT64"},
 						},
-						CreateTime: timestamppb.New(time.Date(2022, time.September, 19, 22, 42, 04, 0, time.UTC)),
-						UpdateTime: timestamppb.New(time.Date(2022, time.September, 21, 13, 23, 02, 0, time.UTC)),
+						CreateTime: timestamppb.New(time.Date(2022, time.September, 19, 22, 42, 0o4, 0, time.UTC)),
+						UpdateTime: timestamppb.New(time.Date(2022, time.September, 21, 13, 23, 0o2, 0, time.UTC)),
 					}),
 					Lineage: &v1beta2.Lineage{
 						Upstreams: []*v1beta2.Resource{{

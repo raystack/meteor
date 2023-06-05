@@ -67,46 +67,42 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
-		return err
-	}
-
-	return
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	return s.BasePlugin.Init(ctx, config)
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		asset := record.Data()
 		s.logger.Info("sinking record to compass", "record", asset.GetUrn())
 
 		compassPayload, err := s.buildCompassPayload(asset)
 		if err != nil {
-			return errors.Wrap(err, "failed to build compass payload")
+			return fmt.Errorf("build compass payload: %w", err)
 		}
-		if err = s.send(compassPayload); err != nil {
-			return errors.Wrap(err, "error sending data")
+		if err = s.send(ctx, compassPayload); err != nil {
+			return fmt.Errorf("send data: %w", err)
 		}
 
 		s.logger.Info("successfully sinked record to compass", "record", asset.GetUrn())
 	}
 
-	return
+	return nil
 }
 
-func (s *Sink) Close() (err error) { return }
+func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(record RequestPayload) (err error) {
+func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
-		return
+		return err
 	}
 
 	// send request
 	url := fmt.Sprintf("%s/v1beta1/assets", s.config.Host)
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return
+		return err
 	}
 
 	for hdrKey, hdrVal := range s.config.Headers {
@@ -118,19 +114,20 @@ func (s *Sink) send(record RequestPayload) (err error) {
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
+	defer plugins.DrainBody(res)
+
 	if res.StatusCode == 200 {
-		return
+		return nil
 	}
 
-	var bodyBytes []byte
-	bodyBytes, err = io.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return
+		return err
 	}
-	err = fmt.Errorf("compass returns %d: %v", res.StatusCode, string(bodyBytes))
 
+	err = fmt.Errorf("compass returns %d: %v", res.StatusCode, string(data))
 	switch code := res.StatusCode; {
 	case code >= 500:
 		return plugins.NewRetryError(err)
@@ -142,12 +139,12 @@ func (s *Sink) send(record RequestPayload) (err error) {
 func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error) {
 	labels, err := s.buildLabels(asset)
 	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "failed to build labels")
+		return RequestPayload{}, fmt.Errorf("build labels: %w", err)
 	}
 
 	mapData, err := s.buildCompassData(asset.GetData())
 	if err != nil {
-		return RequestPayload{}, errors.Wrap(err, "error building compass data")
+		return RequestPayload{}, fmt.Errorf("build compass data: %w", err)
 	}
 
 	upstreams, downstreams := s.buildLineage(asset)
@@ -179,11 +176,11 @@ func (s *Sink) buildCompassData(anyData *anypb.Any) (map[string]interface{}, err
 		EmitUnpopulated: true,
 	}.Marshal(anyData)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling asset data")
+		return nil, fmt.Errorf("marshaling asset data: %w", err)
 	}
 
 	if err := json.Unmarshal(data, &mapData); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling to mapdata")
+		return nil, fmt.Errorf("unmarshalling to mapdata: %w", err)
 	}
 
 	return mapData, nil
@@ -192,7 +189,7 @@ func (s *Sink) buildCompassData(anyData *anypb.Any) (map[string]interface{}, err
 func (s *Sink) buildLineage(asset *v1beta2.Asset) (upstreams, downstreams []LineageRecord) {
 	lineage := asset.GetLineage()
 	if lineage == nil {
-		return
+		return nil, nil
 	}
 
 	for _, upstream := range lineage.Upstreams {
@@ -210,10 +207,11 @@ func (s *Sink) buildLineage(asset *v1beta2.Asset) (upstreams, downstreams []Line
 		})
 	}
 
-	return
+	return upstreams, downstreams
 }
 
-func (s *Sink) buildOwners(asset *v1beta2.Asset) (owners []Owner) {
+func (*Sink) buildOwners(asset *v1beta2.Asset) []Owner {
+	var owners []Owner
 	for _, ownerProto := range asset.GetOwners() {
 		owners = append(owners, Owner{
 			URN:   ownerProto.Urn,
@@ -222,7 +220,7 @@ func (s *Sink) buildOwners(asset *v1beta2.Asset) (owners []Owner) {
 			Email: ownerProto.Email,
 		})
 	}
-	return
+	return owners
 }
 
 func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
@@ -239,7 +237,7 @@ func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
 	for key, template := range s.config.Labels {
 		value, err := s.buildLabelValue(template, asset)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not find %q", template)
+			return nil, fmt.Errorf("find %q: %w", template, err)
 		}
 
 		labels[key] = value
@@ -248,55 +246,48 @@ func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
 	return labels, nil
 }
 
-func (s *Sink) buildLabelValue(template string, asset *v1beta2.Asset) (value string, err error) {
+func (s *Sink) buildLabelValue(template string, asset *v1beta2.Asset) (string, error) {
 	fields := strings.Split(template, ".")
 	if len(fields) < 2 {
-		err = errors.New("label template has to be at least nested 2 levels")
-		return
+		return "", errors.New("label template has to be at least nested 2 levels")
 	}
 
-	value, err = s.getLabelValueFromProperties(fields[0], fields[1], asset)
+	value, err := s.getLabelValueFromProperties(fields[0], fields[1], asset)
 	if err != nil {
-		err = fmt.Errorf("error getting label value")
-		return
+		return "", fmt.Errorf("get label value: %w", err)
 	}
 
-	return
+	return value, nil
 }
 
-func (s *Sink) getLabelValueFromProperties(field1 string, field2 string, asset *v1beta2.Asset) (value string, err error) {
+func (*Sink) getLabelValueFromProperties(field1, field2 string, asset *v1beta2.Asset) (string, error) {
 	switch field1 {
 	case "$attributes":
 		attr := utils.GetAttributes(asset)
 		v, ok := attr[field2]
 		if !ok {
-			err = fmt.Errorf("could not find %q field on attributes", field2)
-			return
+			return "", fmt.Errorf("find %q field on attributes", field2)
 		}
-		value, ok = v.(string)
+		value, ok := v.(string)
 		if !ok {
-			err = fmt.Errorf("%q field is not a string", field2)
-			return
+			return "", fmt.Errorf("%q field is not a string", field2)
 		}
-		return
+		return value, nil
 	case "$labels":
 		labels := asset.GetLabels()
 		if labels == nil {
-			err = errors.New("could not find labels field")
-			return
-		}
-		var ok bool
-		value, ok = labels[field2]
-		if !ok {
-			err = fmt.Errorf("could not find %q from labels", field2)
-			return
+			return "", errors.New("find labels field")
 		}
 
-		return
+		value, ok := labels[field2]
+		if !ok {
+			return "", fmt.Errorf("find %q from labels", field2)
+		}
+
+		return value, nil
 	}
 
-	err = errors.New("invalid label template format")
-	return
+	return "", errors.New("invalid label template format")
 }
 
 func init() {

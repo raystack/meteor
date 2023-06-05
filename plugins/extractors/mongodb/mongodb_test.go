@@ -98,7 +98,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -113,7 +114,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host),
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}

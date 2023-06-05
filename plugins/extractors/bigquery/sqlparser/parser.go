@@ -55,9 +55,10 @@ var (
 
 // ParseJoinConditions will return all join condition (ON and USING) in sql Query in a list of string
 // where each of it is a join condition string
-func ParseJoinConditions(sqlQuery string) (jcs []string) {
+func ParseJoinConditions(sqlQuery string) []string {
 	sqlQuery = cleanUpQuery(sqlQuery)
 
+	var jcs []string
 	matches := joinPatterns.FindAllStringSubmatch(sqlQuery, -1)
 	for _, match := range matches {
 
@@ -65,15 +66,14 @@ func ParseJoinConditions(sqlQuery string) (jcs []string) {
 		jcs = append(jcs, match[joinConditionFullIdx])
 	}
 
-	return
+	return jcs
 }
 
 // ParseFilterConditions will return all filter condition (WHERE and HAVING) in sql Query in a list of string
-func ParseFilterConditions(sqlQuery string) (fcs []string) {
+func ParseFilterConditions(sqlQuery string) []string {
 	sqlQuery = cleanUpQuery(sqlQuery)
 
-	fcs = filterPatterns.FindAllString(sqlQuery, -1)
-	return
+	return filterPatterns.FindAllString(sqlQuery, -1)
 }
 
 func cleanUpQuery(s string) string {

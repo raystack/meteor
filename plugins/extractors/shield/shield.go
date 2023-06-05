@@ -51,16 +51,16 @@ func New(logger log.Logger, client Client) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	if err := e.client.Connect(ctx, e.config.Host); err != nil {
-		return fmt.Errorf("error connecting to host: %w", err)
+		return fmt.Errorf("connect to host %s: %w", e.config.Host, err)
 	}
 
-	return
+	return nil
 }
 
 // Extract extracts the user information
@@ -69,18 +69,18 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 	listUsers, err := e.client.ListUsers(ctx, &sh.ListUsersRequest{})
 	if err != nil {
-		return fmt.Errorf("error fetching users: %w", err)
+		return fmt.Errorf("fetch users: %w", err)
 	}
 
 	for _, user := range listUsers.Users {
 		role, roleErr := e.client.GetRole(ctx, &sh.GetRoleRequest{Id: user.GetId()})
 		if roleErr != nil {
-			return fmt.Errorf("error fetching user roles: %w", err)
+			return fmt.Errorf("fetch user roles: %w", err)
 		}
 
 		grp, grpErr := e.client.GetGroup(ctx, &sh.GetGroupRequest{Id: user.GetId()})
 		if grpErr != nil {
-			return fmt.Errorf("error fetching user groups: %w", err)
+			return fmt.Errorf("fetch user groups: %w", err)
 		}
 		data, err := anypb.New(&v1beta2.User{
 			Email:    user.GetEmail(),
@@ -98,7 +98,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			UpdateTime: user.GetUpdatedAt(),
 		})
 		if err != nil {
-			err = fmt.Errorf("error creating Any struct: %w", err)
+			err = fmt.Errorf("creat Any struct: %w", err)
 			return err
 		}
 		emit(models.NewRecord(&v1beta2.Asset{

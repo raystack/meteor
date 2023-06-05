@@ -80,7 +80,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"password": "pass",
 				"host":     host,
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -95,7 +96,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": fmt.Sprintf("oracle://%s:%s@%s/%s", user, password, host, defaultDB),
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,7 +112,7 @@ func TestExtract(t *testing.T) {
 
 func setup() (err error) {
 	// using system user to setup the oracle database
-	var queries = []string{
+	queries := []string{
 		fmt.Sprintf("CREATE USER %s IDENTIFIED BY %s", user, password),
 		fmt.Sprintf("GRANT CREATE SESSION TO %s", user),
 		fmt.Sprintf("GRANT DBA TO %s", user),
@@ -123,13 +125,13 @@ func setup() (err error) {
 	}
 	defer userDB.Close()
 
-	var createTables = []string{
+	createTables := []string{
 		"CREATE TABLE employee (empid integer primary key, name varchar2(30) NOT NULL, salary number(10, 2))",
 		"CREATE TABLE department (id integer primary key, title varchar(20) NOT NULL, budget float(26))",
 		"COMMENT ON column department.title IS 'Department Name'",
 	}
 
-	var populateTables = []string{
+	populateTables := []string{
 		"INSERT INTO employee values(10, 'Sameer', 51000.0)",
 		"INSERT INTO employee values(11, 'Jash', 45000.60)",
 		"INSERT INTO employee values(12, 'Jay', 70000.11)",

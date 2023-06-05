@@ -88,7 +88,6 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 
 // Extract checks if the table is valid and extracts the table schema
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
-
 	projects, err := e.client.Projects(ctx)
 	if err != nil {
 		if shouldRetry(err) {

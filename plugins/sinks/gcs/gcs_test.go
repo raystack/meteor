@@ -26,7 +26,6 @@ var validConfig = map[string]interface{}{
 }
 
 func TestInit(t *testing.T) {
-
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		gcsSink := g.New(testUtils.Logger)
 		actualError := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
@@ -36,7 +35,6 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("should retun error if service account json and service account base64 missing", func(t *testing.T) {
-
 		gcsSink := g.New(testUtils.Logger)
 		actualError := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"project_id": "google-project-id",
@@ -46,19 +44,17 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("should retun error if unable to decode base64 service account key", func(t *testing.T) {
-
 		gcsSink := g.New(testUtils.Logger)
 		actualError := gcsSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"project_id":             "google-project-id",
 			"url":                    "gcs://bucket_name/target_folder",
 			"service_account_base64": "----", // invalid
 		}})
-		assert.ErrorContains(t, actualError, "failed to decode base64 service account")
+		assert.ErrorContains(t, actualError, "decode base64 service account")
 	})
 }
 
 func TestSink(t *testing.T) {
-
 	t.Run("should write data in bucket and return nil error on success", func(t *testing.T) {
 		u := &v1beta2.User{
 			FullName: "John Doe",

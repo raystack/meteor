@@ -31,7 +31,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"host": "invalid_host",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -44,7 +45,8 @@ func TestInit(t *testing.T) {
 				"identifier": "my-tableau",
 				"sitename":   sitename,
 				"username":   username,
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -56,7 +58,8 @@ func TestInit(t *testing.T) {
 				"version":    version,
 				"identifier": "my-tableau",
 				"sitename":   sitename,
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -70,7 +73,8 @@ func TestInit(t *testing.T) {
 				"sitename":   sitename,
 				"site_id":    "xxxxxxxxx",
 				"auth_token": "xxxxxxxxx",
-			}})
+			},
+		})
 		assert.NoError(t, err)
 	})
 }
@@ -97,7 +101,8 @@ func TestExtract(t *testing.T) {
 				"sitename":   sitename,
 				"username":   username,
 				"password":   password,
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -25,9 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var (
-	host = "http://compass.com"
-)
+var host = "http://compass.com"
 
 // sample metadata
 var (
@@ -55,7 +53,7 @@ func TestInit(t *testing.T) {
 func TestSink(t *testing.T) {
 	t.Run("should return error if compass host returns error", func(t *testing.T) {
 		compassError := `{"reason":"no asset found"}`
-		errMessage := "error sending data: compass returns 404: {\"reason\":\"no asset found\"}"
+		errMessage := "send data: compass returns 404: {\"reason\":\"no asset found\"}"
 
 		// setup mock client
 		url := fmt.Sprintf("%s/v1beta1/assets", host)
@@ -625,7 +623,7 @@ func (m *mockHTTPClient) Assert(t *testing.T) {
 		headersMap[hdrKey] = strings.Join(hdrVals, ",")
 	}
 	assert.Equal(t, m.Headers, headersMap)
-	var bodyBytes = []byte("")
+	bodyBytes := []byte("")
 	if m.req.Body != nil {
 		var err error
 		bodyBytes, err = io.ReadAll(m.req.Body)

@@ -21,8 +21,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testServer *httptest.Server
-var urnScope = "test-redash"
+var (
+	testServer *httptest.Server
+	urnScope   = "test-redash"
+)
 
 func TestMain(m *testing.M) {
 	testServer = NewTestServer()
@@ -42,7 +44,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"base_url": "",
 				"api_key":  "checkAPI",
-			}})
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
@@ -52,7 +55,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"base_url": testServer.URL,
 				"api_key":  "",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})

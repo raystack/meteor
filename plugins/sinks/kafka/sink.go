@@ -3,13 +3,11 @@ package kafka
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/dynamicpb"
-
 	"github.com/goto/meteor/models"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
@@ -17,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 //go:embed README.md
@@ -62,24 +62,24 @@ func New(logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	if err := s.BasePlugin.Init(ctx, config); err != nil {
 		return err
 	}
 
 	s.writer = createWriter(s.config)
 
-	return
+	return nil
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		if err := s.push(ctx, record.Data()); err != nil {
 			return err
 		}
 	}
 
-	return
+	return nil
 }
 
 func (s *Sink) Close() (err error) {
@@ -104,7 +104,7 @@ func (s *Sink) push(ctx context.Context, payload interface{}) error {
 		},
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to write messages")
+		return fmt.Errorf("write messages: %w", err)
 	}
 
 	return nil
@@ -113,7 +113,7 @@ func (s *Sink) push(ctx context.Context, payload interface{}) error {
 func (s *Sink) buildValue(value interface{}) ([]byte, error) {
 	protoBytes, err := proto.Marshal(value.(proto.Message))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to serialize payload as a protobuf message")
+		return nil, fmt.Errorf("serialize payload as a protobuf message: %w", err)
 	}
 	return protoBytes, nil
 }

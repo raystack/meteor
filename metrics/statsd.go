@@ -5,8 +5,6 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/pkg/errors"
-
 	statsd "github.com/etsy/statsd/examples/go"
 	"github.com/goto/meteor/agent"
 	"github.com/goto/meteor/recipe"
@@ -65,7 +63,7 @@ func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, 
 
 // createMetricName creates a metric name for a given recipe and success
 func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
-	var successText = "false"
+	successText := "false"
 	if success {
 		successText = "true"
 	}
@@ -87,17 +85,16 @@ type statsdClient interface {
 }
 
 // NewStatsdClient returns a new statsd client if the given address is valid
-func NewStatsdClient(statsdAddress string) (c *statsd.StatsdClient, err error) {
-	statsdHost, statsdPortStr, err := net.SplitHostPort(statsdAddress)
+func NewStatsdClient(statsdAddress string) (*statsd.StatsdClient, error) {
+	host, portStr, err := net.SplitHostPort(statsdAddress)
 	if err != nil {
-		err = errors.Wrap(err, "failed to split the network address")
-		return
+		return nil, fmt.Errorf("split the network address: %w", err)
 	}
-	statsdPort, err := strconv.Atoi(statsdPortStr)
+
+	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		err = errors.Wrap(err, "failed to convert port type")
-		return
+		return nil, fmt.Errorf("convert port type: %w", err)
 	}
-	c = statsd.New(statsdHost, statsdPort)
-	return
+
+	return statsd.New(host, port), nil
 }

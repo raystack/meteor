@@ -7,10 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/gcs"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,7 +34,8 @@ func TestInit(t *testing.T) {
 			RawConfig: map[string]interface{}{
 				"project_id":             "google-project-id",
 				"service_account_base64": "----", // invalid
-			}})
+			},
+		})
 
 		assert.ErrorContains(t, err, "decode Base64 encoded service account")
 	})

@@ -84,7 +84,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 }
@@ -99,9 +100,9 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
-			}})
+			},
+		})
 		if err != nil {
-
 			t.Fatal(err)
 		}
 
@@ -125,7 +126,7 @@ func TestExtract(t *testing.T) {
 
 // setup is a helper function to set up the test database
 func setup() (err error) {
-	var queries = []string{
+	queries := []string{
 		fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDB),
 		fmt.Sprintf("CREATE DATABASE %s", testDB),
 		fmt.Sprintf("USE %s;", testDB),
@@ -137,7 +138,7 @@ func setup() (err error) {
 	}
 
 	// create and populate tables
-	var populate = []string{
+	populate := []string{
 		"CREATE TABLE applicant (applicant_id int, last_name varchar(255), first_name varchar(255));",
 		"INSERT INTO applicant VALUES (1, 'test1', 'test11');",
 		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",

@@ -70,7 +70,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 	if s.config.Overwrite {
 		f, err = os.Create(s.config.Path)
 	} else {
-		f, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+		f, err = os.OpenFile(s.config.Path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o777)
 	}
 	if err != nil {
 		return err

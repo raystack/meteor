@@ -36,14 +36,11 @@ func New(logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
-		return err
-	}
-	return
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	return s.BasePlugin.Init(ctx, config)
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (s *Sink) Sink(_ context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		if err := s.process(record.Data()); err != nil {
 			return err
@@ -52,9 +49,9 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	return nil
 }
 
-func (s *Sink) Close() (err error) { return }
+func (*Sink) Close() error { return nil }
 
-func (s *Sink) process(asset *assetsv1beta2.Asset) error {
+func (*Sink) process(asset *assetsv1beta2.Asset) error {
 	jsonBytes, err := models.ToJSON(asset)
 	if err != nil {
 		return err

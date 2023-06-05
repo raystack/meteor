@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"fmt"
 
 	"github.com/google/go-github/v37/github"
 	"github.com/goto/meteor/models"
@@ -10,7 +11,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -55,28 +55,26 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
-	ts := oauth2.StaticTokenSource(
+	e.client = github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: e.config.Token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	e.client = github.NewClient(tc)
+	)))
 
-	return
+	return nil
 }
 
 // Extract extracts the data from the extractor
 // The data is returned as a list of assets.Asset
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	users, _, err := e.client.Organizations.ListMembers(ctx, e.config.Org, nil)
-
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch organizations")
+		return fmt.Errorf("fetch organizations: %w", err)
 	}
+
 	for _, user := range users {
 		usr, _, err := e.client.Users.Get(ctx, *user.Login)
 		if err != nil {

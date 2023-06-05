@@ -67,7 +67,7 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 }
 
 func (b featureTableBuilder) buildLineage(ft *core.FeatureTable) (
-	upstreams []*v1beta2.Resource, downstreams []*v1beta2.Resource, err error,
+	upstreams, downstreams []*v1beta2.Resource, err error,
 ) {
 	upstreams, err = b.buildUpstreams(ft)
 	if err != nil {

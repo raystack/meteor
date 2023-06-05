@@ -11,7 +11,6 @@ import (
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -63,8 +62,8 @@ func New(logger log.Logger) *Extractor {
 	return e
 }
 
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -72,35 +71,37 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.buildExcludedCollections()
 
 	// setup client
-	if e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+	var err error
+	e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL)
+	if err != nil {
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract collects metadata of each database through emitter
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	databases, err := e.client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
-		return errors.Wrap(err, "failed to list database names")
+		return fmt.Errorf("list database names: %w", err)
 	}
 
 	for _, dbName := range databases {
 		database := e.client.Database(dbName)
 		if err := e.extractCollections(ctx, database, emit); err != nil {
-			return errors.Wrap(err, "failed to extract collections")
+			return fmt.Errorf("extract collections: %w", err)
 		}
 	}
 
-	return
+	return nil
 }
 
 // Extract and output collections from a single mongo database
-func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emit plugins.Emit) (err error) {
+func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emit plugins.Emit) error {
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
-		return errors.Wrap(err, "failed to list collection names")
+		return fmt.Errorf("list collection names: %w", err)
 	}
 
 	// we need to sort the collections for testing purpose
@@ -115,22 +116,21 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 
 		table, err := e.buildTable(ctx, db, collectionName)
 		if err != nil {
-			return errors.Wrap(err, "failed to build table")
+			return fmt.Errorf("build table: %w", err)
 		}
 
 		emit(models.NewRecord(table))
 	}
 
-	return
+	return nil
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *v1beta2.Asset, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (*v1beta2.Asset, error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch total no of rows")
-		return
+		return nil, fmt.Errorf("fetch total no of rows: %w", err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
@@ -139,18 +139,16 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build Any struct")
+		return nil, fmt.Errorf("build Any struct: %w", err)
 	}
-	//
-	table = &v1beta2.Asset{
+
+	return &v1beta2.Asset{
 		Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
 		Name:    collectionName,
 		Service: "mongodb",
 		Type:    "table",
 		Data:    data,
-	}
-
-	return
+	}, nil
 }
 
 // Build a map of excluded collections using list of collection names
@@ -170,18 +168,17 @@ func (e *Extractor) isDefaultCollection(collectionName string) bool {
 }
 
 // Create mongo client and tries to connect
-func createAndConnnectClient(ctx context.Context, uri string) (client *mongo.Client, err error) {
+func createAndConnnectClient(ctx context.Context, uri string) (*mongo.Client, error) {
 	clientOptions := options.Client().ApplyURI(uri)
-	client, err = mongo.NewClient(clientOptions)
+	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
-		return
+		return nil, err
 	}
-	err = client.Connect(ctx)
-	if err != nil {
-		return
+	if err := client.Connect(ctx); err != nil {
+		return nil, err
 	}
 
-	return
+	return client, nil
 }
 
 func init() {

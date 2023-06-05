@@ -5,23 +5,22 @@ import (
 	"strings"
 
 	"github.com/blastrain/vitess-sqlparser/sqlparser"
-	"github.com/pkg/errors"
 )
 
-func evaluateQueryTemplate(datasetQuery NativeDatasetQuery) (query string, err error) {
-	query = datasetQuery.Query
+func evaluateQueryTemplate(datasetQuery NativeDatasetQuery) (string, error) {
+	query := datasetQuery.Query
 
 	// clean metabase custom syntax
 	query = strings.ReplaceAll(query, "[[", "")
 	query = strings.ReplaceAll(query, "]]", "")
 
 	if datasetQuery.TemplateTags == nil {
-		return
+		return "", nil
 	}
 	for key, tag := range datasetQuery.TemplateTags {
 		templateValue, err := getTemplateDefaultValue(tag.Type)
 		if err != nil {
-			return query, errors.Wrapf(err, "error building template default value")
+			return "", fmt.Errorf("build template default value: %w", err)
 		}
 
 		query = strings.ReplaceAll(
@@ -31,130 +30,114 @@ func evaluateQueryTemplate(datasetQuery NativeDatasetQuery) (query string, err e
 		)
 	}
 
-	return
+	return query, nil
 }
 
 func getTemplateDefaultValue(tempType string) (value string, err error) {
 	switch tempType {
 	case "date":
-		value = "CURRENT_DATE()"
-	case "string":
-		fallthrough
-	case "text":
-		value = "sample-text"
-	case "number":
-		value = "0"
-	case "dimension":
-		value = "1"
-	default:
-		err = fmt.Errorf("unsupported template type \"%s\"", tempType)
-	}
+		return "CURRENT_DATE()", nil
 
-	return
+	case "string", "text":
+		return "sample-text", nil
+
+	case "number":
+		return "0", nil
+
+	case "dimension":
+		return "1", nil
+
+	default:
+		return "", fmt.Errorf("unsupported template type %q", tempType)
+	}
 }
 
-func extractTableNamesFromSQL(query string) (tableNames []string, err error) {
+func extractTableNamesFromSQL(query string) ([]string, error) {
 	stmt, err := sqlparser.Parse(query)
 	if err != nil {
-		err = errors.Wrap(err, "error when parsing SQL")
-		return
+		return nil, fmt.Errorf("parse SQL: %w", err)
 	}
 
 	names, err := parseSelectStatement(stmt)
 	if err != nil {
-		err = errors.Wrap(err, "error parsing select statement")
-		return
+		return nil, fmt.Errorf("parse select statement: %w", err)
 	}
-	tableNames = append(tableNames, names...)
 
-	return
+	return names, nil
 }
 
-func parseSelectStatement(selectStmt sqlparser.Statement) (tableNames []string, err error) {
-	var names []string
-
+func parseSelectStatement(selectStmt sqlparser.Statement) ([]string, error) {
 	switch stmt := selectStmt.(type) {
 	case *sqlparser.Select:
+		var tableNames []string
 		for _, from := range stmt.From {
-			names, err = parseTableExpr(from)
+			names, err := parseTableExpr(from)
 			if err != nil {
-				return
+				return nil, err
 			}
+
 			tableNames = append(tableNames, names...)
 		}
+
+		return tableNames, nil
+
 	case *sqlparser.Union:
-		names, err = parseSelectStatement(stmt.Left)
+		leftNames, err := parseSelectStatement(stmt.Left)
 		if err != nil {
-			return
+			return nil, err
 		}
-		tableNames = append(tableNames, names...)
 
-		names, err = parseSelectStatement(stmt.Right)
+		rightNames, err := parseSelectStatement(stmt.Right)
 		if err != nil {
-			return
+			return nil, err
 		}
-		tableNames = append(tableNames, names...)
+
+		return append(leftNames, rightNames...), nil
+
 	case *sqlparser.ParenSelect:
-		names, err = parseSelectStatement(stmt.Select)
-		if err != nil {
-			return
-		}
-		tableNames = append(tableNames, names...)
-	default:
-		err = fmt.Errorf("unhandled Statement type \"%T\"", stmt)
-	}
+		return parseSelectStatement(stmt.Select)
 
-	return
+	default:
+		return nil, fmt.Errorf("unhandled Statement type \"%T\"", stmt)
+	}
 }
 
-func parseTableExpr(tableExpr sqlparser.TableExpr) (tableNames []string, err error) {
-	var names []string
-
+func parseTableExpr(tableExpr sqlparser.TableExpr) ([]string, error) {
 	switch expr := tableExpr.(type) {
 	case *sqlparser.AliasedTableExpr:
-		names, err = parseSimpleTableExpr(expr.Expr)
-		if err != nil {
-			return
-		}
-		tableNames = append(tableNames, names...)
+		return parseSimpleTableExpr(expr.Expr)
+
 	case *sqlparser.JoinTableExpr:
-		names, err = parseTableExpr(expr.LeftExpr)
+		leftNames, err := parseTableExpr(expr.LeftExpr)
 		if err != nil {
-			return
+			return nil, err
 		}
-		tableNames = append(tableNames, names...)
 
-		names, err = parseTableExpr(expr.RightExpr)
+		rightNames, err := parseTableExpr(expr.RightExpr)
 		if err != nil {
-			return
+			return nil, err
 		}
-		tableNames = append(tableNames, names...)
+		return append(leftNames, rightNames...), nil
+
 	default:
-		err = fmt.Errorf("unhandled TableExpr type \"%T\"", expr)
+		return nil, fmt.Errorf("unhandled TableExpr type \"%T\"", expr)
 	}
-
-	return
 }
 
-func parseSimpleTableExpr(simpleTableExpr sqlparser.SimpleTableExpr) (tableNames []string, err error) {
-	var names []string
-
+func parseSimpleTableExpr(simpleTableExpr sqlparser.SimpleTableExpr) ([]string, error) {
 	switch expr := simpleTableExpr.(type) {
 	case sqlparser.TableName:
 		name := expr.Name.String()
 		if expr.Qualifier.String() != "" {
 			name = expr.Qualifier.String() + "." + name
 		}
-		tableNames = append(tableNames, name)
-	case *sqlparser.Subquery:
-		names, err = parseSelectStatement(expr.Select)
-		if err != nil {
-			return
-		}
-		tableNames = append(tableNames, names...)
-	default:
-		err = fmt.Errorf("unhandled SimpleTableExpr type \"%T\"", expr)
-	}
 
-	return
+		return []string{name}, nil
+
+	case *sqlparser.Subquery:
+		return parseSelectStatement(expr.Select)
+
+	default:
+		return nil, fmt.Errorf("unhandled SimpleTableExpr type \"%T\"", expr)
+	}
 }

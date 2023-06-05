@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/goto/meteor/plugins"
 )
 
 const projectPageSize = 100
@@ -107,7 +107,7 @@ type Client interface {
 	Init(ctx context.Context, cfg Config) (err error)
 	GetAllProjects(ctx context.Context) (ps []*Project, err error)
 	GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) (wbs []*Workbook, err error)
-	makeRequest(method, url string, payload interface{}, data interface{}) (err error)
+	makeRequest(ctx context.Context, method, url string, payload, result interface{}) (err error)
 }
 
 type client struct {
@@ -118,7 +118,6 @@ type client struct {
 }
 
 func NewClient(httpClient *http.Client) Client {
-
 	c := &client{
 		httpClient: httpClient,
 	}
@@ -142,37 +141,36 @@ func (c *client) Init(ctx context.Context, cfg Config) (err error) {
 		c.siteID = c.config.SiteID
 		return nil
 	}
-	c.authToken, c.siteID, err = c.getAuthToken()
+	c.authToken, c.siteID, err = c.getAuthToken(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch auth token")
+		return fmt.Errorf("fetch auth token: %w", err)
 	}
 	return nil
 }
 
-func (c *client) getProjectsWithPagination(ctx context.Context, pageNum int, pageSize int) (ps []*Project, totalItem int, err error) {
+func (c *client) getProjectsWithPagination(ctx context.Context, pageNum, pageSize int) (ps []*Project, totalItem int, err error) {
 	var response responseProject
 	projectPath := fmt.Sprintf("sites/%s/projects?pageSize=%d&pageNumber=%d", c.siteID, pageSize, pageNum)
 	projectURL := c.buildURL(projectPath)
-	err = c.makeRequest(http.MethodGet, projectURL, nil, &response)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, http.MethodGet, projectURL, nil, &response); err != nil {
+		return nil, 0, err
 	}
+
 	totalItem, err = strconv.Atoi(response.Pagination.TotalAvailable)
 	if err != nil {
-		err = errors.Wrap(err, "cannot convert total available items in get projects pagination to int")
-		return
+		return nil, 0, fmt.Errorf("convert total available projects to int: %w", err)
 	}
-	ps = response.Projects.Projects
-	return
+
+	return response.Projects.Projects, totalItem, nil
 }
 
-func (c *client) GetAllProjects(ctx context.Context) (ps []*Project, err error) {
-	var pageNum = 1
+func (c *client) GetAllProjects(ctx context.Context) ([]*Project, error) {
+	pageNum := 1
+	var ps []*Project
 	for {
-		partialProjects, totalItem, errGet := c.getProjectsWithPagination(ctx, pageNum, projectPageSize)
+		partialProjects, totalItem, err := c.getProjectsWithPagination(ctx, pageNum, projectPageSize)
 		if err != nil {
-			err = errors.Wrap(errGet, "error when get projects with pagination")
-			break
+			return nil, fmt.Errorf("get projects with pagination: %w", err)
 		}
 		ps = append(ps, partialProjects...)
 		pageNum++
@@ -181,22 +179,20 @@ func (c *client) GetAllProjects(ctx context.Context) (ps []*Project, err error) 
 			break
 		}
 	}
-	return
+	return ps, nil
 }
 
-func (c *client) GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) (wbs []*Workbook, err error) {
+func (c *client) GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) ([]*Workbook, error) {
 	var response responseGraphQL
 	url := fmt.Sprintf("%s/api/metadata/graphql", c.config.Host)
 	graphQLBody := getGraphQLQueryWorkbooksByProjectName(projectName)
-	err = c.makeRequest(http.MethodPost, url, graphQLBody, &response)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, http.MethodPost, url, graphQLBody, &response); err != nil {
+		return nil, err
 	}
-	wbs = response.Data.Workbooks
-	return
+	return response.Data.Workbooks, nil
 }
 
-func (c *client) getAuthToken() (authToken string, siteID string, err error) {
+func (c *client) getAuthToken(ctx context.Context) (authToken, siteID string, err error) {
 	payload := map[string]interface{}{
 		"credentials": map[string]interface{}{
 			"name":     c.config.Username,
@@ -209,10 +205,10 @@ func (c *client) getAuthToken() (authToken string, siteID string, err error) {
 
 	var data responseSignIn
 	signInURL := c.buildURL("auth/signin")
-	err = c.makeRequest(http.MethodPost, signInURL, payload, &data)
-	if err != nil {
-		return
+	if err := c.makeRequest(ctx, http.MethodPost, signInURL, payload, &data); err != nil {
+		return "", "", err
 	}
+
 	return data.Credentials.Token, data.Credentials.Site.ID, nil
 }
 
@@ -221,37 +217,41 @@ func (c *client) buildURL(path string) string {
 }
 
 // helper function to avoid rewriting a request
-func (c *client) makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+func (c *client) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
-		return errors.Wrap(err, "failed to encode the payload JSON")
+		return fmt.Errorf("encode the payload JSON: %w", err)
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
-		return errors.Wrap(err, "failed to create request")
+		return fmt.Errorf("create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Tableau-Auth", c.authToken)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate response")
+		return fmt.Errorf("generate response: %w", err)
 	}
+	defer plugins.DrainBody(res)
+
 	if res.StatusCode >= 300 {
-		return fmt.Errorf("getting %d status code", res.StatusCode)
+		return fmt.Errorf("response status code %d", res.StatusCode)
 	}
 
-	bytes, err := io.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return errors.Wrap(err, "failed to read response body")
+		return fmt.Errorf("read response body: %w", err)
 	}
 
-	if err = json.Unmarshal(bytes, &data); err != nil {
-		return errors.Wrapf(err, "failed to parse: %s", string(bytes))
+	if err := json.Unmarshal(data, &result); err != nil {
+		return fmt.Errorf("parse: %s: %w", string(data), err)
 	}
-	return
+
+	return nil
 }
 
 func getGraphQLQueryWorkbooksByProjectName(projectName string) map[string]string {

@@ -1,13 +1,15 @@
 package tableau
 
 import (
+	"fmt"
+
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
-func (e *Extractor) buildLineage(tables []*Table) (lineage *v1beta2.Lineage) {
-	upstreamLineages := []*v1beta2.Resource{}
+func (e *Extractor) buildLineage(tables []*Table) *v1beta2.Lineage {
+	var upstreamLineages []*v1beta2.Resource
 	for _, t := range tables {
 		res, err := e.buildLineageResources(t)
 		if err != nil {
@@ -16,62 +18,50 @@ func (e *Extractor) buildLineage(tables []*Table) (lineage *v1beta2.Lineage) {
 		}
 		upstreamLineages = append(upstreamLineages, res)
 	}
-	lineage = &v1beta2.Lineage{Upstreams: upstreamLineages}
-	return
+	return &v1beta2.Lineage{Upstreams: upstreamLineages}
 }
 
-func (e *Extractor) buildLineageResources(t *Table) (resource *v1beta2.Resource, err error) {
+func (*Extractor) buildLineageResources(t *Table) (*v1beta2.Resource, error) {
 	if t == nil {
-		err = errors.New("no table found")
-		return
+		return nil, errors.New("no table found")
 	}
-	var table = *t
 
 	upstreamDB := t.Database
 	if _, found := upstreamDB["hostName"]; found {
 		// DatabaseServer
 		var db DatabaseServer
-		err = mapstructure.Decode(upstreamDB, &db)
-		if err != nil {
-			err = errors.Wrap(err, "error cast database to DatabaseServer struct")
-			return
+		if err := mapstructure.Decode(upstreamDB, &db); err != nil {
+			return nil, fmt.Errorf("decode upstream as DatabaseServer: %w", err)
 		}
-		resource = db.CreateResource(table)
-		return
+
+		return db.CreateResource(*t), nil
 	}
 	if _, found := upstreamDB["provider"]; found {
 		// CloudFile
 		var db CloudFile
-		err = mapstructure.Decode(upstreamDB, &db)
-		if err != nil {
-			err = errors.Wrap(err, "error cast database to CloudFile struct")
-			return
+		if err := mapstructure.Decode(upstreamDB, &db); err != nil {
+			return nil, fmt.Errorf("decode upstream as CloudFile: %w", err)
 		}
-		resource = db.CreateResource(table)
-		return
+
+		return db.CreateResource(*t), nil
 	}
 	if _, found := upstreamDB["filePath"]; found {
 		// File
 		var db File
-		err = mapstructure.Decode(upstreamDB, &db)
-		if err != nil {
-			err = errors.Wrap(err, "error cast database to File struct")
-			return
+		if err := mapstructure.Decode(upstreamDB, &db); err != nil {
+			return nil, fmt.Errorf("decode upstream as File: %w", err)
 		}
-		resource = db.CreateResource(table)
-		return
+
+		return db.CreateResource(*t), nil
 	}
 	if _, found := upstreamDB["connectorUrl"]; found {
 		// WebDataConnector
 		var db WebDataConnector
-		err = mapstructure.Decode(upstreamDB, &db)
-		if err != nil {
-			err = errors.Wrap(err, "error cast database to WebDataConnector struct")
-			return
+		if err := mapstructure.Decode(upstreamDB, &db); err != nil {
+			return nil, fmt.Errorf("decode upstream as WebDataConnector: %w", err)
 		}
-		resource = db.CreateResource(table)
-		return
+
+		return db.CreateResource(*t), nil
 	}
-	err = errors.New("cannot build lineage resource, database structure unknown")
-	return
+	return nil, errors.New("build lineage resource: database structure unknown")
 }

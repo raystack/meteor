@@ -5,7 +5,7 @@ import (
 	"github.com/goto/meteor/plugins/extractors/bigquery/auditlog"
 )
 
-func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats) (tp *v1beta2.TableProfile) {
+func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats) *v1beta2.TableProfile {
 	var tableUsage int64
 	var commonJoins []*v1beta2.TableCommonJoin
 	var filterConditions []string
@@ -37,11 +37,9 @@ func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.Tabl
 		}
 	}
 
-	tp = &v1beta2.TableProfile{
+	return &v1beta2.TableProfile{
 		UsageCount:  tableUsage,
 		CommonJoins: commonJoins,
 		Filters:     filterConditions,
 	}
-
-	return
 }

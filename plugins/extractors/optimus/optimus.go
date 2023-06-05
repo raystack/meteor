@@ -13,7 +13,6 @@ import (
 	"github.com/goto/meteor/utils"
 	pb "github.com/goto/optimus/protos/gotocompany/optimus/core/v1beta1"
 	"github.com/goto/salt/log"
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -63,16 +62,16 @@ func New(logger log.Logger, client Client) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	if err := e.client.Connect(ctx, e.config.Host, e.config.MaxSizeInMB); err != nil {
-		return errors.Wrap(err, "error connecting to host")
+		return fmt.Errorf("connect to host: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the table is valid and extracts the table schema
@@ -81,7 +80,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 	projResp, err := e.client.ListProjects(ctx, &pb.ListProjectsRequest{})
 	if err != nil {
-		return errors.Wrap(err, "error fetching projects")
+		return fmt.Errorf("fetch projects: %w", err)
 	}
 
 	for _, project := range projResp.Projects {
@@ -123,22 +122,20 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return nil
 }
 
-func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (*v1beta2.Asset, error) {
 	jobResp, err := e.client.GetJobTask(ctx, &pb.GetJobTaskRequest{
 		ProjectName:   project,
 		NamespaceName: namespace,
 		JobName:       jobSpec.Name,
 	})
 	if err != nil {
-		err = errors.Wrap(err, "error fetching task")
-		return
+		return nil, fmt.Errorf("fetching task: %w", err)
 	}
 
 	task := jobResp.Task
 	upstreams, downstreams, err := e.buildLineage(task)
 	if err != nil {
-		err = errors.Wrap(err, "error building lineage")
-		return
+		return nil, fmt.Errorf("building lineage: %w", err)
 	}
 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
@@ -168,10 +165,10 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 		}),
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		return nil, fmt.Errorf("create Any struct: %w", err)
 	}
 
-	asset = &v1beta2.Asset{
+	return &v1beta2.Asset{
 		Urn:         urn,
 		Name:        jobSpec.Name,
 		Service:     service,
@@ -188,9 +185,7 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 			Upstreams:   upstreams,
 			Downstreams: downstreams,
 		},
-	}
-
-	return
+	}, nil
 }
 
 func (e *Extractor) buildLineage(task *pb.JobTask) (upstreams, downstreams []*v1beta2.Resource, err error) {

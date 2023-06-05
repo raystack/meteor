@@ -18,7 +18,6 @@ import (
 	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -153,7 +152,7 @@ func setup() (err error) {
 		fmt.Sprintf(`GRANT ALL PERMISSIONS ON ALL KEYSPACES TO '%s'`, user),
 	})
 	if err != nil {
-		return errors.Wrap(err, "fail to create database")
+		return fmt.Errorf("create database: %w", err)
 	}
 
 	// create and populate tables
@@ -164,7 +163,7 @@ func setup() (err error) {
 		fmt.Sprintf(`INSERT INTO %s.jobs (jobid, job, department) VALUES (2, 'test2', 'test22');`, keyspace),
 	})
 	if err != nil {
-		return errors.Wrap(err, "fail to populate database")
+		return fmt.Errorf("populate database: %w", err)
 	}
 	return
 }
@@ -200,7 +199,7 @@ func getExpected() []*v1beta2.Asset {
 		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		err = fmt.Errorf("create Any struct: %w", err)
 	}
 
 	table2, err := anypb.New(&v1beta2.Table{
@@ -221,7 +220,7 @@ func getExpected() []*v1beta2.Asset {
 		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
+		err = fmt.Errorf("create Any struct: %w", err)
 	}
 
 	return []*v1beta2.Asset{

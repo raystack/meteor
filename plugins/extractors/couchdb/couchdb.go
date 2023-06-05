@@ -62,8 +62,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Initialise the Extractor with Configurations
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -71,23 +71,24 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.buildExcludedDBs()
 
 	// create client
+	var err error
 	e.client, err = kivik.New("couch", e.config.ConnectionURL)
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return nil
 }
 
 // Extract extracts the data from the CouchDB server
 // and collected through the out channel
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.client.Close(ctx)
 	e.emit = emit
 
 	res, err := e.client.AllDBs(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
 	for _, dbName := range res {
@@ -95,22 +96,23 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			return err
 		}
 	}
-	return
+	return nil
 }
 
 // Extract tables from a given database
-func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error) {
+func (e *Extractor) extractTables(ctx context.Context, dbName string) error {
 	// skip if database is default
 	if e.isExcludedDB(dbName) {
-		return
+		return nil
 	}
 	e.db = e.client.DB(ctx, dbName)
 
 	// extract documents
 	rows, err := e.db.AllDocs(ctx)
 	if err != nil {
-		return
+		return err
 	}
+	defer rows.Close()
 
 	// process each rows
 	for rows.Next() {
@@ -119,24 +121,25 @@ func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error
 			return err
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate over tables: %w", err)
+	}
 
-	return
+	return nil
 }
 
 // Build and push document to output channel
-func (e *Extractor) processTable(ctx context.Context, dbName string, docID string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(ctx, docID)
+func (e *Extractor) processTable(ctx context.Context, dbName, docID string) error {
+	columns, err := e.extractColumns(ctx, docID)
 	if err != nil {
-		return
+		return err
 	}
 	table, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		return err
+		return fmt.Errorf("create Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -147,22 +150,22 @@ func (e *Extractor) processTable(ctx context.Context, dbName string, docID strin
 		Data:    table,
 	}))
 
-	return
+	return nil
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(ctx context.Context, docID string) ([]*v1beta2.Column, error) {
 	size, rev, err := e.db.GetMeta(ctx, docID)
 	if err != nil {
-		return
+		return nil, err
 	}
 	row := e.db.Get(ctx, docID)
 	var fields map[string]interface{}
-	err = row.ScanDoc(&fields)
-	if err != nil {
-		return
+	if err := row.ScanDoc(&fields); err != nil {
+		return nil, err
 	}
 
+	var columns []*v1beta2.Column
 	for k := range fields {
 		if k == "_id" || k == "_rev" {
 			continue
@@ -175,7 +178,7 @@ func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns [
 			Length:      size,
 		})
 	}
-	return
+	return columns, nil
 }
 
 func (e *Extractor) buildExcludedDBs() {

@@ -12,13 +12,10 @@ import (
 
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
-
-	testutils "github.com/goto/meteor/test/utils"
-	"github.com/pkg/errors"
-
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/metabase"
 	"github.com/goto/meteor/test/mocks"
+	testutils "github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -101,7 +98,8 @@ func TestExtract(t *testing.T) {
 				"username":       "test-user",
 				"password":       "test-pass",
 				"instance_label": "my-metabase",
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -160,11 +158,11 @@ func getTable(t *testing.T, id int) metabase.Table {
 func readFromFiles(path string, data interface{}) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return errors.Wrapf(err, "error opening \"%s\"", path)
+		return fmt.Errorf("opening %q: %w", path, err)
 	}
 	err = json.NewDecoder(file).Decode(&data)
 	if err != nil {
-		return errors.Wrapf(err, "error decoding \"%s\"", path)
+		return fmt.Errorf("decode %q: %w", path, err)
 	}
 
 	return nil
@@ -174,33 +172,33 @@ type mockClient struct {
 	mock.Mock
 }
 
-func (m *mockClient) Authenticate(host, username, password, sessionID string) error {
+func (m *mockClient) Authenticate(ctx context.Context, host, username, password, sessionID string) error {
 	args := m.Called(host, username, password, sessionID)
 	return args.Error(0)
 }
 
-func (m *mockClient) GetDashboards() ([]metabase.Dashboard, error) {
+func (m *mockClient) GetDashboards(context.Context) ([]metabase.Dashboard, error) {
 	args := m.Called()
 	return args.Get(0).([]metabase.Dashboard), args.Error(1)
 }
 
-func (m *mockClient) GetDashboard(id int) (metabase.Dashboard, error) {
+func (m *mockClient) GetDashboard(ctx context.Context, id int) (metabase.Dashboard, error) {
 	args := m.Called(id)
 	return args.Get(0).(metabase.Dashboard), args.Error(1)
 }
 
-func (m *mockClient) GetDatabase(id int) (metabase.Database, error) {
+func (m *mockClient) GetDatabase(ctx context.Context, id int) (metabase.Database, error) {
 	args := m.Called(id)
 	return args.Get(0).(metabase.Database), args.Error(1)
 }
 
-func (m *mockClient) GetTable(id int) (metabase.Table, error) {
+func (m *mockClient) GetTable(ctx context.Context, id int) (metabase.Table, error) {
 	args := m.Called(id)
 	return args.Get(0).(metabase.Table), args.Error(1)
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
+func assertResults(t *testing.T, expected, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
 	expectedMap := make(map[string]*v1beta2.Asset)

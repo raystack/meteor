@@ -12,13 +12,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/goto/meteor/test/utils"
-
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/couchdb"
 	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"

@@ -96,7 +96,7 @@ func TestPopulateAll(t *testing.T) {
 
 		err := ts.Populate(ld)
 
-		assert.EqualError(t, err, "got empty referenced tables")
+		assert.EqualError(t, err, "empty referenced tables")
 		assert.Empty(t, ts.TableUsage)
 		assert.Empty(t, ts.JoinDetail)
 		assert.Empty(t, ts.FilterConditions)

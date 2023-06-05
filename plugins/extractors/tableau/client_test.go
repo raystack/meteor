@@ -6,12 +6,12 @@ package tableau
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,9 +51,8 @@ func TestInit(t *testing.T) {
 			Password: "xxxxxxxxxx",
 			Sitename: "invalid_site",
 		})
-		assert.EqualError(t, err, "failed to fetch auth token: failed to generate response: Post \"invalidhost/api/3.12/auth/signin\": unsupported protocol scheme \"\"")
+		assert.EqualError(t, err, "fetch auth token: generate response: Post \"invalidhost/api/3.12/auth/signin\": unsupported protocol scheme \"\"")
 	})
-
 }
 
 func TestGetAllProjects(t *testing.T) {
@@ -112,7 +111,7 @@ func testDataGetWorkbooksByProjectName(t *testing.T) (wbs []*Workbook, err error
 
 	var response responseGraphQL
 	if err = json.Unmarshal([]byte(byteString), &response); err != nil {
-		err = errors.Wrapf(err, "failed to parse: %s", byteString)
+		err = fmt.Errorf("parse: %s: %w", byteString, err)
 	}
 
 	wbs = response.Data.Workbooks
@@ -127,7 +126,7 @@ func testDataGetAllProjects(t *testing.T) (ps []*Project, err error) {
 
 	var response responseProject
 	if err = json.Unmarshal([]byte(byteString), &response); err != nil {
-		err = errors.Wrapf(err, "failed to parse: %s", byteString)
+		err = fmt.Errorf("parse: %s: %w", byteString, err)
 		return
 	}
 

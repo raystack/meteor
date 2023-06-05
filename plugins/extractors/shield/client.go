@@ -3,6 +3,8 @@ package shield
 import (
 	"context"
 	"fmt"
+	"time"
+
 	sh "github.com/goto/shield/proto/v1beta1"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
@@ -10,7 +12,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"time"
 )
 
 const (
@@ -35,18 +36,19 @@ type client struct {
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string) (err error) {
+func (c *client) Connect(ctx context.Context, host string) error {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
-		err = fmt.Errorf("error creating connection: %w", err)
-		return
+	var err error
+	c.conn, err = c.createConnection(dialTimeoutCtx, host)
+	if err != nil {
+		return fmt.Errorf("create connection: %w", err)
 	}
 
 	c.ShieldServiceClient = sh.NewShieldServiceClient(c.conn)
 
-	return
+	return nil
 }
 
 func (c *client) Close() error {

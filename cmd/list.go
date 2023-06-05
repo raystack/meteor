@@ -9,7 +9,6 @@ import (
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/printer"
 	"github.com/goto/salt/term"
-
 	"github.com/spf13/cobra"
 )
 

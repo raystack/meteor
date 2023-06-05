@@ -1093,7 +1093,7 @@ func TestValidate(t *testing.T) {
 		assert.Equal(t, expectedErrs, errs)
 	})
 	t.Run("", func(t *testing.T) {
-		var invalidRecipe = recipe.Recipe{
+		invalidRecipe := recipe.Recipe{
 			Name: "sample",
 			Source: recipe.PluginRecipe{
 				Name: "test-extractor",
@@ -1213,8 +1213,8 @@ func (p *panicProcessor) Process(_ context.Context, _ models.Record) (dst models
 
 // enrichInvalidConfigError enrich the error with plugin information
 func enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
-	if errors.As(err, &plugins.InvalidConfigError{}) {
-		icErr := err.(plugins.InvalidConfigError)
+	var icErr plugins.InvalidConfigError
+	if errors.As(err, &icErr) {
 		icErr.PluginName = pluginName
 		icErr.Type = pluginType
 

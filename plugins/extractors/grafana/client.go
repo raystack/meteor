@@ -1,10 +1,13 @@
 package grafana
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/goto/meteor/plugins"
 )
 
 type Client struct {
@@ -19,115 +22,120 @@ func NewClient(httpClient *http.Client, config Config) *Client {
 	}
 }
 
-func (c *Client) SearchAllDashboardUIDs() (uids []string, err error) {
+func (c *Client) SearchAllDashboardUIDs(ctx context.Context) ([]string, error) {
 	url := c.getDashboardSearchURL()
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
+
 	req.Header.Add("Authorization", c.config.APIKey)
-	response, err := c.httpClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("response with status: %d", response.StatusCode)
-		return
+	defer plugins.DrainBody(res)
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response with status: %d", res.StatusCode)
 	}
-	defer response.Body.Close()
 
 	var searchResponses []map[string]interface{}
-	err = json.NewDecoder(response.Body).Decode(&searchResponses)
-	if err != nil {
-		return
+	if err := json.NewDecoder(res.Body).Decode(&searchResponses); err != nil {
+		return nil, err
 	}
-	uids = make([]string, len(searchResponses))
+	uids := make([]string, len(searchResponses))
 	for i, rsp := range searchResponses {
 		uid, ok := rsp["uid"].(string)
 		if ok {
 			uids[i] = uid
 		}
 	}
-	return
+	return uids, nil
 }
 
-func (c *Client) GetAllDashboardDetails(uids []string) (dashboardDetails []DashboardDetail, err error) {
-	dataSources, err := c.GetAllDatasources()
+func (c *Client) GetAllDashboardDetails(ctx context.Context, uids []string) ([]DashboardDetail, error) {
+	dataSources, err := c.GetAllDatasources(ctx)
 	if err != nil {
-		return
+		return nil, err
 	}
+
+	var dashboards []DashboardDetail
 	for _, uid := range uids {
-		dashboardDetail, e := c.GetDashboardDetail(uid)
-		if e != nil {
-			err = e
-			return
+		dashboard, err := c.GetDashboardDetail(uid)
+		if err != nil {
+			return nil, err
 		}
-		for j, panel := range dashboardDetail.Dashboard.Panels {
+		for j, panel := range dashboard.Dashboard.Panels {
 			key := "default"
 			if panel.DataSource != "" {
 				key = panel.DataSource
 			}
-			dashboardDetail.Dashboard.Panels[j].DataSource = dataSources[key].Type
+			dashboard.Dashboard.Panels[j].DataSource = dataSources[key].Type
 		}
-		dashboardDetail.Meta.URL = c.concatURL(c.config.BaseURL, dashboardDetail.Meta.URL)
-		dashboardDetails = append(dashboardDetails, dashboardDetail)
+		dashboard.Meta.URL = c.concatURL(c.config.BaseURL, dashboard.Meta.URL)
+		dashboards = append(dashboards, dashboard)
 	}
-	return
+
+	return dashboards, nil
 }
 
-func (c *Client) GetDashboardDetail(uid string) (dashboardDetail DashboardDetail, err error) {
+func (c *Client) GetDashboardDetail(uid string) (DashboardDetail, error) {
 	url := c.getDashboardDetailURL(uid)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return
+		return DashboardDetail{}, err
 	}
 	req.Header.Add("Authorization", c.config.APIKey)
-	response, err := c.httpClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return
+		return DashboardDetail{}, err
 	}
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("response with status: %d", response.StatusCode)
-		return
-	}
-	defer response.Body.Close()
+	defer plugins.DrainBody(res)
 
-	err = json.NewDecoder(response.Body).Decode(&dashboardDetail)
-	return
+	if res.StatusCode != http.StatusOK {
+		return DashboardDetail{}, fmt.Errorf("response with status: %d", res.StatusCode)
+	}
+
+	var dashboard DashboardDetail
+	if err := json.NewDecoder(res.Body).Decode(&dashboard); err != nil {
+		return DashboardDetail{}, err
+	}
+
+	return dashboard, nil
 }
 
-func (c *Client) GetAllDatasources() (dataSources map[string]DataSource, err error) {
+func (c *Client) GetAllDatasources(ctx context.Context) (map[string]DataSource, error) {
 	url := c.getDataSourceURL()
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
 	req.Header.Add("Authorization", c.config.APIKey)
-	response, err := c.httpClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("response with status: %d", response.StatusCode)
-		return
-	}
-	defer response.Body.Close()
+	defer plugins.DrainBody(res)
 
-	var datasourceResponses []DataSource
-	err = json.NewDecoder(response.Body).Decode(&datasourceResponses)
-	if err != nil {
-		return
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response with status: %d", res.StatusCode)
 	}
 
-	dataSources = make(map[string]DataSource)
-	for _, rsp := range datasourceResponses {
+	var dataSources []DataSource
+	if err := json.NewDecoder(res.Body).Decode(&dataSources); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]DataSource)
+	for _, rsp := range dataSources {
 		if rsp.IsDefault {
-			dataSources["default"] = rsp
+			result["default"] = rsp
 		} else {
-			dataSources[rsp.Name] = rsp
+			result[rsp.Name] = rsp
 		}
 	}
-	return
+	return result, nil
 }
 
 func (c *Client) getDataSourceURL() string {

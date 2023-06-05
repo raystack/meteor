@@ -15,7 +15,6 @@ import (
 func TestBuildTableProfile(t *testing.T) {
 	tableURN := plugins.BigQueryURN("project1", "dataset1", "table1")
 	t.Run("table profile usage related fields are empty if usage collection is disabled", func(t *testing.T) {
-
 		var tableStats *auditlog.TableStats
 		extr := &Extractor{
 			config: Config{

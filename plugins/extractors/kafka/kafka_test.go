@@ -102,7 +102,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"wrong-config": "wrong-value",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -116,7 +117,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"broker": brokerHost,
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -194,7 +196,7 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
+func assertResults(t *testing.T, expected, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
 	expectedMap := make(map[string]*v1beta2.Asset)

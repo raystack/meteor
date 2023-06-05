@@ -7,24 +7,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/goto/meteor/models"
-	testUtils "github.com/goto/meteor/test/utils"
-	"github.com/goto/meteor/utils"
-
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/sinks/shield"
+	testUtils "github.com/goto/meteor/test/utils"
+	"github.com/goto/meteor/utils"
 	shieldProto "github.com/goto/shield/proto/v1beta1"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -73,7 +70,6 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should return RetryError if shield returns certain status code", func(t *testing.T) {
-
 		user, err := anypb.New(&v1beta2.User{
 			Email:    "user@gotocompany.com",
 			FullName: "john",
@@ -103,7 +99,6 @@ func TestSink(t *testing.T) {
 		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &plugins.RetryError{})
-
 	})
 
 	t.Run("should not return when valid payload is sent", func(t *testing.T) {
@@ -137,7 +132,6 @@ func TestSink(t *testing.T) {
 		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, nil, err)
 	})
-
 }
 
 type mockClient struct {

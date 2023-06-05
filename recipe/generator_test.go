@@ -101,7 +101,6 @@ func TestFromTemplate(t *testing.T) {
 				path.Join(outputDir, data[0].FileName+".yaml"),
 			)
 		})
-
 	})
 }
 

@@ -4,12 +4,13 @@
 package redshift_test
 
 import (
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice/redshiftdataapiserviceiface"
 	"github.com/goto/meteor/plugins/extractors/redshift"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // Define a mock struct to be used in your unit tests of myFunc.

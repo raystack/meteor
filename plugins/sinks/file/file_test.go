@@ -64,7 +64,6 @@ func TestSink(t *testing.T) {
 			"format": "yaml",
 		}
 		assert.NoError(t, sinkValidSetup(t, config))
-
 	})
 	t.Run("should return error for invalid directory in yaml", func(t *testing.T) {
 		config := map[string]interface{}{

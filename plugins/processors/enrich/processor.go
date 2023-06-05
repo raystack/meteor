@@ -50,19 +50,15 @@ func New(logger log.Logger) *Processor {
 }
 
 // Process processes the data
-func (p *Processor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = p.BasePlugin.Init(ctx, config); err != nil {
-		return err
-	}
-
-	return
+func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
+	return p.BasePlugin.Init(ctx, config)
 }
 
 // Process processes the data
-func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
+func (p *Processor) Process(_ context.Context, src models.Record) (models.Record, error) {
 	result, err := p.process(src)
 	if err != nil {
-		return src, err
+		return models.Record{}, err
 	}
 
 	return models.NewRecord(result), nil

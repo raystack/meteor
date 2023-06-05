@@ -65,7 +65,7 @@ func TestSinkFactoryRegister(t *testing.T) {
 		assert.Equal(t, mocks.NewSink(), mock2)  // Same type
 		assert.True(t, mocks.NewSink() != mock2) // Different instance
 
-		err = factory.Register("mock1", newSink(mocks.NewSink())) //error for duplicate sink
+		err = factory.Register("mock1", newSink(mocks.NewSink())) // error for duplicate sink
 		assert.Error(t, err)
 	})
 }

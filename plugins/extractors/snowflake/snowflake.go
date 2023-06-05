@@ -26,13 +26,15 @@ type Config struct {
 	ConnectionURL string `mapstructure:"connection_url" validate:"required"`
 }
 
-var sampleConfig = `connection_url: "user:password@my_organization-my_account/mydb"`
-var info = plugins.Info{
-	Description:  "Table metadata from Snowflake server.",
-	SampleConfig: sampleConfig,
-	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
-}
+var (
+	sampleConfig = `connection_url: "user:password@my_organization-my_account/mydb"`
+	info         = plugins.Info{
+		Description:  "Table metadata from Snowflake server.",
+		SampleConfig: sampleConfig,
+		Summary:      summary,
+		Tags:         []string{"oss", "extractor"},
+	}
+)
 
 // Extractor manages the extraction of data from snowflake
 type Extractor struct {
@@ -69,40 +71,43 @@ func New(logger log.Logger, opts ...Option) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
 	if e.httpTransport == nil {
 		// create snowflake client
+		var err error
 		if e.db, err = sql.Open("snowflake", e.config.ConnectionURL); err != nil {
-			return fmt.Errorf("failed to create client: %w", err)
+			return fmt.Errorf("create client: %w", err)
 		}
-		return
+		return nil
 	}
 
 	cfg, err := gosnowflake.ParseDSN(e.config.ConnectionURL)
 	if err != nil {
-		return fmt.Errorf("failed to parse dsn when creating client: %w", err)
+		return fmt.Errorf("parse dsn when creating client: %w", err)
 	}
+
 	cfg.Transporter = e.httpTransport
 	connector := gosnowflake.NewConnector(&gosnowflake.SnowflakeDriver{}, *cfg)
 	e.db = sql.OpenDB(connector)
 
-	return
+	return nil
 }
 
 // Extract collects metadata of the database through emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 	e.emit = emit
 
 	// Get list of databases
 	dbs, err := e.db.Query("SHOW DATABASES;")
 	if err != nil {
-		return fmt.Errorf("failed to get the list of databases: %w", err)
+		return fmt.Errorf("get databases: %w", err)
 	}
+	defer dbs.Close()
 
 	// Iterate through all tables and databases
 	for dbs.Next() {
@@ -110,59 +115,65 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 		var retentionTime int
 
 		if err = dbs.Scan(&createdOn, &name, &isDefault, &isCurrent, &origin, &owner, &comment, &options, &retentionTime); err != nil {
-			return fmt.Errorf("failed to scan database %s: %w", name, err)
+			return fmt.Errorf("scan database row: %w", err)
 		}
 		if err = e.extractTables(name); err != nil {
-			return fmt.Errorf("failed to extract tables from %s: %w", name, err)
+			return fmt.Errorf("extract tables from %s: %w", name, err)
 		}
 	}
+	if err := dbs.Err(); err != nil {
+		return fmt.Errorf("iterate over database rows: %w", err)
+	}
 
-	return
+	return nil
 }
 
 // extractTables extracts tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(database string) error {
 	// extract tables
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return fmt.Errorf("failed to execute USE query on %s: %w", database, err)
+		return fmt.Errorf("execute USE query on %s: %w", database, err)
 	}
+
 	rows, err := e.db.Query("SHOW TABLES;")
 	if err != nil {
-		return fmt.Errorf("failed to show tables for %s: %w", database, err)
+		return fmt.Errorf("show tables for %s: %w", database, err)
 	}
+	defer rows.Close()
 
 	// process each rows
 	for rows.Next() {
 		var createdOn, name, databaseName, schemaName, kind, comment, clusterBy, owner, autoClustering, changeTracking, isExternal string
 		var bytes, rowsCount, retentionTime int
 
-		if err = rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsCount,
+		if err := rows.Scan(&createdOn, &name, &databaseName, &schemaName, &kind, &comment, &clusterBy, &rowsCount,
 			&bytes, &owner, &retentionTime, &autoClustering, &changeTracking, &isExternal); err != nil {
 			return err
 		}
-		if err = e.processTable(database, name); err != nil {
+		if err := e.processTable(database, name); err != nil {
 			return err
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate over tables: %w", err)
+	}
 
-	return
+	return nil
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(database, tableName)
+func (e *Extractor) processTable(database, tableName string) error {
+	columns, err := e.extractColumns(database, tableName)
 	if err != nil {
-		return fmt.Errorf("failed to extract columns from %s.%s: %w", database, tableName, err)
+		return fmt.Errorf("extract columns from %s.%s: %w", database, tableName, err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-		return err
+		return fmt.Errorf("create Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -173,31 +184,34 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		Data:    data,
 	}))
 
-	return
+	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(database string, tableName string) (result []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(database, tableName string) ([]*v1beta2.Column, error) {
 	// extract columns
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute USE query on %s: %w", database, err)
+		return nil, fmt.Errorf("execute USE query on %s: %w", database, err)
 	}
+
 	sqlStr := `SELECT COLUMN_NAME,COMMENT,DATA_TYPE,IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 			   FROM information_schema.columns
 		       WHERE TABLE_NAME = ?
 		       ORDER BY COLUMN_NAME ASC;`
 	rows, err := e.db.Query(sqlStr, tableName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
+		return nil, fmt.Errorf("execute a query to extract columns metadata: %w", err)
 	}
+	defer rows.Close()
 
+	var result []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString sql.NullString
 		var length int
 
 		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
-			return nil, fmt.Errorf("failed to scan fields from query: %w", err)
+			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 		result = append(result, &v1beta2.Column{
 			Name:        fieldName.String,
@@ -206,6 +220,9 @@ func (e *Extractor) extractColumns(database string, tableName string) (result []
 			IsNullable:  e.isNullable(isNullableString.String),
 			Length:      int64(length),
 		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over columns: %w", err)
 	}
 
 	return result, nil

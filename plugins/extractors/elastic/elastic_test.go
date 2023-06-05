@@ -159,7 +159,7 @@ func setup() (err error) {
 	return
 }
 
-func populateElasticSearch(index string, id string, data string) error {
+func populateElasticSearch(index, id, data string) error {
 	req := esapi.IndexRequest{
 		Index:      index,
 		DocumentID: id,
