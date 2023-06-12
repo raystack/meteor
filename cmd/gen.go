@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/recipe"
+	"github.com/raystack/meteor/recipe"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

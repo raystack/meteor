@@ -6,7 +6,7 @@ Meteor can be installed currently by one of the following ways:
 
 ```sh
 # install meteor (requires homebrew installed)
-$ brew install odpf/tap/meteor
+$ brew install raystack/tap/meteor
 
 # Get info about meteor
 $ meteor
@@ -23,19 +23,19 @@ You have to add the meteor binary to the `PATH` environment variable yourself or
 
 Once installed, you should be able to run:
 
-```$ meteor version```
+`$ meteor version`
 
 ## Using docker image
 
 ```bash
 # pull
-$ docker pull odpf/meteor
+$ docker pull raystack/meteor
 
 # Get info about commands
-$ docker run --rm odpf/meteor
+$ docker run --rm raystack/meteor
 
 # list down all the extractors currently supported
-$ docker run --rm odpf/meteor meteor list extractors
+$ docker run --rm raystack/meteor meteor list extractors
 ```
 
 ## Build from source
@@ -44,7 +44,7 @@ Requires you to have `git` and `golang (version 1.16 or above)` installed.
 
 ```bash
 #clone repo
-$ git clone https://github.com/odpf/meteor.git
+$ git clone https://github.com/raystack/meteor.git
 
 $ cd meteor
 
@@ -53,4 +53,4 @@ $ make build
 $ ./meteor --help
 ```
 
-[github-releases]: https://github.com/odpf/meteor/releases
+[github-releases]: https://github.com/raystack/meteor/releases

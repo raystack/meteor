@@ -15,13 +15,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/superset"
-	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/superset"
+	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

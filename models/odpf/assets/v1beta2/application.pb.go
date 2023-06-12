@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        (unknown)
-// source: odpf/assets/v1beta2/application.proto
+// source: raystack/assets/v1beta2/application.proto
 
 package assetsv1beta2
 
@@ -42,7 +42,7 @@ type Application struct {
 func (x *Application) Reset() {
 	*x = Application{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_application_proto_msgTypes[0]
+		mi := &file_raystack_assets_v1beta2_application_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -55,7 +55,7 @@ func (x *Application) String() string {
 func (*Application) ProtoMessage() {}
 
 func (x *Application) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_application_proto_msgTypes[0]
+	mi := &file_raystack_assets_v1beta2_application_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -68,7 +68,7 @@ func (x *Application) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Application.ProtoReflect.Descriptor instead.
 func (*Application) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_application_proto_rawDescGZIP(), []int{0}
+	return file_raystack_assets_v1beta2_application_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Application) GetId() string {
@@ -106,9 +106,9 @@ func (x *Application) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_odpf_assets_v1beta2_application_proto protoreflect.FileDescriptor
+var File_raystack_assets_v1beta2_application_proto protoreflect.FileDescriptor
 
-var file_odpf_assets_v1beta2_application_proto_rawDesc = []byte{
+var file_raystack_assets_v1beta2_application_proto_rawDesc = []byte{
 	0x0a, 0x25, 0x6f, 0x64, 0x70, 0x66, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x76, 0x31,
 	0x62, 0x65, 0x74, 0x61, 0x32, 0x2f, 0x61, 0x70, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x13, 0x6f, 0x64, 0x70, 0x66, 0x2e, 0x61, 0x73,
@@ -141,27 +141,27 @@ var file_odpf_assets_v1beta2_application_proto_rawDesc = []byte{
 }
 
 var (
-	file_odpf_assets_v1beta2_application_proto_rawDescOnce sync.Once
-	file_odpf_assets_v1beta2_application_proto_rawDescData = file_odpf_assets_v1beta2_application_proto_rawDesc
+	file_raystack_assets_v1beta2_application_proto_rawDescOnce sync.Once
+	file_raystack_assets_v1beta2_application_proto_rawDescData = file_raystack_assets_v1beta2_application_proto_rawDesc
 )
 
-func file_odpf_assets_v1beta2_application_proto_rawDescGZIP() []byte {
-	file_odpf_assets_v1beta2_application_proto_rawDescOnce.Do(func() {
-		file_odpf_assets_v1beta2_application_proto_rawDescData = protoimpl.X.CompressGZIP(file_odpf_assets_v1beta2_application_proto_rawDescData)
+func file_raystack_assets_v1beta2_application_proto_rawDescGZIP() []byte {
+	file_raystack_assets_v1beta2_application_proto_rawDescOnce.Do(func() {
+		file_raystack_assets_v1beta2_application_proto_rawDescData = protoimpl.X.CompressGZIP(file_raystack_assets_v1beta2_application_proto_rawDescData)
 	})
-	return file_odpf_assets_v1beta2_application_proto_rawDescData
+	return file_raystack_assets_v1beta2_application_proto_rawDescData
 }
 
-var file_odpf_assets_v1beta2_application_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_odpf_assets_v1beta2_application_proto_goTypes = []interface{}{
-	(*Application)(nil),           // 0: odpf.assets.v1beta2.Application
+var file_raystack_assets_v1beta2_application_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_raystack_assets_v1beta2_application_proto_goTypes = []interface{}{
+	(*Application)(nil),           // 0: raystack.assets.v1beta2.Application
 	(*structpb.Struct)(nil),       // 1: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
-var file_odpf_assets_v1beta2_application_proto_depIdxs = []int32{
-	1, // 0: odpf.assets.v1beta2.Application.attributes:type_name -> google.protobuf.Struct
-	2, // 1: odpf.assets.v1beta2.Application.create_time:type_name -> google.protobuf.Timestamp
-	2, // 2: odpf.assets.v1beta2.Application.update_time:type_name -> google.protobuf.Timestamp
+var file_raystack_assets_v1beta2_application_proto_depIdxs = []int32{
+	1, // 0: raystack.assets.v1beta2.Application.attributes:type_name -> google.protobuf.Struct
+	2, // 1: raystack.assets.v1beta2.Application.create_time:type_name -> google.protobuf.Timestamp
+	2, // 2: raystack.assets.v1beta2.Application.update_time:type_name -> google.protobuf.Timestamp
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -169,13 +169,13 @@ var file_odpf_assets_v1beta2_application_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_odpf_assets_v1beta2_application_proto_init() }
-func file_odpf_assets_v1beta2_application_proto_init() {
-	if File_odpf_assets_v1beta2_application_proto != nil {
+func init() { file_raystack_assets_v1beta2_application_proto_init() }
+func file_raystack_assets_v1beta2_application_proto_init() {
+	if File_raystack_assets_v1beta2_application_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_odpf_assets_v1beta2_application_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_application_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Application); i {
 			case 0:
 				return &v.state
@@ -192,18 +192,18 @@ func file_odpf_assets_v1beta2_application_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_odpf_assets_v1beta2_application_proto_rawDesc,
+			RawDescriptor: file_raystack_assets_v1beta2_application_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_odpf_assets_v1beta2_application_proto_goTypes,
-		DependencyIndexes: file_odpf_assets_v1beta2_application_proto_depIdxs,
-		MessageInfos:      file_odpf_assets_v1beta2_application_proto_msgTypes,
+		GoTypes:           file_raystack_assets_v1beta2_application_proto_goTypes,
+		DependencyIndexes: file_raystack_assets_v1beta2_application_proto_depIdxs,
+		MessageInfos:      file_raystack_assets_v1beta2_application_proto_msgTypes,
 	}.Build()
-	File_odpf_assets_v1beta2_application_proto = out.File
-	file_odpf_assets_v1beta2_application_proto_rawDesc = nil
-	file_odpf_assets_v1beta2_application_proto_goTypes = nil
-	file_odpf_assets_v1beta2_application_proto_depIdxs = nil
+	File_raystack_assets_v1beta2_application_proto = out.File
+	file_raystack_assets_v1beta2_application_proto_rawDesc = nil
+	file_raystack_assets_v1beta2_application_proto_goTypes = nil
+	file_raystack_assets_v1beta2_application_proto_depIdxs = nil
 }

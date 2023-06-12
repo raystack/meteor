@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
-	"github.com/odpf/meteor/models"
+	"github.com/raystack/meteor/models"
 )
 
 var validate *validator.Validate

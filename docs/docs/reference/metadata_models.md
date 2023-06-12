@@ -68,12 +68,12 @@ implementation please refer [here][proton-assets].
 
 ## Usage
 
-[//]: # (@formatter:off)
+[//]: # "@formatter:off"
 
 ```golang
 import(
-    assetsv1beta1 "github.com/odpf/meteor/models/odpf/assets/v1beta1"
-    "github.com/odpf/meteor/models/odpf/assets/facets/v1beta1"
+    assetsv1beta1 "github.com/raystack/meteor/models/raystack/assets/v1beta1"
+    "github.com/raystack/meteor/models/raystack/assets/facets/v1beta1"
 )
 
 func main(){
@@ -99,25 +99,14 @@ func main(){
 }
 ```
 
-[//]: # (@formatter:on)
-
-
-[proton-bucket]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/bucket.proto
-
-[proton-dashboard]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/dashboard.proto
-
-[proton-user]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/user.proto
-
-[proton-table]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/table.proto
-
-[proton-job]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/job.proto
-
-[proton-topic]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/topic.proto
-
-[proton-featuretable]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/feature_table.proto
-
-[proton-application]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/application.proto
-
-[proton-model]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2/model.proto
-
-[proton-assets]: https://github.com/odpf/proton/tree/main/odpf/assets/v1beta2
+[//]: # "@formatter:on"
+[proton-bucket]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/bucket.proto
+[proton-dashboard]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/dashboard.proto
+[proton-user]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/user.proto
+[proton-table]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/table.proto
+[proton-job]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/job.proto
+[proton-topic]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/topic.proto
+[proton-featuretable]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/feature_table.proto
+[proton-application]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/application.proto
+[proton-model]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/model.proto
+[proton-assets]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2

@@ -1,8 +1,8 @@
 package registry
 
 import (
-	"github.com/odpf/meteor/plugins"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/plugins"
 )
 
 // SinkFactory is a factory for Sinks.

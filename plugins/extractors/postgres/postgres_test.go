@@ -10,19 +10,19 @@ import (
 	"os"
 	"testing"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/test/utils"
-	ut "github.com/odpf/meteor/utils"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/test/utils"
+	ut "github.com/raystack/meteor/utils"
 
 	"database/sql"
 
 	_ "github.com/lib/pq"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/postgres"
-	"github.com/odpf/meteor/test/mocks"
-	testUtils "github.com/odpf/meteor/test/utils"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/postgres"
+	"github.com/raystack/meteor/test/mocks"
+	testUtils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

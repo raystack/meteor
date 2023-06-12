@@ -7,8 +7,8 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/generator"
-	"github.com/odpf/meteor/registry"
+	"github.com/raystack/meteor/generator"
+	"github.com/raystack/meteor/registry"
 	"github.com/spf13/cobra"
 )
 

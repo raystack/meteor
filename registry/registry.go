@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/odpf/meteor/plugins"
+	"github.com/raystack/meteor/plugins"
 )
 
 var (

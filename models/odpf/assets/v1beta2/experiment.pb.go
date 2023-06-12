@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        (unknown)
-// source: odpf/assets/v1beta2/experiment.proto
+// source: raystack/assets/v1beta2/experiment.proto
 
 package assetsv1beta2
 
@@ -63,7 +63,7 @@ type Experiment struct {
 func (x *Experiment) Reset() {
 	*x = Experiment{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_experiment_proto_msgTypes[0]
+		mi := &file_raystack_assets_v1beta2_experiment_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -76,7 +76,7 @@ func (x *Experiment) String() string {
 func (*Experiment) ProtoMessage() {}
 
 func (x *Experiment) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_experiment_proto_msgTypes[0]
+	mi := &file_raystack_assets_v1beta2_experiment_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -89,7 +89,7 @@ func (x *Experiment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Experiment.ProtoReflect.Descriptor instead.
 func (*Experiment) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_experiment_proto_rawDescGZIP(), []int{0}
+	return file_raystack_assets_v1beta2_experiment_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Experiment) GetEntity() string {
@@ -155,7 +155,7 @@ type Experiment_Variant struct {
 func (x *Experiment_Variant) Reset() {
 	*x = Experiment_Variant{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_experiment_proto_msgTypes[1]
+		mi := &file_raystack_assets_v1beta2_experiment_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -168,7 +168,7 @@ func (x *Experiment_Variant) String() string {
 func (*Experiment_Variant) ProtoMessage() {}
 
 func (x *Experiment_Variant) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_experiment_proto_msgTypes[1]
+	mi := &file_raystack_assets_v1beta2_experiment_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -181,7 +181,7 @@ func (x *Experiment_Variant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Experiment_Variant.ProtoReflect.Descriptor instead.
 func (*Experiment_Variant) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_experiment_proto_rawDescGZIP(), []int{0, 0}
+	return file_raystack_assets_v1beta2_experiment_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *Experiment_Variant) GetName() string {
@@ -219,9 +219,9 @@ func (x *Experiment_Variant) GetIsPromoted() bool {
 	return false
 }
 
-var File_odpf_assets_v1beta2_experiment_proto protoreflect.FileDescriptor
+var File_raystack_assets_v1beta2_experiment_proto protoreflect.FileDescriptor
 
-var file_odpf_assets_v1beta2_experiment_proto_rawDesc = []byte{
+var file_raystack_assets_v1beta2_experiment_proto_rawDesc = []byte{
 	0x0a, 0x24, 0x6f, 0x64, 0x70, 0x66, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x76, 0x31,
 	0x62, 0x65, 0x74, 0x61, 0x32, 0x2f, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x13, 0x6f, 0x64, 0x70, 0x66, 0x2e, 0x61, 0x73, 0x73,
@@ -272,30 +272,30 @@ var file_odpf_assets_v1beta2_experiment_proto_rawDesc = []byte{
 }
 
 var (
-	file_odpf_assets_v1beta2_experiment_proto_rawDescOnce sync.Once
-	file_odpf_assets_v1beta2_experiment_proto_rawDescData = file_odpf_assets_v1beta2_experiment_proto_rawDesc
+	file_raystack_assets_v1beta2_experiment_proto_rawDescOnce sync.Once
+	file_raystack_assets_v1beta2_experiment_proto_rawDescData = file_raystack_assets_v1beta2_experiment_proto_rawDesc
 )
 
-func file_odpf_assets_v1beta2_experiment_proto_rawDescGZIP() []byte {
-	file_odpf_assets_v1beta2_experiment_proto_rawDescOnce.Do(func() {
-		file_odpf_assets_v1beta2_experiment_proto_rawDescData = protoimpl.X.CompressGZIP(file_odpf_assets_v1beta2_experiment_proto_rawDescData)
+func file_raystack_assets_v1beta2_experiment_proto_rawDescGZIP() []byte {
+	file_raystack_assets_v1beta2_experiment_proto_rawDescOnce.Do(func() {
+		file_raystack_assets_v1beta2_experiment_proto_rawDescData = protoimpl.X.CompressGZIP(file_raystack_assets_v1beta2_experiment_proto_rawDescData)
 	})
-	return file_odpf_assets_v1beta2_experiment_proto_rawDescData
+	return file_raystack_assets_v1beta2_experiment_proto_rawDescData
 }
 
-var file_odpf_assets_v1beta2_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_odpf_assets_v1beta2_experiment_proto_goTypes = []interface{}{
-	(*Experiment)(nil),            // 0: odpf.assets.v1beta2.Experiment
-	(*Experiment_Variant)(nil),    // 1: odpf.assets.v1beta2.Experiment.Variant
+var file_raystack_assets_v1beta2_experiment_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_raystack_assets_v1beta2_experiment_proto_goTypes = []interface{}{
+	(*Experiment)(nil),            // 0: raystack.assets.v1beta2.Experiment
+	(*Experiment_Variant)(nil),    // 1: raystack.assets.v1beta2.Experiment.Variant
 	(*structpb.Struct)(nil),       // 2: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
-var file_odpf_assets_v1beta2_experiment_proto_depIdxs = []int32{
-	1, // 0: odpf.assets.v1beta2.Experiment.variants:type_name -> odpf.assets.v1beta2.Experiment.Variant
-	2, // 1: odpf.assets.v1beta2.Experiment.attributes:type_name -> google.protobuf.Struct
-	3, // 2: odpf.assets.v1beta2.Experiment.create_time:type_name -> google.protobuf.Timestamp
-	3, // 3: odpf.assets.v1beta2.Experiment.update_time:type_name -> google.protobuf.Timestamp
-	2, // 4: odpf.assets.v1beta2.Experiment.Variant.attributes:type_name -> google.protobuf.Struct
+var file_raystack_assets_v1beta2_experiment_proto_depIdxs = []int32{
+	1, // 0: raystack.assets.v1beta2.Experiment.variants:type_name -> raystack.assets.v1beta2.Experiment.Variant
+	2, // 1: raystack.assets.v1beta2.Experiment.attributes:type_name -> google.protobuf.Struct
+	3, // 2: raystack.assets.v1beta2.Experiment.create_time:type_name -> google.protobuf.Timestamp
+	3, // 3: raystack.assets.v1beta2.Experiment.update_time:type_name -> google.protobuf.Timestamp
+	2, // 4: raystack.assets.v1beta2.Experiment.Variant.attributes:type_name -> google.protobuf.Struct
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -303,13 +303,13 @@ var file_odpf_assets_v1beta2_experiment_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_odpf_assets_v1beta2_experiment_proto_init() }
-func file_odpf_assets_v1beta2_experiment_proto_init() {
-	if File_odpf_assets_v1beta2_experiment_proto != nil {
+func init() { file_raystack_assets_v1beta2_experiment_proto_init() }
+func file_raystack_assets_v1beta2_experiment_proto_init() {
+	if File_raystack_assets_v1beta2_experiment_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_odpf_assets_v1beta2_experiment_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_experiment_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Experiment); i {
 			case 0:
 				return &v.state
@@ -321,7 +321,7 @@ func file_odpf_assets_v1beta2_experiment_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_experiment_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_experiment_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Experiment_Variant); i {
 			case 0:
 				return &v.state
@@ -338,18 +338,18 @@ func file_odpf_assets_v1beta2_experiment_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_odpf_assets_v1beta2_experiment_proto_rawDesc,
+			RawDescriptor: file_raystack_assets_v1beta2_experiment_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_odpf_assets_v1beta2_experiment_proto_goTypes,
-		DependencyIndexes: file_odpf_assets_v1beta2_experiment_proto_depIdxs,
-		MessageInfos:      file_odpf_assets_v1beta2_experiment_proto_msgTypes,
+		GoTypes:           file_raystack_assets_v1beta2_experiment_proto_goTypes,
+		DependencyIndexes: file_raystack_assets_v1beta2_experiment_proto_depIdxs,
+		MessageInfos:      file_raystack_assets_v1beta2_experiment_proto_msgTypes,
 	}.Build()
-	File_odpf_assets_v1beta2_experiment_proto = out.File
-	file_odpf_assets_v1beta2_experiment_proto_rawDesc = nil
-	file_odpf_assets_v1beta2_experiment_proto_goTypes = nil
-	file_odpf_assets_v1beta2_experiment_proto_depIdxs = nil
+	File_raystack_assets_v1beta2_experiment_proto = out.File
+	file_raystack_assets_v1beta2_experiment_proto_rawDesc = nil
+	file_raystack_assets_v1beta2_experiment_proto_goTypes = nil
+	file_raystack_assets_v1beta2_experiment_proto_depIdxs = nil
 }

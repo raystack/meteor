@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	merlin "github.com/odpf/meteor/plugins/extractors/merlin/internal/merlin"
+	merlin "github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
 
 	mock "github.com/stretchr/testify/mock"
 )

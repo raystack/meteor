@@ -7,13 +7,13 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/d5/tengo/v2"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/internal/tengoutil"
-	"github.com/odpf/meteor/plugins/internal/tengoutil/structmap"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/internal/tengoutil"
+	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/log"
 )
 
 func init() {

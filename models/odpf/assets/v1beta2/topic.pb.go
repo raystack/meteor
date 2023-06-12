@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        (unknown)
-// source: odpf/assets/v1beta2/topic.proto
+// source: raystack/assets/v1beta2/topic.proto
 
 package assetsv1beta2
 
@@ -46,7 +46,7 @@ type Topic struct {
 func (x *Topic) Reset() {
 	*x = Topic{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[0]
+		mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -59,7 +59,7 @@ func (x *Topic) String() string {
 func (*Topic) ProtoMessage() {}
 
 func (x *Topic) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[0]
+	mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -72,7 +72,7 @@ func (x *Topic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Topic.ProtoReflect.Descriptor instead.
 func (*Topic) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_topic_proto_rawDescGZIP(), []int{0}
+	return file_raystack_assets_v1beta2_topic_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Topic) GetProfile() *TopicProfile {
@@ -127,7 +127,7 @@ type TopicProfile struct {
 func (x *TopicProfile) Reset() {
 	*x = TopicProfile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[1]
+		mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -140,7 +140,7 @@ func (x *TopicProfile) String() string {
 func (*TopicProfile) ProtoMessage() {}
 
 func (x *TopicProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[1]
+	mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -153,7 +153,7 @@ func (x *TopicProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TopicProfile.ProtoReflect.Descriptor instead.
 func (*TopicProfile) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_topic_proto_rawDescGZIP(), []int{1}
+	return file_raystack_assets_v1beta2_topic_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *TopicProfile) GetThroughput() string {
@@ -184,7 +184,7 @@ type TopicSchema struct {
 func (x *TopicSchema) Reset() {
 	*x = TopicSchema{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[2]
+		mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -197,7 +197,7 @@ func (x *TopicSchema) String() string {
 func (*TopicSchema) ProtoMessage() {}
 
 func (x *TopicSchema) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_topic_proto_msgTypes[2]
+	mi := &file_raystack_assets_v1beta2_topic_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -210,7 +210,7 @@ func (x *TopicSchema) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TopicSchema.ProtoReflect.Descriptor instead.
 func (*TopicSchema) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_topic_proto_rawDescGZIP(), []int{2}
+	return file_raystack_assets_v1beta2_topic_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TopicSchema) GetSchemaUrl() string {
@@ -227,9 +227,9 @@ func (x *TopicSchema) GetFormat() string {
 	return ""
 }
 
-var File_odpf_assets_v1beta2_topic_proto protoreflect.FileDescriptor
+var File_raystack_assets_v1beta2_topic_proto protoreflect.FileDescriptor
 
-var file_odpf_assets_v1beta2_topic_proto_rawDesc = []byte{
+var file_raystack_assets_v1beta2_topic_proto_rawDesc = []byte{
 	0x0a, 0x1f, 0x6f, 0x64, 0x70, 0x66, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x76, 0x31,
 	0x62, 0x65, 0x74, 0x61, 0x32, 0x2f, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x12, 0x13, 0x6f, 0x64, 0x70, 0x66, 0x2e, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2e, 0x76,
@@ -276,31 +276,31 @@ var file_odpf_assets_v1beta2_topic_proto_rawDesc = []byte{
 }
 
 var (
-	file_odpf_assets_v1beta2_topic_proto_rawDescOnce sync.Once
-	file_odpf_assets_v1beta2_topic_proto_rawDescData = file_odpf_assets_v1beta2_topic_proto_rawDesc
+	file_raystack_assets_v1beta2_topic_proto_rawDescOnce sync.Once
+	file_raystack_assets_v1beta2_topic_proto_rawDescData = file_raystack_assets_v1beta2_topic_proto_rawDesc
 )
 
-func file_odpf_assets_v1beta2_topic_proto_rawDescGZIP() []byte {
-	file_odpf_assets_v1beta2_topic_proto_rawDescOnce.Do(func() {
-		file_odpf_assets_v1beta2_topic_proto_rawDescData = protoimpl.X.CompressGZIP(file_odpf_assets_v1beta2_topic_proto_rawDescData)
+func file_raystack_assets_v1beta2_topic_proto_rawDescGZIP() []byte {
+	file_raystack_assets_v1beta2_topic_proto_rawDescOnce.Do(func() {
+		file_raystack_assets_v1beta2_topic_proto_rawDescData = protoimpl.X.CompressGZIP(file_raystack_assets_v1beta2_topic_proto_rawDescData)
 	})
-	return file_odpf_assets_v1beta2_topic_proto_rawDescData
+	return file_raystack_assets_v1beta2_topic_proto_rawDescData
 }
 
-var file_odpf_assets_v1beta2_topic_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_odpf_assets_v1beta2_topic_proto_goTypes = []interface{}{
-	(*Topic)(nil),                 // 0: odpf.assets.v1beta2.Topic
-	(*TopicProfile)(nil),          // 1: odpf.assets.v1beta2.TopicProfile
-	(*TopicSchema)(nil),           // 2: odpf.assets.v1beta2.TopicSchema
+var file_raystack_assets_v1beta2_topic_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_raystack_assets_v1beta2_topic_proto_goTypes = []interface{}{
+	(*Topic)(nil),                 // 0: raystack.assets.v1beta2.Topic
+	(*TopicProfile)(nil),          // 1: raystack.assets.v1beta2.TopicProfile
+	(*TopicSchema)(nil),           // 2: raystack.assets.v1beta2.TopicSchema
 	(*structpb.Struct)(nil),       // 3: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
-var file_odpf_assets_v1beta2_topic_proto_depIdxs = []int32{
-	1, // 0: odpf.assets.v1beta2.Topic.profile:type_name -> odpf.assets.v1beta2.TopicProfile
-	2, // 1: odpf.assets.v1beta2.Topic.schema:type_name -> odpf.assets.v1beta2.TopicSchema
-	3, // 2: odpf.assets.v1beta2.Topic.attributes:type_name -> google.protobuf.Struct
-	4, // 3: odpf.assets.v1beta2.Topic.create_time:type_name -> google.protobuf.Timestamp
-	4, // 4: odpf.assets.v1beta2.Topic.update_time:type_name -> google.protobuf.Timestamp
+var file_raystack_assets_v1beta2_topic_proto_depIdxs = []int32{
+	1, // 0: raystack.assets.v1beta2.Topic.profile:type_name -> raystack.assets.v1beta2.TopicProfile
+	2, // 1: raystack.assets.v1beta2.Topic.schema:type_name -> raystack.assets.v1beta2.TopicSchema
+	3, // 2: raystack.assets.v1beta2.Topic.attributes:type_name -> google.protobuf.Struct
+	4, // 3: raystack.assets.v1beta2.Topic.create_time:type_name -> google.protobuf.Timestamp
+	4, // 4: raystack.assets.v1beta2.Topic.update_time:type_name -> google.protobuf.Timestamp
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -308,13 +308,13 @@ var file_odpf_assets_v1beta2_topic_proto_depIdxs = []int32{
 	0, // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_odpf_assets_v1beta2_topic_proto_init() }
-func file_odpf_assets_v1beta2_topic_proto_init() {
-	if File_odpf_assets_v1beta2_topic_proto != nil {
+func init() { file_raystack_assets_v1beta2_topic_proto_init() }
+func file_raystack_assets_v1beta2_topic_proto_init() {
+	if File_raystack_assets_v1beta2_topic_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_odpf_assets_v1beta2_topic_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_topic_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Topic); i {
 			case 0:
 				return &v.state
@@ -326,7 +326,7 @@ func file_odpf_assets_v1beta2_topic_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_topic_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_topic_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TopicProfile); i {
 			case 0:
 				return &v.state
@@ -338,7 +338,7 @@ func file_odpf_assets_v1beta2_topic_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_topic_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_topic_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TopicSchema); i {
 			case 0:
 				return &v.state
@@ -355,18 +355,18 @@ func file_odpf_assets_v1beta2_topic_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_odpf_assets_v1beta2_topic_proto_rawDesc,
+			RawDescriptor: file_raystack_assets_v1beta2_topic_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_odpf_assets_v1beta2_topic_proto_goTypes,
-		DependencyIndexes: file_odpf_assets_v1beta2_topic_proto_depIdxs,
-		MessageInfos:      file_odpf_assets_v1beta2_topic_proto_msgTypes,
+		GoTypes:           file_raystack_assets_v1beta2_topic_proto_goTypes,
+		DependencyIndexes: file_raystack_assets_v1beta2_topic_proto_depIdxs,
+		MessageInfos:      file_raystack_assets_v1beta2_topic_proto_msgTypes,
 	}.Build()
-	File_odpf_assets_v1beta2_topic_proto = out.File
-	file_odpf_assets_v1beta2_topic_proto_rawDesc = nil
-	file_odpf_assets_v1beta2_topic_proto_goTypes = nil
-	file_odpf_assets_v1beta2_topic_proto_depIdxs = nil
+	File_raystack_assets_v1beta2_topic_proto = out.File
+	file_raystack_assets_v1beta2_topic_proto_rawDesc = nil
+	file_raystack_assets_v1beta2_topic_proto_goTypes = nil
+	file_raystack_assets_v1beta2_topic_proto_depIdxs = nil
 }

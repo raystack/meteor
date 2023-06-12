@@ -11,17 +11,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/mssql"
-	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/mssql"
+	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

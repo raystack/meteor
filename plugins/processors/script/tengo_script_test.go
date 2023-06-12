@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	testutils "github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -187,7 +187,7 @@ func TestProcess(t *testing.T) {
 				asset.does_not_exist = "value"
 			`),
 			input: &v1beta2.Asset{
-				Data: &anypb.Any{TypeUrl: "type.googleapis.com/odpf.assets.v1beta2.Table"},
+				Data: &anypb.Any{TypeUrl: "type.googleapis.com/raystack.assets.v1beta2.Table"},
 			},
 			expected: nil,
 			errStr:   "invalid keys: does_not_exist",

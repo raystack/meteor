@@ -7,15 +7,15 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql" // used to register the mariadb driver
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/models"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins/sqlutil"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins/sqlutil"
 )
 
 //go:embed README.md

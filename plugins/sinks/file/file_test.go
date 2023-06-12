@@ -8,11 +8,11 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	f "github.com/odpf/meteor/plugins/sinks/file"
-	testUtils "github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	f "github.com/raystack/meteor/plugins/sinks/file"
+	testUtils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -102,7 +102,7 @@ func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
 
 func getExpectedVal(t *testing.T) []models.Record {
 	t.Helper()
-	
+
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{

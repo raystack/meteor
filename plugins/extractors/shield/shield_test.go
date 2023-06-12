@@ -7,13 +7,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/plugins/extractors/shield"
+	"github.com/raystack/meteor/plugins/extractors/shield"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/test/mocks"
-	testutils "github.com/odpf/meteor/test/utils"
-	sh "github.com/odpf/shield/proto/v1beta1"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/test/mocks"
+	testutils "github.com/raystack/meteor/test/utils"
+	sh "github.com/raystack/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

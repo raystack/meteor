@@ -10,7 +10,7 @@ sinks:
   config:
     host: shield.com
     headers:
-      X-Shield-Email: meteor@odpf.io
+      X-Shield-Email: meteor@raystack.io
       X-Other-Header: value1, value2
 ```
 

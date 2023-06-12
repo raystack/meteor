@@ -6,23 +6,23 @@ package kafka_test
 import (
 	"context"
 	"errors"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"google.golang.org/protobuf/types/known/anypb"
 	"log"
 	"net"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 
 	"os"
 	"strconv"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/kafka"
-	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/models"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/kafka"
+	"github.com/raystack/meteor/test/mocks"
 	kafkaLib "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 )

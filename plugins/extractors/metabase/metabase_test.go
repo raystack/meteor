@@ -10,15 +10,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 
-	testutils "github.com/odpf/meteor/test/utils"
 	"github.com/pkg/errors"
+	testutils "github.com/raystack/meteor/test/utils"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/metabase"
-	"github.com/odpf/meteor/test/mocks"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/metabase"
+	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

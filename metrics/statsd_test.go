@@ -6,13 +6,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 
-	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/metrics"
-	"github.com/odpf/meteor/recipe"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/metrics"
+	"github.com/raystack/meteor/recipe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

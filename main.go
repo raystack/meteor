@@ -5,12 +5,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/odpf/meteor/cmd"
+	"github.com/raystack/meteor/cmd"
 
-	_ "github.com/odpf/meteor/plugins/extractors"
-	_ "github.com/odpf/meteor/plugins/processors"
-	_ "github.com/odpf/meteor/plugins/sinks"
-	"github.com/odpf/salt/cmdx"
+	_ "github.com/raystack/meteor/plugins/extractors"
+	_ "github.com/raystack/meteor/plugins/processors"
+	_ "github.com/raystack/meteor/plugins/sinks"
+	"github.com/raystack/salt/cmdx"
 )
 
 const (

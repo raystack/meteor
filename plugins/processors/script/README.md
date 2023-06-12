@@ -23,9 +23,9 @@ processors:
 ## Inputs
 
 | Key      | Value    | Example                                                        | Description                                          | Required? |
-|:---------|:---------|:---------------------------------------------------------------|:-----------------------------------------------------|:----------|
-| `engine` | `string` | `"tengo"`                                                      | Script engine. Only `"tengo"` is supported currently | ✅         |
-| `script` | `string` | `asset.labels = merge({script_engine: "tengo"}, asset.labels)` | [Tengo][tengo] script.                               | ✅         |
+| :------- | :------- | :------------------------------------------------------------- | :--------------------------------------------------- | :-------- |
+| `engine` | `string` | `"tengo"`                                                      | Script engine. Only `"tengo"` is supported currently | ✅        |
+| `script` | `string` | `asset.labels = merge({script_engine: "tengo"}, asset.labels)` | [Tengo][tengo] script.                               | ✅        |
 
 ### Notes
 
@@ -68,12 +68,12 @@ Consider a [`FeatureTable`][proton-featuretable] asset with the following data:
   "service": "caramlstore",
   "type": "feature_table",
   "data": {
-    "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+    "@type": "type.googleapis.com/raystack.assets.v1beta2.FeatureTable",
     "namespace": "sauron",
     "entities": [
       {
         "name": "merchant_uuid",
-        "labels": {"description": "merchant uuid", "value_type": "STRING"}
+        "labels": { "description": "merchant uuid", "value_type": "STRING" }
       }
     ],
     "features": [
@@ -81,9 +81,12 @@ Consider a [`FeatureTable`][proton-featuretable] asset with the following data:
         "name": "ongoing_placed_and_waiting_acceptance_orders",
         "data_type": "INT64"
       },
-      {"name": "ongoing_orders", "data_type": "INT64"},
-      {"name": "merchant_avg_dispatch_arrival_time_10m", "data_type": "FLOAT"},
-      {"name": "ongoing_accepted_orders", "data_type": "INT64"}
+      { "name": "ongoing_orders", "data_type": "INT64" },
+      {
+        "name": "merchant_avg_dispatch_arrival_time_10m",
+        "data_type": "FLOAT"
+      },
+      { "name": "ongoing_accepted_orders", "data_type": "INT64" }
     ],
     "create_time": "2022-09-19T22:42:04Z",
     "update_time": "2022-09-21T13:23:02Z"
@@ -116,7 +119,7 @@ With the following contrived requirements to transform the asset:
 
 The script to apply the transformations above:
 
-[//]: # (@formatter:off)
+[//]: # "@formatter:off"
 
 ```go
 text := import("text")
@@ -155,7 +158,7 @@ update_time := times.parse("2006-01-02T15:04:05Z07:00", asset.data.update_time)
 asset.data.update_time = times.add_date(update_time, 0, 0, 1)
 ```
 
-[//]: # (@formatter:on)
+[//]: # "@formatter:on"
 
 With this script, the output from the processor would have the following asset:
 
@@ -166,7 +169,7 @@ With this script, the output from the processor would have the following asset:
   "service": "caramlstore",
   "type": "feature_table",
   "data": {
-    "@type": "type.googleapis.com/odpf.assets.v1beta2.FeatureTable",
+    "@type": "type.googleapis.com/raystack.assets.v1beta2.FeatureTable",
     "namespace": "sauron",
     "entities": [
       {
@@ -203,9 +206,7 @@ With this script, the output from the processor would have the following asset:
     "create_time": "2022-09-19T22:42:04Z",
     "update_time": "2022-09-22T13:23:02Z"
   },
-  "owners": [
-    {"name": "Big Mom", "email": "big.mom@wholecakeisland.com"}
-  ],
+  "owners": [{ "name": "Big Mom", "email": "big.mom@wholecakeisland.com" }],
   "lineage": {
     "upstreams": [
       {
@@ -215,7 +216,7 @@ With this script, the output from the processor would have the following asset:
       }
     ]
   },
-  "labels": {"script_engine": "tengo"}
+  "labels": { "script_engine": "tengo" }
 }
 ```
 
@@ -226,32 +227,17 @@ the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-ne
 for information on contributing to this module.
 
 [tengo]: https://github.com/d5/tengo
-
 [tengo-stdlib]: https://github.com/d5/tengo/blob/v2.13.0/docs/stdlib.md
-
-[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
-
-[proton-bucket]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/bucket.proto#L13
-
-[proton-dashboard]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/dashboard.proto#L14
-
-[proton-experiment]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/experiment.proto#L15
-
-[proton-featuretable]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/feature_table.proto#L32
-
-[proton-group]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/group.proto#L12
-
-[proton-job]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/job.proto#L13
-
-[proton-metric]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/metric.proto#L13
-
-[proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L73
-
-[proton-application]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/application.proto#L11
-
-[proton-table]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/table.proto#L14
-
-[proton-topic]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/topic.proto#L14
-
-[proton-user]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/user.proto#L15
-
+[proton-asset]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/asset.proto#L14
+[proton-bucket]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/bucket.proto#L13
+[proton-dashboard]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/dashboard.proto#L14
+[proton-experiment]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/experiment.proto#L15
+[proton-featuretable]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/feature_table.proto#L32
+[proton-group]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/group.proto#L12
+[proton-job]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/job.proto#L13
+[proton-metric]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/metric.proto#L13
+[proton-model]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/model.proto#L73
+[proton-application]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/application.proto#L11
+[proton-table]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/table.proto#L14
+[proton-topic]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/topic.proto#L14
+[proton-user]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/user.proto#L15

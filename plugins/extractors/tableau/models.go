@@ -2,14 +2,14 @@ package tableau
 
 import (
 	"fmt"
-	"github.com/odpf/meteor/plugins"
+	"github.com/raystack/meteor/plugins"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 )
 
 // https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api_concepts_connectiontype.htm

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        (unknown)
-// source: odpf/assets/v1beta2/model.proto
+// source: raystack/assets/v1beta2/model.proto
 
 package assetsv1beta2
 
@@ -36,7 +36,7 @@ type ModelSignature struct {
 func (x *ModelSignature) Reset() {
 	*x = ModelSignature{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[0]
+		mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -49,7 +49,7 @@ func (x *ModelSignature) String() string {
 func (*ModelSignature) ProtoMessage() {}
 
 func (x *ModelSignature) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[0]
+	mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *ModelSignature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelSignature.ProtoReflect.Descriptor instead.
 func (*ModelSignature) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_model_proto_rawDescGZIP(), []int{0}
+	return file_raystack_assets_v1beta2_model_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ModelSignature) GetInputs() []*ModelSignature_Parameter {
@@ -117,7 +117,7 @@ type ModelVersion struct {
 func (x *ModelVersion) Reset() {
 	*x = ModelVersion{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[1]
+		mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -130,7 +130,7 @@ func (x *ModelVersion) String() string {
 func (*ModelVersion) ProtoMessage() {}
 
 func (x *ModelVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[1]
+	mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +143,7 @@ func (x *ModelVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelVersion.ProtoReflect.Descriptor instead.
 func (*ModelVersion) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_model_proto_rawDescGZIP(), []int{1}
+	return file_raystack_assets_v1beta2_model_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ModelVersion) GetSignature() *ModelSignature {
@@ -235,7 +235,7 @@ type Model struct {
 func (x *Model) Reset() {
 	*x = Model{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[2]
+		mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -248,7 +248,7 @@ func (x *Model) String() string {
 func (*Model) ProtoMessage() {}
 
 func (x *Model) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[2]
+	mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,7 +261,7 @@ func (x *Model) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Model.ProtoReflect.Descriptor instead.
 func (*Model) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_model_proto_rawDescGZIP(), []int{2}
+	return file_raystack_assets_v1beta2_model_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Model) GetNamespace() string {
@@ -337,7 +337,7 @@ type ModelSignature_Parameter struct {
 func (x *ModelSignature_Parameter) Reset() {
 	*x = ModelSignature_Parameter{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[3]
+		mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -350,7 +350,7 @@ func (x *ModelSignature_Parameter) String() string {
 func (*ModelSignature_Parameter) ProtoMessage() {}
 
 func (x *ModelSignature_Parameter) ProtoReflect() protoreflect.Message {
-	mi := &file_odpf_assets_v1beta2_model_proto_msgTypes[3]
+	mi := &file_raystack_assets_v1beta2_model_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -363,7 +363,7 @@ func (x *ModelSignature_Parameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModelSignature_Parameter.ProtoReflect.Descriptor instead.
 func (*ModelSignature_Parameter) Descriptor() ([]byte, []int) {
-	return file_odpf_assets_v1beta2_model_proto_rawDescGZIP(), []int{0, 0}
+	return file_raystack_assets_v1beta2_model_proto_rawDescGZIP(), []int{0, 0}
 }
 
 func (x *ModelSignature_Parameter) GetName() string {
@@ -387,9 +387,9 @@ func (x *ModelSignature_Parameter) GetShape() []int64 {
 	return nil
 }
 
-var File_odpf_assets_v1beta2_model_proto protoreflect.FileDescriptor
+var File_raystack_assets_v1beta2_model_proto protoreflect.FileDescriptor
 
-var file_odpf_assets_v1beta2_model_proto_rawDesc = []byte{
+var file_raystack_assets_v1beta2_model_proto_rawDesc = []byte{
 	0x0a, 0x1f, 0x6f, 0x64, 0x70, 0x66, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x76, 0x31,
 	0x62, 0x65, 0x74, 0x61, 0x32, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x12, 0x13, 0x6f, 0x64, 0x70, 0x66, 0x2e, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2e, 0x76,
@@ -472,39 +472,39 @@ var file_odpf_assets_v1beta2_model_proto_rawDesc = []byte{
 }
 
 var (
-	file_odpf_assets_v1beta2_model_proto_rawDescOnce sync.Once
-	file_odpf_assets_v1beta2_model_proto_rawDescData = file_odpf_assets_v1beta2_model_proto_rawDesc
+	file_raystack_assets_v1beta2_model_proto_rawDescOnce sync.Once
+	file_raystack_assets_v1beta2_model_proto_rawDescData = file_raystack_assets_v1beta2_model_proto_rawDesc
 )
 
-func file_odpf_assets_v1beta2_model_proto_rawDescGZIP() []byte {
-	file_odpf_assets_v1beta2_model_proto_rawDescOnce.Do(func() {
-		file_odpf_assets_v1beta2_model_proto_rawDescData = protoimpl.X.CompressGZIP(file_odpf_assets_v1beta2_model_proto_rawDescData)
+func file_raystack_assets_v1beta2_model_proto_rawDescGZIP() []byte {
+	file_raystack_assets_v1beta2_model_proto_rawDescOnce.Do(func() {
+		file_raystack_assets_v1beta2_model_proto_rawDescData = protoimpl.X.CompressGZIP(file_raystack_assets_v1beta2_model_proto_rawDescData)
 	})
-	return file_odpf_assets_v1beta2_model_proto_rawDescData
+	return file_raystack_assets_v1beta2_model_proto_rawDescData
 }
 
-var file_odpf_assets_v1beta2_model_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_odpf_assets_v1beta2_model_proto_goTypes = []interface{}{
-	(*ModelSignature)(nil),           // 0: odpf.assets.v1beta2.ModelSignature
-	(*ModelVersion)(nil),             // 1: odpf.assets.v1beta2.ModelVersion
-	(*Model)(nil),                    // 2: odpf.assets.v1beta2.Model
-	(*ModelSignature_Parameter)(nil), // 3: odpf.assets.v1beta2.ModelSignature.Parameter
-	nil,                              // 4: odpf.assets.v1beta2.ModelVersion.LabelsEntry
+var file_raystack_assets_v1beta2_model_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_raystack_assets_v1beta2_model_proto_goTypes = []interface{}{
+	(*ModelSignature)(nil),           // 0: raystack.assets.v1beta2.ModelSignature
+	(*ModelVersion)(nil),             // 1: raystack.assets.v1beta2.ModelVersion
+	(*Model)(nil),                    // 2: raystack.assets.v1beta2.Model
+	(*ModelSignature_Parameter)(nil), // 3: raystack.assets.v1beta2.ModelSignature.Parameter
+	nil,                              // 4: raystack.assets.v1beta2.ModelVersion.LabelsEntry
 	(*structpb.Struct)(nil),          // 5: google.protobuf.Struct
 	(*timestamppb.Timestamp)(nil),    // 6: google.protobuf.Timestamp
 }
-var file_odpf_assets_v1beta2_model_proto_depIdxs = []int32{
-	3,  // 0: odpf.assets.v1beta2.ModelSignature.inputs:type_name -> odpf.assets.v1beta2.ModelSignature.Parameter
-	3,  // 1: odpf.assets.v1beta2.ModelSignature.outputs:type_name -> odpf.assets.v1beta2.ModelSignature.Parameter
-	0,  // 2: odpf.assets.v1beta2.ModelVersion.signature:type_name -> odpf.assets.v1beta2.ModelSignature
-	5,  // 3: odpf.assets.v1beta2.ModelVersion.attributes:type_name -> google.protobuf.Struct
-	4,  // 4: odpf.assets.v1beta2.ModelVersion.labels:type_name -> odpf.assets.v1beta2.ModelVersion.LabelsEntry
-	6,  // 5: odpf.assets.v1beta2.ModelVersion.create_time:type_name -> google.protobuf.Timestamp
-	6,  // 6: odpf.assets.v1beta2.ModelVersion.update_time:type_name -> google.protobuf.Timestamp
-	1,  // 7: odpf.assets.v1beta2.Model.versions:type_name -> odpf.assets.v1beta2.ModelVersion
-	5,  // 8: odpf.assets.v1beta2.Model.attributes:type_name -> google.protobuf.Struct
-	6,  // 9: odpf.assets.v1beta2.Model.create_time:type_name -> google.protobuf.Timestamp
-	6,  // 10: odpf.assets.v1beta2.Model.update_time:type_name -> google.protobuf.Timestamp
+var file_raystack_assets_v1beta2_model_proto_depIdxs = []int32{
+	3,  // 0: raystack.assets.v1beta2.ModelSignature.inputs:type_name -> raystack.assets.v1beta2.ModelSignature.Parameter
+	3,  // 1: raystack.assets.v1beta2.ModelSignature.outputs:type_name -> raystack.assets.v1beta2.ModelSignature.Parameter
+	0,  // 2: raystack.assets.v1beta2.ModelVersion.signature:type_name -> raystack.assets.v1beta2.ModelSignature
+	5,  // 3: raystack.assets.v1beta2.ModelVersion.attributes:type_name -> google.protobuf.Struct
+	4,  // 4: raystack.assets.v1beta2.ModelVersion.labels:type_name -> raystack.assets.v1beta2.ModelVersion.LabelsEntry
+	6,  // 5: raystack.assets.v1beta2.ModelVersion.create_time:type_name -> google.protobuf.Timestamp
+	6,  // 6: raystack.assets.v1beta2.ModelVersion.update_time:type_name -> google.protobuf.Timestamp
+	1,  // 7: raystack.assets.v1beta2.Model.versions:type_name -> raystack.assets.v1beta2.ModelVersion
+	5,  // 8: raystack.assets.v1beta2.Model.attributes:type_name -> google.protobuf.Struct
+	6,  // 9: raystack.assets.v1beta2.Model.create_time:type_name -> google.protobuf.Timestamp
+	6,  // 10: raystack.assets.v1beta2.Model.update_time:type_name -> google.protobuf.Timestamp
 	11, // [11:11] is the sub-list for method output_type
 	11, // [11:11] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
@@ -512,13 +512,13 @@ var file_odpf_assets_v1beta2_model_proto_depIdxs = []int32{
 	0,  // [0:11] is the sub-list for field type_name
 }
 
-func init() { file_odpf_assets_v1beta2_model_proto_init() }
-func file_odpf_assets_v1beta2_model_proto_init() {
-	if File_odpf_assets_v1beta2_model_proto != nil {
+func init() { file_raystack_assets_v1beta2_model_proto_init() }
+func file_raystack_assets_v1beta2_model_proto_init() {
+	if File_raystack_assets_v1beta2_model_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_odpf_assets_v1beta2_model_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_model_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ModelSignature); i {
 			case 0:
 				return &v.state
@@ -530,7 +530,7 @@ func file_odpf_assets_v1beta2_model_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_model_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_model_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ModelVersion); i {
 			case 0:
 				return &v.state
@@ -542,7 +542,7 @@ func file_odpf_assets_v1beta2_model_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_model_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_model_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Model); i {
 			case 0:
 				return &v.state
@@ -554,7 +554,7 @@ func file_odpf_assets_v1beta2_model_proto_init() {
 				return nil
 			}
 		}
-		file_odpf_assets_v1beta2_model_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_raystack_assets_v1beta2_model_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ModelSignature_Parameter); i {
 			case 0:
 				return &v.state
@@ -571,18 +571,18 @@ func file_odpf_assets_v1beta2_model_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_odpf_assets_v1beta2_model_proto_rawDesc,
+			RawDescriptor: file_raystack_assets_v1beta2_model_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_odpf_assets_v1beta2_model_proto_goTypes,
-		DependencyIndexes: file_odpf_assets_v1beta2_model_proto_depIdxs,
-		MessageInfos:      file_odpf_assets_v1beta2_model_proto_msgTypes,
+		GoTypes:           file_raystack_assets_v1beta2_model_proto_goTypes,
+		DependencyIndexes: file_raystack_assets_v1beta2_model_proto_depIdxs,
+		MessageInfos:      file_raystack_assets_v1beta2_model_proto_msgTypes,
 	}.Build()
-	File_odpf_assets_v1beta2_model_proto = out.File
-	file_odpf_assets_v1beta2_model_proto_rawDesc = nil
-	file_odpf_assets_v1beta2_model_proto_goTypes = nil
-	file_odpf_assets_v1beta2_model_proto_depIdxs = nil
+	File_raystack_assets_v1beta2_model_proto = out.File
+	file_raystack_assets_v1beta2_model_proto_rawDesc = nil
+	file_raystack_assets_v1beta2_model_proto_goTypes = nil
+	file_raystack_assets_v1beta2_model_proto_depIdxs = nil
 }

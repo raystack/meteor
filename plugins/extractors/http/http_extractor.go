@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/log"
 )
 
 var errUserExit = errors.New("user exit")
