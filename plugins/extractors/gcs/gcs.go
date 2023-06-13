@@ -62,15 +62,19 @@ var info = plugins.Info{
 // from the google cloud storage
 type Extractor struct {
 	plugins.BaseExtractor
-	client *storage.Client
-	logger log.Logger
-	config Config
+	client    *storage.Client
+	logger    log.Logger
+	config    Config
+	newClient NewClientFunc
 }
 
+type NewClientFunc func(ctx context.Context, logger log.Logger, config Config) (*storage.Client, error)
+
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
+func New(logger log.Logger, newClient NewClientFunc) *Extractor {
 	e := &Extractor{
-		logger: logger,
+		logger:    logger,
+		newClient: newClient,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -86,7 +90,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 
 	// create client
 	var err error
-	e.client, err = e.createClient(ctx)
+	e.client, err = e.newClient(ctx, e.logger, e.config)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -176,28 +180,28 @@ func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *v1be
 	}
 }
 
-func (e *Extractor) createClient(ctx context.Context) (*storage.Client, error) {
-	if e.config.ServiceAccountBase64 == "" && e.config.ServiceAccountJSON == "" {
-		e.logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
+func createClient(ctx context.Context, logger log.Logger, config Config) (*storage.Client, error) {
+	if config.ServiceAccountBase64 == "" && config.ServiceAccountJSON == "" {
+		logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
 		return storage.NewClient(ctx)
 	}
 
-	if e.config.ServiceAccountBase64 != "" {
-		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+	if config.ServiceAccountBase64 != "" {
+		serviceAccountJSON, err := base64.StdEncoding.DecodeString(config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
 			return nil, fmt.Errorf("decode Base64 encoded service account: %w", err)
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
-		e.config.ServiceAccountJSON = string(serviceAccountJSON)
+		config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
-	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
 }
 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("gcs", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), createClient)
 	}); err != nil {
 		panic(err)
 	}

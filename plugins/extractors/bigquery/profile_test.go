@@ -58,7 +58,15 @@ func TestBuildTableProfile(t *testing.T) {
 					},
 					plugins.BigQueryURN("project4", "dataset1", "table1"): auditlog.JoinDetail{
 						Usage: 1,
+						Conditions: map[string]bool{
+							"ON t1.somefield = t2.anotherfield": true,
+						},
 					},
+				},
+			},
+			FilterConditions: map[string]map[string]bool{
+				plugins.BigQueryURN("project1", "dataset1", "table1"): {
+					"WHERE t1.somefield = 'somevalue'": true,
 				},
 			},
 		}
@@ -81,8 +89,10 @@ func TestBuildTableProfile(t *testing.T) {
 			Count: 3,
 		})
 		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   plugins.BigQueryURN("project4", "dataset1", "table1"),
-			Count: 1,
+			Urn:        plugins.BigQueryURN("project4", "dataset1", "table1"),
+			Count:      1,
+			Conditions: []string{"ON t1.somefield = t2.anotherfield"},
 		})
+		assert.Contains(t, tp.Filters, "WHERE t1.somefield = 'somevalue'")
 	})
 }

@@ -4,6 +4,7 @@
 package plugins_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/goto/meteor/plugins"
@@ -60,5 +61,38 @@ func TestBaseExtractorValidate(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
+	})
+}
+
+func TestBaseExtractorInit(t *testing.T) {
+	t.Run("should return InvalidConfigError if config is invalid", func(t *testing.T) {
+		invalidConfig := struct {
+			FieldA string `validate:"required"`
+		}{}
+
+		baseExtractor := plugins.NewBaseExtractor(plugins.Info{}, &invalidConfig)
+		err := baseExtractor.Init(context.Background(), plugins.Config{
+			URNScope:  "test-scope",
+			RawConfig: map[string]interface{}{},
+		})
+
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
+	})
+
+	t.Run("should return populate config and return no error if config is valid", func(t *testing.T) {
+		validConfig := struct {
+			FieldA string `validate:"required"`
+		}{}
+
+		baseExtractor := plugins.NewBaseExtractor(plugins.Info{}, &validConfig)
+		err := baseExtractor.Init(context.Background(), plugins.Config{
+			URNScope: "test-scope",
+			RawConfig: map[string]interface{}{
+				"FieldA": "test-value",
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "test-value", validConfig.FieldA)
 	})
 }

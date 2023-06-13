@@ -9,6 +9,8 @@ import (
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/metabase/client"
+	m "github.com/goto/meteor/plugins/extractors/metabase/models"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
@@ -17,6 +19,11 @@ import (
 
 //go:embed README.md
 var summary string
+
+const (
+	datasetQueryTypeQuery  = "query"
+	datasetQueryTypeNative = "native"
+)
 
 var sampleConfig = `
 host: http://localhost:3000
@@ -46,14 +53,14 @@ type Extractor struct {
 	plugins.BaseExtractor
 	config Config
 	logger log.Logger
-	client Client
+	client client.Client
 }
 
 // New returns a pointer to an initialized Extractor Object
-func New(client Client, logger log.Logger) *Extractor {
+func New(c client.Client, l log.Logger) *Extractor {
 	e := &Extractor{
-		client: client,
-		logger: logger,
+		client: c,
+		logger: l,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
@@ -91,7 +98,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return nil
 }
 
-func (e *Extractor) buildDashboard(ctx context.Context, d Dashboard) (*v1beta2.Asset, error) {
+func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (*v1beta2.Asset, error) {
 	// we fetch dashboard again individually to get more fields
 	dashboard, err := e.client.GetDashboard(ctx, d.ID)
 	if err != nil {
@@ -129,7 +136,7 @@ func (e *Extractor) buildDashboard(ctx context.Context, d Dashboard) (*v1beta2.A
 	}, nil
 }
 
-func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashboard Dashboard) []*v1beta2.Chart {
+func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashboard m.Dashboard) []*v1beta2.Chart {
 	var charts []*v1beta2.Chart
 	for _, oc := range dashboard.OrderedCards {
 		chart, err := e.buildChart(ctx, oc.Card, dashboardURN)
@@ -149,7 +156,7 @@ func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashbo
 	return charts
 }
 
-func (e *Extractor) buildChart(ctx context.Context, card Card, dashboardURN string) (*v1beta2.Chart, error) {
+func (e *Extractor) buildChart(ctx context.Context, card m.Card, dashboardURN string) (*v1beta2.Chart, error) {
 	upstreams, err := e.buildUpstreams(ctx, card)
 	if err != nil {
 		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
@@ -177,7 +184,7 @@ func (e *Extractor) buildChart(ctx context.Context, card Card, dashboardURN stri
 	}, nil
 }
 
-func (e *Extractor) buildUpstreams(ctx context.Context, card Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreams(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
 	switch card.DatasetQuery.Type {
 	case datasetQueryTypeQuery:
 		upstreams, err := e.buildUpstreamsFromQuery(ctx, card)
@@ -198,13 +205,13 @@ func (e *Extractor) buildUpstreams(ctx context.Context, card Card) ([]*v1beta2.R
 	}
 }
 
-func (e *Extractor) buildUpstreamsFromQuery(ctx context.Context, card Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreamsFromQuery(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
 	table, err := e.client.GetTable(ctx, card.DatasetQuery.Query.SourceTable)
 	if err != nil {
 		return nil, fmt.Errorf("get table: %w", err)
 	}
 
-	service, cluster, dbName := e.extractDbComponent(table.Db)
+	service, cluster, dbName := e.extractDBComponent(table.Db)
 	return []*v1beta2.Resource{{
 		Urn:     e.buildURN(service, cluster, dbName, table.Name),
 		Service: service,
@@ -212,7 +219,7 @@ func (e *Extractor) buildUpstreamsFromQuery(ctx context.Context, card Card) ([]*
 	}}, nil
 }
 
-func (e *Extractor) buildUpstreamsFromNative(ctx context.Context, card Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreamsFromNative(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
 	database, err := e.client.GetDatabase(ctx, card.DatasetQuery.Database)
 	if err != nil {
 		return nil, fmt.Errorf("get database: %w", err)
@@ -224,7 +231,7 @@ func (e *Extractor) buildUpstreamsFromNative(ctx context.Context, card Card) ([]
 	}
 
 	var upstreams []*v1beta2.Resource
-	service, cluster, dbName := e.extractDbComponent(database)
+	service, cluster, dbName := e.extractDBComponent(database)
 	for _, tableName := range tableNames {
 		upstreams = append(upstreams, &v1beta2.Resource{
 			Urn:     e.buildURN(service, cluster, dbName, tableName),
@@ -257,7 +264,7 @@ func (*Extractor) buildDashboardUpstreams(charts []*v1beta2.Chart) []*v1beta2.Re
 	return upstreams
 }
 
-func (e *Extractor) extractDbComponent(database Database) (service, cluster, dbName string) {
+func (e *Extractor) extractDBComponent(database m.Database) (service, cluster, dbName string) {
 	service = database.Engine
 
 	switch service {
@@ -280,7 +287,7 @@ func (e *Extractor) extractDbComponent(database Database) (service, cluster, dbN
 	return service, cluster, dbName
 }
 
-func (*Extractor) getTableNamesFromSQL(datasetQuery NativeDatasetQuery) ([]string, error) {
+func (*Extractor) getTableNamesFromSQL(datasetQuery m.NativeDatasetQuery) ([]string, error) {
 	query, err := evaluateQueryTemplate(datasetQuery)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating query template: %w", err)
@@ -323,7 +330,7 @@ func (e *Extractor) buildURN(service, cluster, dbName, tableName string) string 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("metabase", func() plugins.Extractor {
-		return New(newClient(), plugins.GetLog())
+		return New(client.New(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

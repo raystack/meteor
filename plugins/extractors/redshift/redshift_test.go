@@ -4,12 +4,16 @@
 package redshift_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice/redshiftdataapiserviceiface"
+	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/redshift"
+	"github.com/goto/meteor/test/mocks"
+	"github.com/goto/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -264,4 +268,97 @@ func TestExtractor_GetColumn(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestInit(t *testing.T) {
+	t.Run("should return error for invalid config", func(t *testing.T) {
+		extractor := redshift.New(nil)
+
+		err := extractor.Init(context.Background(), plugins.Config{
+			URNScope:  "test-redshift",
+			RawConfig: map[string]interface{}{},
+		})
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
+	})
+	t.Run("should return no error", func(t *testing.T) {
+		mockSvc := &mockRedshiftDataAPIClient{
+			RedshiftDataAPIServiceAPI: nil,
+			ListDatabasesOutput: redshiftdataapiservice.ListDatabasesOutput{
+				Databases: []*string{aws.String("dev"), aws.String("test")},
+				NextToken: nil,
+			},
+		}
+		extractor := redshift.New(nil, redshift.WithClient(mockSvc))
+
+		err := extractor.Init(context.Background(), plugins.Config{
+			URNScope: "test-redshift",
+			RawConfig: map[string]interface{}{
+				"cluster_id": "some-cluster-id",
+				"db_name":    "some-db-name",
+				"db_user":    "some-user",
+				"aws_region": "google-project-id",
+			},
+		})
+		assert.NoError(t, err)
+	})
+}
+
+func TestExtract(t *testing.T) {
+	t.Run("should return no error", func(t *testing.T) {
+		mockSvc := &mockRedshiftDataAPIClient{
+			RedshiftDataAPIServiceAPI: nil,
+			ListDatabasesOutput: redshiftdataapiservice.ListDatabasesOutput{
+				Databases: []*string{aws.String("dev"), aws.String("test")},
+				NextToken: nil,
+			},
+			ListTablesOutput: redshiftdataapiservice.ListTablesOutput{
+				NextToken: nil,
+				Tables: []*redshiftdataapiservice.TableMember{
+					{
+						Name:   aws.String("sql_features"),
+						Schema: aws.String("information_schema"),
+						Type:   aws.String("SYSTEM TABLE"),
+					},
+					{
+						Name:   aws.String("sql_features_info"),
+						Schema: aws.String("information_schema"),
+						Type:   aws.String("SYSTEM TABLE"),
+					},
+				},
+			},
+			DescribeTableOutput: redshiftdataapiservice.DescribeTableOutput{
+				ColumnList: []*redshiftdataapiservice.ColumnMetadata{
+					{
+						Label:      aws.String("description"),
+						Length:     aws.Int64(123),
+						Name:       aws.String("column_name"),
+						SchemaName: aws.String("information_schema"),
+						TableName:  aws.String("table_name"),
+						TypeName:   aws.String("character_data"),
+					},
+				},
+			},
+		}
+		extractor := redshift.New(nil, redshift.WithClient(mockSvc))
+
+		ctx := context.Background()
+
+		err := extractor.Init(ctx, plugins.Config{
+			URNScope: "test-redshift",
+			RawConfig: map[string]interface{}{
+				"cluster_id": "some-cluster-id",
+				"db_name":    "some-db-name",
+				"db_user":    "some-user",
+				"aws_region": "google-project-id",
+			},
+		})
+		assert.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extractor.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+
+		actual := emitter.GetAllData()
+		utils.AssertProtosWithJSONFile(t, "testdata/expected-assets.json", actual)
+	})
 }

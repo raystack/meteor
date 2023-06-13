@@ -107,6 +107,64 @@ func TestInit(t *testing.T) {
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
+
+	t.Run("should return error for invalid cert file", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":   "true",
+						"cert_file": "non-existent-file",
+						"key_file":  "non-existent-file",
+						"ca_file":   "non-existent-file",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "create cert")
+	})
+
+	t.Run("should return error for invalid ca cert", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":   "true",
+						"cert_file": "testdata/example-cert.txt",
+						"key_file":  "testdata/example-key.txt",
+						"ca_file":   "non-existent-file",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "read ca cert file")
+	})
+
+	t.Run("should return error for create connection", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":              "true",
+						"insecure_skip_verify": "true",
+						"cert_file":            "testdata/example-cert.txt",
+						"key_file":             "testdata/example-key.txt",
+						"ca_file":              "testdata/example-ca-cert.txt",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "create connection")
+	})
 }
 
 func TestExtract(t *testing.T) {
@@ -182,6 +240,7 @@ func setup(broker kafkaLib.Broker) (err error) {
 		{Topic: "meteor-test-topic-1", NumPartitions: 1, ReplicationFactor: 1},
 		{Topic: "meteor-test-topic-2", NumPartitions: 1, ReplicationFactor: 1},
 		{Topic: "meteor-test-topic-3", NumPartitions: 1, ReplicationFactor: 1},
+		{Topic: "__consumer_offsets", NumPartitions: 1, ReplicationFactor: 1},
 	}
 	err = conn.CreateTopics(topicConfigs...)
 	if err != nil {

@@ -102,14 +102,18 @@ type Extractor struct {
 	config          Config
 	galClient       *auditlog.AuditLog
 	policyTagClient *datacatalog.PolicyTagManagerClient
+	newClient       NewClientFunc
 }
 
-func New(logger log.Logger) *Extractor {
+type NewClientFunc func(ctx context.Context, logger log.Logger, config Config) (*bigquery.Client, error)
+
+func New(logger log.Logger, newClient NewClientFunc) *Extractor {
 	galc := auditlog.New(logger)
 
 	e := &Extractor{
 		logger:    logger,
 		galClient: galc,
+		newClient: newClient,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -124,7 +128,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	var err error
-	e.client, err = e.createClient(ctx)
+	e.client, err = e.newClient(ctx, e.logger, e.config)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -175,23 +179,23 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return nil
 }
 
-// Create big query client
-func (e *Extractor) createClient(ctx context.Context) (*bigquery.Client, error) {
-	if e.config.ServiceAccountBase64 == "" && e.config.ServiceAccountJSON == "" {
-		e.logger.Info("credentials are not specified, creating bigquery client using default credentials...")
-		return bigquery.NewClient(ctx, e.config.ProjectID)
+// CreateClient creates a bigquery client
+func CreateClient(ctx context.Context, logger log.Logger, config Config) (*bigquery.Client, error) {
+	if config.ServiceAccountBase64 == "" && config.ServiceAccountJSON == "" {
+		logger.Info("credentials are not specified, creating bigquery client using default credentials...")
+		return bigquery.NewClient(ctx, config.ProjectID)
 	}
 
-	if e.config.ServiceAccountBase64 != "" {
-		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+	if config.ServiceAccountBase64 != "" {
+		serviceAccountJSON, err := base64.StdEncoding.DecodeString(config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
 			return nil, fmt.Errorf("decode base64 service account: %w", err)
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
-		e.config.ServiceAccountJSON = string(serviceAccountJSON)
+		config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
-	return bigquery.NewClient(ctx, e.config.ProjectID, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
 }
 
 func (e *Extractor) createPolicyTagClient(ctx context.Context) (*datacatalog.PolicyTagManagerClient, error) {
@@ -209,7 +213,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 	tb.PageInfo().MaxSize = e.getMaxPageSize()
 	for {
 		table, err := tb.Next()
-		if errors.Is(err, iterator.Done) || errors.Is(err, context.Canceled) {
+		if errors.Is(err, iterator.Done) || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			break
 		} else if err != nil {
 			e.logger.Error("failed to get table, skipping table", "err", err)
@@ -380,7 +384,8 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 }
 
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []string, rows *structpb.ListValue, err error) {
-	if e.config.MaxPreviewRows == 0 {
+	maxPreviewRows := e.config.MaxPreviewRows
+	if maxPreviewRows == 0 {
 		return nil, nil, nil
 	}
 
@@ -389,13 +394,13 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	ri := t.Read(ctx)
 	// fetch only the required amount of rows
 	maxPageSize := e.getMaxPageSize()
-	if maxPageSize > e.config.MaxPreviewRows {
-		ri.PageInfo().MaxSize = e.config.MaxPreviewRows
+	if maxPageSize > maxPreviewRows {
+		ri.PageInfo().MaxSize = maxPreviewRows
 	} else {
 		ri.PageInfo().MaxSize = maxPageSize
 	}
 
-	for totalRows < e.config.MaxPreviewRows {
+	for totalRows < maxPreviewRows {
 		var row []bigquery.Value
 		err := ri.Next(&row)
 		if errors.Is(err, iterator.Done) {
@@ -452,10 +457,10 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 	}
 
 	it, err := query.Read(ctx)
-	it.PageInfo().MaxSize = e.getMaxPageSize()
 	if err != nil {
 		return nil, err
 	}
+	it.PageInfo().MaxSize = e.getMaxPageSize()
 
 	// fetch first row for column profile result
 	var row struct {
@@ -573,7 +578,7 @@ func (e *Extractor) getMaxPageSize() int {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), CreateClient)
 	}); err != nil {
 		panic(err)
 	}

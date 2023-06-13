@@ -1,4 +1,4 @@
-package metabase
+package client
 
 import (
 	"bytes"
@@ -9,14 +9,15 @@ import (
 	"net/http"
 
 	"github.com/goto/meteor/plugins"
+	m "github.com/goto/meteor/plugins/extractors/metabase/models"
 )
 
 type Client interface {
 	Authenticate(ctx context.Context, host, username, password, sessionID string) error
-	GetDatabase(context.Context, int) (Database, error)
-	GetTable(context.Context, int) (Table, error)
-	GetDashboard(context.Context, int) (Dashboard, error)
-	GetDashboards(context.Context) ([]Dashboard, error)
+	GetDatabase(context.Context, int) (m.Database, error)
+	GetTable(context.Context, int) (m.Table, error)
+	GetDashboard(context.Context, int) (m.Dashboard, error)
+	GetDashboards(context.Context) ([]m.Dashboard, error)
 }
 
 type client struct {
@@ -25,15 +26,15 @@ type client struct {
 	username      string
 	password      string
 	sessionID     string
-	databaseCache map[int]Database
-	tableCache    map[int]Table
+	databaseCache map[int]m.Database
+	tableCache    map[int]m.Table
 }
 
-func newClient() *client {
+func New() Client {
 	return &client{
 		httpClient:    &http.Client{},
-		databaseCache: map[int]Database{},
-		tableCache:    map[int]Table{},
+		databaseCache: map[int]m.Database{},
+		tableCache:    map[int]m.Table{},
 	}
 }
 
@@ -55,48 +56,48 @@ func (c *client) Authenticate(ctx context.Context, host, username, password, ses
 	return nil
 }
 
-func (c *client) GetTable(ctx context.Context, id int) (Table, error) {
+func (c *client) GetTable(ctx context.Context, id int) (m.Table, error) {
 	if table, ok := c.tableCache[id]; ok {
 		return table, nil
 	}
 
-	var tbl Table
+	var tbl m.Table
 	url := fmt.Sprintf("%s/api/table/%d", c.host, id)
 	if err := c.makeRequest(ctx, "GET", url, nil, &tbl); err != nil {
-		return Table{}, err
+		return m.Table{}, err
 	}
 
 	c.tableCache[id] = tbl
 	return tbl, nil
 }
 
-func (c *client) GetDatabase(ctx context.Context, id int) (Database, error) {
+func (c *client) GetDatabase(ctx context.Context, id int) (m.Database, error) {
 	if db, ok := c.databaseCache[id]; ok {
 		return db, nil
 	}
 
-	var db Database
+	var db m.Database
 	url := fmt.Sprintf("%s/api/database/%d", c.host, id)
 	if err := c.makeRequest(ctx, "GET", url, nil, &db); err != nil {
-		return Database{}, err
+		return m.Database{}, err
 	}
 
 	c.databaseCache[id] = db
 	return db, nil
 }
 
-func (c *client) GetDashboard(ctx context.Context, id int) (Dashboard, error) {
-	var d Dashboard
+func (c *client) GetDashboard(ctx context.Context, id int) (m.Dashboard, error) {
+	var d m.Dashboard
 	url := fmt.Sprintf("%s/api/dashboard/%d", c.host, id)
 	if err := c.makeRequest(ctx, "GET", url, nil, &d); err != nil {
-		return Dashboard{}, err
+		return m.Dashboard{}, err
 	}
 
 	return d, nil
 }
 
-func (c *client) GetDashboards(ctx context.Context) ([]Dashboard, error) {
-	var dd []Dashboard
+func (c *client) GetDashboards(ctx context.Context) ([]m.Dashboard, error) {
+	var dd []m.Dashboard
 	url := fmt.Sprintf("%s/api/dashboard", c.host)
 	if err := c.makeRequest(ctx, "GET", url, nil, &dd); err != nil {
 		return nil, err

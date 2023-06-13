@@ -85,7 +85,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	if e.client != nil {
+	if e.client == nil {
 		// Create session
 		sess := session.Must(session.NewSession())
 

@@ -769,6 +769,59 @@
             "created_at": "2021-11-02T10:32:58.616Z",
             "sizeY": 5,
             "row": 5
+        },
+        {
+            "sizeX": 8,
+            "series": [],
+            "collection_authority_level": null,
+            "card": {
+                "description": "When template-tags contains invalid type it should not returning downstream",
+                "archived": false,
+                "collection_position": null,
+                "table_id": null,
+                "result_metadata": [],
+                "database_id": 42,
+                "enable_embedding": false,
+                "collection_id": null,
+                "query_type": "native",
+                "name": "Exceptional Users",
+                "query_average_duration": 25,
+                "creator_id": 1,
+                "updated_at": "2021-11-02T10:31:38.804Z",
+                "made_public_by_id": null,
+                "embedding_params": null,
+                "cache_ttl": null,
+                "dataset_query": {
+                    "type": "native",
+                    "native": {
+                        "query": "SELECT me FROM universe;",
+                        "template-tags": {
+                            "some-field": {
+                                "type": "invalid-type"
+                            }
+                        }
+                    },
+                    "database": 2
+                },
+                "id": 42,
+                "display": "table",
+                "visualization_settings": {
+                    "table.pivot_column": "name",
+                    "table.cell_column": "total_followers"
+                },
+                "created_at": "2021-11-02T09:07:25.569Z",
+                "public_uuid": null
+            },
+            "updated_at": "2021-11-02T10:32:58.719Z",
+            "col": 10,
+            "id": 42,
+            "parameter_mappings": [],
+            "card_id": 42,
+            "visualization_settings": {},
+            "dashboard_id": 1,
+            "created_at": "2021-11-02T09:12:44.179Z",
+            "sizeY": 5,
+            "row": 0
         }
     ],
     "param_values": null,

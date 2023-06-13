@@ -17,10 +17,7 @@ func TestFromTemplate(t *testing.T) {
 		templatePath := "./testdata/template.yaml"
 		outputDir := "./test/temp"
 		bytes, err := os.ReadFile("./testdata/generator/data-3.yaml")
-		if err != nil {
-			fmt.Println(fmt.Errorf("error reading data: %w", err))
-			return
-		}
+		assert.NoError(t, err)
 
 		var data []recipe.TemplateData
 		if err := yaml.Unmarshal(bytes, &data); err != nil {
@@ -42,16 +39,11 @@ func TestFromTemplate(t *testing.T) {
 
 		t.Run("when recipe has a name", func(t *testing.T) {
 			bytes, err := os.ReadFile("./testdata/generator/data-1-2.yaml")
-			if err != nil {
-				fmt.Println(fmt.Errorf("error reading data: %w", err))
-				return
-			}
+			assert.NoError(t, err)
 
 			var data []recipe.TemplateData
-			if err := yaml.Unmarshal(bytes, &data); err != nil {
-				fmt.Println(fmt.Errorf("error parsing data: %w", err))
-				return
-			}
+			err = yaml.Unmarshal(bytes, &data)
+			assert.NoError(t, err)
 
 			cleanDir(t, outputDir)
 			defer cleanDir(t, outputDir)
@@ -75,16 +67,11 @@ func TestFromTemplate(t *testing.T) {
 
 		t.Run("when recipe does not have a name", func(t *testing.T) {
 			bytes, err := os.ReadFile("./testdata/generator/data-3.yaml")
-			if err != nil {
-				fmt.Println(fmt.Errorf("error reading data: %w", err))
-				return
-			}
+			assert.NoError(t, err)
 
 			var data []recipe.TemplateData
-			if err := yaml.Unmarshal(bytes, &data); err != nil {
-				fmt.Println(fmt.Errorf("error parsing data: %w", err))
-				return
-			}
+			err = yaml.Unmarshal(bytes, &data)
+			assert.NoError(t, err)
 
 			cleanDir(t, outputDir)
 			defer cleanDir(t, outputDir)
@@ -101,6 +88,47 @@ func TestFromTemplate(t *testing.T) {
 				path.Join(outputDir, data[0].FileName+".yaml"),
 			)
 		})
+	})
+
+	t.Run("should throw error for error creating output directory", func(t *testing.T) {
+		templatePath := "./testdata/generator/template.yaml"
+		outputDir := "./invalid-output-dir-\000"
+
+		bytes, err := os.ReadFile("./testdata/generator/data-1-2.yaml")
+		assert.NoError(t, err)
+
+		var data []recipe.TemplateData
+		err = yaml.Unmarshal(bytes, &data)
+		assert.NoError(t, err)
+
+		err = recipe.FromTemplate(recipe.TemplateConfig{
+			TemplateFilePath: templatePath,
+			OutputDirPath:    outputDir,
+			Data:             data,
+		})
+
+		assert.ErrorContains(t, err, "error creating output directory")
+	})
+
+	t.Run("should throw error for error creating file", func(t *testing.T) {
+		templatePath := "./testdata/generator/template.yaml"
+		outputDir := "./testdata/generator/temp"
+		defer cleanDir(t, outputDir)
+
+		bytes, err := os.ReadFile("./testdata/generator/data-invalid-file-name.yaml")
+		assert.NoError(t, err)
+
+		var data []recipe.TemplateData
+		err = yaml.Unmarshal(bytes, &data)
+		assert.NoError(t, err)
+
+		err = recipe.FromTemplate(recipe.TemplateConfig{
+			TemplateFilePath: templatePath,
+			OutputDirPath:    outputDir,
+			Data:             data,
+		})
+
+		assert.ErrorContains(t, err, "error creating file")
 	})
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/optimus/client"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
 	pb "github.com/goto/optimus/protos/gotocompany/optimus/core/v1beta1"
@@ -16,10 +17,15 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+const (
+	service      = "optimus"
+	sampleConfig = `host: optimus.com:80`
+)
+
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("optimus", func() plugins.Extractor {
-		return New(plugins.GetLog(), newClient())
+		return New(plugins.GetLog(), client.New())
 	}); err != nil {
 		panic(err)
 	}
@@ -34,8 +40,6 @@ type Config struct {
 	MaxSizeInMB int    `mapstructure:"max_size_in_mb"`
 }
 
-var sampleConfig = `host: optimus.com:80`
-
 var info = plugins.Info{
 	Description:  "Optimus' jobs metadata",
 	SampleConfig: sampleConfig,
@@ -48,13 +52,13 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger log.Logger
 	config Config
-	client Client
+	client client.Client
 }
 
-func New(logger log.Logger, client Client) *Extractor {
+func New(l log.Logger, c client.Client) *Extractor {
 	e := &Extractor{
-		logger: logger,
-		client: client,
+		logger: l,
+		client: c,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 

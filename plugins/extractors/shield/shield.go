@@ -8,11 +8,16 @@ import (
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/extractors/shield/client"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	sh "github.com/goto/shield/proto/v1beta1"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
+)
+
+const (
+	service = "shield"
 )
 
 //go:embed README.md
@@ -37,13 +42,13 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger log.Logger
 	config Config
-	client Client
+	client client.Client
 }
 
-func New(logger log.Logger, client Client) *Extractor {
+func New(l log.Logger, c client.Client) *Extractor {
 	e := &Extractor{
-		logger: logger,
-		client: client,
+		logger: l,
+		client: c,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
@@ -117,7 +122,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("shield", func() plugins.Extractor {
-		return New(plugins.GetLog(), newClient())
+		return New(plugins.GetLog(), client.New())
 	}); err != nil {
 		panic(err)
 	}

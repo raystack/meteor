@@ -162,6 +162,36 @@
                     "update_time": null,
                     "url": "",
                     "urn": "metabase::my-metabase/card/4"
+                },
+                {
+                    "attributes": {
+                        "archived": false,
+                        "collection_id": 0,
+                        "creator_id": 1,
+                        "database_id": 42,
+                        "display": "table",
+                        "id": 42,
+                        "query_average_duration": 25,
+                        "table_id": 0
+                    },
+                    "create_time": null,
+                    "dashboard_source": "",
+                    "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+                    "data_source": "",
+                    "description": "When template-tags contains invalid type it should not returning downstream",
+                    "event": null,
+                    "lineage": {
+                        "downstreams": [],
+                        "upstreams": []
+                    },
+                    "name": "Exceptional Users",
+                    "owners": [],
+                    "raw_query": "",
+                    "source": "metabase",
+                    "type": "",
+                    "update_time": null,
+                    "url": "",
+                    "urn": "metabase::my-metabase/card/42"
                 }
             ],
             "create_time": "2021-10-25T16:10:40.371Z",

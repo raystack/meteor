@@ -10,6 +10,7 @@ import (
 	"github.com/goto/meteor/models"
 	assetsv1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sinks/shield/client"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	sh "github.com/goto/shield/proto/v1beta1"
@@ -43,12 +44,12 @@ var info = plugins.Info{
 
 type Sink struct {
 	plugins.BasePlugin
-	client Client
+	client client.Client
 	config Config
 	logger log.Logger
 }
 
-func New(c Client, logger log.Logger) plugins.Syncer {
+func New(c client.Client, logger log.Logger) plugins.Syncer {
 	s := &Sink{
 		logger: logger,
 		client: c,
@@ -158,7 +159,7 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 
 func init() {
 	if err := registry.Sinks.Register("shield", func() plugins.Syncer {
-		return New(newClient(), plugins.GetLog())
+		return New(client.New(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

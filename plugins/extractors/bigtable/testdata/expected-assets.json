@@ -1,0 +1,28 @@
+[
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {
+                "column_family": "[{\"Name\":\"family-a\",\"GCPolicy\":\"\"}]"
+            },
+            "columns": [],
+            "create_time": null,
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": null,
+            "update_time": null
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "table-a",
+        "owners": [],
+        "service": "bigtable",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:bigtable:google-project-id:table:instance-A.table-a"
+    }
+]

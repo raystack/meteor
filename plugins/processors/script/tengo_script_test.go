@@ -192,6 +192,28 @@ func TestProcess(t *testing.T) {
 			expected: nil,
 			errStr:   "invalid keys: does_not_exist",
 		},
+		{
+			name:   "InvalidInput",
+			script: "a := 1",
+			input: &v1beta2.Asset{
+				Data: &anypb.Any{TypeUrl: "$$$$"},
+			},
+			expected: nil,
+			errStr:   "script processor: structmap",
+		},
+		{
+			name: "ErrRunContext",
+			script: heredoc.Doc(`
+				a := 5 / 0
+			`),
+			input: &v1beta2.Asset{
+				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{
+					Namespace: "sauron",
+				}),
+			},
+			expected: nil,
+			errStr:   "script processor: run script",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

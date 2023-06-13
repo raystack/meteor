@@ -1,0 +1,142 @@
+[
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {},
+            "columns": [
+                {
+                    "attributes": null,
+                    "columns": [],
+                    "data_type": "character_data",
+                    "description": "description",
+                    "is_nullable": false,
+                    "length": "123",
+                    "name": "column_name",
+                    "profile": null
+                }
+            ],
+            "create_time": null,
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": null,
+            "update_time": null
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "sql_features",
+        "owners": [],
+        "service": "redshift",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.dev.sql_features"
+    },
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {},
+            "columns": [
+                {
+                    "attributes": null,
+                    "columns": [],
+                    "data_type": "character_data",
+                    "description": "description",
+                    "is_nullable": false,
+                    "length": "123",
+                    "name": "column_name",
+                    "profile": null
+                }
+            ],
+            "create_time": null,
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": null,
+            "update_time": null
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "sql_features_info",
+        "owners": [],
+        "service": "redshift",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.dev.sql_features_info"
+    },
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {},
+            "columns": [
+                {
+                    "attributes": null,
+                    "columns": [],
+                    "data_type": "character_data",
+                    "description": "description",
+                    "is_nullable": false,
+                    "length": "123",
+                    "name": "column_name",
+                    "profile": null
+                }
+            ],
+            "create_time": null,
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": null,
+            "update_time": null
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "sql_features",
+        "owners": [],
+        "service": "redshift",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.test.sql_features"
+    },
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {},
+            "columns": [
+                {
+                    "attributes": null,
+                    "columns": [],
+                    "data_type": "character_data",
+                    "description": "description",
+                    "is_nullable": false,
+                    "length": "123",
+                    "name": "column_name",
+                    "profile": null
+                }
+            ],
+            "create_time": null,
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": null,
+            "update_time": null
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "sql_features_info",
+        "owners": [],
+        "service": "redshift",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.test.sql_features_info"
+    }
+]

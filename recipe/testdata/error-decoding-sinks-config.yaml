@@ -1,0 +1,10 @@
+name: recipe-three
+version: v1beta1
+source:
+  type: kafka
+  scope: my-scope
+sinks:
+  - name: test-sink
+    config:
+      some: !!binary ==
+      

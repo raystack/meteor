@@ -81,11 +81,13 @@ func TestSink(t *testing.T) {
 			"project_id":           "google-project-id",
 			"url":                  "gcs://bucket_name/target_folder",
 			"service_account_json": `{"type": "service_account"}`,
+			"object_prefix":        "github-users",
 		}})
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		defer gcsSink.Close()
 		err = gcsSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 
 		assert.NoError(t, err)

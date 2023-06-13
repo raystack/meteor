@@ -12,6 +12,7 @@ import (
 	"github.com/goto/meteor/models"
 	assetsv1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sinks/gcs/client"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
@@ -55,7 +56,7 @@ var info = plugins.Info{
 type Sink struct {
 	plugins.BasePlugin
 	logger log.Logger
-	writer Writer
+	writer client.Writer
 	config Config
 }
 
@@ -79,7 +80,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 	bucketname, objectname := s.resolveBucketPath()
 
-	if s.writer, err = newWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
+	if s.writer, err = client.NewWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
 		return err
 	}
 

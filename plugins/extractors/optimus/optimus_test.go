@@ -5,6 +5,7 @@ package optimus_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/goto/meteor/plugins"
@@ -52,6 +53,23 @@ func TestInit(t *testing.T) {
 		})
 		assert.NoError(t, err)
 	})
+
+	t.Run("should return error when connect to optimus failed", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		expectedErr := errors.New("failed to connect to optimus")
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(expectedErr)
+		defer client.AssertExpectations(t)
+
+		extr := optimus.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{
+			URNScope:  urnScope,
+			RawConfig: validConfig,
+		})
+		assert.ErrorIs(t, err, expectedErr)
+	})
 }
 
 func TestExtract(t *testing.T) {
@@ -74,6 +92,161 @@ func TestExtract(t *testing.T) {
 
 		actual := emitter.GetAllData()
 		testutils.AssertProtosWithJSONFile(t, "testdata/expected.json", actual)
+	})
+
+	t.Run("should error when ListProjects failed", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(nil).Once()
+		client.On("ListProjects", ctx, &pb.ListProjectsRequest{}, mock.Anything).
+			Return(&pb.ListProjectsResponse{}, errors.New("some error")).Once()
+
+		client.On("Close").Return(nil, nil).Once()
+		defer client.AssertExpectations(t)
+
+		extr := optimus.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.ErrorContains(t, err, "fetch projects")
+	})
+
+	t.Run("should skip and no error when ListProjectNamespaces failed", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(nil).Once()
+		client.On("ListProjects", ctx, &pb.ListProjectsRequest{}, mock.Anything).Return(&pb.ListProjectsResponse{
+			Projects: []*pb.ProjectSpecification{
+				{
+					Name: "project-A",
+					Config: map[string]string{
+						"BAR": "foo",
+					},
+					Secrets: []*pb.ProjectSpecification_ProjectSecret{},
+				},
+			},
+		}, nil).Once()
+		client.On("ListProjectNamespaces", ctx, mock.Anything, mock.Anything).Return(&pb.ListProjectNamespacesResponse{}, errors.New("some error")).Once()
+
+		client.On("Close").Return(nil, nil).Once()
+		defer client.AssertExpectations(t)
+
+		extr := optimus.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should skip and no error when ListProjectNamespaces failed", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(nil).Once()
+		client.On("ListProjects", ctx, &pb.ListProjectsRequest{}, mock.Anything).Return(&pb.ListProjectsResponse{
+			Projects: []*pb.ProjectSpecification{
+				{
+					Name: "project-A",
+					Config: map[string]string{
+						"BAR": "foo",
+					},
+					Secrets: []*pb.ProjectSpecification_ProjectSecret{},
+				},
+			},
+		}, nil).Once()
+		client.On("ListProjectNamespaces", ctx, &pb.ListProjectNamespacesRequest{
+			ProjectName: "project-A",
+		}, mock.Anything).Return(&pb.ListProjectNamespacesResponse{
+			Namespaces: []*pb.NamespaceSpecification{
+				{
+					Name:   "namespace-A",
+					Config: map[string]string{},
+				},
+			},
+		}, nil).Once()
+
+		client.On("ListJobSpecification", ctx, &pb.ListJobSpecificationRequest{
+			ProjectName:   "project-A",
+			NamespaceName: "namespace-A",
+		}, mock.Anything).Return(&pb.ListJobSpecificationResponse{}, errors.New("some error")).Once()
+
+		client.On("Close").Return(nil, nil).Once()
+		defer client.AssertExpectations(t)
+
+		extr := optimus.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should skip and no error when ListProjectNamespaces failed", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"], 0).Return(nil).Once()
+		client.On("ListProjects", ctx, &pb.ListProjectsRequest{}, mock.Anything).Return(&pb.ListProjectsResponse{
+			Projects: []*pb.ProjectSpecification{
+				{
+					Name: "project-A",
+					Config: map[string]string{
+						"BAR": "foo",
+					},
+					Secrets: []*pb.ProjectSpecification_ProjectSecret{},
+				},
+			},
+		}, nil).Once()
+		client.On("ListProjectNamespaces", ctx, &pb.ListProjectNamespacesRequest{
+			ProjectName: "project-A",
+		}, mock.Anything).Return(&pb.ListProjectNamespacesResponse{
+			Namespaces: []*pb.NamespaceSpecification{
+				{
+					Name:   "namespace-A",
+					Config: map[string]string{},
+				},
+			},
+		}, nil).Once()
+
+		client.On("ListJobSpecification", ctx, &pb.ListJobSpecificationRequest{
+			ProjectName:   "project-A",
+			NamespaceName: "namespace-A",
+		}, mock.Anything).Return(&pb.ListJobSpecificationResponse{
+			Jobs: []*pb.JobSpecification{
+				{
+					Version: 1,
+					Name:    "job-A",
+				},
+			},
+		}, nil).Once()
+
+		client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
+			ProjectName:   "project-A",
+			NamespaceName: "namespace-A",
+			JobName:       "job-A",
+		}, mock.Anything).Return(&pb.GetJobTaskResponse{}, errors.New("some error")).Once()
+
+		client.On("Close").Return(nil, nil).Once()
+		defer client.AssertExpectations(t)
+
+		extr := optimus.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
 	})
 }
 

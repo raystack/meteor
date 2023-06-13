@@ -95,6 +95,27 @@ func TestReaderRead(t *testing.T) {
 				compareRecipes(t, expectedRecipes[i], r)
 			}
 		})
+
+		t.Run("where error decoding config value", func(t *testing.T) {
+			reader := recipe.NewReader(testLog, emptyConfigPath)
+
+			_, err := reader.Read("./testdata/error-decoding-source-config.yaml")
+			assert.ErrorContains(t, err, "binary value contains invalid base64 data")
+		})
+
+		t.Run("where error decoding processors value", func(t *testing.T) {
+			reader := recipe.NewReader(testLog, emptyConfigPath)
+
+			_, err := reader.Read("./testdata/error-decoding-processors-config.yaml")
+			assert.ErrorContains(t, err, "binary value contains invalid base64 data")
+		})
+
+		t.Run("where error decoding sinks value", func(t *testing.T) {
+			reader := recipe.NewReader(testLog, emptyConfigPath)
+
+			_, err := reader.Read("./testdata/error-decoding-sinks-config.yaml")
+			assert.ErrorContains(t, err, "binary value contains invalid base64 data")
+		})
 	})
 
 	t.Run("should parse variable in recipe with value from env vars prefixed with METEOR_", func(t *testing.T) {

@@ -4,6 +4,7 @@
 package plugins_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/goto/meteor/plugins"
@@ -98,7 +99,7 @@ func TestBasePluginInit(t *testing.T) {
 		}{}
 
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &invalidConfig)
-		err := basePlugin.Validate(plugins.Config{
+		err := basePlugin.Init(context.Background(), plugins.Config{
 			URNScope:  "test-scope",
 			RawConfig: map[string]interface{}{},
 		})
@@ -112,7 +113,7 @@ func TestBasePluginInit(t *testing.T) {
 		}{}
 
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &validConfig)
-		err := basePlugin.Validate(plugins.Config{
+		err := basePlugin.Init(context.Background(), plugins.Config{
 			URNScope: "test-scope",
 			RawConfig: map[string]interface{}{
 				"FieldA": "test-value",

@@ -5,6 +5,7 @@ package shield_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/goto/meteor/plugins"
@@ -32,6 +33,19 @@ func TestInit(t *testing.T) {
 		err := extr.Init(context.TODO(), plugins.Config{URNScope: urnScope, RawConfig: map[string]interface{}{}})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
+	})
+
+	t.Run("should return error if connection fails", func(t *testing.T) {
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		expectedErr := errors.New("connection failed")
+		client.On("Connect", ctx, validConfig["host"]).Return(expectedErr)
+		defer client.AssertExpectations(t)
+
+		extr := shield.New(testutils.Logger, client)
+		err := extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		assert.ErrorIs(t, err, expectedErr)
 	})
 
 	t.Run("should hit shield /admin/ping to check connection if config is valid", func(t *testing.T) {
@@ -68,6 +82,140 @@ func TestExtract(t *testing.T) {
 
 		actual := emitter.GetAllData()
 		testutils.AssertProtosWithJSONFile(t, "testdata/expected.json", actual)
+	})
+
+	t.Run("should return error when ListUsers fails", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		expectedErr := errors.New("failed to list users")
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
+		client.On("Close").Return(nil, nil).Once()
+		client.On("ListUsers", ctx, mock.Anything, mock.Anything).Return(&sh.ListUsersResponse{}, expectedErr).Once()
+		defer client.AssertExpectations(t)
+
+		extr := shield.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("should return error when GetRole fails", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
+		client.On("Close").Return(nil, nil).Once()
+		client.On("ListUsers", ctx, &sh.ListUsersRequest{}, mock.Anything).Return(&sh.ListUsersResponse{
+			Users: []*sh.User{
+				{
+					Id:       "user-A",
+					Name:     "fullname-A",
+					Slug:     "sample description for user-A",
+					Email:    "user1@gojek.com",
+					Metadata: nil,
+					CreatedAt: &timestamppb.Timestamp{
+						Seconds: 2400,
+					},
+					UpdatedAt: &timestamppb.Timestamp{
+						Seconds: 2100,
+					},
+				},
+				{
+					Id:       "user-B",
+					Name:     "fullname-B",
+					Slug:     "sample description for user-B",
+					Email:    "user2@gojek.com",
+					Metadata: nil,
+					CreatedAt: &timestamppb.Timestamp{
+						Seconds: 1200,
+					},
+					UpdatedAt: &timestamppb.Timestamp{
+						Seconds: 900,
+					},
+				},
+			},
+		}, nil).Once()
+		client.On("GetRole", ctx, &sh.GetRoleRequest{
+			Id: "user-A",
+		}, mock.Anything).Return(&sh.GetRoleResponse{}, errors.New("failed to get role")).Once()
+		defer client.AssertExpectations(t)
+
+		extr := shield.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.ErrorContains(t, err, "fetch user roles")
+	})
+
+	t.Run("should return error when GetGroup fails", func(t *testing.T) {
+		var err error
+		ctx := context.TODO()
+
+		client := new(mockClient)
+		client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
+		client.On("Close").Return(nil, nil).Once()
+		client.On("ListUsers", ctx, &sh.ListUsersRequest{}, mock.Anything).Return(&sh.ListUsersResponse{
+			Users: []*sh.User{
+				{
+					Id:       "user-A",
+					Name:     "fullname-A",
+					Slug:     "sample description for user-A",
+					Email:    "user1@gojek.com",
+					Metadata: nil,
+					CreatedAt: &timestamppb.Timestamp{
+						Seconds: 2400,
+					},
+					UpdatedAt: &timestamppb.Timestamp{
+						Seconds: 2100,
+					},
+				},
+				{
+					Id:       "user-B",
+					Name:     "fullname-B",
+					Slug:     "sample description for user-B",
+					Email:    "user2@gojek.com",
+					Metadata: nil,
+					CreatedAt: &timestamppb.Timestamp{
+						Seconds: 1200,
+					},
+					UpdatedAt: &timestamppb.Timestamp{
+						Seconds: 900,
+					},
+				},
+			},
+		}, nil).Once()
+
+		client.On("GetRole", ctx, &sh.GetRoleRequest{
+			Id: "user-A",
+		}, mock.Anything).Return(&sh.GetRoleResponse{
+			Role: &sh.Role{
+				Id:   "user-A",
+				Name: "role-A",
+			},
+		}, nil).Once()
+
+		client.On("GetGroup", ctx, &sh.GetGroupRequest{
+			Id: "user-A",
+		}, mock.Anything).Return(&sh.GetGroupResponse{}, errors.New("failed to get group")).Once()
+
+		defer client.AssertExpectations(t)
+
+		extr := shield.New(testutils.Logger, client)
+		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
+		require.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.ErrorContains(t, err, "fetch user groups")
 	})
 }
 

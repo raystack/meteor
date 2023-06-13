@@ -1,0 +1,46 @@
+[
+  {
+    "urn": "urn:gcs:google-project-id:bucket:test-bucket",
+    "name": "test-bucket",
+    "service": "gcs",
+    "type": "bucket",
+    "create_time": null,
+    "data": {
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Bucket",
+      "attributes": {},
+      "blobs": [
+        {
+          "attributes": null,
+          "name": "some_file.txt",
+          "ownership": [
+            {
+              "email": "",
+              "name": "",
+              "role": "",
+              "urn": ""
+            }
+          ],
+          "size": "74",
+          "source": "",
+          "update_time": "2023-06-13T03:46:12.372974Z",
+          "create_time": "2023-06-13T03:46:12.372974Z",
+          "delete_time": "0001-01-01T00:00:00Z",
+          "expire_time": "0001-01-01T00:00:00Z",
+          "urn": "urn:gcs:google-project-id:object:test-bucket/some_file.txt"
+        }
+      ],
+      "description": "",
+      "storage_type": "",
+      "location": "US-CENTRAL1",
+      "create_time": "0001-01-01T00:00:00Z",
+      "update_time": null
+    },
+    "description": "",
+    "event": null,
+    "labels": {},
+    "lineage": null,
+    "owners": [],
+    "update_time": null,
+    "url": ""
+  }
+]

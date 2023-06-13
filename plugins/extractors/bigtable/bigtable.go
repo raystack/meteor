@@ -57,14 +57,38 @@ var (
 // Extractor used to extract bigtable metadata
 type Extractor struct {
 	plugins.BaseExtractor
-	config        Config
-	logger        log.Logger
-	instanceNames []string
+	config         Config
+	logger         log.Logger
+	instanceNames  []string
+	newClient      NewClientFunc
+	newAdminClient NewAdminClientFunc
 }
 
-func New(logger log.Logger) *Extractor {
+// InstanceAdminClient is an interface for *bigtable.InstanceAdminClient
+//
+//go:generate mockery --name=InstanceAdminClient -r --case underscore --with-expecter --structname InstanceAdminClient --output=./mocks
+type InstanceAdminClient interface {
+	Instances(ctx context.Context) ([]*bigtable.InstanceInfo, error)
+}
+
+// AdminClient is an interface for *bigtable.AdminClient
+//
+//go:generate mockery --name=AdminClient -r --case underscore --with-expecter --structname AdminClient --output=./mocks
+type AdminClient interface {
+	Tables(ctx context.Context) ([]string, error)
+	TableInfo(ctx context.Context, table string) (*bigtable.TableInfo, error)
+}
+
+type (
+	NewClientFunc      func(ctx context.Context, cfg Config) (InstanceAdminClient, error)
+	NewAdminClientFunc func(ctx context.Context, instance string, config Config) (AdminClient, error)
+)
+
+func New(logger log.Logger, newClient NewClientFunc, newAdminClient NewAdminClientFunc) *Extractor {
 	e := &Extractor{
-		logger: logger,
+		logger:         logger,
+		newClient:      newClient,
+		newAdminClient: newAdminClient,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -82,7 +106,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	client, err := instanceAdminClientCreator(ctx, e.config)
+	client, err := e.newClient(ctx, e.config)
 	if err != nil {
 		return err
 	}
@@ -115,7 +139,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) ([]string, e
 
 func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error {
 	for _, instance := range e.instanceNames {
-		adminClient, err := e.createAdminClient(ctx, instance, e.config.ProjectID)
+		adminClient, err := e.newAdminClient(ctx, instance, e.config)
 		if err != nil {
 			return err
 		}
@@ -162,12 +186,12 @@ func (c Config) clientOptions() []option.ClientOption {
 	return []option.ClientOption{option.WithCredentialsJSON(c.serviceAccountJSON)}
 }
 
-func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.InstanceAdminClient, error) {
+func createInstanceAdminClient(ctx context.Context, config Config) (InstanceAdminClient, error) {
 	return bigtable.NewInstanceAdminClient(ctx, config.ProjectID, config.clientOptions()...)
 }
 
-func (e *Extractor) createAdminClient(ctx context.Context, instance, projectID string) (*bigtable.AdminClient, error) {
-	return bigtable.NewAdminClient(ctx, projectID, instance, e.config.clientOptions()...)
+func createAdminClient(ctx context.Context, instance string, config Config) (AdminClient, error) {
+	return bigtable.NewAdminClient(ctx, config.ProjectID, instance, config.clientOptions()...)
 }
 
 func (e *Extractor) decodeServiceAccount() error {
@@ -187,7 +211,7 @@ func (e *Extractor) decodeServiceAccount() error {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), instanceAdminClientCreator, createAdminClient)
 	}); err != nil {
 		panic(err)
 	}

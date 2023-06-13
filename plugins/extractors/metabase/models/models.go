@@ -1,15 +1,10 @@
-package metabase
+package models
 
 import (
 	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
-)
-
-const (
-	datasetQueryTypeQuery  = "query"
-	datasetQueryTypeNative = "native"
 )
 
 type Dashboard struct {

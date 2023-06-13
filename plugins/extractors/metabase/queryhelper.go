@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/blastrain/vitess-sqlparser/sqlparser"
+	m "github.com/goto/meteor/plugins/extractors/metabase/models"
 )
 
-func evaluateQueryTemplate(datasetQuery NativeDatasetQuery) (string, error) {
+func evaluateQueryTemplate(datasetQuery m.NativeDatasetQuery) (string, error) {
 	query := datasetQuery.Query
 
 	// clean metabase custom syntax
