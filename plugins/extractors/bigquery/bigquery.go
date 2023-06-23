@@ -2,11 +2,13 @@ package bigquery
 
 import (
 	"context"
+	"crypto/rand"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"math/big"
 	"strings"
 	"sync"
 
@@ -42,6 +44,7 @@ type Config struct {
 	Exclude              Exclude  `mapstructure:"exclude"`
 	IncludeColumnProfile bool     `mapstructure:"include_column_profile"`
 	MaxPreviewRows       int      `mapstructure:"max_preview_rows" default:"30"`
+	MixValues            bool     `mapstructure:"mix_values" default:"false"`
 	IsCollectTableUsage  bool     `mapstructure:"collect_table_usage" default:"false"`
 	UsagePeriodInDay     int64    `mapstructure:"usage_period_in_day" default:"7"`
 	UsageProjectIDs      []string `mapstructure:"usage_project_ids"`
@@ -103,17 +106,21 @@ type Extractor struct {
 	galClient       *auditlog.AuditLog
 	policyTagClient *datacatalog.PolicyTagManagerClient
 	newClient       NewClientFunc
+	randFn          randFn
 }
+
+type randFn func(int64) (int64, error)
 
 type NewClientFunc func(ctx context.Context, logger log.Logger, config Config) (*bigquery.Client, error)
 
-func New(logger log.Logger, newClient NewClientFunc) *Extractor {
+func New(logger log.Logger, newClient NewClientFunc, randFn randFn) *Extractor {
 	galc := auditlog.New(logger)
 
 	e := &Extractor{
 		logger:    logger,
 		galClient: galc,
 		newClient: newClient,
+		randFn:    randFn,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -436,12 +443,55 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 		totalRows++
 	}
 
+	// if mix values true, then randomize the values
+	if e.config.MixValues {
+		tempRows, err = e.mixValues(tempRows)
+		if err != nil {
+			return nil, nil, fmt.Errorf("mix values: %w", err)
+		}
+	}
+
 	rows, err = structpb.NewList(tempRows)
 	if err != nil {
 		return nil, nil, fmt.Errorf("create preview list: %w", err)
 	}
 
 	return fields, rows, nil
+}
+
+func (e *Extractor) mixValues(rows []interface{}) ([]interface{}, error) {
+	numRows := len(rows)
+	if numRows < 2 {
+		return rows, nil
+	}
+
+	numColumns := len(rows[0].([]interface{}))
+
+	mixedRows := make([]interface{}, numRows)
+	copy(mixedRows, rows)
+
+	for col := 0; col < numColumns; col++ {
+		for row := numRows - 1; row > 0; row-- {
+			// Generate a random index within the range [0, row+1)
+			swapRow, err := e.randFn(int64(row + 1))
+			if err != nil {
+				return nil, err
+			}
+
+			// Swap the values in the current row and the randomly selected row
+			a, ok := mixedRows[row].([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("row %d is not a slice", row)
+			}
+			b, ok := mixedRows[swapRow].([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("row %d is not a slice", swapRow)
+			}
+			a[col], b[col] = b[col], a[col]
+		}
+	}
+
+	return mixedRows, nil
 }
 
 func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (*v1beta2.ColumnProfile, error) {
@@ -578,8 +628,16 @@ func (e *Extractor) getMaxPageSize() int {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
-		return New(plugins.GetLog(), CreateClient)
+		return New(plugins.GetLog(), CreateClient, cryptoRandom)
 	}); err != nil {
 		panic(err)
 	}
+}
+
+func cryptoRandom(max int64) (int64, error) {
+	i, err := rand.Int(rand.Reader, big.NewInt(max))
+	if err != nil {
+		return 0, err
+	}
+	return i.Int64(), nil
 }

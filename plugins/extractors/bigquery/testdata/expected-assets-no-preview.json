@@ -1,0 +1,180 @@
+[
+    {
+        "create_time": null,
+        "data": {
+            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+            "attributes": {
+                "clustering_fields": [],
+                "dataset": "dataset1",
+                "full_qualified_name": "test-project-id:dataset1.table_a",
+                "partition_data": {
+                    "require_partition_filter": false
+                },
+                "project": "test-project-id",
+                "type": "TABLE"
+            },
+            "columns": [
+                {
+                    "attributes": {
+                        "mode": "REQUIRED"
+                    },
+                    "columns": [],
+                    "data_type": "INTEGER",
+                    "description": "",
+                    "is_nullable": false,
+                    "length": "0",
+                    "name": "id",
+                    "profile": {
+                        "avg": 0,
+                        "count": "0",
+                        "max": "",
+                        "med": 0,
+                        "min": "",
+                        "top": "",
+                        "unique": "0"
+                    }
+                },
+                {
+                    "attributes": {
+                        "mode": "REQUIRED"
+                    },
+                    "columns": [],
+                    "data_type": "STRING",
+                    "description": "",
+                    "is_nullable": false,
+                    "length": "0",
+                    "name": "name",
+                    "profile": {
+                        "avg": 0,
+                        "count": "0",
+                        "max": "",
+                        "med": 0,
+                        "min": "",
+                        "top": "",
+                        "unique": "0"
+                    }
+                },
+                {
+                    "attributes": {
+                        "mode": "REPEATED"
+                    },
+                    "columns": [
+                        {
+                            "attributes": {
+                                "mode": "NULLABLE"
+                            },
+                            "columns": [],
+                            "data_type": "STRING",
+                            "description": "",
+                            "is_nullable": true,
+                            "length": "0",
+                            "name": "key",
+                            "profile": null
+                        },
+                        {
+                            "attributes": {
+                                "mode": "NULLABLE"
+                            },
+                            "columns": [],
+                            "data_type": "JSON",
+                            "description": "",
+                            "is_nullable": true,
+                            "length": "0",
+                            "name": "value",
+                            "profile": null
+                        }
+                    ],
+                    "data_type": "RECORD",
+                    "description": "",
+                    "is_nullable": false,
+                    "length": "0",
+                    "name": "structarr",
+                    "profile": null
+                },
+                {
+                    "attributes": {
+                        "mode": "NULLABLE"
+                    },
+                    "columns": [],
+                    "data_type": "DATE",
+                    "description": "",
+                    "is_nullable": true,
+                    "length": "0",
+                    "name": "birthday",
+                    "profile": {
+                        "avg": 0,
+                        "count": "0",
+                        "max": "",
+                        "med": 0,
+                        "min": "",
+                        "top": "",
+                        "unique": "0"
+                    }
+                },
+                {
+                    "attributes": {
+                        "mode": "NULLABLE"
+                    },
+                    "columns": [],
+                    "data_type": "NUMERIC",
+                    "description": "",
+                    "is_nullable": true,
+                    "length": "0",
+                    "name": "skillNum",
+                    "profile": {
+                        "avg": 0,
+                        "count": "0",
+                        "max": "",
+                        "med": 0,
+                        "min": "",
+                        "top": "",
+                        "unique": "0"
+                    }
+                },
+                {
+                    "attributes": {
+                        "mode": "NULLABLE"
+                    },
+                    "columns": [],
+                    "data_type": "TIMESTAMP",
+                    "description": "",
+                    "is_nullable": true,
+                    "length": "0",
+                    "name": "created_at",
+                    "profile": {
+                        "avg": 0,
+                        "count": "0",
+                        "max": "",
+                        "med": 0,
+                        "min": "",
+                        "top": "",
+                        "unique": "0"
+                    }
+                }
+            ],
+            "create_time": "2023-06-13T03:46:12.372974Z",
+            "preview_fields": [],
+            "preview_rows": null,
+            "profile": {
+                "common_joins": [],
+                "filters": [],
+                "partition_key": "",
+                "partition_value": "",
+                "total_rows": "0",
+                "usage_count": "0"
+            },
+            "update_time": "2023-06-13T03:46:12.372974Z"
+        },
+        "description": "",
+        "event": null,
+        "labels": {},
+        "lineage": null,
+        "name": "table_a",
+        "owners": [],
+        "service": "bigquery",
+        "type": "table",
+        "update_time": null,
+        "url": "",
+        "urn": "urn:bigquery:test-project-id:table:test-project-id:dataset1.table_a"
+    }
+]

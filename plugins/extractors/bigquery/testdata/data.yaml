@@ -42,6 +42,30 @@ projects:
               birthday: "2007-02-01"
               skillNum: 5
               created_at: '2022-01-02T18:00:00'
+            - id: 3
+              name: carol
+              structarr:
+                - key: profile
+                  value: '{"age": 20}'
+              birthday: "2002-03-01"
+              skillNum: 7
+              created_at: '2022-01-03T06:00:00'
+            - id: 4
+              name: dave
+              structarr:
+                - key: profile
+                  value: '{"age": 25}'
+              birthday: "1997-04-01"
+              skillNum: 9
+              created_at: '2022-01-04T00:00:00'
+            - id: 5
+              name: eve
+              structarr:
+                - key: profile
+                  value: '{"age": 30}'
+              birthday: "1992-05-01"
+              skillNum: 11
+              created_at: '2022-01-05T12:00:00'
         - id: exclude_this_table
           columns:
             - name: id
