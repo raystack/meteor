@@ -111,7 +111,7 @@ type Extractor struct {
 
 type randFn func(int64) (int64, error)
 
-type NewClientFunc func(ctx context.Context, logger log.Logger, config Config) (*bigquery.Client, error)
+type NewClientFunc func(ctx context.Context, logger log.Logger, config *Config) (*bigquery.Client, error)
 
 func New(logger log.Logger, newClient NewClientFunc, randFn randFn) *Extractor {
 	galc := auditlog.New(logger)
@@ -135,7 +135,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	var err error
-	e.client, err = e.newClient(ctx, e.logger, e.config)
+	e.client, err = e.newClient(ctx, e.logger, &e.config)
 	if err != nil {
 		return fmt.Errorf("create client: %w", err)
 	}
@@ -187,7 +187,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 // CreateClient creates a bigquery client
-func CreateClient(ctx context.Context, logger log.Logger, config Config) (*bigquery.Client, error) {
+func CreateClient(ctx context.Context, logger log.Logger, config *Config) (*bigquery.Client, error) {
 	if config.ServiceAccountBase64 == "" && config.ServiceAccountJSON == "" {
 		logger.Info("credentials are not specified, creating bigquery client using default credentials...")
 		return bigquery.NewClient(ctx, config.ProjectID)

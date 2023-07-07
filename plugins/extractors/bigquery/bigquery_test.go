@@ -93,7 +93,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func mockClient(ctx context.Context, logger slog.Logger, config bigquery.Config) (*bq.Client, error) {
+func mockClient(ctx context.Context, logger slog.Logger, config *bigquery.Config) (*bq.Client, error) {
 	return client, nil
 }
 
