@@ -30,7 +30,7 @@ func VersionCmd() *cobra.Command {
 			}
 
 			fmt.Println(Version)
-			fmt.Println(term.Yellow(version.UpdateNotice(Version, "gotocompany/meteor")))
+			fmt.Println(term.Yellow(version.UpdateNotice(Version, "goto/meteor")))
 
 			return nil
 		},
