@@ -108,7 +108,7 @@ type Extractor struct {
 	randFn          randFn
 }
 
-type randFn func(max, rndSeed int64) int64
+type randFn func(rndSeed int64) func(int64) int64
 
 type NewClientFunc func(ctx context.Context, logger log.Logger, config *Config) (*bigquery.Client, error)
 
@@ -456,35 +456,35 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *big
 }
 
 func (e *Extractor) mixValuesIfNeeded(rows []interface{}, rndSeed int64) ([]interface{}, error) {
-	numRows := len(rows)
-
-	if !e.config.MixValues || numRows < 2 {
+	if !e.config.MixValues || len(rows) < 2 {
 		return rows, nil
 	}
 
-	numColumns := len(rows[0].([]interface{}))
+	var table [][]any
+	for _, row := range rows {
+		arr, ok := row.([]any)
+		if !ok {
+			return nil, fmt.Errorf("row %d is not a slice", row)
+		}
+		table = append(table, arr)
+	}
 
-	mixedRows := make([]interface{}, numRows)
-	copy(mixedRows, rows)
+	numRows := len(table)
+	numColumns := len(table[0])
 
+	rndGen := e.randFn(rndSeed)
 	for col := 0; col < numColumns; col++ {
-		for row := numRows - 1; row > 0; row-- {
-			// Generate a random index within the range [0, row+1)
-			swapRow := e.randFn(int64(row+1), rndSeed)
+		for row := 0; row < numRows; row++ {
+			randomRow := rndGen(int64(numRows))
 
-			// Swap the values in the current row and the randomly selected row
-			a, ok := mixedRows[row].([]interface{})
-			if !ok {
-				return nil, fmt.Errorf("row %d is not a slice", row)
-			}
-			b, ok := mixedRows[swapRow].([]interface{})
-			if !ok {
-				return nil, fmt.Errorf("row %d is not a slice", swapRow)
-			}
-			a[col], b[col] = b[col], a[col]
+			table[row][col], table[randomRow][col] = table[randomRow][col], table[row][col]
 		}
 	}
 
+	mixedRows := make([]any, numRows)
+	for i, row := range table {
+		mixedRows[i] = row
+	}
 	return mixedRows, nil
 }
 
@@ -628,7 +628,9 @@ func init() {
 	}
 }
 
-func seededRandom(max, rndSeed int64) int64 {
-	rnd := rand.New(rand.NewSource(rndSeed)) //nolint:gosec
-	return rnd.Int63n(max)
+func seededRandom(seed int64) func(max int64) int64 {
+	rnd := rand.New(rand.NewSource(seed)) //nolint:gosec
+	return func(max int64) int64 {
+		return rnd.Int63n(max)
+	}
 }
