@@ -1,253 +1,253 @@
 [
-    {
-        "create_time": null,
-        "data": {
-            "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
-            "attributes": {
-                "clustering_fields": [],
-                "dataset": "dataset1",
-                "full_qualified_name": "test-project-id:dataset1.table_a",
-                "partition_data": {
-                    "require_partition_filter": false
-                },
-                "project": "test-project-id",
-                "type": "TABLE"
-            },
-            "columns": [
-                {
-                    "attributes": {
-                        "mode": "REQUIRED"
-                    },
-                    "columns": [],
-                    "data_type": "INTEGER",
-                    "description": "",
-                    "is_nullable": false,
-                    "length": "0",
-                    "name": "id",
-                    "profile": {
-                        "avg": 0,
-                        "count": "0",
-                        "max": "",
-                        "med": 0,
-                        "min": "",
-                        "top": "",
-                        "unique": "0"
-                    }
-                },
-                {
-                    "attributes": {
-                        "mode": "REQUIRED"
-                    },
-                    "columns": [],
-                    "data_type": "STRING",
-                    "description": "",
-                    "is_nullable": false,
-                    "length": "0",
-                    "name": "name",
-                    "profile": {
-                        "avg": 0,
-                        "count": "0",
-                        "max": "",
-                        "med": 0,
-                        "min": "",
-                        "top": "",
-                        "unique": "0"
-                    }
-                },
-                {
-                    "attributes": {
-                        "mode": "REPEATED"
-                    },
-                    "columns": [
-                        {
-                            "attributes": {
-                                "mode": "NULLABLE"
-                            },
-                            "columns": [],
-                            "data_type": "STRING",
-                            "description": "",
-                            "is_nullable": true,
-                            "length": "0",
-                            "name": "key",
-                            "profile": null
-                        },
-                        {
-                            "attributes": {
-                                "mode": "NULLABLE"
-                            },
-                            "columns": [],
-                            "data_type": "JSON",
-                            "description": "",
-                            "is_nullable": true,
-                            "length": "0",
-                            "name": "value",
-                            "profile": null
-                        }
-                    ],
-                    "data_type": "RECORD",
-                    "description": "",
-                    "is_nullable": false,
-                    "length": "0",
-                    "name": "structarr",
-                    "profile": null
-                },
-                {
-                    "attributes": {
-                        "mode": "NULLABLE"
-                    },
-                    "columns": [],
-                    "data_type": "DATE",
-                    "description": "",
-                    "is_nullable": true,
-                    "length": "0",
-                    "name": "birthday",
-                    "profile": {
-                        "avg": 0,
-                        "count": "0",
-                        "max": "",
-                        "med": 0,
-                        "min": "",
-                        "top": "",
-                        "unique": "0"
-                    }
-                },
-                {
-                    "attributes": {
-                        "mode": "NULLABLE"
-                    },
-                    "columns": [],
-                    "data_type": "NUMERIC",
-                    "description": "",
-                    "is_nullable": true,
-                    "length": "0",
-                    "name": "skillNum",
-                    "profile": {
-                        "avg": 0,
-                        "count": "0",
-                        "max": "",
-                        "med": 0,
-                        "min": "",
-                        "top": "",
-                        "unique": "0"
-                    }
-                },
-                {
-                    "attributes": {
-                        "mode": "NULLABLE"
-                    },
-                    "columns": [],
-                    "data_type": "TIMESTAMP",
-                    "description": "",
-                    "is_nullable": true,
-                    "length": "0",
-                    "name": "created_at",
-                    "profile": {
-                        "avg": 0,
-                        "count": "0",
-                        "max": "",
-                        "med": 0,
-                        "min": "",
-                        "top": "",
-                        "unique": "0"
-                    }
-                }
-            ],
-            "create_time": "2023-06-13T03:46:12.372974Z",
-            "preview_fields": [
-                "id",
-                "name",
-                "structarr",
-                "birthday",
-                "skillNum",
-                "created_at"
-            ],
-            "preview_rows": [
-                [
-                    1,
-                    "alice",
-                    [
-                        [
-                            "profile",
-                            "{\"age\": 10}"
-                        ]
-                    ],
-                    "2012-01-01",
-                    "3",
-                    "2022-01-01T12:00:00Z"
-                ],
-                [
-                    3,
-                    "carol",
-                    [
-                        [
-                            "profile",
-                            "{\"age\": 20}"
-                        ]
-                    ],
-                    "2002-03-01",
-                    "7",
-                    "2022-01-03T06:00:00Z"
-                ],
-                [
-                    5,
-                    "eve",
-                    [
-                        [
-                            "profile",
-                            "{\"age\": 30}"
-                        ]
-                    ],
-                    "1992-05-01",
-                    "11",
-                    "2022-01-05T12:00:00Z"
-                ],
-                [
-                    2,
-                    "bob",
-                    [
-                        [
-                            "profile",
-                            "{\"age\": 15}"
-                        ]
-                    ],
-                    "2007-02-01",
-                    "5",
-                    "2022-01-02T18:00:00Z"
-                ],
-                [
-                    4,
-                    "dave",
-                    [
-                        [
-                            "profile",
-                            "{\"age\": 25}"
-                        ]
-                    ],
-                    "1997-04-01",
-                    "9",
-                    "2022-01-04T00:00:00Z"
-                ]
-            ],
-            "profile": {
-                "common_joins": [],
-                "filters": [],
-                "partition_key": "",
-                "partition_value": "",
-                "total_rows": "0",
-                "usage_count": "0"
-            },
-            "update_time": "2023-06-13T03:46:12.372974Z"
+  {
+    "create_time": null,
+    "data": {
+      "@type": "type.googleapis.com/gotocompany.assets.v1beta2.Table",
+      "attributes": {
+        "clustering_fields": [],
+        "dataset": "dataset1",
+        "full_qualified_name": "test-project-id:dataset1.table_a",
+        "partition_data": {
+          "require_partition_filter": false
         },
-        "description": "",
-        "event": null,
-        "labels": {},
-        "lineage": null,
-        "name": "table_a",
-        "owners": [],
-        "service": "bigquery",
-        "type": "table",
-        "update_time": null,
-        "url": "",
-        "urn": "urn:bigquery:test-project-id:table:test-project-id:dataset1.table_a"
-    }
+        "project": "test-project-id",
+        "type": "TABLE"
+      },
+      "columns": [
+        {
+          "attributes": {
+            "mode": "REQUIRED"
+          },
+          "columns": [],
+          "data_type": "INTEGER",
+          "description": "",
+          "is_nullable": false,
+          "length": "0",
+          "name": "id",
+          "profile": {
+            "avg": 0,
+            "count": "0",
+            "max": "",
+            "med": 0,
+            "min": "",
+            "top": "",
+            "unique": "0"
+          }
+        },
+        {
+          "attributes": {
+            "mode": "REQUIRED"
+          },
+          "columns": [],
+          "data_type": "STRING",
+          "description": "",
+          "is_nullable": false,
+          "length": "0",
+          "name": "name",
+          "profile": {
+            "avg": 0,
+            "count": "0",
+            "max": "",
+            "med": 0,
+            "min": "",
+            "top": "",
+            "unique": "0"
+          }
+        },
+        {
+          "attributes": {
+            "mode": "REPEATED"
+          },
+          "columns": [
+            {
+              "attributes": {
+                "mode": "NULLABLE"
+              },
+              "columns": [],
+              "data_type": "STRING",
+              "description": "",
+              "is_nullable": true,
+              "length": "0",
+              "name": "key",
+              "profile": null
+            },
+            {
+              "attributes": {
+                "mode": "NULLABLE"
+              },
+              "columns": [],
+              "data_type": "JSON",
+              "description": "",
+              "is_nullable": true,
+              "length": "0",
+              "name": "value",
+              "profile": null
+            }
+          ],
+          "data_type": "RECORD",
+          "description": "",
+          "is_nullable": false,
+          "length": "0",
+          "name": "structarr",
+          "profile": null
+        },
+        {
+          "attributes": {
+            "mode": "NULLABLE"
+          },
+          "columns": [],
+          "data_type": "DATE",
+          "description": "",
+          "is_nullable": true,
+          "length": "0",
+          "name": "birthday",
+          "profile": {
+            "avg": 0,
+            "count": "0",
+            "max": "",
+            "med": 0,
+            "min": "",
+            "top": "",
+            "unique": "0"
+          }
+        },
+        {
+          "attributes": {
+            "mode": "NULLABLE"
+          },
+          "columns": [],
+          "data_type": "NUMERIC",
+          "description": "",
+          "is_nullable": true,
+          "length": "0",
+          "name": "skillNum",
+          "profile": {
+            "avg": 0,
+            "count": "0",
+            "max": "",
+            "med": 0,
+            "min": "",
+            "top": "",
+            "unique": "0"
+          }
+        },
+        {
+          "attributes": {
+            "mode": "NULLABLE"
+          },
+          "columns": [],
+          "data_type": "TIMESTAMP",
+          "description": "",
+          "is_nullable": true,
+          "length": "0",
+          "name": "created_at",
+          "profile": {
+            "avg": 0,
+            "count": "0",
+            "max": "",
+            "med": 0,
+            "min": "",
+            "top": "",
+            "unique": "0"
+          }
+        }
+      ],
+      "create_time": "2023-06-13T03:46:12.372974Z",
+      "preview_fields": [
+        "id",
+        "name",
+        "structarr",
+        "birthday",
+        "skillNum",
+        "created_at"
+      ],
+      "preview_rows": [
+        [
+          1,
+          "alice",
+          [
+            [
+              "profile",
+              "{\"age\": 15}"
+            ]
+          ],
+          "2007-02-01",
+          "9",
+          "2022-01-02T18:00:00Z"
+        ],
+        [
+          4,
+          "carol",
+          [
+            [
+              "profile",
+              "{\"age\": 25}"
+            ]
+          ],
+          "1992-05-01",
+          "7",
+          "2022-01-01T12:00:00Z"
+        ],
+        [
+          5,
+          "bob",
+          [
+            [
+              "profile",
+              "{\"age\": 10}"
+            ]
+          ],
+          "2012-01-01",
+          "3",
+          "2022-01-05T12:00:00Z"
+        ],
+        [
+          3,
+          "dave",
+          [
+            [
+              "profile",
+              "{\"age\": 20}"
+            ]
+          ],
+          "1997-04-01",
+          "11",
+          "2022-01-04T00:00:00Z"
+        ],
+        [
+          2,
+          "eve",
+          [
+            [
+              "profile",
+              "{\"age\": 30}"
+            ]
+          ],
+          "2002-03-01",
+          "5",
+          "2022-01-03T06:00:00Z"
+        ]
+      ],
+      "profile": {
+        "common_joins": [],
+        "filters": [],
+        "partition_key": "",
+        "partition_value": "",
+        "total_rows": "0",
+        "usage_count": "0"
+      },
+      "update_time": "2023-06-13T03:46:12.372974Z"
+    },
+    "description": "",
+    "event": null,
+    "labels": {},
+    "lineage": null,
+    "name": "table_a",
+    "owners": [],
+    "service": "bigquery",
+    "type": "table",
+    "update_time": null,
+    "url": "",
+    "urn": "urn:bigquery:test-project-id:table:test-project-id:dataset1.table_a"
+  }
 ]
