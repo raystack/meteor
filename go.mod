@@ -40,9 +40,9 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249
-	github.com/raystack/optimus v0.6.0-rc.5
-	github.com/raystack/salt v0.2.4
-	github.com/raystack/shield v0.2.3
+	github.com/raystack/optimus v0.7.0
+	github.com/raystack/salt v0.3.2
+	github.com/raystack/shield v0.6.2
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect

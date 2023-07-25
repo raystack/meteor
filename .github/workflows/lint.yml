@@ -7,20 +7,19 @@ on:
   pull_request:
 
 jobs:
-  golangci:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.18'
-      # See https://github.com/golangci/golangci-lint-action#how-to-use
-      - name: golangci-lint
+      - name: Run linter
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50
+          version: v1.53
           args: --timeout=5m
