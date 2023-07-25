@@ -28,7 +28,8 @@ import (
 	_ "github.com/raystack/meteor/plugins/extractors/presto"
 	_ "github.com/raystack/meteor/plugins/extractors/redash"
 	_ "github.com/raystack/meteor/plugins/extractors/redshift"
-	_ "github.com/raystack/meteor/plugins/extractors/shield"
+
+	// _ "github.com/raystack/meteor/plugins/extractors/shield"
 	_ "github.com/raystack/meteor/plugins/extractors/snowflake"
 	_ "github.com/raystack/meteor/plugins/extractors/superset"
 	_ "github.com/raystack/meteor/plugins/extractors/tableau"
