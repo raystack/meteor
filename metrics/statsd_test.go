@@ -1,6 +1,7 @@
 package metrics_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -38,6 +39,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "statsd/statsd",
+		Platform:   "linux/amd64",
 		Tag:        "latest",
 		Env: []string{
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
@@ -114,7 +116,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
+		monitor.RecordRun(context.Background(), agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -155,7 +157,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: true})
+		monitor.RecordRun(context.Background(), agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: true})
 	})
 }
 
@@ -187,7 +189,12 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", false)
+		monitor.RecordPlugin(context.Background(), agent.PluginInfo{
+			RecipeName: recipe.Name,
+			PluginName: recipe.Sinks[0].Name,
+			PluginType: "sink",
+			Success:    false,
+		})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -215,7 +222,13 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", true)
+		monitor.RecordPlugin(context.Background(),
+			agent.PluginInfo{
+				RecipeName: recipe.Name,
+				PluginName: recipe.Sinks[0].Name,
+				PluginType: "sink",
+				Success:    true,
+			})
 	})
 }
 

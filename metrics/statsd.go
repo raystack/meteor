@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -32,7 +33,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 }
 
 // RecordRun records a run behavior
-func (m *StatsdMonitor) RecordRun(run agent.Run) {
+func (m *StatsdMonitor) RecordRun(_ context.Context, run agent.Run) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, run.Recipe, run.Success),
 		int64(run.DurationInMs),
@@ -47,19 +48,21 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 }
 
 // RecordPlugin records a individual plugin behavior in a run
-func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
+func (m *StatsdMonitor) RecordPlugin(_ context.Context, pluginInfo agent.PluginInfo) {
 	m.client.Increment(
 		fmt.Sprintf(
 			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
 			m.prefix,
 			pluginRunMetricName,
-			recipeName,
-			pluginName,
-			pluginType,
-			success,
+			pluginInfo.RecipeName,
+			pluginInfo.PluginName,
+			pluginInfo.PluginType,
+			pluginInfo.Success,
 		),
 	)
 }
+
+func (*StatsdMonitor) RecordSinkRetryCount(context.Context, agent.PluginInfo) {}
 
 // createMetricName creates a metric name for a given recipe and success
 func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
