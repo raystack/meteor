@@ -101,12 +101,6 @@ func (c *mockClient) GetGroup(ctx context.Context, in *sh.GetGroupRequest, opts 
 	return args.Get(0).(*sh.GetGroupResponse), args.Error(1)
 }
 
-func (c *mockClient) GetRole(ctx context.Context, in *sh.GetRoleRequest, opts ...grpc.CallOption) (*sh.GetRoleResponse, error) {
-	args := c.Called(ctx, in, opts)
-
-	return args.Get(0).(*sh.GetRoleResponse), args.Error(1)
-}
-
 func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
 
@@ -138,24 +132,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 					Seconds: 900,
 				},
 			},
-		},
-	}, nil).Once()
-
-	client.On("GetRole", ctx, &sh.GetRoleRequest{
-		Id: "user-A",
-	}, mock.Anything).Return(&sh.GetRoleResponse{
-		Role: &sh.Role{
-			Id:   "user-A",
-			Name: "role-A",
-		},
-	}, nil).Once()
-
-	client.On("GetRole", ctx, &sh.GetRoleRequest{
-		Id: "user-B",
-	}, mock.Anything).Return(&sh.GetRoleResponse{
-		Role: &sh.Role{
-			Id:   "user-B",
-			Name: "role-B",
 		},
 	}, nil).Once()
 
