@@ -7,13 +7,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/plugins/extractors/shield"
+	"github.com/raystack/meteor/plugins/extractors/shield"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/test/mocks"
-	testutils "github.com/odpf/meteor/test/utils"
-	sh "github.com/odpf/shield/proto/v1beta1"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/test/mocks"
+	testutils "github.com/raystack/meteor/test/utils"
+	sh "github.com/raystack/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -101,12 +101,6 @@ func (c *mockClient) GetGroup(ctx context.Context, in *sh.GetGroupRequest, opts 
 	return args.Get(0).(*sh.GetGroupResponse), args.Error(1)
 }
 
-func (c *mockClient) GetRole(ctx context.Context, in *sh.GetRoleRequest, opts ...grpc.CallOption) (*sh.GetRoleResponse, error) {
-	args := c.Called(ctx, in, opts)
-
-	return args.Get(0).(*sh.GetRoleResponse), args.Error(1)
-}
-
 func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	client.On("Connect", ctx, validConfig["host"]).Return(nil).Once()
 
@@ -115,7 +109,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			{
 				Id:       "user-A",
 				Name:     "fullname-A",
-				Slug:     "sample description for user-A",
 				Email:    "user1@gojek.com",
 				Metadata: nil,
 				CreatedAt: &timestamppb.Timestamp{
@@ -128,7 +121,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			{
 				Id:       "user-B",
 				Name:     "fullname-B",
-				Slug:     "sample description for user-B",
 				Email:    "user2@gojek.com",
 				Metadata: nil,
 				CreatedAt: &timestamppb.Timestamp{
@@ -138,24 +130,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 					Seconds: 900,
 				},
 			},
-		},
-	}, nil).Once()
-
-	client.On("GetRole", ctx, &sh.GetRoleRequest{
-		Id: "user-A",
-	}, mock.Anything).Return(&sh.GetRoleResponse{
-		Role: &sh.Role{
-			Id:   "user-A",
-			Name: "role-A",
-		},
-	}, nil).Once()
-
-	client.On("GetRole", ctx, &sh.GetRoleRequest{
-		Id: "user-B",
-	}, mock.Anything).Return(&sh.GetRoleResponse{
-		Role: &sh.Role{
-			Id:   "user-B",
-			Name: "role-B",
 		},
 	}, nil).Once()
 

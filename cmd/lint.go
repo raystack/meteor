@@ -6,14 +6,14 @@ import (
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/config"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/recipe"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
-	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
+	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/config"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/recipe"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/log"
+	"github.com/raystack/salt/printer"
+	"github.com/raystack/salt/term"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func LintCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
-		Args:    cobra.ExactValidArgs(1),
+		Args:    cobra.MatchAll(cobra.ExactArgs(1)),
 		Short:   "Check for issues in recipes",
 		Long: heredoc.Doc(`
 			Check for issues specified recipes.

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/odpf/meteor/registry"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/registry"
 )
 
 //go:embed recipe.yaml

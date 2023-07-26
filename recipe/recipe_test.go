@@ -4,8 +4,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/odpf/meteor/recipe"
-	"github.com/odpf/salt/log"
+	"github.com/raystack/meteor/recipe"
+	"github.com/raystack/salt/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

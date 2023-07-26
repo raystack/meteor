@@ -3,8 +3,8 @@ package sqlutil
 import (
 	"database/sql"
 
-	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"github.com/raystack/salt/log"
 )
 
 func FetchDBs(db *sql.DB, logger log.Logger, query string) ([]string, error) {

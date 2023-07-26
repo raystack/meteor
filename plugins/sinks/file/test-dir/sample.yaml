@@ -5,7 +5,7 @@
   url: ""
   description: ""
   data:
-    typeurl: type.googleapis.com/odpf.assets.v1beta2.Table
+    typeurl: type.googleapis.com/raystack.assets.v1beta2.Table
     value:
         - 10
         - 2
@@ -41,7 +41,7 @@
   url: ""
   description: ""
   data:
-    typeurl: type.googleapis.com/odpf.assets.v1beta2.Table
+    typeurl: type.googleapis.com/raystack.assets.v1beta2.Table
     value:
         - 10
         - 2

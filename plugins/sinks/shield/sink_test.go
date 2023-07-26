@@ -13,14 +13,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/odpf/meteor/models"
-	testUtils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
+	"github.com/raystack/meteor/models"
+	testUtils "github.com/raystack/meteor/test/utils"
+	"github.com/raystack/meteor/utils"
 
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/sinks/shield"
-	shieldProto "github.com/odpf/shield/proto/v1beta1"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sinks/shield"
+	shieldProto "github.com/raystack/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
@@ -75,7 +75,7 @@ func TestSink(t *testing.T) {
 	t.Run("should return RetryError if shield returns certain status code", func(t *testing.T) {
 
 		user, err := anypb.New(&v1beta2.User{
-			Email:    "user@odpf.com",
+			Email:    "user@raystack.com",
 			FullName: "john",
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"org_unit_path": "/",
@@ -109,10 +109,10 @@ func TestSink(t *testing.T) {
 	t.Run("should not return when valid payload is sent", func(t *testing.T) {
 		u := &v1beta2.User{
 			FullName: "John Doe",
-			Email:    "john.doe@odpf.com",
+			Email:    "john.doe@raystack.com",
 			Attributes: utils.TryParseMapToProto(map[string]interface{}{
 				"org_unit_path": "/",
-				"aliases":       "doe.john@odpf.com,johndoe@odpf.com",
+				"aliases":       "doe.john@raystack.com,johndoe@raystack.com",
 			}),
 		}
 		user, _ := anypb.New(u)

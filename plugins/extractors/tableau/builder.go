@@ -2,8 +2,8 @@ package tableau
 
 import (
 	"github.com/mitchellh/mapstructure"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
 	"github.com/pkg/errors"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 )
 
 func (e *Extractor) buildLineage(tables []*Table) (lineage *v1beta2.Lineage) {

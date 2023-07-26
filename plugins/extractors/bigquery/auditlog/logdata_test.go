@@ -6,7 +6,7 @@ package auditlog
 import (
 	"testing"
 
-	"github.com/odpf/meteor/plugins"
+	"github.com/raystack/meteor/plugins"
 	"github.com/stretchr/testify/assert"
 	loggingpb "google.golang.org/genproto/googleapis/cloud/bigquery/logging/v1"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"

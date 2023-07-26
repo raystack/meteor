@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/merlin/internal/merlin"
-	intrnlmcks "github.com/odpf/meteor/plugins/extractors/merlin/internal/mocks"
-	"github.com/odpf/meteor/test/mocks"
-	testutils "github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
+	intrnlmcks "github.com/raystack/meteor/plugins/extractors/merlin/internal/mocks"
+	"github.com/raystack/meteor/test/mocks"
+	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

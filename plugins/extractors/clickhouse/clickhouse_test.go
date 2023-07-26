@@ -10,19 +10,19 @@ import (
 	"os"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/clickhouse"
-	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/clickhouse"
+	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -172,17 +172,17 @@ func getExpected() []models.Record {
 	return []models.Record{
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant",
-			Name: "applicant",
-			Type: "table",
+			Name:    "applicant",
+			Type:    "table",
 			Service: "clickhouse",
-			Data: table1,
+			Data:    table1,
 		}),
 		models.NewRecord(&v1beta2.Asset{
 			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs",
-			Name: "jobs",
-			Type: "table",
+			Name:    "jobs",
+			Type:    "table",
 			Service: "clickhouse",
-			Data: table2,
+			Data:    table2,
 		}),
 	}
 }

@@ -1,6 +1,6 @@
 package plugins
 
-import "github.com/odpf/salt/log"
+import "github.com/raystack/salt/log"
 
 var (
 	logger log.Logger = log.NewLogrus(log.LogrusWithLevel("INFO"))

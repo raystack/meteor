@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/meteor/utils"
-	pb "github.com/odpf/optimus/protos/odpf/optimus/core/v1beta1"
-	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/meteor/utils"
+	pb "github.com/raystack/optimus/protos/raystack/optimus/core/v1beta1"
+	"github.com/raystack/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -145,7 +145,6 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 			"endDate":          jobSpec.EndDate,
 			"interval":         jobSpec.Interval,
 			"dependsOnPast":    jobSpec.DependsOnPast,
-			"catchUp":          jobSpec.CatchUp,
 			"taskName":         jobSpec.TaskName,
 			"windowSize":       jobSpec.WindowSize,
 			"windowOffset":     jobSpec.WindowOffset,

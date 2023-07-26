@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/models"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/merlin/internal/merlin"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/models"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/log"
 )
 
 // init register the extractor to the catalog

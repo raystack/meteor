@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/odpf/meteor/plugins"
+	"github.com/raystack/meteor/plugins"
 )
 
 const (

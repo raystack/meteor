@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/odpf/meteor/models"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/models"
 )
 
 type streamMiddleware func(src models.Record) (dst models.Record, err error)

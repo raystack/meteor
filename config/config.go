@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/odpf/salt/config"
+	"github.com/raystack/salt/config"
 )
 
 // Config contains the configuration for meteor.

@@ -20,11 +20,11 @@ source:
 ## Inputs
 
 | Key                      | Value    | Example                                  | Description                                                               | Required? |
-|:-------------------------|:---------|:-----------------------------------------|:--------------------------------------------------------------------------|:----------|
-| `url`                    | `string` | `my-company.com/api/merlin/`             | Merlin's API base URL                                                     | ✅         |
-| `service_account_base64` | `string` | `____BASE64_ENCODED_SERVICE_ACCOUNT____` | Service Account credentials in base64 encoded string.                     | ❌         |
-| `request_timeout`        | `string` | `10s`                                    | Timeout for HTTP requests to Merlin API                                   | ❌         |
-| `worker_count`           | `int`    | `5`                                      | Number of workers to spawn for extracting projects parallely from Merlin. | ❌         |
+| :----------------------- | :------- | :--------------------------------------- | :------------------------------------------------------------------------ | :-------- |
+| `url`                    | `string` | `my-company.com/api/merlin/`             | Merlin's API base URL                                                     | ✅        |
+| `service_account_base64` | `string` | `____BASE64_ENCODED_SERVICE_ACCOUNT____` | Service Account credentials in base64 encoded string.                     | ❌        |
+| `request_timeout`        | `string` | `10s`                                    | Timeout for HTTP requests to Merlin API                                   | ❌        |
+| `worker_count`           | `int`    | `5`                                      | Number of workers to spawn for extracting projects parallely from Merlin. | ❌        |
 
 ### Notes
 
@@ -43,7 +43,7 @@ A single model asset includes all the active model versions. A model version is
 considered active if it has an endpoint.
 
 | Field                              | Value                                                                  | Sample Value                                                  |
-|:-----------------------------------|:-----------------------------------------------------------------------|:--------------------------------------------------------------|
+| :--------------------------------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ |
 | `resource.urn`                     | `urn:merlin:{scope}:model:{model.project_id}.{model.id}`               | `urn:merlin:staging:model:15.1512`                            |
 | `resource.name`                    | `{model.name}`                                                         | `tensorflow-sample`                                           |
 | `resource.service`                 | `merlin`                                                               | `merlin`                                                      |
@@ -71,7 +71,7 @@ will have an 'endpoint' for each environment it is deployed in. Please refer the
 proto definitions for more information.
 
 | Field                             | Value                                  | Sample Value                                                                                       |
-|:----------------------------------|:---------------------------------------|:---------------------------------------------------------------------------------------------------|
+| :-------------------------------- | :------------------------------------- | :------------------------------------------------------------------------------------------------- |
 | `status`                          | `model_version.status`                 | `running`                                                                                          |
 | `version`                         | `model_version.id`                     | `11`                                                                                               |
 | `attributes.endpoint_id`          | `endpoint.id`                          | `187`                                                                                              |
@@ -100,7 +100,7 @@ feature table specs that specify the project name and feature table name of the
 is used to construct the upstreams for the model.
 
 | Field     | Value                                                          | Sample Value                                               |
-|:----------|:---------------------------------------------------------------|:-----------------------------------------------------------|
+| :-------- | :------------------------------------------------------------- | :--------------------------------------------------------- |
 | `urn`     | `urn:caramlstore:{scope}:feature_table:{ft.project}.{ft.name}` | `urn:kafka:int-kafka.yonkou.io:topic:staging_30min_demand` |
 | `type`    | `feature_table`                                                | `topic`                                                    |
 | `service` | `caramlstore`                                                  | `kafka`                                                    |
@@ -111,15 +111,9 @@ Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#ad
 for information on contributing to this module.
 
 [merlin]: https://github.com/gojek/merlin
-
 [merlin-swagger]: https://github.com/gojek/merlin/blob/v0.24.0/swagger.yaml
-
 [google-default-auth]: https://cloud.google.com/docs/authentication/production#automatically
-
-[proton-asset]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/asset.proto#L14
-
-[proton-model]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L73
-
-[proton-modelversion]: https://github.com/odpf/proton/blob/fabbde8/odpf/assets/v1beta2/model.proto#L31
-
+[proton-asset]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/asset.proto#L14
+[proton-model]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/model.proto#L73
+[proton-modelversion]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/model.proto#L31
 [caraml-store]: https://github.com/caraml-dev/caraml-store

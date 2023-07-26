@@ -7,10 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 
-	"github.com/odpf/meteor/plugins"
-	bt "github.com/odpf/meteor/plugins/extractors/bigtable"
+	"github.com/raystack/meteor/plugins"
+	bt "github.com/raystack/meteor/plugins/extractors/bigtable"
 	"github.com/stretchr/testify/assert"
 )
 

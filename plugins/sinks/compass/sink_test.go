@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/odpf/meteor/models"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/sinks/compass"
-	testUtils "github.com/odpf/meteor/test/utils"
-	"github.com/odpf/meteor/utils"
+	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sinks/compass"
+	testUtils "github.com/raystack/meteor/test/utils"
+	"github.com/raystack/meteor/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -229,7 +229,7 @@ func TestSink(t *testing.T) {
 					URL:         "http://test.com",
 					Description: "topic information",
 					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
 						"columns": []map[string]interface{}{
 							{
 								"name":        "id",
@@ -280,7 +280,7 @@ func TestSink(t *testing.T) {
 						"bar": "valueAttrB",
 					},
 					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
 						"attributes": map[string]interface{}{
 							"attrA": "valueAttrA",
 							"attrB": "valueAttrB",
@@ -323,7 +323,7 @@ func TestSink(t *testing.T) {
 						"foo2": "newBar",
 					},
 					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/odpf.assets.v1beta2.Table",
+						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
 						"attributes": map[string]interface{}{
 							"newFoo": "newBar",
 						},

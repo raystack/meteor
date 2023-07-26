@@ -1,8 +1,8 @@
 package auditlog
 
 import (
-	"github.com/odpf/meteor/plugins/extractors/bigquery/sqlparser"
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/plugins/extractors/bigquery/sqlparser"
 )
 
 type TableStats struct {

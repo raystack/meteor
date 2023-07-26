@@ -3,7 +3,7 @@ package utils
 import (
 	"io"
 
-	"github.com/odpf/salt/log"
+	"github.com/raystack/salt/log"
 )
 
 // Logger set with writer

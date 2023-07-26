@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	v1beta2 "github.com/odpf/meteor/models/odpf/assets/v1beta2"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoregistry"

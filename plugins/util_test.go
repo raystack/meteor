@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/odpf/meteor/plugins"
+	"github.com/raystack/meteor/plugins"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/odpf/meteor/registry"
-	"github.com/odpf/salt/printer"
-	"github.com/odpf/salt/term"
+	"github.com/raystack/meteor/registry"
+	"github.com/raystack/salt/printer"
+	"github.com/raystack/salt/term"
 
 	"github.com/spf13/cobra"
 )

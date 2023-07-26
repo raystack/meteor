@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/odpf/salt/log"
 	"github.com/pkg/errors"
+	"github.com/raystack/salt/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	auditpb "google.golang.org/genproto/googleapis/cloud/audit"

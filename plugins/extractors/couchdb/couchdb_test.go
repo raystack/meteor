@@ -12,15 +12,15 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/test/utils"
 
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/plugins/extractors/couchdb"
-	"github.com/odpf/meteor/test/mocks"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/couchdb"
+	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

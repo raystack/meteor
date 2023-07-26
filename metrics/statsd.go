@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	statsd "github.com/etsy/statsd/examples/go"
-	"github.com/odpf/meteor/agent"
-	"github.com/odpf/meteor/recipe"
+	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/recipe"
 )
 
 const (

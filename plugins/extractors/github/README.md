@@ -6,26 +6,26 @@
 source:
   name: github
   config:
-    org: odpf
+    org: raystack
     token: github_token
 ```
 
 ## Inputs
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `org` | `string` | `odpf` | Name of github organisation | *required* |
-| `token` | `string` | `kdfljdfljoijj` | Github API access token | *required* |
+| Key     | Value    | Example         | Description                 |            |
+| :------ | :------- | :-------------- | :-------------------------- | :--------- |
+| `org`   | `string` | `raystack`      | Name of github organisation | _required_ |
+| `token` | `string` | `kdfljdfljoijj` | Github API access token     | _required_ |
 
 ## Outputs
 
-| Field | Sample Value |
-| :---- | :---- |
+| Field          | Sample Value                   |
+| :------------- | :----------------------------- |
 | `resource.urn` | `https://github.com/ravisuhag` |
-| `email` | `suhag.ravi@gmail.com` |
-| `username` | `ravisuhag` |
-| `full_name` | `Ravi Suhag` |
-| `status` | `active` |
+| `email`        | `suhag.ravi@gmail.com`         |
+| `username`     | `ravisuhag`                    |
+| `full_name`    | `Ravi Suhag`                   |
+| `status`       | `active`                       |
 
 ## Contributing
 

@@ -9,13 +9,13 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/odpf/meteor/plugins/extractors/snowflake"
+	"github.com/raystack/meteor/plugins/extractors/snowflake"
 
 	"github.com/dnaeon/go-vcr/v2/cassette"
 	"github.com/dnaeon/go-vcr/v2/recorder"
-	"github.com/odpf/meteor/plugins"
-	"github.com/odpf/meteor/test/mocks"
-	"github.com/odpf/meteor/test/utils"
+	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 	"github.com/stretchr/testify/assert"
 )
