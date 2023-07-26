@@ -109,7 +109,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			{
 				Id:       "user-A",
 				Name:     "fullname-A",
-				Slug:     "sample description for user-A",
 				Email:    "user1@gojek.com",
 				Metadata: nil,
 				CreatedAt: &timestamppb.Timestamp{
@@ -122,7 +121,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			{
 				Id:       "user-B",
 				Name:     "fullname-B",
-				Slug:     "sample description for user-B",
 				Email:    "user2@gojek.com",
 				Metadata: nil,
 				CreatedAt: &timestamppb.Timestamp{
