@@ -66,19 +66,12 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.client.Close()
 
-	listUsers, err := e.client.ListUsers(ctx, &sh.ListUsersRequest{
-		Fields: nil,
-	})
+	listUsers, err := e.client.ListUsers(ctx, &sh.ListUsersRequest{})
 	if err != nil {
 		return fmt.Errorf("error fetching users: %w", err)
 	}
 
 	for _, user := range listUsers.Users {
-		role, roleErr := e.client.GetRole(ctx, &sh.GetRoleRequest{Id: user.GetId()})
-		if roleErr != nil {
-			return fmt.Errorf("error fetching user roles: %w", err)
-		}
-
 		grp, grpErr := e.client.GetGroup(ctx, &sh.GetGroupRequest{Id: user.GetId()})
 		if grpErr != nil {
 			return fmt.Errorf("error fetching user groups: %w", err)
@@ -91,7 +84,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			Memberships: []*v1beta2.Membership{
 				{
 					GroupUrn: fmt.Sprintf("%s:%s", grp.Group.GetName(), grp.Group.GetId()),
-					Role:     []string{role.Role.GetName()},
 				},
 			},
 			CreateTime: user.GetCreatedAt(),
@@ -102,12 +94,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			return err
 		}
 		emit(models.NewRecord(&v1beta2.Asset{
-			Urn:         models.NewURN(service, e.UrnScope, "user", user.GetId()),
-			Name:        user.GetName(),
-			Service:     service,
-			Type:        "user",
-			Description: user.GetSlug(),
-			Data:        data,
+			Urn:     models.NewURN(service, e.UrnScope, "user", user.GetId()),
+			Name:    user.GetName(),
+			Service: service,
+			Type:    "user",
+			Data:    data,
 		}))
 	}
 
