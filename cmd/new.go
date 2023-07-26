@@ -39,7 +39,7 @@ func NewRecipeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "recipe [name]",
 		Aliases: []string{"r"},
-		Args:    cobra.ExactValidArgs(1),
+		Args:    cobra.MatchAll(cobra.ExactArgs(1)),
 		Short:   "Generate a new recipe",
 		Long: heredoc.Doc(`
 			Generate a new recipe.

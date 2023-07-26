@@ -19,7 +19,7 @@ func GenCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "gen",
-		Args:  cobra.ExactValidArgs(1),
+		Args:  cobra.MatchAll(cobra.ExactArgs(1)),
 		Short: "Generate recipes",
 		Long: heredoc.Doc(`
 			Generate multiple recipes using a template and list of data.

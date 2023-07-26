@@ -28,7 +28,7 @@ func LintCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
-		Args:    cobra.ExactValidArgs(1),
+		Args:    cobra.MatchAll(cobra.ExactArgs(1)),
 		Short:   "Check for issues in recipes",
 		Long: heredoc.Doc(`
 			Check for issues specified recipes.
