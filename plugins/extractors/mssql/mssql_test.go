@@ -40,7 +40,8 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mcr.microsoft.com/mssql/server",
-		Tag:        "2019-latest",
+		Tag:        "2022-latest",
+		Platform:   "linux/amd64",
 		Env: []string{
 			"SA_PASSWORD=" + pass,
 			"ACCEPT_EULA=Y",

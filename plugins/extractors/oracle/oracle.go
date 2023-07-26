@@ -13,6 +13,7 @@ import (
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	_ "github.com/sijms/go-ora/v2"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -52,33 +53,32 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	if err := e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
-	// Create database connection
-	var err error
-	e.db, err = connection(e.config)
+	e.db, err = sqlutil.OpenWithOtel("oracle", e.config.ConnectionURL, semconv.DBSystemOracle)
 	if err != nil {
-		return fmt.Errorf("create connection: %w", err)
+		return fmt.Errorf("create a client: %w", err)
 	}
 
 	return nil
 }
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 
 	// Get username
-	userName, err := e.getUserName(e.db)
+	userName, err := e.getUserName(ctx, e.db)
 	if err != nil {
 		return fmt.Errorf("get user name: %w", err)
 	}
 
 	// Get DB name
-	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "select ora_database_name from dual")
+	dbs, err := sqlutil.FetchDBs(ctx, e.db, e.logger, "select ora_database_name from dual")
 	if err != nil {
 		return err
 	}
@@ -88,14 +88,14 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
  		FROM all_objects
 		WHERE object_type = 'TABLE'
 		AND upper(owner) = upper('%s')`, userName)
-	tables, err := sqlutil.FetchTablesInDB(e.db, database, tableQuery)
+	tables, err := sqlutil.FetchTablesInDB(ctx, e.db, database, tableQuery)
 	if err != nil {
 		e.logger.Error("failed to get tables, skipping database", "error", err)
 		// continue
 	}
 
 	for _, table := range tables {
-		result, err := e.getTableMetadata(e.db, database, table)
+		result, err := e.getTableMetadata(ctx, e.db, database, table)
 		if err != nil {
 			e.logger.Error("failed to get table metadata, skipping table", "error", err)
 			// continue
@@ -107,10 +107,10 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	return nil
 }
 
-func (*Extractor) getUserName(db *sql.DB) (string, error) {
+func (*Extractor) getUserName(ctx context.Context, db *sql.DB) (string, error) {
 	sqlStr := `select user from dual`
 
-	rows, err := db.Query(sqlStr)
+	rows, err := db.QueryContext(ctx, sqlStr)
 	if err != nil {
 		return "", err
 	}
@@ -130,14 +130,14 @@ func (*Extractor) getUserName(db *sql.DB) (string, error) {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
-	columns, err := e.getColumnMetadata(db, tableName)
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
+	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
 		return nil, err
 	}
 
 	// get table row count
-	rows, err := db.Query(`select count(*) from ` + tableName) //nolint:gosec
+	rows, err := db.QueryContext(ctx, `select count(*) from `+tableName) //nolint:gosec
 	if err != nil {
 		return nil, fmt.Errorf("run query for count: %w", err)
 	}
@@ -174,7 +174,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName, tableName string) (*v1b
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := `select utc.column_name, utc.data_type, 
 			decode(utc.char_used, 'C', utc.char_length, utc.data_length) as data_length,
 			utc.nullable, nvl(ucc.comments, '') as col_comment
@@ -184,7 +184,7 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, tableName string) ([]*v1beta2.
 			utc.table_name = ucc.table_name
 			WHERE utc.table_name ='%s'`
 
-	rows, err := db.Query(fmt.Sprintf(sqlStr, tableName))
+	rows, err := db.QueryContext(ctx, fmt.Sprintf(sqlStr, tableName))
 	if err != nil {
 		return nil, fmt.Errorf("fetch query results: %w", err)
 	}
@@ -218,11 +218,6 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, tableName string) ([]*v1beta2.
 // Convert nullable string to a boolean
 func isNullable(value string) bool {
 	return value == "Y"
-}
-
-// connection generates a connection string
-func connection(cfg Config) (db *sql.DB, err error) {
-	return sql.Open("oracle", cfg.ConnectionURL)
 }
 
 // Register the extractor to catalog

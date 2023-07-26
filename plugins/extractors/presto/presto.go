@@ -15,6 +15,7 @@ import (
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	_ "github.com/prestodb/presto-go-client/presto" // presto driver
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -44,7 +45,7 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger          log.Logger
 	config          Config
-	client          *sql.DB
+	db              *sql.DB
 	excludedCatalog map[string]bool
 
 	// These below values are used to recreate a connection for each catalog
@@ -64,8 +65,9 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	if err := e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
@@ -75,10 +77,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	e.excludedCatalog = sqlutil.BuildBoolMap(excludeList)
 
 	// create presto client
-	var err error
-	e.client, err = sql.Open("presto", e.config.ConnectionURL)
+	e.db, err = sqlutil.OpenWithOtel("presto", e.config.ConnectionURL, semconv.DBSystemKey.String("presto"))
 	if err != nil {
-		return fmt.Errorf("create client: %w", err)
+		return fmt.Errorf("create a client: %w", err)
 	}
 
 	if err := e.extractConnectionComponents(e.config.ConnectionURL); err != nil {
@@ -89,10 +90,10 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 }
 
 // Extract collects metadata of the database through emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
-	defer e.client.Close()
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	defer e.db.Close()
 
-	catalogs, err := e.getCatalogs()
+	catalogs, err := e.getCatalogs(ctx)
 	if err != nil {
 		return err
 	}
@@ -109,20 +110,20 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 
 		dbQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
 
-		dbs, err := sqlutil.FetchDBs(db, e.logger, dbQuery)
+		dbs, err := sqlutil.FetchDBs(ctx, db, e.logger, dbQuery)
 		if err != nil {
 			return fmt.Errorf("extract tables from %s: %w", catalog, err)
 		}
 		for _, database := range dbs {
 			showTablesQuery := fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database)
-			tables, err := sqlutil.FetchTablesInDB(db, database, showTablesQuery)
+			tables, err := sqlutil.FetchTablesInDB(ctx, db, database, showTablesQuery)
 			if err != nil {
 				e.logger.Error("failed to get tables, skipping database", "catalog", catalog, "error", err)
 				continue
 			}
 
 			for _, table := range tables {
-				result, err := e.processTable(db, catalog, database, table)
+				result, err := e.processTable(ctx, db, catalog, database, table)
 				if err != nil {
 					e.logger.Error("failed to get table metadata, skipping table", "error", err)
 					continue
@@ -136,9 +137,9 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 }
 
 // getCatalogs prepares the list of catalogs
-func (e *Extractor) getCatalogs() ([]string, error) {
+func (e *Extractor) getCatalogs(ctx context.Context) ([]string, error) {
 	// Get list of catalogs
-	rows, err := e.client.Query("SHOW CATALOGS")
+	rows, err := e.db.QueryContext(ctx, "SHOW CATALOGS")
 	if err != nil {
 		return nil, fmt.Errorf("fetch catalogs: %w", err)
 	}
@@ -165,8 +166,8 @@ func (e *Extractor) getCatalogs() ([]string, error) {
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(db *sql.DB, catalog, database, tableName string) (*v1beta2.Asset, error) {
-	columns, err := e.extractColumns(db, catalog)
+func (e *Extractor) processTable(ctx context.Context, db *sql.DB, catalog, database, tableName string) (*v1beta2.Asset, error) {
+	columns, err := e.extractColumns(ctx, db, catalog)
 	if err != nil {
 		return nil, fmt.Errorf("extract columns: %w", err)
 	}
@@ -188,12 +189,12 @@ func (e *Extractor) processTable(db *sql.DB, catalog, database, tableName string
 }
 
 // extractColumns extracts columns from a given table
-func (*Extractor) extractColumns(db *sql.DB, catalog string) ([]*v1beta2.Column, error) {
+func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]*v1beta2.Column, error) {
 	//nolint:gosec
 	sqlStr := fmt.Sprintf(`SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,COMMENT
 				FROM %s.information_schema.columns
 				ORDER BY COLUMN_NAME ASC`, catalog)
-	rows, err := db.Query(sqlStr)
+	rows, err := db.QueryContext(ctx, sqlStr)
 	if err != nil {
 		return nil, fmt.Errorf("execute a query to extract columns metadata: %w", err)
 	}

@@ -44,6 +44,7 @@ func TestMain(m *testing.M) {
 	// dsn format - http[s]://user[:pass]@host[:port][?parameters]
 	retryFn := func(r *dockertest.Resource) (err error) {
 		dsn := fmt.Sprintf("http://presto@localhost:%s", port)
+
 		db, err = sql.Open("presto", dsn)
 		if err != nil {
 			return err

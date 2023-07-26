@@ -10,8 +10,10 @@ import (
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/sqlutil"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -53,13 +55,13 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	if err := e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
-	var err error
-	e.db, err = sql.Open("clickhouse", e.config.ConnectionURL)
+	e.db, err = sqlutil.OpenWithOtel("clickhouse", e.config.ConnectionURL, semconv.DBSystemClickhouse)
 	if err != nil {
 		return fmt.Errorf("create a client: %w", err)
 	}
@@ -70,8 +72,8 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // Extract checks if the extractor is configured and
 // if the connection to the DB is successful
 // and then starts the extraction process
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
-	if err := e.extractTables(emit); err != nil {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	if err := e.extractTables(ctx, emit); err != nil {
 		return fmt.Errorf("extract tables: %w", err)
 	}
 
@@ -79,8 +81,8 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 }
 
 // extractTables extract tables from a given database
-func (e *Extractor) extractTables(emit plugins.Emit) error {
-	res, err := e.db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
+func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error {
+	res, err := e.db.QueryContext(ctx, "SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
 		return fmt.Errorf("execute query: %w", err)
 	}
@@ -92,7 +94,7 @@ func (e *Extractor) extractTables(emit plugins.Emit) error {
 			return err
 		}
 
-		columns, err := e.getColumnsInfo(dbName, tableName)
+		columns, err := e.getColumnsInfo(ctx, dbName, tableName)
 		if err != nil {
 			return err
 		}
@@ -121,10 +123,10 @@ func (e *Extractor) extractTables(emit plugins.Emit) error {
 	return nil
 }
 
-func (e *Extractor) getColumnsInfo(dbName, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
-	rows, err := e.db.Query(sqlStr)
+	rows, err := e.db.QueryContext(ctx, sqlStr)
 	if err != nil {
 		return nil, fmt.Errorf("execute query: %w", err)
 	}

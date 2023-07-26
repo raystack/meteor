@@ -40,12 +40,13 @@ require (
 	github.com/prestodb/presto-go-client v0.0.0-20211201125635-ad28cec17d6c
 	github.com/schollz/progressbar/v3 v3.13.1
 	github.com/segmentio/kafka-go v0.4.39
-	github.com/sijms/go-ora/v2 v2.2.22
+	github.com/sijms/go-ora/v2 v2.7.9
 	github.com/snowflakedb/gosnowflake v1.6.7
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.3
 	go.mongodb.org/mongo-driver v1.11.2
+	go.nhat.io/otelsql v0.11.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.36.1
 	go.opentelemetry.io/contrib/instrumentation/host v0.42.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.42.0
@@ -57,7 +58,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0
 	go.opentelemetry.io/otel/sdk v1.16.0
 	go.opentelemetry.io/otel/sdk/metric v0.39.0
-	go.opentelemetry.io/otel/trace v1.16.0
 	golang.org/x/oauth2 v0.6.0
 	google.golang.org/api v0.114.0
 	google.golang.org/genproto v0.0.0-20230330154414-c0448cd141ea
@@ -212,6 +212,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.39.0 // indirect
+	go.opentelemetry.io/otel/trace v1.16.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect

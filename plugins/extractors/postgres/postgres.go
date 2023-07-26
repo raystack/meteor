@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	// used to register the postgres driver
+
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
@@ -17,6 +18,7 @@ import (
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
 	_ "github.com/lib/pq" // register postgres driver
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -49,7 +51,7 @@ type Extractor struct {
 	excludedDbs map[string]bool
 	logger      log.Logger
 	config      Config
-	client      *sql.DB
+	db          *sql.DB
 
 	// These below values are used to recreate a connection for each database
 	host     string
@@ -69,8 +71,9 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	if err := e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
@@ -79,10 +82,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	e.excludedDbs = sqlutil.BuildBoolMap(excludeList)
 
 	// Create database connection
-	var err error
-	e.client, err = sql.Open("postgres", e.config.ConnectionURL)
+	e.db, err = sqlutil.OpenWithOtel("postgres", e.config.ConnectionURL, semconv.DBSystemPostgreSQL)
 	if err != nil {
-		return fmt.Errorf("create connection: %w", err)
+		return fmt.Errorf("create a client: %w", err)
 	}
 
 	if err := e.extractConnectionComponents(e.config.ConnectionURL); err != nil {
@@ -93,11 +95,11 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 }
 
 // Extract collects metadata from the source. Metadata is collected through the emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
-	defer e.client.Close()
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	defer e.db.Close()
 
 	// Get list of databases
-	dbs, err := sqlutil.FetchDBs(e.client, e.logger, "SELECT datname FROM pg_database WHERE datistemplate = false;")
+	dbs, err := sqlutil.FetchDBs(ctx, e.db, e.logger, "SELECT datname FROM pg_database WHERE datistemplate = false;")
 	if err != nil {
 		return fmt.Errorf("fetch databases: %w", err)
 	}
@@ -127,14 +129,14 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
-		tables, err := sqlutil.FetchTablesInDB(db, database, query)
+		tables, err := sqlutil.FetchTablesInDB(ctx, db, database, query)
 		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
 			continue
 		}
 
 		for _, table := range tables {
-			result, err := e.getTableMetadata(db, database, table)
+			result, err := e.getTableMetadata(ctx, db, database, table)
 			if err != nil {
 				e.logger.Error("failed to get table metadata, skipping table", "error", err)
 				continue
@@ -148,13 +150,13 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
-	columns, err := e.getColumnMetadata(db, tableName)
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
+	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
 		return nil, err
 	}
 
-	usrPrivilegeInfo, err := e.userPrivilegesInfo(db, dbName, tableName)
+	usrPrivilegeInfo, err := e.userPrivilegesInfo(ctx, db, dbName, tableName)
 	if err != nil {
 		e.logger.Warn("unable to fetch user privileges info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
 	}
@@ -176,12 +178,12 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName, tableName string) (*v1b
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
 				WHERE TABLE_NAME = '%s' ORDER BY COLUMN_NAME ASC;`
-	rows, err := db.Query(fmt.Sprintf(sqlStr, tableName))
+	rows, err := db.QueryContext(ctx, fmt.Sprintf(sqlStr, tableName))
 	if err != nil {
 		return nil, fmt.Errorf("execute query: %w", err)
 	}
@@ -209,13 +211,13 @@ func (e *Extractor) getColumnMetadata(db *sql.DB, tableName string) ([]*v1beta2.
 	return result, nil
 }
 
-func (e *Extractor) userPrivilegesInfo(db *sql.DB, dbName, tableName string) (*structpb.Struct, error) {
+func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, tableName string) (*structpb.Struct, error) {
 	query := `SELECT grantee, string_agg(privilege_type, ',') 
 	FROM information_schema.role_table_grants 
 	WHERE table_name='%s' AND table_catalog='%s'
 	GROUP BY grantee;`
 
-	rows, err := db.Query(fmt.Sprintf(query, tableName, dbName))
+	rows, err := db.QueryContext(ctx, fmt.Sprintf(query, tableName, dbName))
 	if err != nil {
 		return nil, fmt.Errorf("execute query: %w", err)
 	}
