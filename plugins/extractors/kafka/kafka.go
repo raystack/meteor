@@ -92,10 +92,10 @@ func New(logger log.Logger) *Extractor {
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
-	clientDurn, err := otel.Meter("").
+	clientDurn, err := otel.Meter("github.com/goto/meteor/plugins/extractors/kafka").
 		Int64Histogram("meteor.kafka.client.duration", metric.WithUnit("ms"))
 	if err != nil {
-		return fmt.Errorf("create client duration histogram: %w", err)
+		otel.Handle(err)
 	}
 
 	e.clientDurn = clientDurn

@@ -236,7 +236,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 		return fmt.Errorf("find processor %q: %w", pr.Name, err)
 	}
 
-	proc, err = otelmw.WithProcessorMW(proc, pr.Name, recipeName)
+	proc = otelmw.WithProcessor(pr.Name, recipeName)(proc)
 	if err != nil {
 		return fmt.Errorf("wrap processor %q: %w", pr.Name, err)
 	}
@@ -269,7 +269,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		return fmt.Errorf("find sink %q: %w", sr.Name, err)
 	}
 
-	sink, err = otelmw.WithSinkMW(sink, sr.Name, recipeName)
+	sink = otelmw.WithSink(sr.Name, recipeName)(sink)
 	if err != nil {
 		return fmt.Errorf("wrap otel sink %q: %w", sr.Name, err)
 	}

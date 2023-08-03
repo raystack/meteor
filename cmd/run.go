@@ -88,14 +88,7 @@ func RunCmd() *cobra.Command {
 				}
 				defer doneOtlp()
 
-				mt, err := metrics.NewOtelMonitor()
-				if err != nil {
-					return err
-				}
-
-				if mt != nil {
-					mts = append(mts, mt)
-				}
+				mts = append(mts, metrics.NewOtelMonitor())
 			}
 
 			runner := agent.NewAgent(agent.Config{

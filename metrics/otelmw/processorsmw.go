@@ -11,42 +11,43 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-type ProcessorMW struct {
+type Processor struct {
 	next       plugins.Processor
 	duration   metric.Int64Histogram
 	pluginName string
 	recipeName string
 }
 
-func WithProcessorMW(p plugins.Processor, pluginName, recipeName string) (plugins.Processor, error) {
-	meter := otel.Meter("")
-
-	processorDuration, err := meter.Int64Histogram("meteor.processor.duration", metric.WithUnit("ms"))
+func WithProcessor(pluginName, recipeName string) func(plugins.Processor) plugins.Processor {
+	processorDuration, err := otel.Meter("github.com/goto/meteor/metrics/otelmw").
+		Int64Histogram("meteor.processor.duration", metric.WithUnit("ms"))
 	if err != nil {
-		return nil, err
+		otel.Handle(err)
 	}
 
-	return &ProcessorMW{
-		next:       p,
-		duration:   processorDuration,
-		pluginName: pluginName,
-		recipeName: recipeName,
-	}, nil
+	return func(p plugins.Processor) plugins.Processor {
+		return &Processor{
+			next:       p,
+			duration:   processorDuration,
+			pluginName: pluginName,
+			recipeName: recipeName,
+		}
+	}
 }
 
-func (mw *ProcessorMW) Init(ctx context.Context, cfg plugins.Config) error {
+func (mw *Processor) Init(ctx context.Context, cfg plugins.Config) error {
 	return mw.next.Init(ctx, cfg)
 }
 
-func (mw *ProcessorMW) Info() plugins.Info {
+func (mw *Processor) Info() plugins.Info {
 	return mw.next.Info()
 }
 
-func (mw *ProcessorMW) Validate(cfg plugins.Config) error {
+func (mw *Processor) Validate(cfg plugins.Config) error {
 	return mw.next.Validate(cfg)
 }
 
-func (mw *ProcessorMW) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
+func (mw *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
 	defer func(start time.Time) {
 		mw.duration.Record(ctx,
 			time.Since(start).Milliseconds(),

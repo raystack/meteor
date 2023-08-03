@@ -32,11 +32,10 @@ func TestOtelMonitor_RecordRun(t *testing.T) {
 		defer done()
 		assert.Nil(t, err)
 
-		monitor, err := metrics.NewOtelMonitor()
+		monitor := metrics.NewOtelMonitor()
 
 		monitor.RecordRun(ctx, agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
 
-		assert.Nil(t, err)
 		assert.NotNil(t, monitor)
 		assert.NotNil(t, done)
 	})
@@ -62,7 +61,7 @@ func TestOtelMonitor_RecordPlugin(t *testing.T) {
 		defer done()
 		assert.Nil(t, err)
 
-		monitor, err := metrics.NewOtelMonitor()
+		monitor := metrics.NewOtelMonitor()
 
 		monitor.RecordPlugin(context.Background(),
 			agent.PluginInfo{
@@ -71,7 +70,6 @@ func TestOtelMonitor_RecordPlugin(t *testing.T) {
 				PluginType: "sink",
 				Success:    true,
 			})
-		assert.Nil(t, err)
 		assert.NotNil(t, monitor)
 		assert.NotNil(t, done)
 	})

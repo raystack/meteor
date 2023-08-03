@@ -11,46 +11,47 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-type SinksMW struct {
+type Sinks struct {
 	next       plugins.Syncer
 	duration   metric.Int64Histogram
 	pluginName string
 	recipeName string
 }
 
-func WithSinkMW(s plugins.Syncer, pluginName, recipeName string) (plugins.Syncer, error) {
-	meter := otel.Meter("")
-
-	sinkDuration, err := meter.Int64Histogram("meteor.sink.duration", metric.WithUnit("ms"))
+func WithSink(pluginName, recipeName string) func(plugins.Syncer) plugins.Syncer {
+	sinkDuration, err := otel.Meter("github.com/goto/meteor/metrics/otelmw").
+		Int64Histogram("meteor.sink.duration", metric.WithUnit("ms"))
 	if err != nil {
-		return nil, err
+		otel.Handle(err)
 	}
 
-	return &SinksMW{
-		next:       s,
-		duration:   sinkDuration,
-		pluginName: pluginName,
-		recipeName: recipeName,
-	}, nil
+	return func(s plugins.Syncer) plugins.Syncer {
+		return &Sinks{
+			next:       s,
+			duration:   sinkDuration,
+			pluginName: pluginName,
+			recipeName: recipeName,
+		}
+	}
 }
 
-func (mw *SinksMW) Init(ctx context.Context, cfg plugins.Config) error {
+func (mw *Sinks) Init(ctx context.Context, cfg plugins.Config) error {
 	return mw.next.Init(ctx, cfg)
 }
 
-func (mw *SinksMW) Info() plugins.Info {
+func (mw *Sinks) Info() plugins.Info {
 	return mw.next.Info()
 }
 
-func (mw *SinksMW) Validate(cfg plugins.Config) error {
+func (mw *Sinks) Validate(cfg plugins.Config) error {
 	return mw.next.Validate(cfg)
 }
 
-func (mw *SinksMW) Close() error {
+func (mw *Sinks) Close() error {
 	return mw.next.Close()
 }
 
-func (mw *SinksMW) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (mw *Sinks) Sink(ctx context.Context, batch []models.Record) (err error) {
 	defer func(start time.Time) {
 		mw.duration.Record(ctx,
 			time.Since(start).Milliseconds(),
