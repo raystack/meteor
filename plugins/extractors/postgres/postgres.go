@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	// used to register the postgres driver
-
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"

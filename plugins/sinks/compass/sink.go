@@ -11,9 +11,11 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
@@ -58,9 +60,14 @@ type Sink struct {
 	client httpClient
 	config Config
 	logger log.Logger
+	urlb   urlbuilder.Source
 }
 
 func New(c httpClient, logger log.Logger) plugins.Syncer {
+	if cl, ok := c.(*http.Client); ok {
+		cl.Transport = otelhttpclient.NewHTTPTransport(cl.Transport)
+	}
+
 	s := &Sink{client: c, logger: logger}
 
 	s.BasePlugin = plugins.NewBasePlugin(info, &s.config)
@@ -68,7 +75,17 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 }
 
 func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
-	return s.BasePlugin.Init(ctx, config)
+	if err := s.BasePlugin.Init(ctx, config); err != nil {
+		return err
+	}
+
+	urlb, err := urlbuilder.NewSource(s.config.Host)
+	if err != nil {
+		return err
+	}
+	s.urlb = urlb
+
+	return nil
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
@@ -93,17 +110,20 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 func (*Sink) Close() error { return nil }
 
 func (s *Sink) send(ctx context.Context, record RequestPayload) error {
+	const assetsRoute = "/v1beta1/assets"
+	targetURL := s.urlb.New().Path(assetsRoute).URL()
+
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
 
 	// send request
-	url := fmt.Sprintf("%s/v1beta1/assets", s.config.Host)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, targetURL.String(), bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
 	}
+	req = otelhttpclient.AnnotateRequest(req, assetsRoute)
 
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")

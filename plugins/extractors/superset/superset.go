@@ -11,9 +11,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -53,6 +55,7 @@ type Extractor struct {
 	csrfToken   string
 	logger      log.Logger
 	client      *http.Client
+	urlb        urlbuilder.Source
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -70,11 +73,19 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
+
 	e.client = &http.Client{
-		Timeout: 4 * time.Second,
+		Timeout:   4 * time.Second,
+		Transport: otelhttpclient.NewHTTPTransport(nil),
 	}
+
+	urlb, err := urlbuilder.NewSource(e.config.Host)
+	if err != nil {
+		return err
+	}
+	e.urlb = urlb
+
 	// get access token for further api calls in superset
-	var err error
 	e.accessToken, err = e.getAccessToken(ctx)
 	if err != nil {
 		return fmt.Errorf("get access token: %w", err)
@@ -136,7 +147,10 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Dashboard, error) 
 	var data struct {
 		Result []Dashboard `json:"result"`
 	}
-	if err := e.makeRequest(ctx, "GET", e.config.Host+"/api/v1/dashboard", nil, &data); err != nil {
+
+	const listDashboardRoute = "/api/v1/dashboard"
+	targetURL := e.urlb.New().Path(listDashboardRoute).URL()
+	if err := e.makeRequest(ctx, listDashboardRoute, http.MethodGet, targetURL.String(), nil, &data); err != nil {
 		return nil, fmt.Errorf("get dashboard: %w", err)
 	}
 	return data.Result, nil
@@ -144,12 +158,16 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Dashboard, error) 
 
 // getChartsList gets a list of charts from superset server
 func (e *Extractor) getChartsList(ctx context.Context, id int) ([]*v1beta2.Chart, error) {
+	const listChartsRoute = "/api/v1/dashboard/{id}/charts"
+	targetURL := e.urlb.New().Path(listChartsRoute).PathParamInt("id", int64(id)).URL()
+
 	var data struct {
 		Result []Chart `json:"result"`
 	}
-	if err := e.makeRequest(ctx, "GET", fmt.Sprintf("%s/api/v1/dashboard/%d/charts", e.config.Host, id), nil, &data); err != nil {
+	if err := e.makeRequest(ctx, listChartsRoute, http.MethodGet, targetURL.String(), nil, &data); err != nil {
 		return nil, fmt.Errorf("fetch chart details: %w", err)
 	}
+
 	var charts []*v1beta2.Chart
 	for _, res := range data.Result {
 		charts = append(charts, &v1beta2.Chart{
@@ -167,6 +185,9 @@ func (e *Extractor) getChartsList(ctx context.Context, id int) ([]*v1beta2.Chart
 
 // getAccessToken authenticate and get a JWT access token
 func (e *Extractor) getAccessToken(ctx context.Context) (string, error) {
+	const loginRoute = "/api/v1/security/login"
+	targetURL := e.urlb.New().Path(loginRoute).URL()
+
 	payload := map[string]interface{}{
 		"username": e.config.Username,
 		"password": e.config.Password,
@@ -175,7 +196,7 @@ func (e *Extractor) getAccessToken(ctx context.Context) (string, error) {
 	var data struct {
 		Token string `json:"access_token"`
 	}
-	if err := e.makeRequest(ctx, "POST", e.config.Host+"/api/v1/security/login", payload, &data); err != nil {
+	if err := e.makeRequest(ctx, loginRoute, http.MethodPost, targetURL.String(), payload, &data); err != nil {
 		return "", fmt.Errorf("fetch access token: %w", err)
 	}
 	return data.Token, nil
@@ -183,17 +204,22 @@ func (e *Extractor) getAccessToken(ctx context.Context) (string, error) {
 
 // getCsrfToken fetch the CSRF token
 func (e *Extractor) getCsrfToken(ctx context.Context) (string, error) {
+	const csrfTokenRoute = "/api/v1/security/csrf_token/"
+	targetURL := e.urlb.New().Path(csrfTokenRoute).URL()
+
 	var data struct {
 		CsrfToken string `json:"result"`
 	}
-	if err := e.makeRequest(ctx, "GET", e.config.Host+"/api/v1/security/csrf_token/", nil, &data); err != nil {
+	if err := e.makeRequest(ctx, csrfTokenRoute, http.MethodGet, targetURL.String(), nil, &data); err != nil {
 		return "", fmt.Errorf("fetch csrf token: %w", err)
 	}
 	return data.CsrfToken, nil
 }
 
 // makeRequest helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
+//
+//nolint:revive
+func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)
@@ -203,11 +229,11 @@ func (e *Extractor) makeRequest(ctx context.Context, method, url string, payload
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
-	bearer := "Bearer " + e.accessToken
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", bearer)
+	req.Header.Set("Authorization", "Bearer "+e.accessToken)
 	req.Header.Set("X-CSRFToken", e.csrfToken)
 	req.Header.Set("Referer", url)
+	req = otelhttpclient.AnnotateRequest(req, route)
 
 	res, err := e.client.Do(req)
 	if err != nil {

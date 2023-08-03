@@ -11,9 +11,11 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
 )
@@ -53,10 +55,15 @@ type Sink struct {
 	client httpClient
 	config Config
 	logger log.Logger
+	urlb   urlbuilder.Source
 }
 
 // New returns a pointer to an initialized Sink Object
 func New(c httpClient, logger log.Logger) plugins.Syncer {
+	if cl, ok := c.(*http.Client); ok {
+		cl.Transport = otelhttpclient.NewHTTPTransport(cl.Transport)
+	}
+
 	s := &Sink{
 		logger: logger,
 		client: c,
@@ -68,7 +75,17 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 
 // Init initializes the sink
 func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
-	return s.BasePlugin.Init(ctx, config)
+	if err := s.BasePlugin.Init(ctx, config); err != nil {
+		return err
+	}
+
+	urlb, err := urlbuilder.NewSource(s.config.Host)
+	if err != nil {
+		return err
+	}
+	s.urlb = urlb
+
+	return nil
 }
 
 // Sink helps to sink record to stencil
@@ -144,18 +161,26 @@ func (s *Sink) buildAvroStencilPayload(asset *v1beta2.Asset, table *v1beta2.Tabl
 
 // send helps to pass data to stencil
 func (s *Sink) send(ctx context.Context, tableURN string, record interface{}) error {
+	schemaID := strings.ReplaceAll(tableURN, "/", ".")
+
+	const schemaRoute = "/v1beta1/namespaces/{namespaceID}/schemas/{schemaID}"
+	targetURL := s.urlb.New().
+		Path(schemaRoute).
+		PathParam("namespaceID", s.config.NamespaceID).
+		PathParam("schemaID", schemaID).
+		URL()
+
 	payloadBytes, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
 
 	// send request
-	schemaID := strings.ReplaceAll(tableURN, "/", ".")
-	url := fmt.Sprintf("%s/v1beta1/namespaces/%s/schemas/%s", s.config.Host, s.config.NamespaceID, schemaID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL.String(), bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
 	}
+	req = otelhttpclient.AnnotateRequest(req, schemaRoute)
 
 	if s.config.Format == "json" {
 		req.Header.Add("X-Compatibility", "COMPATIBILITY_UNSPECIFIED")

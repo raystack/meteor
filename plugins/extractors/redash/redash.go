@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
@@ -48,6 +50,7 @@ type Extractor struct {
 	config Config
 	logger log.Logger
 	client *http.Client
+	urlb   urlbuilder.Source
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -67,8 +70,15 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	e.client = &http.Client{
-		Timeout: 4 * time.Second,
+		Timeout:   4 * time.Second,
+		Transport: otelhttpclient.NewHTTPTransport(nil),
 	}
+
+	urlb, err := urlbuilder.NewSource(e.config.BaseURL)
+	if err != nil {
+		return err
+	}
+	e.urlb = urlb
 
 	return nil
 }
@@ -116,14 +126,16 @@ func (e *Extractor) buildDashboard(dashboard Results) (*v1beta2.Asset, error) {
 
 // getDashboardsList gets a list of dashboards from redash server
 func (e *Extractor) getDashboardsList(ctx context.Context) ([]Results, error) {
+	const listDashboardsRoute = "/api/dashboards"
+	targetURL := e.urlb.New().Path(listDashboardsRoute).URL()
+
 	var data struct {
 		Count    int       `json:"count"`
 		Page     int       `json:"page"`
 		PageSize int       `json:"page_size"`
 		Results  []Results `json:"results"`
 	}
-	url := fmt.Sprintf("%s/api/dashboards", e.config.BaseURL)
-	if err := e.makeRequest(ctx, "GET", url, nil, &data); err != nil {
+	if err := e.makeRequest(ctx, listDashboardsRoute, http.MethodGet, targetURL.String(), nil, &data); err != nil {
 		return nil, fmt.Errorf("get dashboard: %w", err)
 	}
 
@@ -131,7 +143,9 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Results, error) {
 }
 
 // makeRequest helper function to avoid rewriting a request
-func (e *Extractor) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
+//
+//nolint:revive
+func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)
@@ -141,11 +155,10 @@ func (e *Extractor) makeRequest(ctx context.Context, method, url string, payload
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
-
-	key := e.config.ApiKey
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Set("Authorization", key)
+	req.Header.Set("Authorization", e.config.ApiKey)
 	req.Header.Set("Referer", url)
+	req = otelhttpclient.AnnotateRequest(req, route)
 
 	res, err := e.client.Do(req)
 	if err != nil {

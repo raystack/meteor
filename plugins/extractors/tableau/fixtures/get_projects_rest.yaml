@@ -57,7 +57,7 @@ interactions:
       - application/json
       X-Tableau-Auth:
       - FtQuBjVfQSihHnczcJZPsw|rG9Awy5xrXYrUSROHBjDqyBqMxiKHZrd
-    url: https://server.tableau.com/api/3.12/sites/529d2cc3-0b46-4360-aa69-688785ce1497/projects?pageSize=100&pageNumber=1
+    url: https://server.tableau.com/api/3.12/sites/529d2cc3-0b46-4360-aa69-688785ce1497/projects?pageNumber=1&pageSize=100
     method: GET
   response:
     body: '{"pagination":{"pageNumber":"1","pageSize":"100","totalAvailable":"3"},"projects":{"project":[{"owner":{"id":"781984c3-c3f3-4e0d-8b56-52fc451a5cc1"},"id":"945de5fd-9e2b-494a-a683-186b420fa644","name":"default","description":"The

@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/goto/meteor/metrics/otelhttpclient"
 )
 
 type executeRequestFunc func(ctx context.Context, reqCfg RequestConfig) (map[string]interface{}, error)
@@ -53,7 +55,7 @@ func buildRequest(ctx context.Context, reqCfg RequestConfig) (*http.Request, err
 	}
 	req.Header.Set("Accept", "application/json")
 
-	return req, nil
+	return otelhttpclient.AnnotateRequest(req, reqCfg.RoutePattern), nil
 }
 
 func addQueryParams(req *http.Request, params []QueryParam) {

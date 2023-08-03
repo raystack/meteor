@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
@@ -53,6 +54,10 @@ type Sink struct {
 }
 
 func New(c httpClient, logger log.Logger) plugins.Syncer {
+	if cl, ok := c.(*http.Client); ok {
+		cl.Transport = otelhttpclient.NewHTTPTransport(cl.Transport)
+	}
+
 	s := &Sink{
 		logger: logger,
 		client: c,

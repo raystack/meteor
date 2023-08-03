@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
@@ -42,14 +43,15 @@ type Config struct {
 }
 
 type RequestConfig struct {
-	URL         string            `mapstructure:"url" validate:"required,url"`
-	QueryParams []QueryParam      `mapstructure:"query_params" validate:"dive"`
-	Method      string            `mapstructure:"method" validate:"oneof=GET POST" default:"GET"`
-	Headers     map[string]string `mapstructure:"headers"`
-	ContentType string            `mapstructure:"content_type" validate:"required,oneof=application/json"`
-	Accept      string            `mapstructure:"accept" validate:"required,oneof=application/json"`
-	Body        interface{}       `mapstructure:"body"`
-	Timeout     time.Duration     `mapstructure:"timeout" validate:"min=1ms" default:"5s"`
+	RoutePattern string            `mapstructure:"route_pattern" default:""`
+	URL          string            `mapstructure:"url" validate:"required,url"`
+	QueryParams  []QueryParam      `mapstructure:"query_params" validate:"dive"`
+	Method       string            `mapstructure:"method" validate:"oneof=GET POST" default:"GET"`
+	Headers      map[string]string `mapstructure:"headers"`
+	ContentType  string            `mapstructure:"content_type" validate:"required,oneof=application/json"`
+	Accept       string            `mapstructure:"accept" validate:"required,oneof=application/json"`
+	Body         interface{}       `mapstructure:"body"`
+	Timeout      time.Duration     `mapstructure:"timeout" validate:"min=1ms" default:"5s"`
 }
 
 type QueryParam struct {
@@ -59,6 +61,7 @@ type QueryParam struct {
 
 var sampleConfig = heredoc.Doc(`
 	request:
+      route_pattern: /api/v1/endpoint 
 	  url: "https://example.com/api/v1/endpoint"
 	  method: "GET"
 	  headers:
@@ -109,7 +112,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	e.executeRequest = makeRequestExecutor(e.config.SuccessCodes, &http.Client{})
+	e.executeRequest = makeRequestExecutor(e.config.SuccessCodes, &http.Client{
+		Transport: otelhttpclient.NewHTTPTransport(nil),
+	})
 	return nil
 }
 

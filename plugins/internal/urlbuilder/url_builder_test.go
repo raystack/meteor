@@ -1,13 +1,12 @@
 //go:build plugins
-// +build plugins
 
-package merlin_test
+package urlbuilder_test
 
 import (
 	"net/url"
 	"testing"
 
-	"github.com/goto/meteor/plugins/extractors/merlin/internal/merlin"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,7 +50,7 @@ func TestNewURLBuilderSource(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			b, err := merlin.NewURLBuilderSource(tc.baseURL)
+			b, err := urlbuilder.NewSource(tc.baseURL)
 			if tc.expectedErr != "" {
 				assert.ErrorContains(t, err, tc.expectedErr)
 				return
@@ -64,9 +63,9 @@ func TestNewURLBuilderSource(t *testing.T) {
 }
 
 func TestURLBuilder(t *testing.T) {
-	b, err := merlin.NewURLBuilderSource("https://api.example.com/v1/?limit=10&mode=light")
+	b, err := urlbuilder.NewSource("https://api.example.com/v1/?limit=10&mode=light")
 	if err != nil {
-		t.Fatalf("NewURLBuilderSource(): %s", err)
+		t.Fatalf("NewSource(): %s", err)
 	}
 
 	cases := []struct {

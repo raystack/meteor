@@ -563,6 +563,8 @@ github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5Kwzbycv
 github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBdXk=
+github.com/felixge/httpsnoop v1.0.3/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/flimzy/diff v0.1.7 h1:DRbd+lN3lY1xVuQrfqvDNsqBwA6RMbClMs6tS5sqWWk=
 github.com/flimzy/diff v0.1.7/go.mod h1:lFJtC7SPsK0EroDmGTSrdtWKAxOk3rO+q+e04LL05Hs=
 github.com/flimzy/testy v0.1.17 h1:Y+TUugY6s4B/vrOEPo6SUKafc41W5aiX3qUWvhAPMdI=
@@ -1584,6 +1586,8 @@ go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.3
 go.opentelemetry.io/contrib/instrumentation/host v0.42.0 h1:/GMlvboQJd4LWxNX/oGYLv06J5a/M/flauLruM/3U2g=
 go.opentelemetry.io/contrib/instrumentation/host v0.42.0/go.mod h1:w6v1mVemRjTTdfejACjf+LgVA6zKtHOWmdAIf3icx7A=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0/go.mod h1:2AboqHi0CiIZU0qwhtUfCYD1GeUzvvIXWNkhDt7ZMG4=
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 h1:pginetY7+onl4qN1vl0xW/V/v6OBZ0vVdH+esuJgvmM=
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0/go.mod h1:XiYsayHc36K3EByOO6nbAXnAWbrUxdjUROCEeeROOH8=
 go.opentelemetry.io/contrib/instrumentation/runtime v0.42.0 h1:EbmAUG9hEAMXyfWEasIt2kmh/WmXUznUksChApTgBGc=
 go.opentelemetry.io/contrib/instrumentation/runtime v0.42.0/go.mod h1:rD9feqRYP24P14t5kmhNMqsqm1jvKmpx2H2rKVw52V8=
 go.opentelemetry.io/contrib/samplers/probability/consistent v0.11.0 h1:K4HJhe01GFkIo9JZ8iX1hMeI5MrkEMggXQM0YJamtEQ=

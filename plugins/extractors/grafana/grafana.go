@@ -60,9 +60,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	// build client
-	e.client = NewClient(&http.Client{}, e.config)
-
-	return nil
+	var err error
+	e.client, err = NewClient(&http.Client{}, e.config)
+	return err
 }
 
 // Extract checks if the extractor is configured and

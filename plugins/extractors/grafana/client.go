@@ -5,31 +5,47 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 )
 
 type Client struct {
+	urlb       urlbuilder.Source
 	httpClient *http.Client
 	config     Config
 }
 
-func NewClient(httpClient *http.Client, config Config) *Client {
-	return &Client{
-		httpClient: httpClient,
-		config:     config,
-	}
-}
+func NewClient(httpClient *http.Client, config Config) (*Client, error) {
+	httpClient.Transport = otelhttpclient.NewHTTPTransport(httpClient.Transport)
 
-func (c *Client) SearchAllDashboardUIDs(ctx context.Context) ([]string, error) {
-	url := c.getDashboardSearchURL()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	urlb, err := urlbuilder.NewSource(config.BaseURL)
 	if err != nil {
 		return nil, err
 	}
 
+	return &Client{
+		urlb:       urlb,
+		httpClient: httpClient,
+		config:     config,
+	}, nil
+}
+
+func (c *Client) SearchAllDashboardUIDs(ctx context.Context) ([]string, error) {
+	const searchRoute = "/api/search"
+	targetURL := c.urlb.New().
+		Path(searchRoute).
+		QueryParam("type", "dash-db").
+		URL()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Authorization", c.config.APIKey)
+	req = otelhttpclient.AnnotateRequest(req, searchRoute)
+
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -73,7 +89,7 @@ func (c *Client) GetAllDashboardDetails(ctx context.Context, uids []string) ([]D
 			}
 			dashboard.Dashboard.Panels[j].DataSource = dataSources[key].Type
 		}
-		dashboard.Meta.URL = c.concatURL(c.config.BaseURL, dashboard.Meta.URL)
+		dashboard.Meta.URL = c.urlb.New().Path(dashboard.Meta.URL).URL().String()
 		dashboards = append(dashboards, dashboard)
 	}
 
@@ -81,12 +97,19 @@ func (c *Client) GetAllDashboardDetails(ctx context.Context, uids []string) ([]D
 }
 
 func (c *Client) GetDashboardDetail(uid string) (DashboardDetail, error) {
-	url := c.getDashboardDetailURL(uid)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	const getDashboardRoute = "/api/dashboards/uid/{uid}"
+	targetURL := c.urlb.New().
+		Path(getDashboardRoute).
+		PathParam("uid", uid).
+		URL()
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, targetURL.String(), nil)
 	if err != nil {
 		return DashboardDetail{}, err
 	}
 	req.Header.Add("Authorization", c.config.APIKey)
+	req = otelhttpclient.AnnotateRequest(req, getDashboardRoute)
+
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return DashboardDetail{}, err
@@ -106,12 +129,16 @@ func (c *Client) GetDashboardDetail(uid string) (DashboardDetail, error) {
 }
 
 func (c *Client) GetAllDatasources(ctx context.Context) (map[string]DataSource, error) {
-	url := c.getDataSourceURL()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	const listDataSourcesRoute = "/api/datasources"
+	targetURL := c.urlb.New().Path(listDataSourcesRoute).URL()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Authorization", c.config.APIKey)
+	req = otelhttpclient.AnnotateRequest(req, listDataSourcesRoute)
+
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -136,25 +163,6 @@ func (c *Client) GetAllDatasources(ctx context.Context) (map[string]DataSource, 
 		}
 	}
 	return result, nil
-}
-
-func (c *Client) getDataSourceURL() string {
-	return c.concatURL(c.config.BaseURL, "/api/datasources")
-}
-
-func (c *Client) getDashboardDetailURL(uid string) string {
-	return c.concatURL(c.config.BaseURL, "/api/dashboards/uid/"+uid)
-}
-
-func (c *Client) getDashboardSearchURL() string {
-	return c.concatURL(c.config.BaseURL, "/api/search?type=dash-db")
-}
-
-func (c *Client) concatURL(baseURL, path string) string {
-	if strings.HasSuffix(baseURL, "/") {
-		return baseURL[:len(baseURL)-1] + path
-	}
-	return baseURL + path
 }
 
 type DashboardDetail struct {

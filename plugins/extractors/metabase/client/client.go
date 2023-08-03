@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/plugins"
 	m "github.com/goto/meteor/plugins/extractors/metabase/models"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 )
 
 type Client interface {
@@ -21,6 +24,7 @@ type Client interface {
 }
 
 type client struct {
+	urlb          urlbuilder.Source
 	httpClient    *http.Client
 	host          string
 	username      string
@@ -39,6 +43,12 @@ func New() Client {
 }
 
 func (c *client) Authenticate(ctx context.Context, host, username, password, sessionID string) error {
+	urlb, err := urlbuilder.NewSource(host)
+	if err != nil {
+		return err
+	}
+
+	c.urlb = urlb
 	c.host = host
 	c.username = username
 	c.password = password
@@ -47,7 +57,6 @@ func (c *client) Authenticate(ctx context.Context, host, username, password, ses
 		return nil
 	}
 
-	var err error
 	c.sessionID, err = c.getSessionID(ctx)
 	if err != nil {
 		return fmt.Errorf("get sessionID: %w", err)
@@ -61,9 +70,14 @@ func (c *client) GetTable(ctx context.Context, id int) (m.Table, error) {
 		return table, nil
 	}
 
+	const getTableRoute = "/api/table/{id}"
+	targetURL := c.urlb.New().
+		Path(getTableRoute).
+		PathParamInt("id", int64(id)).
+		URL()
+
 	var tbl m.Table
-	url := fmt.Sprintf("%s/api/table/%d", c.host, id)
-	if err := c.makeRequest(ctx, "GET", url, nil, &tbl); err != nil {
+	if err := c.makeRequest(ctx, getTableRoute, http.MethodGet, targetURL.String(), nil, &tbl); err != nil {
 		return m.Table{}, err
 	}
 
@@ -76,9 +90,14 @@ func (c *client) GetDatabase(ctx context.Context, id int) (m.Database, error) {
 		return db, nil
 	}
 
+	const getDatabaseRoute = "/api/database/{id}"
+	targetURL := c.urlb.New().
+		Path(getDatabaseRoute).
+		PathParam("id", strconv.Itoa(id)).
+		URL()
+
 	var db m.Database
-	url := fmt.Sprintf("%s/api/database/%d", c.host, id)
-	if err := c.makeRequest(ctx, "GET", url, nil, &db); err != nil {
+	if err := c.makeRequest(ctx, getDatabaseRoute, http.MethodGet, targetURL.String(), nil, &db); err != nil {
 		return m.Database{}, err
 	}
 
@@ -87,41 +106,50 @@ func (c *client) GetDatabase(ctx context.Context, id int) (m.Database, error) {
 }
 
 func (c *client) GetDashboard(ctx context.Context, id int) (m.Dashboard, error) {
+	const getDashboardRoute = "/api/dashboard/{id}"
+	targetURL := c.urlb.New().
+		Path(getDashboardRoute).
+		PathParam("id", strconv.Itoa(id)).
+		URL()
+
 	var d m.Dashboard
-	url := fmt.Sprintf("%s/api/dashboard/%d", c.host, id)
-	if err := c.makeRequest(ctx, "GET", url, nil, &d); err != nil {
+	if err := c.makeRequest(ctx, getDashboardRoute, http.MethodGet, targetURL.String(), nil, &d); err != nil {
 		return m.Dashboard{}, err
 	}
-
 	return d, nil
 }
 
 func (c *client) GetDashboards(ctx context.Context) ([]m.Dashboard, error) {
+	const getDashboardsRoute = "/api/dashboard"
+	targetURL := c.urlb.New().Path(getDashboardsRoute).URL()
+
 	var dd []m.Dashboard
-	url := fmt.Sprintf("%s/api/dashboard", c.host)
-	if err := c.makeRequest(ctx, "GET", url, nil, &dd); err != nil {
+	if err := c.makeRequest(ctx, getDashboardsRoute, http.MethodGet, targetURL.String(), nil, &dd); err != nil {
 		return nil, err
 	}
-
 	return dd, nil
 }
 
 func (c *client) getSessionID(ctx context.Context) (string, error) {
+	const createSessionRoute = "/api/session"
+	targetURL := c.urlb.New().Path(createSessionRoute).URL()
+
 	payload := map[string]interface{}{
 		"username": c.username,
 		"password": c.password,
 	}
+
 	var data struct {
 		ID string `json:"id"`
 	}
-	if err := c.makeRequest(ctx, "POST", c.host+"/api/session", payload, &data); err != nil {
+	if err := c.makeRequest(ctx, createSessionRoute, http.MethodPost, targetURL.String(), payload, &data); err != nil {
 		return "", err
 	}
-
 	return data.ID, nil
 }
 
-func (c *client) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
+//nolint:revive
+func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)
@@ -133,6 +161,7 @@ func (c *client) makeRequest(ctx context.Context, method, url string, payload, r
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Metabase-Session", c.sessionID)
+	req = otelhttpclient.AnnotateRequest(req, route)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {

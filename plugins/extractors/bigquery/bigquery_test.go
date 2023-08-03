@@ -32,9 +32,7 @@ const (
 	projectID = "test-project-id"
 )
 
-var (
-	client *bq.Client
-)
+var client *bq.Client
 
 func TestMain(m *testing.M) {
 	pwd, err := os.Getwd()

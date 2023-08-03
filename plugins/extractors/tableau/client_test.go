@@ -45,13 +45,13 @@ func TestInit(t *testing.T) {
 		cl := NewClient(nil)
 
 		err := cl.Init(context.TODO(), Config{
-			Host:     "invalidhost",
+			Host:     "",
 			Version:  "3.12",
 			Username: "invalid_user",
 			Password: "xxxxxxxxxx",
 			Sitename: "invalid_site",
 		})
-		assert.EqualError(t, err, "fetch auth token: generate response: Post \"invalidhost/api/3.12/auth/signin\": unsupported protocol scheme \"\"")
+		assert.EqualError(t, err, "fetch auth token: generate response: Post \"http:///api/3.12/auth/signin\": http: no Host in request URL")
 	})
 }
 

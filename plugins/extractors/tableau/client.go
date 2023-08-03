@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/plugins"
+	"github.com/goto/meteor/plugins/internal/urlbuilder"
 )
 
 const projectPageSize = 100
@@ -107,7 +109,7 @@ type Client interface {
 	Init(ctx context.Context, cfg Config) (err error)
 	GetAllProjects(ctx context.Context) (ps []*Project, err error)
 	GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) (wbs []*Workbook, err error)
-	makeRequest(ctx context.Context, method, url string, payload, result interface{}) (err error)
+	makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) (err error)
 }
 
 type client struct {
@@ -115,20 +117,11 @@ type client struct {
 	authToken  string
 	siteID     string
 	httpClient *http.Client
+	urlb       urlbuilder.Source
 }
 
 func NewClient(httpClient *http.Client) Client {
-	c := &client{
-		httpClient: httpClient,
-	}
-
-	if c.httpClient == nil {
-		c.httpClient = &http.Client{}
-	}
-
-	c.httpClient.Timeout = 30 * time.Second
-
-	return c
+	return &client{httpClient: httpClient}
 }
 
 func (c *client) Init(ctx context.Context, cfg Config) (err error) {
@@ -136,23 +129,40 @@ func (c *client) Init(ctx context.Context, cfg Config) (err error) {
 	if c.httpClient == nil {
 		c.httpClient = &http.Client{}
 	}
+	c.httpClient.Transport = otelhttpclient.NewHTTPTransport(c.httpClient.Transport)
+	c.httpClient.Timeout = 30 * time.Second
+
 	if c.config.AuthToken != "" && c.config.SiteID != "" {
 		c.authToken = c.config.AuthToken
 		c.siteID = c.config.SiteID
 		return nil
 	}
+
+	urlb, err := urlbuilder.NewSource(fmt.Sprintf("%s/api/%s", c.config.Host, c.config.Version))
+	if err != nil {
+		return err
+	}
+	c.urlb = urlb
+
 	c.authToken, c.siteID, err = c.getAuthToken(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch auth token: %w", err)
 	}
+
 	return nil
 }
 
 func (c *client) getProjectsWithPagination(ctx context.Context, pageNum, pageSize int) (ps []*Project, totalItem int, err error) {
+	const listProjectsRoute = "/sites/{siteID}/projects"
+	targetURL := c.urlb.New().
+		Path(listProjectsRoute).
+		PathParam("siteID", c.siteID).
+		QueryParamInt("pageSize", int64(pageSize)).
+		QueryParamInt("pageNumber", int64(pageNum)).
+		URL()
+
 	var response responseProject
-	projectPath := fmt.Sprintf("sites/%s/projects?pageSize=%d&pageNumber=%d", c.siteID, pageSize, pageNum)
-	projectURL := c.buildURL(projectPath)
-	if err := c.makeRequest(ctx, http.MethodGet, projectURL, nil, &response); err != nil {
+	if err := c.makeRequest(ctx, listProjectsRoute, http.MethodGet, targetURL.String(), nil, &response); err != nil {
 		return nil, 0, err
 	}
 
@@ -183,16 +193,21 @@ func (c *client) GetAllProjects(ctx context.Context) ([]*Project, error) {
 }
 
 func (c *client) GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) ([]*Workbook, error) {
+	const graphqlRoute = "/api/metadata/graphql"
+	targetURL := fmt.Sprintf("%s%s", c.config.Host, graphqlRoute)
+
 	var response responseGraphQL
-	url := fmt.Sprintf("%s/api/metadata/graphql", c.config.Host)
 	graphQLBody := getGraphQLQueryWorkbooksByProjectName(projectName)
-	if err := c.makeRequest(ctx, http.MethodPost, url, graphQLBody, &response); err != nil {
+	if err := c.makeRequest(ctx, graphqlRoute, http.MethodPost, targetURL, graphQLBody, &response); err != nil {
 		return nil, err
 	}
 	return response.Data.Workbooks, nil
 }
 
 func (c *client) getAuthToken(ctx context.Context) (authToken, siteID string, err error) {
+	const signinRoute = "/auth/signin"
+	targetURL := c.urlb.New().Path(signinRoute).URL()
+
 	payload := map[string]interface{}{
 		"credentials": map[string]interface{}{
 			"name":     c.config.Username,
@@ -204,20 +219,16 @@ func (c *client) getAuthToken(ctx context.Context) (authToken, siteID string, er
 	}
 
 	var data responseSignIn
-	signInURL := c.buildURL("auth/signin")
-	if err := c.makeRequest(ctx, http.MethodPost, signInURL, payload, &data); err != nil {
+	if err := c.makeRequest(ctx, signinRoute, http.MethodPost, targetURL.String(), payload, &data); err != nil {
 		return "", "", err
 	}
-
 	return data.Credentials.Token, data.Credentials.Site.ID, nil
 }
 
-func (c *client) buildURL(path string) string {
-	return fmt.Sprintf("%s/api/%s/%s", c.config.Host, c.config.Version, path)
-}
-
 // helper function to avoid rewriting a request
-func (c *client) makeRequest(ctx context.Context, method, url string, payload, result interface{}) error {
+//
+//nolint:revive
+func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)
@@ -227,10 +238,10 @@ func (c *client) makeRequest(ctx context.Context, method, url string, payload, r
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Tableau-Auth", c.authToken)
+	req = otelhttpclient.AnnotateRequest(req, route)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
