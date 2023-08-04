@@ -8,7 +8,10 @@ source:
   config:
     project_id: google-project-id
     extract_blob: true
-    credentials_json:
+     # Only one of service_account_base64 / service_account_json is needed. 
+    # If both are present, service_account_base64 takes precedence
+    service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
+    service_account_json:
       {
         "type": "service_account",
         "private_key_id": "xxxxxxx",
@@ -25,16 +28,18 @@ source:
 
 ## Inputs
 
-| Key                | Value      | Example                                  | Description                                     |            |
-| :----------------- | :--------- | :--------------------------------------- | :---------------------------------------------- | :--------- |
-| `project_id`       | `string`   | `my-project`                             | Cloud Storage Project ID                             | _required_ |
-| `extract_blob`     | `boolean`  | `true`                                   | Extract blob metadata inside a bucket           | _optional_ |
-| `credentials_json` | `string`   | `{"private_key": .., "private_id": ...}` | Service Account in JSON string                  | _optional_ |
+
+| Key                      | Value     | Example                                  | Description                                                                                  |            |
+|:-------------------------|:----------|:-----------------------------------------|:---------------------------------------------------------------------------------------------|:-----------|
+| `project_id`             | `string`  | `my-project`                             | Cloud Storage Project ID                                                                          | *required* |
+| `extract_blob`           | `boolean` | `true`                                   | Extract blob metadata inside a bucket                                                        | *optional* |
+| `service_account_base64` | `string`  | `____BASE64_ENCODED_SERVICE_ACCOUNT____` | Service Account in base64 encoded string. Takes precedence over `service_account_json` value | *optional* |
+| `service_account_json`   | `string`  | `{"private_key": .., "private_id": ...}` | Service Account in JSON string                                                               | *optional* |
 | `exclude`          | `[]string` | `["bucket_a","bucket_b"]`                | Array of bucket names to excluded from crawling | _optional_ |
 
 ### _Notes_
 
-Leaving `credentials_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the Google Cloud Storage project.
+Leaving `service_account_base64` and `service_account_json` blank will default to [Google's default authentication](https://cloud.google.com/docs/authentication/production#automatically). It is recommended if Meteor instance runs inside the same Google Cloud environment as the Google Cloud Storage project.
 
 ## Outputs
 

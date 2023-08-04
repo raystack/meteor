@@ -3,6 +3,7 @@ package gcs
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"encoding/base64"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -26,15 +27,20 @@ var summary string
 
 // Config holds the set of configuration for the extractor
 type Config struct {
-	ProjectID          string   `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
-	ServiceAccountJSON string   `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
-	ExtractBlob        bool     `json:"extract_blob" yaml:"extract_blob" mapstructure:"extract_blob"`
-	Exclude            []string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+	ProjectID string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
+	// ServiceAccountBase64 takes precedence over ServiceAccountJSON field
+	ServiceAccountBase64 string   `json:"service_account_base64" yaml:"service_account_base64" mapstructure:"service_account_base64"`
+	ServiceAccountJSON   string   `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
+	ExtractBlob          bool     `json:"extract_blob" yaml:"extract_blob" mapstructure:"extract_blob"`
+	Exclude              []string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
 var sampleConfig = `
 project_id: google-project-id
 extract_blob: true
+# Only one of service_account_base64 / service_account_json is needed. 
+# If both are present, service_account_base64 takes precedence
+service_account_base64: ____base64_encoded_service_account____
 service_account_json: |-
   {
     "type": "service_account",
@@ -143,28 +149,24 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, project
 	return
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*v1beta2.Blob) (asset *v1beta2.Asset, err error) {
-	bucket := &v1beta2.Bucket{
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*v1beta2.Blob) (*v1beta2.Asset, error) {
+	bkt, err := anypb.New(&v1beta2.Bucket{
 		Location:    b.Location,
 		StorageType: b.StorageClass,
 		CreateTime:  timestamppb.New(b.Created),
-	}
-	if blobs != nil {
-		bucket.Blobs = blobs
-	}
-	buck, err := anypb.New(bucket)
+		Blobs:       blobs,
+	})
 	if err != nil {
 		return nil, err
 	}
-	asset = &v1beta2.Asset{
+	return &v1beta2.Asset{
 		Urn:     models.NewURN("gcs", projectID, "bucket", b.Name),
 		Name:    b.Name,
 		Service: "gcs",
 		Type:    "bucket",
 		Labels:  b.Labels,
-		Data:    buck,
-	}
-	return
+		Data:    bkt,
+	}, nil
 }
 
 func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *v1beta2.Blob {
@@ -183,9 +185,17 @@ func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *v1be
 }
 
 func (e *Extractor) createClient(ctx context.Context) (*storage.Client, error) {
-	if e.config.ServiceAccountJSON == "" {
+	if e.config.ServiceAccountBase64 == "" && e.config.ServiceAccountJSON == "" {
 		e.logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
 		return storage.NewClient(ctx)
+	}
+	if e.config.ServiceAccountBase64 != "" {
+		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+		if err != nil || len(serviceAccountJSON) == 0 {
+			return nil, errors.Wrap(err, "decode Base64 encoded service account")
+		}
+		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
+		e.config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
 	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
