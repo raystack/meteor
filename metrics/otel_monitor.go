@@ -11,7 +11,7 @@ import (
 
 // OtelMonitor represents the otel monitor.
 type OtelMonitor struct {
-	recipeDuration   metric.Int64Histogram
+	recipeDuration   metric.Float64Histogram
 	extractorRetries metric.Int64Counter
 	assetsExtracted  metric.Int64Counter
 	sinkRetries      metric.Int64Counter
@@ -20,7 +20,7 @@ type OtelMonitor struct {
 func NewOtelMonitor() *OtelMonitor {
 	// init meters
 	meter := otel.Meter("github.com/goto/meteor/metrics")
-	recipeDuration, err := meter.Int64Histogram("meteor.recipe.duration", metric.WithUnit("ms"))
+	recipeDuration, err := meter.Float64Histogram("meteor.recipe.duration", metric.WithUnit("s"))
 	handleOtelErr(err)
 
 	extractorRetries, err := meter.Int64Counter("meteor.extractor.retries")
@@ -43,7 +43,7 @@ func NewOtelMonitor() *OtelMonitor {
 // RecordRun records a run behavior
 func (m *OtelMonitor) RecordRun(ctx context.Context, run agent.Run) {
 	m.recipeDuration.Record(ctx,
-		int64(run.DurationInMs),
+		float64(run.DurationInMs)/1000.0,
 		metric.WithAttributes(
 			attribute.String("recipe_name", run.Recipe.Name),
 			attribute.String("extractor", run.Recipe.Source.Name),
