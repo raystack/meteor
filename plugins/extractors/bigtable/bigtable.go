@@ -3,13 +3,16 @@ package bigtable
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sync"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/registry"
+	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"cloud.google.com/go/bigtable"
@@ -27,15 +30,19 @@ const (
 
 // Config holds the configurations for the bigtable extractor
 type Config struct {
-	ProjectID string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
+	ProjectID            string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
+	ServiceAccountBase64 string `mapstructure:"service_account_base64"`
+	serviceAccountJSON   []byte
 }
 
 var info = plugins.Info{
 	Description: "Compressed, high-performance, data storage system.",
 	Summary:     summary,
 	Tags:        []string{"gcp", "extractor"},
-	SampleConfig: `
-	project_id: google-project-id`,
+	SampleConfig: heredoc.Doc(`
+		project_id: google-project-id
+		service_account_base64: ____base64_encoded_service_account____
+	`),
 }
 
 // InstancesFetcher is an interface for fetching instances
@@ -66,21 +73,26 @@ func New(logger log.Logger) *Extractor {
 	return e
 }
 
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
+		return err
+	}
+
+	err := e.decodeServiceAccount()
+	if err != nil {
 		return err
 	}
 
 	client, err := instanceAdminClientCreator(ctx, e.config)
 	if err != nil {
-		return
+		return err
 	}
 	e.instanceNames, err = instanceInfoGetter(ctx, client)
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is configured and
@@ -106,17 +118,18 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 	return instanceNames, nil
 }
 
-func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error {
 	for _, instance := range e.instanceNames {
 		adminClient, err := e.createAdminClient(ctx, instance, e.config.ProjectID)
 		if err != nil {
 			return err
 		}
 		tables, _ := adminClient.Tables(ctx)
-		wg := sync.WaitGroup{}
+		var wg sync.WaitGroup
 		for _, table := range tables {
 			wg.Add(1)
 			go func(table string) {
+				defer wg.Done()
 				tableInfo, err := adminClient.TableInfo(ctx, table)
 				if err != nil {
 					return
@@ -138,13 +151,18 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) (err e
 					Data:    tableMeta,
 				}
 				emit(models.NewRecord(&asset))
-
-				wg.Done()
 			}(table)
 		}
 		wg.Wait()
 	}
-	return
+	return nil
+}
+
+func (c Config) clientOptions() []option.ClientOption {
+	if c.serviceAccountJSON == nil {
+		return nil
+	}
+	return []option.ClientOption{option.WithCredentialsJSON(c.serviceAccountJSON)}
 }
 
 func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.InstanceAdminClient, error) {
@@ -152,7 +170,21 @@ func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.In
 }
 
 func (e *Extractor) createAdminClient(ctx context.Context, instance string, projectID string) (*bigtable.AdminClient, error) {
-	return bigtable.NewAdminClient(ctx, projectID, instance)
+	return bigtable.NewAdminClient(ctx, projectID, instance, e.config.clientOptions()...)
+}
+
+func (e *Extractor) decodeServiceAccount() error {
+	if e.config.ServiceAccountBase64 == "" {
+		return nil
+	}
+
+	serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+	if err != nil || len(serviceAccountJSON) == 0 {
+		return fmt.Errorf("decode Base64 encoded service account: %w", err)
+	}
+
+	e.config.serviceAccountJSON = serviceAccountJSON
+	return nil
 }
 
 // Register the extractor to catalog

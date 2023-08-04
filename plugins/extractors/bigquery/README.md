@@ -16,6 +16,8 @@ source:
         - dataset_c.table_a
     max_page_size: 100
     profile_column: true
+    # Only one of service_account_base64 / service_account_json is needed. 
+    # If both are present, service_account_base64 takes precedence
     service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
     service_account_json:
       {

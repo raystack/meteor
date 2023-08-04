@@ -7,6 +7,7 @@ source:
   name: bigtable
   config:
     project_id: google-project-id
+    service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
 ```
 
 ## Inputs
@@ -14,10 +15,11 @@ source:
 | Key        | Value  | Example    | Description         | required |
 |------------|--------|------------|---------------------|----------|
 | project_id | string | my-project | BigTable Project ID | true     |
+| service_account_base64 | string | ____BASE64_ENCODED_SERVICE_ACCOUNT____ | Service Account in base64 encoded string. | *optional* |
 
-### *Notes*
+### *Notes* 
 
-You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as path of the service account json file.
+You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as path of the service account json file. if `service_account_base64` is not specified.
 
 ## Outputs
 
@@ -26,7 +28,7 @@ You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as 
 | `resource.urn` | `project_id.instance_name.table_name` |
 | `resource.name` | `table_name` |
 | `resource.service` | `bigtable` |
-| `properties.fields` | [Fields](#Fields) |
+| `attributes.fields` | [Fields](#Fields) |
 
 ### Fields
 
