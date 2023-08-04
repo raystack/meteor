@@ -24,3 +24,12 @@ func AnnotateRequest(req *http.Request, route string) *http.Request {
 
 	return req.WithContext(context.WithValue(ctx, lablelerContextKey, l))
 }
+
+// LabelerFromContext returns the labeler annotation from the context if exists.
+func LabelerFromContext(ctx context.Context) (*otelhttp.Labeler, bool) {
+	l, ok := ctx.Value(lablelerContextKey).(*otelhttp.Labeler)
+	if !ok {
+		l = &otelhttp.Labeler{}
+	}
+	return l, ok
+}

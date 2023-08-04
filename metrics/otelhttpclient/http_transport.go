@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -55,7 +54,7 @@ func NewHTTPTransport(baseTransport http.RoundTripper) http.RoundTripper {
 func (tr *httpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 	startAt := time.Now()
-	labeler, _ := otelhttp.LabelerFromContext(req.Context())
+	labeler, _ := LabelerFromContext(req.Context())
 
 	var bw bodyWrapper
 	if req.Body != nil && req.Body != http.NoBody {
@@ -63,11 +62,19 @@ func (tr *httpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		req.Body = &bw
 	}
 
+	port := req.URL.Port()
+	if port == "" {
+		port = "80"
+		if req.URL.Scheme == "https" {
+			port = "443"
+		}
+	}
+
 	attribs := append(labeler.Get(),
 		attribute.String(attributeNetProtoName, "http"),
 		attribute.String(attributeRequestMethod, req.Method),
 		attribute.String(attributeServerAddress, req.URL.Hostname()),
-		attribute.String(attributeServerPort, req.URL.Port()),
+		attribute.String(attributeServerPort, port),
 	)
 
 	resp, err := tr.roundTripper.RoundTrip(req)
