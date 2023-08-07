@@ -26,6 +26,7 @@ require (
 	github.com/gocql/gocql v0.0.0-20210817081954-bc256bbb90de
 	github.com/google/go-cmp v0.5.9
 	github.com/google/go-github/v37 v37.0.0
+	github.com/googleapis/gax-go/v2 v2.7.1
 	github.com/goto/optimus v0.6.0-rc.6.0.20230315121505-734e3d9dda98
 	github.com/goto/salt v0.3.0
 	github.com/goto/shield v0.6.0
@@ -136,7 +137,6 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect

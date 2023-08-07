@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	og "github.com/goto/meteor/metrics/otelgrpc"
 	"github.com/goto/meteor/plugins/extractors/caramlstore/internal/core"
 	grpcmw "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
@@ -23,7 +24,6 @@ const (
 type gRPCClient struct {
 	opts []grpc.DialOption
 	core.CoreServiceClient
-
 	conn    *grpc.ClientConn
 	timeout time.Duration
 }
@@ -106,6 +106,8 @@ func (c *gRPCClient) createConnection(ctx context.Context, hostURL string, maxSi
 		maxSizeInMB = gRPCMaxClientRecvSizeMB
 	}
 
+	m := og.NewOtelGRPCMonitor(hostURL)
+
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
@@ -120,10 +122,12 @@ func (c *gRPCClient) createConnection(ctx context.Context, hostURL string, maxSi
 			),
 			otelgrpc.UnaryClientInterceptor(),
 			grpcprom.UnaryClientInterceptor,
+			m.UnaryClientInterceptor(),
 		)),
 		grpc.WithStreamInterceptor(grpcmw.ChainStreamClient(
 			otelgrpc.StreamClientInterceptor(),
 			grpcprom.StreamClientInterceptor,
+			m.StreamClientInterceptor(),
 		)),
 	}
 	opts = append(opts, c.opts...)

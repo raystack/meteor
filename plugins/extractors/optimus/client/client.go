@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	og "github.com/goto/meteor/metrics/otelgrpc"
 	pb "github.com/goto/optimus/protos/gotocompany/optimus/core/v1beta1"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
@@ -63,6 +64,8 @@ func (c *client) Close() error {
 }
 
 func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB int) (*grpc.ClientConn, error) {
+	m := og.NewOtelGRPCMonitor(host)
+
 	if maxSizeInMB <= 0 {
 		maxSizeInMB = GRPCMaxClientRecvSizeMB
 	}
@@ -83,10 +86,12 @@ func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB 
 			grpc_retry.UnaryClientInterceptor(retryOpts...),
 			otelgrpc.UnaryClientInterceptor(),
 			grpc_prometheus.UnaryClientInterceptor,
+			m.UnaryClientInterceptor(),
 		)),
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(
 			otelgrpc.StreamClientInterceptor(),
 			grpc_prometheus.StreamClientInterceptor,
+			m.StreamClientInterceptor(),
 		)),
 	)
 
