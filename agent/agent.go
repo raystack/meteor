@@ -176,7 +176,23 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 			}
 			stream.Shutdown()
 		}()
-		if err := runExtractor(); err != nil {
+
+		retryNotification := func(e error, d time.Duration) {
+			r.logger.Warn(
+				fmt.Sprintf("retrying extractor in %s", d),
+				"retry_delay_ms", d.Milliseconds(),
+				"extractor", recipe.Source.Name,
+				"error", e,
+			)
+		}
+
+		err := r.retrier.retry(
+			ctx,
+			func() error { return runExtractor() },
+			retryNotification,
+		)
+
+		if err != nil {
 			run.Error = errors.Wrap(err, "failed to run extractor")
 		}
 	}()
