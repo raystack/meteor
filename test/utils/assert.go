@@ -71,13 +71,25 @@ func AssertEqualProtos(t *testing.T, expected, actual interface{}) {
 func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actual []*v1beta2.Asset) {
 	t.Helper()
 
+	AssertJSONFile(t, expectedFilePath, actual, jsondiff.FullMatch)
+}
+
+func AssertJSONFile(t *testing.T, expectedFilePath string, actual []*v1beta2.Asset, expectedDiff jsondiff.Difference) {
+	t.Helper()
+
 	expected, err := os.ReadFile(expectedFilePath)
 	require.NoError(t, err)
 
-	AssertJSONEq(t, expected, actual)
+	AssertJSON(t, expected, actual, expectedDiff)
 }
 
 func AssertJSONEq(t *testing.T, expected, actual interface{}) {
+	t.Helper()
+
+	AssertJSON(t, expected, actual, jsondiff.FullMatch)
+}
+
+func AssertJSON(t *testing.T, expected, actual interface{}, expectedDiff jsondiff.Difference) {
 	t.Helper()
 
 	asBytes := func(v interface{}) []byte {
@@ -101,10 +113,8 @@ func AssertJSONEq(t *testing.T, expected, actual interface{}) {
 	}
 
 	options := jsondiff.DefaultConsoleOptions()
-	diff, report := jsondiff.Compare(asBytes(expected), asBytes(actual), &options)
-	if diff != jsondiff.FullMatch {
-		t.Errorf("jsons do not match:\n %s", report)
-	}
+	actualDiff, report := jsondiff.Compare(asBytes(expected), asBytes(actual), &options)
+	assert.Equal(t, expectedDiff, actualDiff, "expected json is %s, got %s\n %s", expectedDiff, actualDiff, report)
 }
 
 func SortedAssets(assets []*v1beta2.Asset) []*v1beta2.Asset {

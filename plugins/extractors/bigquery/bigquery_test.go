@@ -5,13 +5,16 @@ package bigquery_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
 
 	bq "cloud.google.com/go/bigquery"
+	"github.com/nsf/jsondiff"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -90,13 +93,13 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func mockClient(ctx context.Context, logger slog.Logger, config bigquery.Config) (*bq.Client, error) {
+func mockClient(ctx context.Context, logger slog.Logger, config *bigquery.Config) (*bq.Client, error) {
 	return client, nil
 }
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
-		extr := bigquery.New(utils.Logger, bigquery.CreateClient)
+		extr := bigquery.New(utils.Logger, bigquery.CreateClient, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
@@ -109,7 +112,7 @@ func TestInit(t *testing.T) {
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 	t.Run("should not return invalid config error if config is valid", func(t *testing.T) {
-		extr := bigquery.New(utils.Logger, bigquery.CreateClient)
+		extr := bigquery.New(utils.Logger, bigquery.CreateClient, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
@@ -123,7 +126,7 @@ func TestInit(t *testing.T) {
 		assert.NotEqual(t, plugins.InvalidConfigError{}, err)
 	})
 	t.Run("should return error if service_account_base64 config is invalid", func(t *testing.T) {
-		extr := bigquery.New(utils.Logger, bigquery.CreateClient)
+		extr := bigquery.New(utils.Logger, bigquery.CreateClient, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
@@ -138,7 +141,7 @@ func TestInit(t *testing.T) {
 	})
 
 	t.Run("should return no error", func(t *testing.T) {
-		extr := bigquery.New(utils.Logger, mockClient)
+		extr := bigquery.New(utils.Logger, mockClient, nil)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
@@ -153,11 +156,24 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should return no error", func(t *testing.T) {
-		extr := bigquery.New(utils.Logger, mockClient)
+	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(int64) (int64, error)) []*v1beta2.Asset {
+		extr := bigquery.New(utils.Logger, mockClient, randomizer)
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		err := extr.Init(ctx, plugins.Config{
+		err := extr.Init(ctx, cfg)
+
+		assert.NoError(t, err)
+
+		emitter := mocks.NewEmitter()
+		err = extr.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+
+		actual := getAllData(emitter, t)
+		return actual
+	}
+
+	t.Run("should return no error", func(t *testing.T) {
+		actual := runTest(t, plugins.Config{
 			URNScope: "test-bigquery",
 			RawConfig: map[string]interface{}{
 				"project_id":             projectID,
@@ -168,17 +184,68 @@ func TestExtract(t *testing.T) {
 					"tables":   []string{"dataset1.exclude_this_table"},
 				},
 			},
-		})
-
-		assert.NoError(t, err)
-
-		emitter := mocks.NewEmitter()
-		err = extr.Extract(ctx, emitter.Push)
-		assert.NoError(t, err)
-
-		actual := getAllData(emitter, t)
+		}, nil)
 
 		utils.AssertProtosWithJSONFile(t, "testdata/expected-assets.json", actual)
+	})
+
+	t.Run("with mix_values true", func(t *testing.T) {
+		cfg := plugins.Config{
+			URNScope: "test-bigquery",
+			RawConfig: map[string]interface{}{
+				"project_id":             projectID,
+				"max_preview_rows":       "5",
+				"mix_values":             "true",
+				"include_column_profile": "true",
+				"exclude": map[string]interface{}{
+					"datasets": []string{"exclude_this_dataset"},
+					"tables":   []string{"dataset1.exclude_this_table"},
+				},
+			},
+		}
+
+		randFn := func(seed int64) func(max int64) (int64, error) {
+			randomizer := rand.New(rand.NewSource(seed))
+
+			return func(max int64) (int64, error) {
+				return randomizer.Int63n(max), nil
+			}
+		}
+
+		t.Run("should return preview rows with mixed values", func(t *testing.T) {
+			seed := int64(42)
+			randomizer := randFn(seed)
+
+			actual := runTest(t, cfg, randomizer)
+
+			utils.AssertJSONFile(t, "testdata/expected-assets-mixed.json", actual, jsondiff.FullMatch)
+		})
+
+		t.Run("with different seed should not equal to expected", func(t *testing.T) {
+			seed := int64(99)
+			randomizer := randFn(seed)
+
+			actual := runTest(t, cfg, randomizer)
+			utils.AssertJSONFile(t, "testdata/expected-assets-mixed.json", actual, jsondiff.NoMatch)
+		})
+
+		t.Run("should not build preview rows when randomFn fails", func(t *testing.T) {
+			actual := runTest(t, cfg, func(max int64) (int64, error) {
+				return 0, errors.New("randomizer failed")
+			})
+			utils.AssertJSONFile(t, "testdata/expected-assets-no-preview.json", actual, jsondiff.FullMatch)
+		})
+
+		t.Run("should not randomize if rows < 2", func(t *testing.T) {
+			seed := int64(42)
+			randomizer := randFn(seed)
+
+			newCfg := cfg
+			newCfg.RawConfig["max_preview_rows"] = "1"
+
+			actual := runTest(t, newCfg, randomizer)
+			utils.AssertJSONFile(t, "testdata/expected-assets.json", actual, jsondiff.FullMatch)
+		})
 	})
 }
 
