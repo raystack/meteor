@@ -1,0 +1,7 @@
+name: recipe-three
+version: v1beta1
+source:
+  type: kafka
+  scope: my-scope
+  config:
+    broker: !!binary ==

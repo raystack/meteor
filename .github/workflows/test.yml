@@ -26,12 +26,27 @@ jobs:
           name: coverage
           path: coverage.out
 
+  pretest:
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.set-matrix.outputs.plugins }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - id: set-matrix
+        run: |
+          echo "plugins=$(find plugins -mindepth 2 -maxdepth 2 -type d | sed 's/plugins\///' | awk 'BEGIN{printf "["} {printf "%s\"%s\"",sep,$0; sep=","} END{print ",\".\"]"}')" >> $GITHUB_OUTPUT
+
   plugins-test:
+    needs: pretest
     runs-on: ubuntu-latest
     if: |
       github.ref == 'refs/heads/main' || 
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        plugins: ${{ fromJson(needs.pretest.outputs.plugins) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -43,12 +58,12 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install build-essential
       - name: Run Test
-        run: make test-plugins
+        run: make test-plugins PLUGIN=${{ matrix.plugins }}
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v3
         with:
           name: coverage-plugins
-          path: coverage-plugins.out
+          path: coverage-plugins*.out
 
   coverage:
     runs-on: ubuntu-latest
@@ -74,4 +89,4 @@ jobs:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           go install github.com/mattn/goveralls@v0.0.11
-          goveralls -coverprofile=coverage.out,coverage-plugins.out -service=github
+          goveralls -coverprofile=$(ls -1 coverage*.out | paste -sd "," -) -service=github

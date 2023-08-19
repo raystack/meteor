@@ -19,14 +19,14 @@ copy-config:
 	cp ./config/meteor.yaml.sample ./meteor.yaml
 
 test:
-	go test ./... -coverprofile=coverage.out
+	go test $(shell go list ./... | grep -v 'test\|mocks\|plugins\|v1beta2\|cmd') -coverprofile=coverage.out
 
 test-e2e:
 	go test ./test/e2e -tags=integration -count=1
 
 test-plugins:
 	@echo " > Testing plugins with tag 'plugins'"
-	go test ./plugins... -tags=plugins -coverprofile=coverage-plugins.out -parallel=1
+	go test $(if $(filter .,$(PLUGIN)),./plugins,$(if $(PLUGIN),./plugins/$(PLUGIN)/...,./plugins/...)) -tags=plugins -coverprofile=coverage-plugins$(subst .,root,$(subst /,-,$(if $(PLUGIN),-$(PLUGIN),))).out -parallel=1
 
 test-coverage: # test test-plugins
 	cp coverage.out coverage-all.out

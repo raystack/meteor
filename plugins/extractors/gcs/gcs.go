@@ -6,21 +6,19 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"cloud.google.com/go/storage"
 	"github.com/pkg/errors"
-
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"cloud.google.com/go/storage"
-	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/salt/log"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //go:embed README.md
@@ -69,14 +67,18 @@ type Extractor struct {
 	plugins.BaseExtractor
 	client          *storage.Client
 	logger          log.Logger
-	excludedBuckets map[string]bool
 	config          Config
+	excludedBuckets map[string]bool
+	newClient       NewClientFunc
 }
 
+type NewClientFunc func(ctx context.Context, logger log.Logger, config Config) (*storage.Client, error)
+
 // New returns a pointer to an initialized Extractor Object
-func New(logger log.Logger) *Extractor {
+func New(logger log.Logger, newClient NewClientFunc) *Extractor {
 	e := &Extractor{
-		logger: logger,
+		logger:    logger,
+		newClient: newClient,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -85,8 +87,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -94,23 +96,24 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedBuckets = sqlutil.BuildBoolMap(e.config.Exclude)
 
 	// create client
-	e.client, err = e.createClient(ctx)
+	var err error
+	e.client, err = e.newClient(ctx, e.logger, e.config)
 	if err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("create client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	it := e.client.Buckets(ctx, e.config.ProjectID)
 	for {
 		bucket, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", bucket.Name)
+			return fmt.Errorf("iterate over %s: %w", bucket.Name, err)
 		}
 
 		// skip excluded buckets
@@ -122,32 +125,35 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		if e.config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
-				return errors.Wrapf(err, "failed to extract blobs from %s", bucket.Name)
+				return fmt.Errorf("extract blobs from %s: %w", bucket.Name, err)
 			}
 		}
 		asset, err := e.buildBucket(bucket, e.config.ProjectID, blobs)
 		if err != nil {
-			return errors.Wrapf(err, "failed to build bucket")
+			return fmt.Errorf("build bucket: %w", err)
 		}
+
 		emit(models.NewRecord(asset))
 	}
 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName string, projectID string) (blobs []*v1beta2.Blob, err error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]*v1beta2.Blob, error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
-	object, err := it.Next()
-	for err == nil {
-		blobs = append(blobs, e.buildBlob(object, projectID))
-		object, err = it.Next()
-	}
-	if err == iterator.Done {
-		err = nil
-	}
+	var blobs []*v1beta2.Blob
+	for {
+		object, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			return blobs, nil
+		}
+		if err != nil {
+			return nil, err
+		}
 
-	return
+		blobs = append(blobs, e.buildBlob(object, projectID))
+	}
 }
 
 func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*v1beta2.Blob) (*v1beta2.Asset, error) {
@@ -186,27 +192,28 @@ func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *v1be
 	}
 }
 
-func (e *Extractor) createClient(ctx context.Context) (*storage.Client, error) {
-	if e.config.ServiceAccountBase64 == "" && e.config.ServiceAccountJSON == "" {
-		e.logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
+func createClient(ctx context.Context, logger log.Logger, config Config) (*storage.Client, error) {
+	if config.ServiceAccountBase64 == "" && config.ServiceAccountJSON == "" {
+		logger.Info("credentials are not specified, creating google cloud storage client using Default Credentials...")
 		return storage.NewClient(ctx)
 	}
-	if e.config.ServiceAccountBase64 != "" {
-		serviceAccountJSON, err := base64.StdEncoding.DecodeString(e.config.ServiceAccountBase64)
+
+	if config.ServiceAccountBase64 != "" {
+		serviceAccountJSON, err := base64.StdEncoding.DecodeString(config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
-			return nil, errors.Wrap(err, "decode Base64 encoded service account")
+			return nil, fmt.Errorf("decode Base64 encoded service account: %w", err)
 		}
 		// overwrite ServiceAccountJSON with credentials from ServiceAccountBase64 value
-		e.config.ServiceAccountJSON = string(serviceAccountJSON)
+		config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
-	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
 }
 
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("gcs", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), createClient)
 	}); err != nil {
 		panic(err)
 	}

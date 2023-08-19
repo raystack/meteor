@@ -250,6 +250,15 @@ func TestGetAttributes(t *testing.T) {
 			asset:    &v1beta2.Asset{},
 			expected: map[string]interface{}{},
 		},
+		{
+			name: "AssetWithNilAttributes",
+			asset: &v1beta2.Asset{
+				Data: testutils.BuildAny(t, &v1beta2.Metric{
+					Attributes: TryParseMapToProto(nil),
+				}),
+			},
+			expected: map[string]interface{}{},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

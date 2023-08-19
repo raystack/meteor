@@ -12,6 +12,7 @@ import (
 	"github.com/raystack/meteor/models"
 	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sinks/frontier/client"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
 	"google.golang.org/grpc/codes"
@@ -43,12 +44,12 @@ var info = plugins.Info{
 
 type Sink struct {
 	plugins.BasePlugin
-	client Client
+	client client.Client
 	config Config
 	logger log.Logger
 }
 
-func New(c Client, logger log.Logger) plugins.Syncer {
+func New(c client.Client, logger log.Logger) plugins.Syncer {
 	s := &Sink{
 		logger: logger,
 		client: c,
@@ -160,7 +161,7 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 
 func init() {
 	if err := registry.Sinks.Register("frontier", func() plugins.Syncer {
-		return New(newClient(), plugins.GetLog())
+		return New(client.New(), plugins.GetLog())
 	}); err != nil {
 		panic(err)
 	}

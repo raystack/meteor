@@ -3,7 +3,9 @@ package plugins
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"reflect"
 	"sort"
 	"strings"
@@ -112,6 +114,14 @@ func KafkaServersToScope(servers string) string {
 
 func CaraMLStoreURN(scope, project, featureTable string) string {
 	return models.NewURN("caramlstore", scope, "feature_table", project+"."+featureTable)
+}
+
+// DrainBody drains and closes the response body to avoid the following
+// gotcha:
+// http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#close_http_resp_body
+func DrainBody(resp *http.Response) {
+	_, _ = io.Copy(io.Discard, resp.Body)
+	_ = resp.Body.Close()
 }
 
 func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err error) {

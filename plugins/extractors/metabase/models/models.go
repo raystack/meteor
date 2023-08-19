@@ -1,4 +1,4 @@
-package metabase
+package models
 
 import (
 	"strings"

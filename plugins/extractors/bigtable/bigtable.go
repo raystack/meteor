@@ -8,17 +8,16 @@ import (
 	"fmt"
 	"sync"
 
+	"cloud.google.com/go/bigtable"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"github.com/raystack/meteor/registry"
-	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	"cloud.google.com/go/bigtable"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
 	"github.com/raystack/salt/log"
+	"google.golang.org/api/option"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -58,14 +57,38 @@ var (
 // Extractor used to extract bigtable metadata
 type Extractor struct {
 	plugins.BaseExtractor
-	config        Config
-	logger        log.Logger
-	instanceNames []string
+	config         Config
+	logger         log.Logger
+	instanceNames  []string
+	newClient      NewClientFunc
+	newAdminClient NewAdminClientFunc
 }
 
-func New(logger log.Logger) *Extractor {
+// InstanceAdminClient is an interface for *bigtable.InstanceAdminClient
+//
+//go:generate mockery --name=InstanceAdminClient -r --case underscore --with-expecter --structname InstanceAdminClient --output=./mocks
+type InstanceAdminClient interface {
+	Instances(ctx context.Context) ([]*bigtable.InstanceInfo, error)
+}
+
+// AdminClient is an interface for *bigtable.AdminClient
+//
+//go:generate mockery --name=AdminClient -r --case underscore --with-expecter --structname AdminClient --output=./mocks
+type AdminClient interface {
+	Tables(ctx context.Context) ([]string, error)
+	TableInfo(ctx context.Context, table string) (*bigtable.TableInfo, error)
+}
+
+type (
+	NewClientFunc      func(ctx context.Context, cfg Config) (InstanceAdminClient, error)
+	NewAdminClientFunc func(ctx context.Context, instance string, config Config) (AdminClient, error)
+)
+
+func New(logger log.Logger, newClient NewClientFunc, newAdminClient NewAdminClientFunc) *Extractor {
 	e := &Extractor{
-		logger: logger,
+		logger:         logger,
+		newClient:      newClient,
+		newAdminClient: newAdminClient,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -83,7 +106,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	client, err := instanceAdminClientCreator(ctx, e.config)
+	client, err := e.newClient(ctx, e.config)
 	if err != nil {
 		return err
 	}
@@ -98,20 +121,16 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // Extract checks if the extractor is configured and
 // if so, then extracts the metadata and
 // returns the assets.
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	err = e.getTablesInfo(ctx, emit)
-	if err != nil {
-		return
-	}
-
-	return
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	return e.getTablesInfo(ctx, emit)
 }
 
-func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNames []string, err error) {
+func getInstancesInfo(ctx context.Context, client InstancesFetcher) ([]string, error) {
 	instanceInfos, err := client.Instances(ctx)
 	if err != nil {
-		return
+		return nil, err
 	}
+	var instanceNames []string
 	for i := 0; i < len(instanceInfos); i++ {
 		instanceNames = append(instanceNames, instanceInfos[i].Name)
 	}
@@ -120,7 +139,7 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) (instanceNam
 
 func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error {
 	for _, instance := range e.instanceNames {
-		adminClient, err := e.createAdminClient(ctx, instance, e.config.ProjectID)
+		adminClient, err := e.newAdminClient(ctx, instance, e.config)
 		if err != nil {
 			return err
 		}
@@ -130,6 +149,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error 
 			wg.Add(1)
 			go func(table string) {
 				defer wg.Done()
+
 				tableInfo, err := adminClient.TableInfo(ctx, table)
 				if err != nil {
 					return
@@ -162,15 +182,16 @@ func (c Config) clientOptions() []option.ClientOption {
 	if c.serviceAccountJSON == nil {
 		return nil
 	}
+
 	return []option.ClientOption{option.WithCredentialsJSON(c.serviceAccountJSON)}
 }
 
-func createInstanceAdminClient(ctx context.Context, config Config) (*bigtable.InstanceAdminClient, error) {
-	return bigtable.NewInstanceAdminClient(ctx, config.ProjectID)
+func createInstanceAdminClient(ctx context.Context, config Config) (InstanceAdminClient, error) {
+	return bigtable.NewInstanceAdminClient(ctx, config.ProjectID, config.clientOptions()...)
 }
 
-func (e *Extractor) createAdminClient(ctx context.Context, instance string, projectID string) (*bigtable.AdminClient, error) {
-	return bigtable.NewAdminClient(ctx, projectID, instance, e.config.clientOptions()...)
+func createAdminClient(ctx context.Context, instance string, config Config) (AdminClient, error) {
+	return bigtable.NewAdminClient(ctx, config.ProjectID, instance, config.clientOptions()...)
 }
 
 func (e *Extractor) decodeServiceAccount() error {
@@ -190,7 +211,7 @@ func (e *Extractor) decodeServiceAccount() error {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigtable", func() plugins.Extractor {
-		return New(plugins.GetLog())
+		return New(plugins.GetLog(), instanceAdminClientCreator, createAdminClient)
 	}); err != nil {
 		panic(err)
 	}
