@@ -15,7 +15,6 @@
               {
                   "group_urn": "grpname-A:grpId-A",
                   "role": [
-                      "role-A"
                   ]
               }
           ],
@@ -25,7 +24,7 @@
           "update_time": "1970-01-01T00:35:00Z",
           "username": "user-A"
       },
-      "description": "sample description for user-A",
+      "description": "",
       "event": null,
       "labels": {},
       "lineage": null,
@@ -53,7 +52,6 @@
               {
                   "group_urn": "grpname-B:grpId-B",
                   "role": [
-                      "role-B"
                   ]
               }
           ],
@@ -63,7 +61,7 @@
           "update_time": "1970-01-01T00:15:00Z",
           "username": "user-B"
       },
-      "description": "sample description for user-B",
+      "description": "",
       "event": null,
       "labels": {},
       "lineage": null,
