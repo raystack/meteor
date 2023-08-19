@@ -12,10 +12,10 @@ import (
 
 	"github.com/raystack/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/mongodb"
@@ -123,7 +123,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(t), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
 	})
 }
 
@@ -164,53 +164,56 @@ func createCollection(ctx context.Context, collectionName string, data []interfa
 	return
 }
 
-func getExpected(t *testing.T) []models.Record {
+func getExpected(t *testing.T) []*v1beta2.Asset {
 	data1, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 3,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
 	data2, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 2,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
 	data3, err := anypb.New(&v1beta2.Table{
 		Profile: &v1beta2.TableProfile{
 			TotalRows: 1,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		t.Fatal(fmt.Println(err, "failed to build Any struct"))
+		t.Fatal(err, "failed to build Any struct")
 	}
 
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".connections",
 			Name:    "connections",
 			Type:    "table",
 			Data:    data1,
 			Service: "mongodb",
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".posts",
 			Name:    "posts",
 			Type:    "table",
 			Data:    data2,
 			Service: "mongodb",
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:mongodb:test-mongodb:collection:" + testDB + ".stats",
 			Name:    "stats",
 			Type:    "table",
 			Data:    data3,
 			Service: "mongodb",
-		}),
+		},
 	}
 }

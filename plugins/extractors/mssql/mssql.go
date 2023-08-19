@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/salt/log"
 
@@ -132,7 +133,8 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		return errors.Wrap(err, "failed to get columns")
 	}
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

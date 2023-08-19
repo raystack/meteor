@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/raystack/meteor/models"
@@ -153,7 +154,8 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		return errors.Wrap(err, "failed to extract columns")
 	}
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

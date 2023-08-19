@@ -15,6 +15,7 @@ import (
 	"github.com/snowflakedb/gosnowflake"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 )
@@ -180,7 +181,8 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		return fmt.Errorf("failed to extract columns from %s.%s: %w", database, tableName, err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

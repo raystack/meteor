@@ -236,7 +236,7 @@ func TestExtract(t *testing.T) {
 				assert.Equal(t, "1a4336bc-bc6a-4972-83c1-d6426b4d79c3", h.Get("User-Id"))
 				data, err := io.ReadAll(r.Body)
 				assert.NoError(t, err)
-				assert.JSONEq(t, `{"id": "urn:merlin:merlin-stg:model:46.218"}`, (string)(data))
+				testutils.AssertJSONEq(t, `{"id": "urn:merlin:merlin-stg:model:46.218"}`, data)
 
 				testutils.Respond(t, w, http.StatusNonAuthoritativeInfo, `[]`)
 			},

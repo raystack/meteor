@@ -6,10 +6,12 @@ package kafka_test
 import (
 	"context"
 	"errors"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
 	"log"
 	"net"
+
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/test/utils"
 
@@ -130,39 +132,40 @@ func TestExtract(t *testing.T) {
 			Profile: &v1beta2.TopicProfile{
 				NumberOfPartitions: 1,
 			},
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// assert results with expected data
-		expected := []models.Record{
-			models.NewRecord(&v1beta2.Asset{
+		expected := []*v1beta2.Asset{
+			{
 				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-1",
 				Name:    "meteor-test-topic-1",
 				Service: "kafka",
 				Type:    "topic",
 				Data:    data,
-			}),
-			models.NewRecord(&v1beta2.Asset{
+			},
+			{
 				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-2",
 				Name:    "meteor-test-topic-2",
 				Service: "kafka",
 				Type:    "topic",
 				Data:    data,
-			}),
-			models.NewRecord(&v1beta2.Asset{
+			},
+			{
 				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-3",
 				Name:    "meteor-test-topic-3",
 				Service: "kafka",
 				Type:    "topic",
 				Data:    data,
-			}),
+			},
 		}
 
 		// We need this function because the extractor cannot guarantee order
 		// so comparing expected slice and result slice will not be consistent
-		assertResults(t, expected, emitter.Get())
+		utils.AssertEqualProtos(t, expected, utils.SortedAssets(emitter.GetAllData()))
 	})
 }
 

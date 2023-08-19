@@ -12,12 +12,12 @@ import (
 
 	"github.com/raystack/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
-	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/cassandra"
@@ -140,7 +140,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		assert.Equal(t, getExpected(), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllData())
 	})
 }
 
@@ -181,13 +181,8 @@ func execute(queries []string) (err error) {
 	return
 }
 
-// newExtractor returns a new extractor
-func newExtractor() *cassandra.Extractor {
-	return cassandra.New(utils.Logger)
-}
-
 // getExpected returns the expected result
-func getExpected() []models.Record {
+func getExpected() []*v1beta2.Asset {
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -203,6 +198,7 @@ func getExpected() []models.Record {
 				DataType: "text",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
@@ -223,25 +219,26 @@ func getExpected() []models.Record {
 				DataType: "int",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)
 	}
 
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".applicant",
 			Name:    "applicant",
 			Type:    "table",
 			Service: "cassandra",
 			Data:    table1,
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".jobs",
 			Name:    "jobs",
 			Type:    "table",
 			Data:    table2,
 			Service: "cassandra",
-		}),
+		},
 	}
 }

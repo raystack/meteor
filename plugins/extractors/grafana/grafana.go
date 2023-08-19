@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -123,7 +124,8 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 		charts = append(charts, &c)
 	}
 	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: charts,
+		Charts:     charts,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		return nil, err

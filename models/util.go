@@ -15,9 +15,8 @@ func NewURN(service, scope, kind, id string) string {
 }
 
 func ToJSON(asset *assetsv1beta2.Asset) ([]byte, error) {
-	marshaler := &protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-
-	return marshaler.Marshal(asset)
+	return protojson.MarshalOptions{
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
+	}.Marshal(asset)
 }

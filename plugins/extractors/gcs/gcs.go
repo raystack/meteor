@@ -13,6 +13,7 @@ import (
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"cloud.google.com/go/storage"
@@ -153,6 +154,7 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	bkt, err := anypb.New(&v1beta2.Bucket{
 		Location:    b.Location,
 		StorageType: b.StorageClass,
+		Attributes:  &structpb.Struct{},
 		CreateTime:  timestamppb.New(b.Created),
 		Blobs:       blobs,
 	})

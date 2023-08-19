@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
 	"github.com/raystack/meteor/models"
@@ -119,7 +120,8 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 		}
 
 		table, err := anypb.New(&v1beta2.Table{
-			Columns: columns,
+			Columns:    columns,
+			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		})
 		if err != nil {
 			err = fmt.Errorf("error creating Any struct: %w", err)

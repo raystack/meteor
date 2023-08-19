@@ -15,6 +15,7 @@ import (
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/registry"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/salt/log"
@@ -103,7 +104,8 @@ func (e *Extractor) buildTable(filePath string) (asset *v1beta2.Asset, err error
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: e.buildColumns(content),
+		Columns:    e.buildColumns(content),
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct for test: %w", err)

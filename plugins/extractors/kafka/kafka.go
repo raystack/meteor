@@ -5,10 +5,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	_ "embed" // used to print the embedded assets
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
 	"os"
 	"time"
+
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -191,6 +193,7 @@ func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (asset *v1
 		Profile: &v1beta2.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)

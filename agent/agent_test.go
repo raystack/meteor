@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -841,6 +842,7 @@ func TestAgentRun(t *testing.T) {
 			Data: utils.BuildAny(t, &v1beta2.Application{
 				Id:         "test-id",
 				Version:    "c23sdf6",
+				Attributes: &structpb.Struct{},
 				CreateTime: ts(t, "2006-01-02T15:04:05Z"),
 				UpdateTime: ts(t, "2006-01-02T15:04:05Z"),
 			}),
