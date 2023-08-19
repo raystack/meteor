@@ -44,7 +44,7 @@ considered active if it has an endpoint.
 
 | Field                              | Value                                                                  | Sample Value                                                  |
 | :--------------------------------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ |
-| `resource.urn`                     | `urn:merlin:{scope}:model:{model.project_id}.{model.id}`               | `urn:merlin:staging:model:15.1512`                            |
+| `resource.urn`                     | `urn:merlin:{scope}:model:{model.project_name}.{model.name}`           | `urn:merlin:staging:model:food.restaurant-image`              |
 | `resource.name`                    | `{model.name}`                                                         | `tensorflow-sample`                                           |
 | `resource.service`                 | `merlin`                                                               | `merlin`                                                      |
 | `resource.type`                    | `model`                                                                | `model`                                                       |
@@ -52,7 +52,7 @@ considered active if it has an endpoint.
 | `namespace`                        | `{project.name}`                                                       | `integration-test`                                            |
 | `flavor`                           | `model.type`                                                           | `pyfunc`                                                      |
 | `versions`                         | [`[]ModelVersion`](#modelversion)                                      |                                                               |
-| `attributes.merlin_project_id`            | `project.id`                                                           | `23`                                                          |
+| `attributes.merlin_project_id`     | `project.id`                                                           | `23`                                                          |
 | `attributes.mlflow_experiment_id`  | `model.mlflow_experiment_id`                                           | `721`                                                         |
 | `attributes.mlflow_experiment_url` | `model.mlflow_url`                                                     | `http://mlflow.mycompany.com/#/experiments/721`               |
 | `attributes.endpoint_urls[]`       | `model.endpoints[].url`                                                | `["tensorflow-sample.integration-test.models.mycompany.com"]` |

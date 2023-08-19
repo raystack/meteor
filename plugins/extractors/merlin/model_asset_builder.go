@@ -67,7 +67,7 @@ func (b modelBuilder) buildAsset() (*v1beta2.Asset, error) {
 	}
 
 	return &v1beta2.Asset{
-		Urn:     models.NewURN(service, b.scope, typ, fmt.Sprintf("%d.%d", b.project.ID, b.model.ID)),
+		Urn:     models.NewURN(service, b.scope, typ, fmt.Sprintf("%s.%s", b.project.Name, b.model.Name)),
 		Name:    b.model.Name,
 		Service: service,
 		Type:    typ,
