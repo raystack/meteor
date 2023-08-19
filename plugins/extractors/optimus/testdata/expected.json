@@ -4,7 +4,6 @@
       "data": {
           "@type": "type.googleapis.com/raystack.assets.v1beta2.Job",
           "attributes": {
-              "catchUp": false,
               "dependsOnPast": false,
               "endDate": "",
               "interval": "0 19 * * *",
@@ -68,7 +67,6 @@
       "data": {
           "@type": "type.googleapis.com/raystack.assets.v1beta2.Job",
           "attributes": {
-              "catchUp": true,
               "dependsOnPast": false,
               "endDate": "",
               "interval": "0 19 1 * *",
