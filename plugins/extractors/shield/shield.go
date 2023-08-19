@@ -12,6 +12,7 @@ import (
 	"github.com/raystack/salt/log"
 	sh "github.com/raystack/shield/proto/v1beta1"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -86,6 +87,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 					GroupUrn: fmt.Sprintf("%s:%s", grp.Group.GetName(), grp.Group.GetId()),
 				},
 			},
+			Attributes: &structpb.Struct{},
 			CreateTime: user.GetCreatedAt(),
 			UpdateTime: user.GetUpdatedAt(),
 		})

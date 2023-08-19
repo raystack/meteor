@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/gocql/gocql"
 	"github.com/raystack/meteor/models"
@@ -172,7 +173,8 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 	}
 
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -152,6 +153,7 @@ func (e *Extractor) getTableMetadata(db *sql.DB, dbName string, tableName string
 		Profile: &v1beta2.TableProfile{
 			TotalRows: rowCount,
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -67,40 +68,57 @@ func AssertEqualProtos(t *testing.T, expected, actual interface{}) {
 	}
 }
 
-func AssertAssetsWithJSON(t *testing.T, expected, actuals []*v1beta2.Asset) {
+func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actual []*v1beta2.Asset) {
 	t.Helper()
 
-	expectedBytes := buildJSONFromAssets(t, expected)
-	actualBytes := buildJSONFromAssets(t, actuals)
-
-	assertJSON(t, expectedBytes, actualBytes)
-}
-
-func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actuals []*v1beta2.Asset) {
-	t.Helper()
-
-	expectedBytes, err := os.ReadFile(expectedFilePath)
+	expected, err := os.ReadFile(expectedFilePath)
 	require.NoError(t, err)
 
-	actualBytes := buildJSONFromAssets(t, actuals)
-
-	assertJSON(t, expectedBytes, actualBytes)
+	AssertJSONEq(t, expected, actual)
 }
 
-func assertJSON(t *testing.T, expected []byte, actual []byte) {
+func AssertJSONEq(t *testing.T, expected, actual interface{}) {
 	t.Helper()
 
+	asBytes := func(v interface{}) []byte {
+		switch v := v.(type) {
+		case []byte:
+			return v
+		case string:
+			return ([]byte)(v)
+		case []*v1beta2.Asset:
+			return buildJSONFromAssets(t, v)
+		case proto.Message:
+			data, err := protojson.MarshalOptions{
+				UseProtoNames:   true,
+				EmitUnpopulated: true,
+			}.Marshal(v)
+			require.NoError(t, err)
+			return data
+		}
+		t.Errorf("unexpected type: %T", v)
+		return nil
+	}
+
 	options := jsondiff.DefaultConsoleOptions()
-	diff, report := jsondiff.Compare(expected, actual, &options)
+	diff, report := jsondiff.Compare(asBytes(expected), asBytes(actual), &options)
 	if diff != jsondiff.FullMatch {
 		t.Errorf("jsons do not match:\n %s", report)
 	}
 }
 
+func SortedAssets(assets []*v1beta2.Asset) []*v1beta2.Asset {
+	sort.Slice(assets, func(i, j int) bool {
+		return assets[i].Name < assets[j].Name
+	})
+	return assets
+}
+
 func buildJSONFromAssets(t *testing.T, actuals []*v1beta2.Asset) []byte {
 	actualJSON := "["
 	m := protojson.MarshalOptions{
-		UseProtoNames: true,
+		UseProtoNames:   true,
+		EmitUnpopulated: true,
 	}
 
 	for i, actual := range actuals {

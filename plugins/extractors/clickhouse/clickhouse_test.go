@@ -12,13 +12,13 @@ import (
 
 	"github.com/raystack/meteor/test/utils"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/clickhouse"
@@ -118,11 +118,11 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, getExpected(), emitter.Get())
+		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllData())
 	})
 }
 
-func getExpected() []models.Record {
+func getExpected() []*v1beta2.Asset {
 	table1, err := anypb.New(&v1beta2.Table{
 		Columns: []*v1beta2.Column{
 			{
@@ -141,6 +141,7 @@ func getExpected() []models.Record {
 				Description: "",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct for test: %w", err)
@@ -164,26 +165,27 @@ func getExpected() []models.Record {
 				Description: "",
 			},
 		},
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct for test: %w", err)
 		log.Fatal(err)
 	}
-	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
+	return []*v1beta2.Asset{
+		{
 			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant",
 			Name:    "applicant",
 			Type:    "table",
 			Service: "clickhouse",
 			Data:    table1,
-		}),
-		models.NewRecord(&v1beta2.Asset{
+		},
+		{
 			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs",
 			Name:    "jobs",
 			Type:    "table",
 			Service: "clickhouse",
 			Data:    table2,
-		}),
+		},
 	}
 }
 

@@ -1,42 +1,78 @@
 [
   {
-    "data": {
-      "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
-      "email": "user1@gojek.com",
-      "full_name": "fullname-A",
-      "memberships": [
-        {
-          "group_urn": "grpname-A:grpId-A"
-        }
-      ],
-      "status": "active",
-      "username": "user-A",
-      "create_time": "1970-01-01T00:40:00Z",
-      "update_time": "1970-01-01T00:35:00Z"
-    },
-    "name": "fullname-A",
-    "service": "shield",
-    "type": "user",
-    "urn": "urn:shield:test-shield:user:user-A"
+      "create_time": null,
+      "data": {
+          "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
+          "attributes": {},
+          "create_time": "1970-01-01T00:40:00Z",
+          "display_name": "",
+          "email": "user1@raystack.com",
+          "first_name": "",
+          "full_name": "fullname-A",
+          "last_name": "",
+          "manager_email": "",
+          "memberships": [
+              {
+                  "group_urn": "grpname-A:grpId-A",
+                  "role": [
+                      "role-A"
+                  ]
+              }
+          ],
+          "profiles": [],
+          "status": "active",
+          "title": "",
+          "update_time": "1970-01-01T00:35:00Z",
+          "username": "user-A"
+      },
+      "description": "sample description for user-A",
+      "event": null,
+      "labels": {},
+      "lineage": null,
+      "name": "fullname-A",
+      "owners": [],
+      "service": "shield",
+      "type": "user",
+      "update_time": null,
+      "url": "",
+      "urn": "urn:shield:test-shield:user:user-A"
   },
   {
-    "data": {
-      "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
-      "email": "user2@gojek.com",
-      "full_name": "fullname-B",
-      "memberships": [
-        {
-          "group_urn": "grpname-B:grpId-B"
-        }
-      ],
-      "status": "active",
-      "username": "user-B",
-      "create_time": "1970-01-01T00:20:00Z",
-      "update_time": "1970-01-01T00:15:00Z"
-    },
-    "name": "fullname-B",
-    "service": "shield",
-    "type": "user",
-    "urn": "urn:shield:test-shield:user:user-B"
+      "create_time": null,
+      "data": {
+          "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
+          "attributes": {},
+          "create_time": "1970-01-01T00:20:00Z",
+          "display_name": "",
+          "email": "user2@raystack.com",
+          "first_name": "",
+          "full_name": "fullname-B",
+          "last_name": "",
+          "manager_email": "",
+          "memberships": [
+              {
+                  "group_urn": "grpname-B:grpId-B",
+                  "role": [
+                      "role-B"
+                  ]
+              }
+          ],
+          "profiles": [],
+          "status": "active",
+          "title": "",
+          "update_time": "1970-01-01T00:15:00Z",
+          "username": "user-B"
+      },
+      "description": "sample description for user-B",
+      "event": null,
+      "labels": {},
+      "lineage": null,
+      "name": "fullname-B",
+      "owners": [],
+      "service": "shield",
+      "type": "user",
+      "update_time": null,
+      "url": "",
+      "urn": "urn:shield:test-shield:user:user-B"
   }
 ]

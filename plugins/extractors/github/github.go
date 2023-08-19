@@ -88,6 +88,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			Username: usr.GetLogin(),
 			FullName: usr.GetName(),
 			Status:   "active",
+			Attributes: &structpb.Struct{}
 		})
 		if err != nil {
 			e.logger.Error("error creating Any struct: %w", err)

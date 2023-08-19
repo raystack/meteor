@@ -18,6 +18,7 @@ import (
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -110,7 +111,8 @@ func (e *Extractor) buildDashboard(id int) (asset *v1beta2.Asset, err error) {
 		return
 	}
 	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: chart,
+		Charts:     chart,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		return nil, err

@@ -11,6 +11,7 @@ import (
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/plugins/sqlutil"
 
@@ -161,7 +162,8 @@ func (e *Extractor) processTable(db *sql.DB, catalog string, database string, ta
 		return result, fmt.Errorf("failed to extract columns: %w", err)
 	}
 	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
+		Columns:    columns,
+		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
 		err = fmt.Errorf("error creating Any struct: %w", err)

@@ -106,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		testUtils.AssertAssetsWithJSON(t, getExpected(t), emitter.GetAllData())
+		testUtils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
 	})
 }
 

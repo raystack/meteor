@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/raystack/meteor/models"
@@ -122,7 +123,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
 		table, err := anypb.New(&v1beta2.Table{
-			Columns: columns,
+			Columns:    columns,
+			Attributes: &structpb.Struct{},
 			Profile: &v1beta2.TableProfile{
 				TotalRows: int64(docCount),
 			},
