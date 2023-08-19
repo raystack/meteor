@@ -1,210 +1,240 @@
 [
   {
-      "create_time": null,
-      "data": {
-          "@type": "type.googleapis.com/raystack.assets.v1beta2.Dashboard",
+    "create_time": null,
+    "data": {
+      "@type": "type.googleapis.com/raystack.assets.v1beta2.Dashboard",
+      "attributes": {
+        "collection_id": 1,
+        "creator_id": 1,
+        "id": 1
+      },
+      "charts": [
+        {
           "attributes": {
-              "collection_id": 1,
-              "creator_id": 1,
-              "id": 1
+            "archived": false,
+            "collection_id": 1,
+            "creator_id": 1,
+            "database_id": 1,
+            "display": "table",
+            "id": 1,
+            "query_average_duration": 114,
+            "table_id": 2
           },
-          "charts": [
+          "create_time": null,
+          "dashboard_source": "",
+          "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+          "data_source": "",
+          "description": "HELPFUL CHART DESC",
+          "event": null,
+          "lineage": {
+            "downstreams": [],
+            "upstreams": [
               {
-                  "attributes": {
-                      "archived": false,
-                      "collection_id": 1,
-                      "creator_id": 1,
-                      "database_id": 1,
-                      "display": "table",
-                      "id": 1,
-                      "query_average_duration": 114,
-                      "table_id": 2
-                  },
-                  "create_time": null,
-                  "dashboard_source": "",
-                  "dashboard_urn": "urn:metabase:test-metabase:collection:1",
-                  "data_source": "",
-                  "description": "HELPFUL CHART DESC",
-                  "event": null,
-                  "lineage": {
-                      "downstreams": [],
-                      "upstreams": [
-                          {
-                              "name": "",
-                              "service": "h2",
-                              "type": "table",
-                              "urn": "urn:h2:zip:/app/metabase.jar!:table:sample-dataset.db.ORDERS"
-                          }
-                      ]
-                  },
-                  "name": "Orders, Filtered by Quantity",
-                  "owners": [],
-                  "raw_query": "",
-                  "source": "metabase",
-                  "type": "",
-                  "update_time": null,
-                  "url": "",
-                  "urn": "metabase::my-metabase/card/1"
-              },
-              {
-                  "attributes": {
-                      "archived": false,
-                      "collection_id": 0,
-                      "creator_id": 1,
-                      "database_id": 2,
-                      "display": "table",
-                      "id": 2,
-                      "query_average_duration": 25,
-                      "table_id": 0
-                  },
-                  "create_time": null,
-                  "dashboard_source": "",
-                  "dashboard_urn": "urn:metabase:test-metabase:collection:1",
-                  "data_source": "",
-                  "description": "This shows only exceptional users.",
-                  "event": null,
-                  "lineage": {
-                      "downstreams": [],
-                      "upstreams": [
-                          {
-                              "name": "",
-                              "service": "postgres",
-                              "type": "table",
-                              "urn": "urn:postgres:postgres:5432:table:postgres.user"
-                          }
-                      ]
-                  },
-                  "name": "Exceptional Users",
-                  "owners": [],
-                  "raw_query": "",
-                  "source": "metabase",
-                  "type": "",
-                  "update_time": null,
-                  "url": "",
-                  "urn": "metabase::my-metabase/card/2"
-              },
-              {
-                  "attributes": {
-                      "archived": false,
-                      "collection_id": 1,
-                      "creator_id": 1,
-                      "database_id": 2,
-                      "display": "table",
-                      "id": 3,
-                      "query_average_duration": 30,
-                      "table_id": 5
-                  },
-                  "create_time": null,
-                  "dashboard_source": "",
-                  "dashboard_urn": "urn:metabase:test-metabase:collection:1",
-                  "data_source": "",
-                  "description": "Users, Average of Total Followers",
-                  "event": null,
-                  "lineage": {
-                      "downstreams": [],
-                      "upstreams": [
-                          {
-                              "name": "",
-                              "service": "postgres",
-                              "type": "table",
-                              "urn": "urn:postgres:postgres:5432:table:postgres.user"
-                          }
-                      ]
-                  },
-                  "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
-                  "owners": [],
-                  "raw_query": "",
-                  "source": "metabase",
-                  "type": "",
-                  "update_time": null,
-                  "url": "",
-                  "urn": "metabase::my-metabase/card/3"
-              },
-              {
-                  "attributes": {
-                      "archived": false,
-                      "collection_id": 1,
-                      "creator_id": 1,
-                      "database_id": 2,
-                      "display": "line",
-                      "id": 4,
-                      "query_average_duration": 0,
-                      "table_id": 0
-                  },
-                  "create_time": null,
-                  "dashboard_source": "",
-                  "dashboard_urn": "urn:metabase:test-metabase:collection:1",
-                  "data_source": "",
-                  "description": "",
-                  "event": null,
-                  "lineage": {
-                      "downstreams": [],
-                      "upstreams": [
-                          {
-                              "name": "",
-                              "service": "bigquery",
-                              "type": "table",
-                              "urn": "urn:bigquery:sample-project:table:sample-project:dataset_a.invoice"
-                          },
-                          {
-                              "name": "",
-                              "service": "bigquery",
-                              "type": "table",
-                              "urn": "urn:bigquery:project_a:table:project_a:dataset_b.user"
-                          }
-                      ]
-                  },
-                  "name": "BCR",
-                  "owners": [],
-                  "raw_query": "",
-                  "source": "metabase",
-                  "type": "",
-                  "update_time": null,
-                  "url": "",
-                  "urn": "metabase::my-metabase/card/4"
+                "name": "",
+                "service": "h2",
+                "type": "table",
+                "urn": "urn:h2:zip:/app/metabase.jar!:table:sample-dataset.db.ORDERS"
               }
-          ],
-          "create_time": "2021-10-25T16:10:40.371Z",
-          "update_time": "2021-11-02T10:32:58.786Z"
-      },
-      "description": "HELPFUL DESCRIPTION",
-      "event": null,
-      "labels": {},
-      "lineage": {
-          "downstreams": [],
-          "upstreams": [
+            ]
+          },
+          "name": "Orders, Filtered by Quantity",
+          "owners": [],
+          "raw_query": "",
+          "source": "metabase",
+          "type": "",
+          "update_time": null,
+          "url": "",
+          "urn": "metabase::my-metabase/card/1"
+        },
+        {
+          "attributes": {
+            "archived": false,
+            "collection_id": 0,
+            "creator_id": 1,
+            "database_id": 2,
+            "display": "table",
+            "id": 2,
+            "query_average_duration": 25,
+            "table_id": 0
+          },
+          "create_time": null,
+          "dashboard_source": "",
+          "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+          "data_source": "",
+          "description": "This shows only exceptional users.",
+          "event": null,
+          "lineage": {
+            "downstreams": [],
+            "upstreams": [
               {
-                  "name": "",
-                  "service": "h2",
-                  "type": "table",
-                  "urn": "urn:h2:zip:/app/metabase.jar!:table:sample-dataset.db.ORDERS"
-              },
-              {
-                  "name": "",
-                  "service": "postgres",
-                  "type": "table",
-                  "urn": "urn:postgres:postgres:5432:table:postgres.user"
-              },
-              {
-                  "name": "",
-                  "service": "bigquery",
-                  "type": "table",
-                  "urn": "urn:bigquery:sample-project:table:sample-project:dataset_a.invoice"
-              },
-              {
-                  "name": "",
-                  "service": "bigquery",
-                  "type": "table",
-                  "urn": "urn:bigquery:project_a:table:project_a:dataset_b.user"
+                "name": "",
+                "service": "postgres",
+                "type": "table",
+                "urn": "urn:postgres:postgres:5432:table:postgres.user"
               }
-          ]
-      },
-      "name": "Main",
-      "owners": [],
-      "service": "metabase",
-      "type": "dashboard",
-      "update_time": null,
-      "url": "",
-      "urn": "urn:metabase:test-metabase:collection:1"
+            ]
+          },
+          "name": "Exceptional Users",
+          "owners": [],
+          "raw_query": "",
+          "source": "metabase",
+          "type": "",
+          "update_time": null,
+          "url": "",
+          "urn": "metabase::my-metabase/card/2"
+        },
+        {
+          "attributes": {
+            "archived": false,
+            "collection_id": 1,
+            "creator_id": 1,
+            "database_id": 2,
+            "display": "table",
+            "id": 3,
+            "query_average_duration": 30,
+            "table_id": 5
+          },
+          "create_time": null,
+          "dashboard_source": "",
+          "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+          "data_source": "",
+          "description": "Users, Average of Total Followers",
+          "event": null,
+          "lineage": {
+            "downstreams": [],
+            "upstreams": [
+              {
+                "name": "",
+                "service": "postgres",
+                "type": "table",
+                "urn": "urn:postgres:postgres:5432:table:postgres.user"
+              }
+            ]
+          },
+          "name": "Users, Average of Total Followers and Cumulative sum of Total Likes, Filtered by Total Followers",
+          "owners": [],
+          "raw_query": "",
+          "source": "metabase",
+          "type": "",
+          "update_time": null,
+          "url": "",
+          "urn": "metabase::my-metabase/card/3"
+        },
+        {
+          "attributes": {
+            "archived": false,
+            "collection_id": 1,
+            "creator_id": 1,
+            "database_id": 2,
+            "display": "line",
+            "id": 4,
+            "query_average_duration": 0,
+            "table_id": 0
+          },
+          "create_time": null,
+          "dashboard_source": "",
+          "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+          "data_source": "",
+          "description": "",
+          "event": null,
+          "lineage": {
+            "downstreams": [],
+            "upstreams": [
+              {
+                "name": "",
+                "service": "bigquery",
+                "type": "table",
+                "urn": "urn:bigquery:sample-project:table:sample-project:dataset_a.invoice"
+              },
+              {
+                "name": "",
+                "service": "bigquery",
+                "type": "table",
+                "urn": "urn:bigquery:project_a:table:project_a:dataset_b.user"
+              }
+            ]
+          },
+          "name": "BCR",
+          "owners": [],
+          "raw_query": "",
+          "source": "metabase",
+          "type": "",
+          "update_time": null,
+          "url": "",
+          "urn": "metabase::my-metabase/card/4"
+        },
+        {
+          "attributes": {
+            "archived": false,
+            "collection_id": 0,
+            "creator_id": 1,
+            "database_id": 42,
+            "display": "table",
+            "id": 42,
+            "query_average_duration": 25,
+            "table_id": 0
+          },
+          "create_time": null,
+          "dashboard_source": "",
+          "dashboard_urn": "urn:metabase:test-metabase:collection:1",
+          "data_source": "",
+          "description": "When template-tags contains invalid type it should not returning downstream",
+          "event": null,
+          "lineage": {
+            "downstreams": [],
+            "upstreams": []
+          },
+          "name": "Exceptional Users",
+          "owners": [],
+          "raw_query": "",
+          "source": "metabase",
+          "type": "",
+          "update_time": null,
+          "url": "",
+          "urn": "metabase::my-metabase/card/42"
+        }
+      ],
+      "create_time": "2021-10-25T16:10:40.371Z",
+      "update_time": "2021-11-02T10:32:58.786Z"
+    },
+    "description": "HELPFUL DESCRIPTION",
+    "event": null,
+    "labels": {},
+    "lineage": {
+      "downstreams": [],
+      "upstreams": [
+        {
+          "name": "",
+          "service": "h2",
+          "type": "table",
+          "urn": "urn:h2:zip:/app/metabase.jar!:table:sample-dataset.db.ORDERS"
+        },
+        {
+          "name": "",
+          "service": "postgres",
+          "type": "table",
+          "urn": "urn:postgres:postgres:5432:table:postgres.user"
+        },
+        {
+          "name": "",
+          "service": "bigquery",
+          "type": "table",
+          "urn": "urn:bigquery:sample-project:table:sample-project:dataset_a.invoice"
+        },
+        {
+          "name": "",
+          "service": "bigquery",
+          "type": "table",
+          "urn": "urn:bigquery:project_a:table:project_a:dataset_b.user"
+        }
+      ]
+    },
+    "name": "Main",
+    "owners": [],
+    "service": "metabase",
+    "type": "dashboard",
+    "update_time": null,
+    "url": "",
+    "urn": "urn:metabase:test-metabase:collection:1"
   }
 ]

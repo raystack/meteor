@@ -1,51 +1,60 @@
-package frontier
+package client
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	sh "github.com/raystack/frontier/proto/v1beta1"
+	"github.com/pkg/errors"
+	pb "github.com/raystack/optimus/protos/raystack/optimus/core/v1beta1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	service                    = "frontier"
-	GRPCMaxClientSendSize      = 45 << 20 // 45MB
-	GRPCMaxClientRecvSize      = 45 << 20 // 45MB
-	GRPCMaxRetry          uint = 3
+	GRPCMaxClientSendSizeMB      = 45
+	GRPCMaxClientRecvSizeMB      = 45
+	GRPCMaxRetry            uint = 3
 )
 
 type Client interface {
-	sh.FrontierServiceClient
-	Connect(ctx context.Context, host string) error
+	pb.NamespaceServiceClient
+	pb.ProjectServiceClient
+	pb.JobSpecificationServiceClient
+	pb.JobRunServiceClient
+	Connect(ctx context.Context, host string, maxSizeInMB int) error
 	Close() error
 }
 
-func newClient() Client {
+func New() Client {
 	return &client{}
 }
 
 type client struct {
-	sh.FrontierServiceClient
+	pb.NamespaceServiceClient
+	pb.ProjectServiceClient
+	pb.JobSpecificationServiceClient
+	pb.JobRunServiceClient
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string) (err error) {
+func (c *client) Connect(ctx context.Context, host string, maxSizeInMB int) (err error) {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
-		err = fmt.Errorf("error creating connection: %w", err)
+	if c.conn, err = c.createConnection(dialTimeoutCtx, host, maxSizeInMB); err != nil {
+		err = errors.Wrap(err, "error creating connection")
 		return
 	}
 
-	c.FrontierServiceClient = sh.NewFrontierServiceClient(c.conn)
+	c.NamespaceServiceClient = pb.NewNamespaceServiceClient(c.conn)
+	c.ProjectServiceClient = pb.NewProjectServiceClient(c.conn)
+	c.JobSpecificationServiceClient = pb.NewJobSpecificationServiceClient(c.conn)
+	c.JobRunServiceClient = pb.NewJobRunServiceClient(c.conn)
 
 	return
 }
@@ -54,7 +63,11 @@ func (c *client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *client) createConnection(ctx context.Context, host string) (*grpc.ClientConn, error) {
+func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB int) (*grpc.ClientConn, error) {
+	if maxSizeInMB <= 0 {
+		maxSizeInMB = GRPCMaxClientRecvSizeMB
+	}
+
 	retryOpts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(100 * time.Millisecond)),
 		grpc_retry.WithMax(GRPCMaxRetry),
@@ -64,8 +77,8 @@ func (c *client) createConnection(ctx context.Context, host string) (*grpc.Clien
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSize),
-			grpc.MaxCallRecvMsgSize(GRPCMaxClientRecvSize),
+			grpc.MaxCallSendMsgSize(GRPCMaxClientSendSizeMB<<20),
+			grpc.MaxCallRecvMsgSize(maxSizeInMB<<20),
 		),
 		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
 			grpc_retry.UnaryClientInterceptor(retryOpts...),

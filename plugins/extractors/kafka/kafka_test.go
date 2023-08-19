@@ -8,13 +8,6 @@ import (
 	"errors"
 	"log"
 	"net"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	"github.com/raystack/meteor/test/utils"
-
 	"os"
 	"strconv"
 	"testing"
@@ -22,11 +15,15 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/kafka"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	kafkaLib "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -105,9 +102,68 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"wrong-config": "wrong-value",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
+	})
+
+	t.Run("should return error for invalid cert file", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":   "true",
+						"cert_file": "non-existent-file",
+						"key_file":  "non-existent-file",
+						"ca_file":   "non-existent-file",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "create cert")
+	})
+
+	t.Run("should return error for invalid ca cert", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":   "true",
+						"cert_file": "testdata/example-cert.txt",
+						"key_file":  "testdata/example-key.txt",
+						"ca_file":   "non-existent-file",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "read ca cert file")
+	})
+
+	t.Run("should return error for create connection", func(t *testing.T) {
+		err := newExtractor().Init(context.TODO(), plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]interface{}{
+				"broker": brokerHost,
+				"auth_config": map[string]interface{}{
+					"tls": map[string]interface{}{
+						"enabled":              "true",
+						"insecure_skip_verify": "true",
+						"cert_file":            "testdata/example-cert.txt",
+						"key_file":             "testdata/example-key.txt",
+						"ca_file":              "testdata/example-ca-cert.txt",
+					},
+				},
+			},
+		})
+
+		assert.ErrorContains(t, err, "create connection")
 	})
 }
 
@@ -119,7 +175,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"broker": brokerHost,
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -163,7 +220,7 @@ func TestExtract(t *testing.T) {
 			},
 		}
 
-		// We need this function because the extractor cannot guarantee order
+		// We need to sort because the extractor cannot guarantee order
 		// so comparing expected slice and result slice will not be consistent
 		utils.AssertEqualProtos(t, expected, utils.SortedAssets(emitter.GetAllData()))
 	})
@@ -183,6 +240,7 @@ func setup(broker kafkaLib.Broker) (err error) {
 		{Topic: "meteor-test-topic-1", NumPartitions: 1, ReplicationFactor: 1},
 		{Topic: "meteor-test-topic-2", NumPartitions: 1, ReplicationFactor: 1},
 		{Topic: "meteor-test-topic-3", NumPartitions: 1, ReplicationFactor: 1},
+		{Topic: "__consumer_offsets", NumPartitions: 1, ReplicationFactor: 1},
 	}
 	err = conn.CreateTopics(topicConfigs...)
 	if err != nil {
@@ -197,7 +255,7 @@ func newExtractor() *kafka.Extractor {
 }
 
 // This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected []models.Record, result []models.Record) {
+func assertResults(t *testing.T, expected, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
 	expectedMap := make(map[string]*v1beta2.Asset)

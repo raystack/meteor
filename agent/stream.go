@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 )
 
-type streamMiddleware func(src models.Record) (dst models.Record, err error)
-type subscriber struct {
-	callback  func([]models.Record) error
-	channel   chan models.Record
-	batchSize int
-}
+type (
+	streamMiddleware func(src models.Record) (dst models.Record, err error)
+	subscriber       struct {
+		callback  func([]models.Record) error
+		channel   chan models.Record
+		batchSize int
+	}
+)
 
 type stream struct {
 	middlewares []streamMiddleware
@@ -94,7 +95,7 @@ func (s *stream) broadcast() error {
 func (s *stream) push(data models.Record) {
 	data, err := s.runMiddlewares(data)
 	if err != nil {
-		s.closeWithError(errors.Wrap(err, "emitter: error running middleware"))
+		s.closeWithError(fmt.Errorf("emitter: error running middleware: %w", err))
 		return
 	}
 

@@ -94,6 +94,7 @@ func TestKafkaServersToScope(t *testing.T) {
 		"int-dagstream-kafka.yonkou.io":                           "int-dagstream-kafka.yonkou.io",
 		"2-my-kafka.company.com:1234,1-my-kafka.company.com:1234": "1-my-kafka.company.com,2-my-kafka.company.com",
 		"int-dagstream-kafka":                                     "int-dagstream-kafka",
+		"1-my-kafka.company.com,2-my-kafka.company.com":           "1-my-kafka.company.com,2-my-kafka.company.com",
 	}
 	for servers, expected := range cases {
 		name := fmt.Sprintf("Servers=%s", servers)

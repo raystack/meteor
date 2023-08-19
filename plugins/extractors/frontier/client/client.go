@@ -1,4 +1,4 @@
-package frontier
+package client
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type Client interface {
 	Close() error
 }
 
-func newClient() Client {
+func New() Client {
 	return &client{}
 }
 

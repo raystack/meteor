@@ -9,6 +9,7 @@ import (
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/frontier/client"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -17,6 +18,10 @@ import (
 
 //go:embed README.md
 var summary string
+
+const (
+	service = "frontier"
+)
 
 // Config holds the set of configuration for the frontier extractor
 type Config struct {
@@ -37,13 +42,13 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger log.Logger
 	config Config
-	client Client
+	client client.Client
 }
 
-func New(logger log.Logger, client Client) *Extractor {
+func New(l log.Logger, c client.Client) *Extractor {
 	e := &Extractor{
-		logger: logger,
-		client: client,
+		logger: l,
+		client: c,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 
@@ -110,7 +115,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("frontier", func() plugins.Extractor {
-		return New(plugins.GetLog(), newClient())
+		return New(plugins.GetLog(), client.New())
 	}); err != nil {
 		panic(err)
 	}

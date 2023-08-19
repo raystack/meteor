@@ -13,6 +13,7 @@ import (
 	"github.com/raystack/meteor/models"
 	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sinks/gcs/client"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
 )
@@ -55,7 +56,7 @@ var info = plugins.Info{
 type Sink struct {
 	plugins.BasePlugin
 	logger log.Logger
-	writer Writer
+	writer client.Writer
 	config Config
 }
 
@@ -79,7 +80,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 	bucketname, objectname := s.resolveBucketPath()
 
-	if s.writer, err = newWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
+	if s.writer, err = client.NewWriter(ctx, []byte(s.config.ServiceAccountJSON), bucketname, objectname); err != nil {
 		return err
 	}
 
@@ -94,7 +95,7 @@ func (s *Sink) validateServiceAccountKey() error {
 	if s.config.ServiceAccountBase64 != "" {
 		serviceAccountJSON, err := base64.StdEncoding.DecodeString(s.config.ServiceAccountBase64)
 		if err != nil || len(serviceAccountJSON) == 0 {
-			return errors.Wrap(err, "failed to decode base64 service account")
+			return fmt.Errorf("decode base64 service account: %w", err)
 		}
 		s.config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
@@ -130,7 +131,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 		data = append(data, record.Data())
 	}
 	if err = s.writeData(data); err != nil {
-		return errors.Wrap(err, "error in writing data to the object")
+		return fmt.Errorf("write data to the object: %w", err)
 	}
 	return nil
 }
