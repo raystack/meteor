@@ -1,16 +1,16 @@
-package shield
+package frontier
 
 import (
 	"context"
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
+	sh "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
-	sh "github.com/raystack/shield/proto/v1beta1"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -18,21 +18,21 @@ import (
 //go:embed README.md
 var summary string
 
-// Config holds the set of configuration for the shield extractor
+// Config holds the set of configuration for the frontier extractor
 type Config struct {
 	Host string `mapstructure:"host" validate:"required"`
 }
 
-var sampleConfig = `host: shield.com:80`
+var sampleConfig = `host: frontier.com:80`
 
 var info = plugins.Info{
-	Description:  "Shield' users metadata",
+	Description:  "Frontier' users metadata",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"shield", "extractor"},
+	Tags:         []string{"frontier", "extractor"},
 }
 
-// Extractor manages the communication with the shield service
+// Extractor manages the communication with the frontier service
 type Extractor struct {
 	plugins.BaseExtractor
 	logger log.Logger
@@ -109,7 +109,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 // Register the extractor to catalog
 func init() {
-	if err := registry.Extractors.Register("shield", func() plugins.Extractor {
+	if err := registry.Extractors.Register("frontier", func() plugins.Extractor {
 		return New(plugins.GetLog(), newClient())
 	}); err != nil {
 		panic(err)

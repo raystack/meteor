@@ -1,27 +1,27 @@
-# shield
+# frontier
 
 ## Usage
 
 ```yaml
 source:
-  type: shield
+  type: frontier
   config:
-    host: shield.com:80
+    host: frontier.com:80
 ```
 
 ## Inputs
 
 | Key | Value | Example | Description |    |
 | :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `shield.com:80` | Shield' GRPC host | *required* |
+| `host` | `string` | `frontier.com:80` | Frontier' GRPC host | *required* |
 
 ## Outputs
 
 | Field                   | Sample Value                              |
 |:------------------------|:------------------------------------------|
-| `resource.urn`          | `shield::https://shield-host.com/jonsnow` |
+| `resource.urn`          | `frontier::https://frontier-host.com/jonsnow` |
 | `resource.name`         | `Jon Snow`                                |
-| `resource.service`      | `shield`                                  |
+| `resource.service`      | `frontier`                                  |
 | `resource.type`         | `user`                                    |
 | `resource.description`  | `sample user description`                 |
 | `email`                 | `snow.jon@gmail.com`                      |

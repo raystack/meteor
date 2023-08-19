@@ -31,11 +31,11 @@
       "lineage": null,
       "name": "fullname-A",
       "owners": [],
-      "service": "shield",
+      "service": "frontier",
       "type": "user",
       "update_time": null,
       "url": "",
-      "urn": "urn:shield:test-shield:user:user-A"
+      "urn": "urn:frontier:test-frontier:user:user-A"
   },
   {
       "create_time": null,
@@ -69,10 +69,10 @@
       "lineage": null,
       "name": "fullname-B",
       "owners": [],
-      "service": "shield",
+      "service": "frontier",
       "type": "user",
       "update_time": null,
       "url": "",
-      "urn": "urn:shield:test-shield:user:user-B"
+      "urn": "urn:frontier:test-frontier:user:user-B"
   }
 ]

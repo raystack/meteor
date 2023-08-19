@@ -1,4 +1,4 @@
-package shield
+package frontier
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/pkg/errors"
+	sh "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/models"
 	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
-	sh "github.com/raystack/shield/proto/v1beta1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -28,15 +28,15 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Send user information to shield grpc service",
+	Description: "Send user information to frontier grpc service",
 	Summary:     summary,
 	Tags:        []string{"grpc", "sink"},
 	SampleConfig: heredoc.Doc(`
-	# The hostname of the shield service
-	host: shield.com:5556
-	# Additional headers send to shield, multiple headers value are separated by a comma
+	# The hostname of the frontier service
+	host: frontier.com:5556
+	# Additional headers send to frontier, multiple headers value are separated by a comma
 	headers:
-	  X-Shield-Email: meteor@raystack.io
+	  X-Frontier-Email: meteor@raystack.io
       X-Other-Header: value1, value2
 	`),
 }
@@ -73,11 +73,11 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		asset := record.Data()
-		s.logger.Info("sinking record to shield", "record", asset.GetUrn())
+		s.logger.Info("sinking record to frontier", "record", asset.GetUrn())
 
 		userRequestBody, err := s.buildUserRequestBody(asset)
 		if err != nil {
-			s.logger.Error("failed to build shield payload", "err", err, "record", asset.Name)
+			s.logger.Error("failed to build frontier payload", "err", err, "record", asset.Name)
 			continue
 		}
 
@@ -85,7 +85,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 			return errors.Wrap(err, "error sending data")
 		}
 
-		s.logger.Info("successfully sinked record to shield", "record", asset.Name)
+		s.logger.Info("successfully sinked record to frontier", "record", asset.Name)
 	}
 
 	return nil
@@ -116,7 +116,7 @@ func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) er
 	}
 
 	if e, ok := status.FromError(err); ok {
-		err = fmt.Errorf("shield returns code %d: %v", e.Code(), e.Message())
+		err = fmt.Errorf("frontier returns code %d: %v", e.Code(), e.Message())
 		switch e.Code() {
 		case codes.Unavailable:
 			return plugins.NewRetryError(err)
@@ -159,7 +159,7 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 }
 
 func init() {
-	if err := registry.Sinks.Register("shield", func() plugins.Syncer {
+	if err := registry.Sinks.Register("frontier", func() plugins.Syncer {
 		return New(newClient(), plugins.GetLog())
 	}); err != nil {
 		panic(err)

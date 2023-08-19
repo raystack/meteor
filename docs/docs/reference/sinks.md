@@ -109,19 +109,19 @@ sinks:
     send_format_header: false
 ```
 
-## Shield
+## Frontier
 
-`shield`
+`frontier`
 
-Upsert users to shield service running at a given 'host'. Request will be sent via GRPC.
+Upsert users to frontier service running at a given 'host'. Request will be sent via GRPC.
 
 ```yaml
 sinks:
-  name: shield
+  name: frontier
   config:
-    host: shield.com
+    host: frontier.com
     headers:
-      X-Shield-Email: meteor@raystack.io
+      X-Frontier-Email: meteor@raystack.io
       X-Other-Header: value1, value2
 ```
 

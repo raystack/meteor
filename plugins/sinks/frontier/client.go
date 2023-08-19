@@ -1,4 +1,4 @@
-package shield
+package frontier
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	sh "github.com/raystack/shield/proto/v1beta1"
+	sh "github.com/raystack/frontier/proto/v1beta1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,7 +21,7 @@ const (
 )
 
 type Client interface {
-	sh.ShieldServiceClient
+	sh.FrontierServiceClient
 	Connect(ctx context.Context, host string) error
 	Close() error
 }
@@ -31,7 +31,7 @@ func newClient() Client {
 }
 
 type client struct {
-	sh.ShieldServiceClient
+	sh.FrontierServiceClient
 	conn *grpc.ClientConn
 }
 
@@ -44,7 +44,7 @@ func (c *client) Connect(ctx context.Context, host string) (err error) {
 		return
 	}
 
-	c.ShieldServiceClient = sh.NewShieldServiceClient(c.conn)
+	c.FrontierServiceClient = sh.NewFrontierServiceClient(c.conn)
 
 	return
 }
