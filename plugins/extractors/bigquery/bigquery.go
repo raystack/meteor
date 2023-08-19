@@ -2,13 +2,12 @@ package bigquery
 
 import (
 	"context"
-	"crypto/rand"
 	_ "embed" // used to print the embedded assets
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"math/big"
+	"math/rand"
 	"strings"
 	"sync"
 
@@ -109,7 +108,7 @@ type Extractor struct {
 	randFn          randFn
 }
 
-type randFn func(int64) (int64, error)
+type randFn func(max, rndSeed int64) int64
 
 type NewClientFunc func(ctx context.Context, logger log.Logger, config *Config) (*bigquery.Client, error)
 
@@ -301,7 +300,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	var previewRows *structpb.ListValue
 	if md.Type == bigquery.RegularTable {
 		var err error
-		previewFields, previewRows, err = e.buildPreview(ctx, t)
+		previewFields, previewRows, err = e.buildPreview(ctx, t, md)
 		if err != nil {
 			e.logger.Warn("error building preview", "err", err, "table", tableFQN)
 		}
@@ -390,7 +389,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 	return col
 }
 
-func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields []string, rows *structpb.ListValue, err error) {
+func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (fields []string, rows *structpb.ListValue, err error) {
 	maxPreviewRows := e.config.MaxPreviewRows
 	if maxPreviewRows == 0 {
 		return nil, nil, nil
@@ -443,12 +442,9 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 		totalRows++
 	}
 
-	// if mix values true, then randomize the values
-	if e.config.MixValues {
-		tempRows, err = e.mixValues(tempRows)
-		if err != nil {
-			return nil, nil, fmt.Errorf("mix values: %w", err)
-		}
+	tempRows, err = e.mixValuesIfNeeded(tempRows, md.LastModifiedTime.Unix())
+	if err != nil {
+		return nil, nil, fmt.Errorf("mix values: %w", err)
 	}
 
 	rows, err = structpb.NewList(tempRows)
@@ -459,9 +455,10 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table) (fields
 	return fields, rows, nil
 }
 
-func (e *Extractor) mixValues(rows []interface{}) ([]interface{}, error) {
+func (e *Extractor) mixValuesIfNeeded(rows []interface{}, rndSeed int64) ([]interface{}, error) {
 	numRows := len(rows)
-	if numRows < 2 {
+
+	if !e.config.MixValues || numRows < 2 {
 		return rows, nil
 	}
 
@@ -473,10 +470,7 @@ func (e *Extractor) mixValues(rows []interface{}) ([]interface{}, error) {
 	for col := 0; col < numColumns; col++ {
 		for row := numRows - 1; row > 0; row-- {
 			// Generate a random index within the range [0, row+1)
-			swapRow, err := e.randFn(int64(row + 1))
-			if err != nil {
-				return nil, err
-			}
+			swapRow := e.randFn(int64(row+1), rndSeed)
 
 			// Swap the values in the current row and the randomly selected row
 			a, ok := mixedRows[row].([]interface{})
@@ -628,16 +622,13 @@ func (e *Extractor) getMaxPageSize() int {
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
-		return New(plugins.GetLog(), CreateClient, cryptoRandom)
+		return New(plugins.GetLog(), CreateClient, seededRandom)
 	}); err != nil {
 		panic(err)
 	}
 }
 
-func cryptoRandom(max int64) (int64, error) {
-	i, err := rand.Int(rand.Reader, big.NewInt(max))
-	if err != nil {
-		return 0, err
-	}
-	return i.Int64(), nil
+func seededRandom(max, rndSeed int64) int64 {
+	rnd := rand.New(rand.NewSource(rndSeed)) //nolint:gosec
+	return rnd.Int63n(max)
 }
