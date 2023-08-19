@@ -1,19 +1,19 @@
 //go:build plugins
 // +build plugins
 
-package shield_test
+package frontier_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/raystack/meteor/plugins/extractors/shield"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	sh "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/extractors/frontier"
 	"github.com/raystack/meteor/test/mocks"
 	testutils "github.com/raystack/meteor/test/utils"
-	sh "github.com/raystack/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,20 +22,20 @@ import (
 
 var (
 	validConfig = map[string]interface{}{
-		"host": "shield:80",
+		"host": "frontier:80",
 	}
-	urnScope = "test-shield"
+	urnScope = "test-frontier"
 )
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
-		extr := shield.New(testutils.Logger, new(mockClient))
+		extr := frontier.New(testutils.Logger, new(mockClient))
 		err := extr.Init(context.TODO(), plugins.Config{URNScope: urnScope, RawConfig: map[string]interface{}{}})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
-	t.Run("should hit shield /admin/ping to check connection if config is valid", func(t *testing.T) {
+	t.Run("should hit frontier /admin/ping to check connection if config is valid", func(t *testing.T) {
 		var err error
 		ctx := context.TODO()
 
@@ -43,14 +43,14 @@ func TestInit(t *testing.T) {
 		client.On("Connect", ctx, validConfig["host"]).Return(nil)
 		defer client.AssertExpectations(t)
 
-		extr := shield.New(testutils.Logger, client)
+		extr := frontier.New(testutils.Logger, client)
 		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
 		assert.NoError(t, err)
 	})
 }
 
 func TestExtract(t *testing.T) {
-	t.Run("should extract user information from shield", func(t *testing.T) {
+	t.Run("should extract user information from frontier", func(t *testing.T) {
 		var err error
 		ctx := context.TODO()
 
@@ -59,7 +59,7 @@ func TestExtract(t *testing.T) {
 		client.On("Close").Return(nil, nil).Once()
 		defer client.AssertExpectations(t)
 
-		extr := shield.New(testutils.Logger, client)
+		extr := frontier.New(testutils.Logger, client)
 		err = extr.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
 		require.NoError(t, err)
 
@@ -73,7 +73,7 @@ func TestExtract(t *testing.T) {
 }
 
 type mockClient struct {
-	sh.ShieldServiceClient
+	sh.FrontierServiceClient
 	mock.Mock
 }
 

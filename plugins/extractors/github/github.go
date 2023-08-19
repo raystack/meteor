@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/google/go-github/v37/github"
 	"github.com/raystack/meteor/models"
@@ -84,11 +85,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 		u, err := anypb.New(&v1beta2.User{
-			Email:    usr.GetEmail(),
-			Username: usr.GetLogin(),
-			FullName: usr.GetName(),
-			Status:   "active",
-			Attributes: &structpb.Struct{}
+			Email:      usr.GetEmail(),
+			Username:   usr.GetLogin(),
+			FullName:   usr.GetName(),
+			Status:     "active",
+			Attributes: &structpb.Struct{},
 		})
 		if err != nil {
 			e.logger.Error("error creating Any struct: %w", err)

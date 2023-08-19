@@ -1,7 +1,7 @@
 //go:build plugins
 // +build plugins
 
-package shield_test
+package frontier_test
 
 import (
 	"context"
@@ -14,13 +14,13 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/raystack/meteor/models"
+	"github.com/raystack/meteor/plugins/sinks/frontier"
 	testUtils "github.com/raystack/meteor/test/utils"
 	"github.com/raystack/meteor/utils"
 
+	frontierProto "github.com/raystack/frontier/proto/v1beta1"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/meteor/plugins/sinks/shield"
-	shieldProto "github.com/raystack/shield/proto/v1beta1"
 	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/grpc/codes"
@@ -29,14 +29,14 @@ import (
 
 var (
 	validConfig = map[string]interface{}{
-		"host": "shield:80",
+		"host": "frontier:80",
 	}
-	urnScope = "test-shield"
+	urnScope = "test-frontier"
 )
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if config is invalid", func(t *testing.T) {
-		sink := shield.New(new(mockClient), testUtils.Logger)
+		sink := frontier.New(new(mockClient), testUtils.Logger)
 		err := sink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
 			"host": "",
 		}})
@@ -51,28 +51,28 @@ func TestInit(t *testing.T) {
 		client.On("Connect", ctx, validConfig["host"]).Return(nil)
 		defer client.AssertExpectations(t)
 
-		sink := shield.New(client, testUtils.Logger)
+		sink := frontier.New(client, testUtils.Logger)
 		err = sink.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: validConfig})
 		assert.NoError(t, err)
 	})
 }
 
 func TestSink(t *testing.T) {
-	t.Run("should return error if shield host returns error", func(t *testing.T) {
+	t.Run("should return error if frontier host returns error", func(t *testing.T) {
 		ctx := context.TODO()
 
 		client := new(mockClient)
-		client.On("Connect", ctx, "shield:80").Return(errors.New("failed to create connection"))
-		shieldSink := shield.New(client, testUtils.Logger)
+		client.On("Connect", ctx, "frontier:80").Return(errors.New("failed to create connection"))
+		frontierSink := frontier.New(client, testUtils.Logger)
 
-		err := shieldSink.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: map[string]interface{}{
-			"host": "shield:80",
+		err := frontierSink.Init(ctx, plugins.Config{URNScope: urnScope, RawConfig: map[string]interface{}{
+			"host": "frontier:80",
 		}})
 		require.Error(t, err)
 		assert.EqualError(t, err, "error connecting to host: failed to create connection")
 	})
 
-	t.Run("should return RetryError if shield returns certain status code", func(t *testing.T) {
+	t.Run("should return RetryError if frontier returns certain status code", func(t *testing.T) {
 
 		user, err := anypb.New(&v1beta2.User{
 			Email:    "user@raystack.com",
@@ -90,17 +90,17 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		client := new(mockClient)
-		client.On("Connect", ctx, "shield:80").Return(nil)
-		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&shieldProto.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
-		shieldSink := shield.New(client, testUtils.Logger)
-		err = shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		client.On("Connect", ctx, "frontier:80").Return(nil)
+		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&frontierProto.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
+		frontierSink := frontier.New(client, testUtils.Logger)
+		err = frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": validConfig["host"],
 		}})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &plugins.RetryError{})
 
@@ -123,25 +123,25 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		client := new(mockClient)
-		client.On("Connect", ctx, "shield:80").Return(nil)
-		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&shieldProto.UpdateUserResponse{}, nil)
+		client.On("Connect", ctx, "frontier:80").Return(nil)
+		client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&frontierProto.UpdateUserResponse{}, nil)
 
-		shieldSink := shield.New(client, testUtils.Logger)
-		err := shieldSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		frontierSink := frontier.New(client, testUtils.Logger)
+		err := frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": validConfig["host"],
 		}})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = shieldSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
 		assert.Equal(t, nil, err)
 	})
 
 }
 
 type mockClient struct {
-	shieldProto.ShieldServiceClient
+	frontierProto.FrontierServiceClient
 	mock.Mock
 }
 
@@ -157,8 +157,8 @@ func (c *mockClient) Close() error {
 	return args.Error(0)
 }
 
-func (c *mockClient) UpdateUser(ctx context.Context, in *shieldProto.UpdateUserRequest, opts ...grpc.CallOption) (*shieldProto.UpdateUserResponse, error) {
+func (c *mockClient) UpdateUser(ctx context.Context, in *frontierProto.UpdateUserRequest, opts ...grpc.CallOption) (*frontierProto.UpdateUserResponse, error) {
 	args := c.Called(ctx, in, opts)
 
-	return args.Get(0).(*shieldProto.UpdateUserResponse), args.Error(1)
+	return args.Get(0).(*frontierProto.UpdateUserResponse), args.Error(1)
 }

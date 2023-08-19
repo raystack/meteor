@@ -46,7 +46,7 @@ that particular extractor can be found by visiting the link in the `type` field.
 | Type                      | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
 | :------------------------ | :---- | :------- | :------- | :---- | :------- | :----------- | :------- | :---------- | :----- | :----- |
 | [`github`][github-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✗           | ✗      | ✗      |
-| [`shield`][shield-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✅          | ✅     | ✗      |
+| [`frontier`][frontier-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✅          | ✅     | ✗      |
 | [`gsuite`][gsuite-readme] | ✅    | ✗        | ✅       | ✗     | ✅       | ✅           | ✗        | ✗           | ✗      | ✗      |
 
 ### Bucket
@@ -109,7 +109,7 @@ of asset.
 [redash-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redash/README.md
 [kafka-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/kafka/README.md
 [github-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/github/README.md
-[shield-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/shield/README.md
+[frontier-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/frontier/README.md
 [gsuite-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gsuite/README.md
 [gcs-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gcs/README.md
 [optimus-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/optimus/README.md
