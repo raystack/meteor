@@ -48,7 +48,7 @@ func (b modelBuilder) buildAsset() (*v1beta2.Asset, error) {
 		Versions:  versions,
 		Attributes: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"project_id":            intToValue(b.project.ID),
+				"merlin_project_id":     intToValue(b.project.ID),
 				"mlflow_experiment_id":  intToValue(b.model.MlflowExperimentID),
 				"mlflow_experiment_url": structpb.NewStringValue(b.model.MlflowURL),
 				"endpoint_urls":         stringSliceToValue(urls),

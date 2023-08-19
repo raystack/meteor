@@ -10,7 +10,7 @@
         ],
         "mlflow_experiment_id": 83,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/83",
-        "project_id": 1
+        "merlin_project_id": 1
       },
       "create_time": "2020-04-23T10:07:40.105711Z",
       "flavor": "sklearn",
@@ -87,7 +87,7 @@
         ],
         "mlflow_experiment_id": 692,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/692",
-        "project_id": 1
+        "merlin_project_id": 1
       },
       "create_time": "2021-02-04T13:05:31.593956Z",
       "flavor": "pyfunc",
@@ -177,7 +177,7 @@
         ],
         "mlflow_experiment_id": 1466,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/1466",
-        "project_id": 100
+        "merlin_project_id": 100
       },
       "create_time": "2022-05-25T04:57:24.972027Z",
       "flavor": "pyfunc",
@@ -279,7 +279,7 @@
         ],
         "mlflow_experiment_id": 287,
         "mlflow_experiment_url": "http://mlflow.company.com/#/experiments/287",
-        "project_id": 100
+        "merlin_project_id": 100
       },
       "create_time": "2020-06-23T14:40:23.168186Z",
       "flavor": "pyfunc",
