@@ -4,8 +4,9 @@
       "data": {
           "@type": "type.googleapis.com/raystack.assets.v1beta2.Job",
           "attributes": {
+              "catchUp": false,
               "dependsOnPast": false,
-              "endDate": "",
+              "endDate": null,
               "interval": "0 19 * * *",
               "namespace": "namespace-A",
               "owner": "john_doe@example.com",
@@ -67,8 +68,9 @@
       "data": {
           "@type": "type.googleapis.com/raystack.assets.v1beta2.Job",
           "attributes": {
+              "catchUp": true,
               "dependsOnPast": false,
-              "endDate": "",
+              "endDate": null,
               "interval": "0 19 1 * *",
               "namespace": "namespace-A",
               "owner": "jane_doe@example.com",
