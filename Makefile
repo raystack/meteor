@@ -7,10 +7,10 @@ PROTON_COMMIT := "42b77358cbb68335607e99794f729e4a558974a5"
 all: build
 
 build:
-	go build -ldflags "-X cmd.Version=${VERSION}" ${NAME}
+	go build -ldflags "-X ${NAME}/cmd.Version=${VERSION}" ${NAME}
 
 build-dev:
-	CGO_ENABLED=0 go build -ldflags "-X cmd.Version=dev" ${NAME}
+	CGO_ENABLED=0 go build -ldflags "-X ${NAME}/cmd.Version=dev" ${NAME}
 
 clean:
 	rm -rf dist/
