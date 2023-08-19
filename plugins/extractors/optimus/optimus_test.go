@@ -254,6 +254,49 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 					Notify: []*pb.JobSpecification_Behavior_Notifiers{},
 				},
 			},
+			{
+				Version:       1,
+				Name:          "job-C",
+				Owner:         "jane_doe@example.com",
+				StartDate:     "2021-01-01",
+				EndDate:       "",
+				Interval:      "0 19 1 * *",
+				DependsOnPast: false,
+				CatchUp:       true,
+				TaskName:      "gcs2bq",
+				Config: []*pb.JobConfigItem{
+					{
+						Name:  "FOO_B_1",
+						Value: "BAR_B_1",
+					},
+					{
+						Name:  "FOO_B_2",
+						Value: "BAR_B_2",
+					},
+				},
+				WindowSize:       "720h",
+				WindowOffset:     "-720h",
+				WindowTruncateTo: "M",
+				Dependencies:     []*pb.JobDependency{},
+				Assets: map[string]string{
+					"query.sql": "SELECT * FROM projectZ.datasetY.tableX",
+				},
+				Hooks:       []*pb.JobSpecHook{},
+				Description: "sample description for job-C",
+				Labels: map[string]string{
+					"orchestrator": "optimus",
+				},
+				Behavior: &pb.JobSpecification_Behavior{
+					Retry: &pb.JobSpecification_Behavior_Retry{
+						Count: 0,
+						Delay: &durationpb.Duration{
+							Seconds: 0,
+						},
+						ExponentialBackoff: false,
+					},
+					Notify: []*pb.JobSpecification_Behavior_Notifiers{},
+				},
+			},
 		},
 	}, nil).Once()
 
@@ -268,7 +311,6 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			Image:       "task's image",
 			Destination: &pb.JobTask_Destination{
 				Destination: "bigquery://dst-project:dst-dataset.dst-table",
-				Type:        "bigquery",
 			},
 			Dependencies: []*pb.JobTask_Dependency{
 				{
@@ -289,12 +331,24 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			Image:       "task's image B",
 			Destination: &pb.JobTask_Destination{
 				Destination: "bigquery://dst-b-project:dst-b-dataset.dst-b-table",
-				Type:        "bigquery",
 			},
 			Dependencies: []*pb.JobTask_Dependency{
 				{Dependency: "bigquery://src-b1-project:src-b1-dataset.src-b1-table"},
 				{Dependency: "bigquery://src-b2-project:src-b2-dataset.src-b2-table"},
 			},
+		},
+	}, nil).Once()
+
+	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
+		ProjectName:   "project-A",
+		NamespaceName: "namespace-A",
+		JobName:       "job-C",
+	}, mock.Anything).Return(&pb.GetJobTaskResponse{
+		Task: &pb.JobTask{
+			Name:        "task-C",
+			Description: "task's description C",
+			Image:       "task's image C",
+			Destination: &pb.JobTask_Destination{},
 		},
 	}, nil).Once()
 }
