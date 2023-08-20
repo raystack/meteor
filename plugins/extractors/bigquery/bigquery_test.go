@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -31,9 +32,7 @@ const (
 	projectID = "test-project-id"
 )
 
-var (
-	client *bq.Client
-)
+var client *bq.Client
 
 func TestMain(m *testing.M) {
 	pwd, err := os.Getwd()
@@ -154,7 +153,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(max, seed int64) int64) []*v1beta2.Asset {
+	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(seed int64) func(int64) int64) []*v1beta2.Asset {
 		extr := bigquery.New(utils.Logger, mockClient, randomizer)
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
@@ -202,20 +201,17 @@ func TestExtract(t *testing.T) {
 			},
 		}
 
-		randFn := func(randVal int64) func(max, seed int64) int64 {
-			return func(max, seed int64) int64 {
-				return randVal
+		randFn := func(mainSeed int64) func(seed int64) func(max int64) int64 {
+			r := rand.New(rand.NewSource(mainSeed))
+			return func(seed int64) func(max int64) int64 {
+				return func(max int64) int64 {
+					return r.Int63n(max)
+				}
 			}
 		}
 
 		t.Run("should return preview rows with mixed values", func(t *testing.T) {
-			actual := runTest(t, cfg, randFn(3))
-
-			utils.AssertJSONFile(t, "testdata/expected-assets-mixed.json", actual, jsondiff.FullMatch)
-		})
-
-		t.Run("should return preview rows with mixed values", func(t *testing.T) {
-			actual := runTest(t, cfg, randFn(3))
+			actual := runTest(t, cfg, randFn(1))
 
 			utils.AssertJSONFile(t, "testdata/expected-assets-mixed.json", actual, jsondiff.FullMatch)
 		})
@@ -229,7 +225,7 @@ func TestExtract(t *testing.T) {
 			newCfg := cfg
 			newCfg.RawConfig["max_preview_rows"] = "1"
 
-			actual := runTest(t, newCfg, randFn(3))
+			actual := runTest(t, newCfg, randFn(1))
 			utils.AssertJSONFile(t, "testdata/expected-assets.json", actual, jsondiff.FullMatch)
 		})
 	})
