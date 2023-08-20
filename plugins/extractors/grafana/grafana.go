@@ -6,16 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -68,8 +66,8 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -78,21 +76,22 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedPanels = sqlutil.BuildBoolMap(e.config.Exclude.Panels)
 
 	// build client
-	e.client = NewClient(&http.Client{}, e.config)
-
-	return
+	var err error
+	e.client, err = NewClient(&http.Client{}, e.config)
+	return err
 }
 
 // Extract checks if the extractor is configured and
 // if so, then it extracts the assets from the extractor.
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	uids, err := e.client.SearchAllDashboardUIDs()
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	uids, err := e.client.SearchAllDashboardUIDs(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch dashboards")
+		return fmt.Errorf("fetch dashboards: %w", err)
 	}
-	dashboardDetails, err := e.client.GetAllDashboardDetails(uids)
+
+	dashboardDetails, err := e.client.GetAllDashboardDetails(ctx, uids)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch dashboard details")
+		return fmt.Errorf("fetch dashboard details: %w", err)
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
@@ -102,26 +101,25 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		}
 		dashboard, err := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
 		if err != nil {
-			return errors.Wrap(err, "failed to build Any struct")
+			return fmt.Errorf("build Any struct: %w", err)
 		}
 		emit(models.NewRecord(dashboard))
 	}
 
-	return
+	return nil
 }
 
 // grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
 func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) (*v1beta2.Asset, error) {
-	charts := make([]*v1beta2.Chart, 0)
-	for _, panel := range dashboard.Dashboard.Panels {
-
+	charts := make([]*v1beta2.Chart, len(dashboard.Dashboard.Panels))
+	for i, panel := range dashboard.Dashboard.Panels {
 		// skip excluded panel ids
 		panelUID := fmt.Sprintf("%s.%d", dashboard.Dashboard.UID, panel.ID)
 		if e.excludedPanels[panelUID] {
 			continue
 		}
 		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
-		charts = append(charts, &c)
+		charts[i] = &c
 	}
 	data, err := anypb.New(&v1beta2.Dashboard{
 		Charts:     charts,
@@ -142,7 +140,7 @@ func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail)
 }
 
 // grafanaPanelToMeteorChart converts a grafana panel to a meteor chart
-func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID string, metaURL string) v1beta2.Chart {
+func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID, metaURL string) v1beta2.Chart {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL

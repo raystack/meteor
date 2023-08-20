@@ -69,6 +69,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/felixge/httpsnoop v1.0.3 // indirect
+
 require (
 	cloud.google.com/go v0.110.6 // indirect
 	cloud.google.com/go/compute v1.22.0 // indirect
@@ -217,6 +219,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect

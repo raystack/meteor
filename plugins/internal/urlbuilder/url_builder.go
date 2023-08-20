@@ -1,4 +1,4 @@
-package merlin
+package urlbuilder
 
 import (
 	"fmt"
@@ -8,42 +8,41 @@ import (
 	"strings"
 )
 
-// URLBuilderSource is used to create URLBuilder instances.
+// Source is used to create URLBuilder instances.
 //
-// The URLBuilder created using URLBuilderSource will include the base
-// URL and query parameters present on the URLBuilderSource instance.
+// The URLBuilder created using Source will include the base
+// URL and query parameters present on the Source instance.
 //
-// Ideally, URLBuilderSource instance should be created only once for a
+// Ideally, Source instance should be created only once for a
 // given base URL.
-type URLBuilderSource struct {
+type Source struct {
 	base *url.URL
 	qry  url.Values
 }
 
-// NewURLBuilderSource builds a URLBuilderSource instance by parsing the
-// baseURL.
+// NewSource builds a Source instance by parsing the baseURL.
 //
 // The baseURL is expected to specify the host. If no scheme is
 // specified, it defaults to http scheme.
-func NewURLBuilderSource(baseURL string) (URLBuilderSource, error) {
+func NewSource(baseURL string) (Source, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		return URLBuilderSource{}, fmt.Errorf("new url builder: invalid input: %w", err)
+		return Source{}, fmt.Errorf("new url builder: invalid input: %w", err)
 	}
 
 	if u.Scheme == "" {
-		return NewURLBuilderSource("http://" + baseURL)
+		return NewSource("http://" + baseURL)
 	}
 
-	return URLBuilderSource{
+	return Source{
 		base: u,
 		qry:  u.Query(),
 	}, nil
 }
 
 // New creates a new instance of URLBuilder with the base URL
-// and query parameters carried over from URLBuilderSource.
-func (b URLBuilderSource) New() *URLBuilder {
+// and query parameters carried over from Source.
+func (b Source) New() *URLBuilder {
 	u := *b.base // create a copy
 	return &URLBuilder{
 		url:        &u,
@@ -54,9 +53,9 @@ func (b URLBuilderSource) New() *URLBuilder {
 
 // URLBuilder is used to build a URL.
 //
-// URLBuilderSource should be used to create an instance of URLBuilder.
+// Source should be used to create an instance of URLBuilder.
 //
-//	b, err := httputil.NewURLBuilderSource("https://api.example.com/")
+//	b, err := httputil.NewSource("https://api.example.com/")
 //	if err != nil {
 //		// handle error
 //	}
