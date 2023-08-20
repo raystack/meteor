@@ -1,18 +1,18 @@
 package metrics_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"testing"
-
-	"github.com/raystack/meteor/test/utils"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/agent"
 	"github.com/raystack/meteor/metrics"
 	"github.com/raystack/meteor/recipe"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -39,6 +39,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "statsd/statsd",
+		Platform:   "linux/amd64",
 		Tag:        "latest",
 		Env: []string{
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
@@ -51,13 +52,13 @@ func TestMain(m *testing.M) {
 		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	retryFn := func(resource *dockertest.Resource) (err error) {
+	retryFn := func(resource *dockertest.Resource) error {
 		c, err := metrics.NewStatsdClient("127.0.0.1:" + port)
 		if err != nil {
-			return
+			return err
 		}
 		c.Open()
-		return
+		return nil
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
@@ -115,7 +116,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
+		monitor.RecordRun(context.Background(), agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -156,7 +157,7 @@ func TestStatsdMonitorRecordRun(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordRun(agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: true})
+		monitor.RecordRun(context.Background(), agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: true})
 	})
 }
 
@@ -188,7 +189,12 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", false)
+		monitor.RecordPlugin(context.Background(), agent.PluginInfo{
+			RecipeName: recipe.Name,
+			PluginName: recipe.Sinks[0].Name,
+			PluginType: "sink",
+			Success:    false,
+		})
 	})
 
 	t.Run("should set success field to true on success", func(t *testing.T) {
@@ -216,7 +222,13 @@ func TestStatsdMonitorRecordPlugin(t *testing.T) {
 		defer client.AssertExpectations(t)
 
 		monitor := metrics.NewStatsdMonitor(client, statsdPrefix)
-		monitor.RecordPlugin(recipe.Name, recipe.Sinks[0].Name, "sink", true)
+		monitor.RecordPlugin(context.Background(),
+			agent.PluginInfo{
+				RecipeName: recipe.Name,
+				PluginName: recipe.Sinks[0].Name,
+				PluginType: "sink",
+				Success:    true,
+			})
 	})
 }
 

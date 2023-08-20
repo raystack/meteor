@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/raystack/meteor/metrics/otelmw"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/recipe"
@@ -26,7 +27,7 @@ type Agent struct {
 	extractorFactory *registry.ExtractorFactory
 	processorFactory *registry.ProcessorFactory
 	sinkFactory      *registry.SinkFactory
-	monitor          Monitor
+	monitor          []Monitor
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
@@ -36,9 +37,6 @@ type Agent struct {
 // NewAgent returns an Agent with plugin factories.
 func NewAgent(config Config) *Agent {
 	mt := config.Monitor
-	if isNilMonitor(mt) {
-		mt = new(defaultMonitor)
-	}
 
 	timerFn := config.TimerFn
 	if timerFn == nil {
@@ -59,7 +57,8 @@ func NewAgent(config Config) *Agent {
 }
 
 // Validate checks the recipe for linting errors.
-func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
+func (r *Agent) Validate(rcp recipe.Recipe) []error {
+	var errs []error
 	if ext, err := r.extractorFactory.Get(rcp.Source.Name); err != nil {
 		errs = append(errs, err)
 	} else {
@@ -92,7 +91,8 @@ func (r *Agent) Validate(rcp recipe.Recipe) (errs []error) {
 			errs = append(errs, r.enrichInvalidConfigError(err, p.Name, plugins.PluginTypeProcessor))
 		}
 	}
-	return
+
+	return errs
 }
 
 // RunMultiple executes multiple recipes.
@@ -120,34 +120,37 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
 
 	var (
-		getDuration = r.timerFn()
-		stream      = newStream()
-		recordCnt   int64
+		getDuration       = r.timerFn()
+		stream            = newStream()
+		recordCnt         int64
+		extractorRetryCnt int64
 	)
 
 	defer func() {
 		run.DurationInMs = getDuration()
-		r.logAndRecordMetrics(run)
+		run.ExtractorRetries = int(extractorRetryCnt)
+		run.AssetsExtracted = int(recordCnt)
+		r.logAndRecordMetrics(ctx, run)
 	}()
 
 	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
 	if err != nil {
-		run.Error = errors.Wrap(err, "failed to setup extractor")
-		return
+		run.Error = fmt.Errorf("setup extractor: %w", err)
+		return run
 	}
 
 	for _, pr := range recipe.Processors {
-		if err := r.setupProcessor(ctx, pr, stream); err != nil {
-			run.Error = errors.Wrap(err, "failed to setup processor")
-			return
+		if err := r.setupProcessor(ctx, pr, stream, recipe.Name); err != nil {
+			run.Error = fmt.Errorf("setup processor: %w", err)
+			return run
 		}
 	}
 
 	for _, sr := range recipe.Sinks {
-		err := r.setupSink(ctx, sr, stream, recipe)
+		err := r.setupSink(ctx, sr, stream, recipe.Name)
 		if err != nil {
-			run.Error = errors.Wrap(err, "failed to setup sink")
-			return
+			run.Error = fmt.Errorf("setup sink: %w", err)
+			return run
 		}
 	}
 
@@ -178,6 +181,7 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		}()
 
 		retryNotification := func(e error, d time.Duration) {
+			atomic.AddInt64(&extractorRetryCnt, 1)
 			r.logger.Warn(
 				fmt.Sprintf("retrying extractor in %s", d),
 				"retry_delay_ms", d.Milliseconds(),
@@ -191,9 +195,8 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 			func() error { return runExtractor() },
 			retryNotification,
 		)
-
 		if err != nil {
-			run.Error = errors.Wrap(err, "failed to run extractor")
+			run.Error = fmt.Errorf("run extractor: %w", err)
 		}
 	}()
 	defer stream.Close()
@@ -201,45 +204,51 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	// start listening.
 	// this process is blocking
 	if err := stream.broadcast(); err != nil {
-		run.Error = errors.Wrap(err, "failed to broadcast stream")
+		run.Error = fmt.Errorf("broadcast stream: %w", err)
 	}
 
 	// code will reach here stream.Listen() is done.
 	run.RecordCount = (int)(recordCnt)
 	run.Success = run.Error == nil
-	return
+	return run
 }
 
 func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
 	extractor, err := r.extractorFactory.Get(sr.Name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not find extractor \"%s\"", sr.Name)
+		return nil, fmt.Errorf("find extractor %q: %w", sr.Name, err)
 	}
 	if err := extractor.Init(ctx, recipeToPluginConfig(sr)); err != nil {
-		return nil, errors.Wrapf(err, "could not initiate extractor \"%s\"", sr.Name)
+		return nil, fmt.Errorf("initiate extractor %q: %w", sr.Name, err)
 	}
 
 	return func() error {
 		if err := extractor.Extract(ctx, str.push); err != nil {
-			return errors.Wrapf(err, "error running extractor \"%s\"", sr.Name)
+			return fmt.Errorf("run extractor %q: %w", sr.Name, err)
 		}
 		return nil
 	}, nil
 }
 
-func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream) error {
+func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream, recipeName string) (err error) {
 	proc, err := r.processorFactory.Get(pr.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find processor \"%s\"", pr.Name)
+		return fmt.Errorf("find processor %q: %w", pr.Name, err)
 	}
+
+	proc, err = otelmw.WithProcessorMW(proc, pr.Name, recipeName)
+	if err != nil {
+		return fmt.Errorf("wrap processor %q: %w", pr.Name, err)
+	}
+
 	if err := proc.Init(ctx, recipeToPluginConfig(pr)); err != nil {
-		return errors.Wrapf(err, "could not initiate processor \"%s\"", pr.Name)
+		return fmt.Errorf("initiate processor %q: %w", pr.Name, err)
 	}
 
 	str.setMiddleware(func(src models.Record) (models.Record, error) {
 		dst, err := proc.Process(ctx, src)
 		if err != nil {
-			return models.Record{}, errors.Wrapf(err, "error running processor \"%s\"", pr.Name)
+			return models.Record{}, fmt.Errorf("run processor %q: %w", pr.Name, err)
 		}
 
 		return dst, nil
@@ -248,16 +257,32 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 	return nil
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipe recipe.Recipe) error {
+func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipeName string) error {
+	pluginInfo := PluginInfo{
+		RecipeName: recipeName,
+		PluginName: sr.Name,
+		PluginType: "sink",
+	}
+
 	sink, err := r.sinkFactory.Get(sr.Name)
 	if err != nil {
-		return errors.Wrapf(err, "could not find sink \"%s\"", sr.Name)
+		return fmt.Errorf("find sink %q: %w", sr.Name, err)
 	}
+
+	sink, err = otelmw.WithSinkMW(sink, sr.Name, recipeName)
+	if err != nil {
+		return fmt.Errorf("wrap otel sink %q: %w", sr.Name, err)
+	}
+
 	if err := sink.Init(ctx, recipeToPluginConfig(sr)); err != nil {
-		return errors.Wrapf(err, "could not initiate sink \"%s\"", sr.Name)
+		return fmt.Errorf("initiate sink %q: %w", sr.Name, err)
 	}
 
 	retryNotification := func(e error, d time.Duration) {
+		for _, mt := range r.monitor {
+			mt.RecordSinkRetryCount(ctx, pluginInfo)
+		}
+
 		r.logger.Warn(
 			fmt.Sprintf("retrying sink in %s", d),
 			"retry_delay_ms", d.Milliseconds(),
@@ -266,14 +291,20 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		)
 	}
 	stream.subscribe(func(records []models.Record) error {
+		pluginInfo.BatchSize = len(records)
+
 		err := r.retrier.retry(
 			ctx,
-			func() error { return sink.Sink(ctx, records) },
+			func() error {
+				return sink.Sink(ctx, records)
+			},
 			retryNotification,
 		)
 
-		success := err == nil
-		r.monitor.RecordPlugin(recipe.Name, sr.Name, "sink", success)
+		pluginInfo.Success = err == nil
+		for _, mt := range r.monitor {
+			mt.RecordPlugin(ctx, pluginInfo) // this can be deleted when statsd is removed
+		}
 		if err != nil {
 			// once it reaches here, it means that the retry has been exhausted and still got error
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
@@ -283,7 +314,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 			return nil
 		}
 
-		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipe.Name)
+		r.logger.Info("Successfully published record", "sink", sr.Name, "recipe", recipeName)
 		return nil
 	}, defaultBatchSize)
 
@@ -296,8 +327,11 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 	return nil
 }
 
-func (r *Agent) logAndRecordMetrics(run Run) {
-	r.monitor.RecordRun(run)
+func (r *Agent) logAndRecordMetrics(ctx context.Context, run Run) {
+	for _, monitor := range r.monitor {
+		monitor.RecordRun(ctx, run)
+	}
+
 	if run.Success {
 		r.logger.Info("done running recipe",
 			"recipe", run.Recipe.Name,

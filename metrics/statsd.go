@@ -1,11 +1,10 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
-
-	"github.com/pkg/errors"
 
 	statsd "github.com/etsy/statsd/examples/go"
 	"github.com/raystack/meteor/agent"
@@ -34,7 +33,7 @@ func NewStatsdMonitor(client statsdClient, prefix string) *StatsdMonitor {
 }
 
 // RecordRun records a run behavior
-func (m *StatsdMonitor) RecordRun(run agent.Run) {
+func (m *StatsdMonitor) RecordRun(_ context.Context, run agent.Run) {
 	m.client.Timing(
 		m.createMetricName(runDurationMetricName, run.Recipe, run.Success),
 		int64(run.DurationInMs),
@@ -49,23 +48,25 @@ func (m *StatsdMonitor) RecordRun(run agent.Run) {
 }
 
 // RecordPlugin records a individual plugin behavior in a run
-func (m *StatsdMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
+func (m *StatsdMonitor) RecordPlugin(_ context.Context, pluginInfo agent.PluginInfo) {
 	m.client.Increment(
 		fmt.Sprintf(
 			"%s.%s,recipe_name=%s,name=%s,type=%s,success=%t",
 			m.prefix,
 			pluginRunMetricName,
-			recipeName,
-			pluginName,
-			pluginType,
-			success,
+			pluginInfo.RecipeName,
+			pluginInfo.PluginName,
+			pluginInfo.PluginType,
+			pluginInfo.Success,
 		),
 	)
 }
 
+func (*StatsdMonitor) RecordSinkRetryCount(context.Context, agent.PluginInfo) {}
+
 // createMetricName creates a metric name for a given recipe and success
 func (m *StatsdMonitor) createMetricName(metricName string, recipe recipe.Recipe, success bool) string {
-	var successText = "false"
+	successText := "false"
 	if success {
 		successText = "true"
 	}
@@ -87,17 +88,16 @@ type statsdClient interface {
 }
 
 // NewStatsdClient returns a new statsd client if the given address is valid
-func NewStatsdClient(statsdAddress string) (c *statsd.StatsdClient, err error) {
-	statsdHost, statsdPortStr, err := net.SplitHostPort(statsdAddress)
+func NewStatsdClient(statsdAddress string) (*statsd.StatsdClient, error) {
+	host, portStr, err := net.SplitHostPort(statsdAddress)
 	if err != nil {
-		err = errors.Wrap(err, "failed to split the network address")
-		return
+		return nil, fmt.Errorf("split the network address: %w", err)
 	}
-	statsdPort, err := strconv.Atoi(statsdPortStr)
+
+	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		err = errors.Wrap(err, "failed to convert port type")
-		return
+		return nil, fmt.Errorf("convert port type: %w", err)
 	}
-	c = statsd.New(statsdHost, statsdPort)
-	return
+
+	return statsd.New(host, port), nil
 }

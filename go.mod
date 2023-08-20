@@ -54,7 +54,18 @@ require (
 	github.com/stretchr/testify v1.8.4
 	gitlab.com/flimzy/testy v0.8.0 // indirect
 	go.mongodb.org/mongo-driver v1.10.2
+	go.nhat.io/otelsql v0.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0
+	go.opentelemetry.io/contrib/instrumentation/host v0.42.0
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.42.0
+	go.opentelemetry.io/contrib/samplers/probability/consistent v0.11.0
+	go.opentelemetry.io/otel v1.16.0
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.39.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
+	go.opentelemetry.io/otel/metric v1.16.0
+	go.opentelemetry.io/otel/sdk v1.16.0
+	go.opentelemetry.io/otel/sdk/metric v0.39.0
 	golang.org/x/oauth2 v0.10.0
 	google.golang.org/api v0.134.0
 	google.golang.org/genproto v0.0.0-20230724170836-66ad5b6ff146

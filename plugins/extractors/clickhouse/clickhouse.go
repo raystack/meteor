@@ -6,10 +6,6 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -17,6 +13,9 @@ import (
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -68,7 +67,8 @@ func New(logger log.Logger) *Extractor {
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
@@ -76,36 +76,37 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedDBs = sqlutil.BuildBoolMap(e.config.Exclude.Databases)
 	e.excludedTbl = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
-	if e.db, err = sql.Open("clickhouse", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create a client")
+	e.db, err = sqlutil.OpenWithOtel("clickhouse", e.config.ConnectionURL, semconv.DBSystemClickhouse)
+	if err != nil {
+		return fmt.Errorf("create a client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is configured and
 // if the connection to the DB is successful
 // and then starts the extraction process
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
-	err = e.extractTables(emit)
-	if err != nil {
-		return errors.Wrap(err, "failed to extract tables")
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	if err := e.extractTables(ctx, emit); err != nil {
+		return fmt.Errorf("extract tables: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // extractTables extract tables from a given database
-func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
-	res, err := e.db.Query("SELECT name, database FROM system.tables WHERE database not like 'system'")
+func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error {
+	res, err := e.db.QueryContext(ctx, "SELECT name, database FROM system.tables WHERE database not like 'system'")
 	if err != nil {
-		return errors.Wrap(err, "failed to execute query")
+		return fmt.Errorf("execute query: %w", err)
 	}
+	defer res.Close()
+
 	for res.Next() {
 		var dbName, tableName string
-		err = res.Scan(&tableName, &dbName)
-		if err != nil {
-			return
+		if err := res.Scan(&tableName, &dbName); err != nil {
+			return err
 		}
 
 		// skip excluded databases and tables
@@ -113,10 +114,9 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 			continue
 		}
 
-		var columns []*v1beta2.Column
-		columns, err = e.getColumnsInfo(dbName, tableName)
+		columns, err := e.getColumnsInfo(ctx, dbName, tableName)
 		if err != nil {
-			return
+			return err
 		}
 
 		table, err := anypb.New(&v1beta2.Table{
@@ -124,8 +124,7 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 		})
 		if err != nil {
-			err = fmt.Errorf("error creating Any struct: %w", err)
-			return err
+			return fmt.Errorf("create Any struct: %w", err)
 		}
 
 		asset := v1beta2.Asset{
@@ -137,23 +136,29 @@ func (e *Extractor) extractTables(emit plugins.Emit) (err error) {
 		}
 		emit(models.NewRecord(&asset))
 	}
-	return
+	if err := res.Err(); err != nil {
+		return fmt.Errorf("iterate over tables: %w", err)
+	}
+
+	return nil
 }
 
-func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*v1beta2.Column, err error) {
+func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
-	rows, err := e.db.Query(sqlStr)
+	rows, err := e.db.QueryContext(ctx, sqlStr)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to execute query %s", sqlStr)
-		return
+		return nil, fmt.Errorf("execute query: %w", err)
 	}
+	defer rows.Close()
+
+	var result []*v1beta2.Column
 	for rows.Next() {
 		var colName, colDesc, dataType string
 		var temp1, temp2, temp3, temp4 string
-		err = rows.Scan(&colName, &dataType, &colDesc, &temp1, &temp2, &temp3, &temp4)
+		err := rows.Scan(&colName, &dataType, &colDesc, &temp1, &temp2, &temp3, &temp4)
 		if err != nil {
-			return
+			return nil, err
 		}
 		result = append(result, &v1beta2.Column{
 			Name:        colName,
@@ -161,6 +166,10 @@ func (e *Extractor) getColumnsInfo(dbName string, tableName string) (result []*v
 			Description: colDesc,
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over columns: %w", err)
+	}
+
 	return result, nil
 }
 

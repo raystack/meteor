@@ -11,10 +11,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -22,7 +18,10 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/mssql"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -41,7 +40,8 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mcr.microsoft.com/mssql/server",
-		Tag:        "2019-latest",
+		Tag:        "2022-latest",
+		Platform:   "linux/amd64",
 		Env: []string{
 			"SA_PASSWORD=" + pass,
 			"ACCEPT_EULA=Y",
@@ -85,7 +85,8 @@ func TestInit(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"invalid_config": "invalid_config_value",
-			}})
+			},
+		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -100,7 +101,8 @@ func TestExtract(t *testing.T) {
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"connection_url": fmt.Sprintf("sqlserver://%s:%s@%s/", user, pass, host),
-			}})
+			},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
