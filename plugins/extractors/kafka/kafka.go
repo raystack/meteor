@@ -5,29 +5,32 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	_ "embed" // used to print the embedded assets
+	"errors"
+	"fmt"
 	"os"
+	"strings"
 	"time"
-
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
-	"github.com/segmentio/kafka-go"
-
 	"github.com/raystack/salt/log"
+	"github.com/segmentio/kafka-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
 var summary string
 
 // default topics map to skip
-var defaultTopics = map[string]byte{
-	"__consumer_offsets": 0,
-	"_schemas":           0,
+var defaultTopics = map[string]struct{}{
+	"__consumer_offsets": {},
+	"_schemas":           {},
 }
 
 // Config holds the set of configuration for the kafka extractor
@@ -71,9 +74,10 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 	// internal states
-	conn   *kafka.Conn
-	logger log.Logger
-	config Config
+	conn       *kafka.Conn
+	logger     log.Logger
+	config     Config
+	clientDurn metric.Int64Histogram
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -87,8 +91,16 @@ func New(logger log.Logger) *Extractor {
 }
 
 // Init initializes the extractor
-func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+	clientDurn, err := otel.Meter("github.com/raystack/meteor/plugins/extractors/kafka").
+		Int64Histogram("meteor.kafka.client.duration", metric.WithUnit("ms"))
+	if err != nil {
+		otel.Handle(err)
+	}
+
+	e.clientDurn = clientDurn
+
+	if err := e.BaseExtractor.Init(ctx, config); err != nil {
 		return err
 	}
 
@@ -101,7 +113,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	if e.config.Auth.TLS.Enabled {
 		tlsConfig, err := e.createTLSConfig()
 		if err != nil {
-			return errors.Wrap(err, "failed to create tls config")
+			return fmt.Errorf("create tls config: %w", err)
 		}
 
 		dialer.TLS = tlsConfig
@@ -110,30 +122,25 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	// create connection
 	e.conn, err = dialer.DialContext(ctx, "tcp", e.config.Broker)
 	if err != nil {
-		return errors.Wrap(err, "failed to create connection")
+		return fmt.Errorf("create connection: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.conn.Close()
 
-	partitions, err := e.conn.ReadPartitions()
+	partitions, err := e.readPartitions(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch partitions")
+		return fmt.Errorf("fetch partitions: %w", err)
 	}
 
 	// collect topic list from partition list
 	topics := map[string]int{}
 	for _, p := range partitions {
-		_, ok := topics[p.Topic]
-		if !ok {
-			topics[p.Topic] = 0
-		}
-
 		topics[p.Topic]++
 	}
 
@@ -144,22 +151,23 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		if isDefaultTopic {
 			continue
 		}
+
 		asset, err := e.buildAsset(topic, numOfPartitions)
 		if err != nil {
 			e.logger.Error("failed to build asset", "err", err, "topic", topic)
 			continue
 		}
-		record := models.NewRecord(asset)
-		emit(record)
+		emit(models.NewRecord(asset))
 	}
 
-	return
+	return nil
 }
 
-func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
+func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 	authConfig := e.config.Auth.TLS
 
 	if authConfig.CertFile == "" || authConfig.KeyFile == "" || authConfig.CAFile == "" {
+		//nolint:gosec
 		return &tls.Config{
 			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
 		}, nil
@@ -167,28 +175,27 @@ func (e *Extractor) createTLSConfig() (tlsConfig *tls.Config, err error) {
 
 	cert, err := tls.LoadX509KeyPair(authConfig.CertFile, authConfig.KeyFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create cert")
+		return nil, fmt.Errorf("create cert: %w", err)
 	}
 
 	caCert, err := os.ReadFile(authConfig.CAFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read ca cert file")
+		return nil, fmt.Errorf("read ca cert file: %w", err)
 	}
 
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig = &tls.Config{
+	//nolint:gosec
+	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
-	}
-
-	return tlsConfig, nil
+	}, nil
 }
 
 // Build topic metadata model using a topic and number of partitions
-func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (*v1beta2.Asset, error) {
 	topic, err := anypb.New(&v1beta2.Topic{
 		Profile: &v1beta2.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),
@@ -206,6 +213,31 @@ func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (asset *v1
 		Type:    "topic",
 		Data:    topic,
 	}, nil
+}
+
+func (e *Extractor) readPartitions(ctx context.Context) (partitions []kafka.Partition, err error) {
+	defer func(start time.Time) {
+		attributes := []attribute.KeyValue{
+			attribute.String("kafka.broker", e.config.Broker),
+			attribute.Bool("success", err == nil),
+		}
+		if err != nil {
+			errorCode := "UNKNOWN"
+			var kErr kafka.Error
+			if errors.As(err, &kErr) {
+				errorCode = strings.ReplaceAll(
+					strings.ToUpper(kErr.Title()), " ", "_",
+				)
+			}
+			attributes = append(attributes, attribute.String("kafka.error_code", errorCode))
+		}
+
+		e.clientDurn.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attributes...),
+		)
+	}(time.Now())
+
+	return e.conn.ReadPartitions()
 }
 
 func init() {

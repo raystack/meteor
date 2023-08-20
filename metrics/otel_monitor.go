@@ -11,47 +11,39 @@ import (
 
 // OtelMonitor represents the otel monitor.
 type OtelMonitor struct {
-	recipeDuration   metric.Int64Histogram
+	recipeDuration   metric.Float64Histogram
 	extractorRetries metric.Int64Counter
 	assetsExtracted  metric.Int64Counter
 	sinkRetries      metric.Int64Counter
 }
 
-func NewOtelMonitor() (*OtelMonitor, error) {
+func NewOtelMonitor() *OtelMonitor {
 	// init meters
-	meter := otel.Meter("")
-	recipeDuration, err := meter.Int64Histogram("meteor.recipe.duration", metric.WithUnit("ms"))
-	if err != nil {
-		return nil, err
-	}
+	meter := otel.Meter("github.com/raystack/meteor/metrics")
+	recipeDuration, err := meter.Float64Histogram("meteor.recipe.duration", metric.WithUnit("s"))
+	handleOtelErr(err)
 
 	extractorRetries, err := meter.Int64Counter("meteor.extractor.retries")
-	if err != nil {
-		return nil, err
-	}
+	handleOtelErr(err)
 
 	assetsExtracted, err := meter.Int64Counter("meteor.assets.extracted")
-	if err != nil {
-		return nil, err
-	}
+	handleOtelErr(err)
 
 	sinkRetries, err := meter.Int64Counter("meteor.sink.retries")
-	if err != nil {
-		return nil, err
-	}
+	handleOtelErr(err)
 
 	return &OtelMonitor{
 		recipeDuration:   recipeDuration,
 		extractorRetries: extractorRetries,
 		assetsExtracted:  assetsExtracted,
 		sinkRetries:      sinkRetries,
-	}, nil
+	}
 }
 
 // RecordRun records a run behavior
 func (m *OtelMonitor) RecordRun(ctx context.Context, run agent.Run) {
 	m.recipeDuration.Record(ctx,
-		int64(run.DurationInMs),
+		float64(run.DurationInMs)/1000.0,
 		metric.WithAttributes(
 			attribute.String("recipe_name", run.Recipe.Name),
 			attribute.String("extractor", run.Recipe.Source.Name),
@@ -88,4 +80,10 @@ func (m *OtelMonitor) RecordSinkRetryCount(ctx context.Context, pluginInfo agent
 			attribute.String("sink", pluginInfo.PluginName),
 			attribute.Int64("batch_size", int64(pluginInfo.BatchSize)),
 		))
+}
+
+func handleOtelErr(err error) {
+	if err != nil {
+		otel.Handle(err)
+	}
 }
