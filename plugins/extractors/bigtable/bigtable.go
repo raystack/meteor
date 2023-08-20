@@ -110,6 +110,9 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	if err != nil {
 		return err
 	}
+
+	client = WithInstanceAdminClientMW(e.config.ProjectID)(client)
+
 	e.instanceNames, err = instanceInfoGetter(ctx, client)
 	if err != nil {
 		return err
@@ -143,6 +146,9 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error 
 		if err != nil {
 			return err
 		}
+
+		adminClient = WithAdminClientMW(e.config.ProjectID, instance)(adminClient)
+
 		tables, _ := adminClient.Tables(ctx)
 		var wg sync.WaitGroup
 		for _, table := range tables {
