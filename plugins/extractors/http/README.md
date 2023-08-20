@@ -33,6 +33,7 @@ source:
   type: http
   config:
     request:
+      route_pattern: "/api/v1/endpoint"
       url: "https://example.com/api/v1/endpoint"
       query_params:
         - key: param_key
@@ -45,7 +46,7 @@ source:
       body:
         key: value
       timeout: 5s
-    success_codes: [200]
+    success_codes: [ 200 ]
     concurrency: 3
     script:
       engine: tengo
@@ -58,27 +59,28 @@ source:
 ## Inputs
 
 | Key                        | Value    | Example                                | Description                                                                                     | Required? |
-| :------------------------- | :------- | :------------------------------------- | :---------------------------------------------------------------------------------------------- | :-------- |
-| `request`                  | `Object` | see [Request](#request)                | The configuration for constructing and sending HTTP request.                                    | ✅        |
+|:---------------------------|:---------|:---------------------------------------|:------------------------------------------------------------------------------------------------|:----------|
+| `request`                  | `Object` | see [Request](#request)                | The configuration for constructing and sending HTTP request.                                    | ✅         |
 | `success_codes`            | `[]int`  | `[200]`                                | The list of status codes that would be considered as a successful response. Default is `[200]`. | ✘         |
 | `concurrency`              | `int`    | `5`                                    | Number of concurrent child requests to execute. Default is `5`                                  | ✘         |
-| `script.engine`            | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅        |
-| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more assets.                           | ✅        |
+| `script.engine`            | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅         |
+| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more assets.                           | ✅         |
 | `script.max_allocs`        | `int`    | 10000                                  | The max number of object allocations allowed during the script run time. Default is `5000`.     | ✘         |
 | `script.max_const_objects` | `int`    | 1000                                   | The maximum number of constant objects in the compiled script. Default is `500`.                | ✘         |
 
 ### Request
 
-| Key            | Value               | Example                              | Description                                                                 | Required? |
-| :------------- | :------------------ | :----------------------------------- | :-------------------------------------------------------------------------- | :-------- |
-| `url`          | `string`            | `http://example.com/api/v1/endpoint` | The HTTP endpoint to send request to                                        | ✅        |
-| `query_params` | `[]{key, value}`    | `[{"key":"s","value":"One Piece"}]`  | The query parameters to be added to the request URL.                        | ✘         |
-| `method`       | `string`            | `GET`/`POST`                         | The HTTP verb/method to use with request. Default is `GET`.                 | ✘         |
-| `headers`      | `map[string]string` | `{"Api-Token": "..."}`               | Headers to send in the HTTP request.                                        | ✘         |
-| `content_type` | `string`            | `application/json`                   | Content type for encoding request body. Also sent as a header.              | ✅        |
-| `accept`       | `string`            | `application/json`                   | Sent as the `Accept` header. Also indicates the format to use for decoding. | ✅        |
-| `body`         | `Object`            | `{"key": "value"}`                   | The request body to be sent.                                                | ✘         |
-| `timeout`      | `string`            | `1s`                                 | Timeout for the HTTP request. Default is 5s.                                | ✘         |
+| Key             | Value               | Example                              | Description                                                                 | Required? |
+|:----------------|:--------------------|:-------------------------------------|:----------------------------------------------------------------------------|:----------|
+| `route_pattern` | `string`            | `/api/v1/endpoint`                   | A route pattern to use in metrics as `http.route` tag.                      | ✅         |
+| `url`           | `string`            | `http://example.com/api/v1/endpoint` | The HTTP endpoint to send request to                                        | ✅         |
+| `query_params`  | `[]{key, value}`    | `[{"key":"s","value":"One Piece"}]`  | The query parameters to be added to the request URL.                        | ✘         |
+| `method`        | `string`            | `GET`/`POST`                         | The HTTP verb/method to use with request. Default is `GET`.                 | ✘         |
+| `headers`       | `map[string]string` | `{"Api-Token": "..."}`               | Headers to send in the HTTP request.                                        | ✘         |
+| `content_type`  | `string`            | `application/json`                   | Content type for encoding request body. Also sent as a header.              | ✅         |
+| `accept`        | `string`            | `application/json`                   | Sent as the `Accept` header. Also indicates the format to use for decoding. | ✅         |
+| `body`          | `Object`            | `{"key": "value"}`                   | The request body to be sent.                                                | ✘         |
+| `timeout`       | `string`            | `1s`                                 | Timeout for the HTTP request. Default is 5s.                                | ✘         |
 
 ### Notes
 
@@ -128,9 +130,18 @@ HTTP response received with the `status_code`, `header` and `body`. Ex:
     "link": "</products?page=5&perPage=20>;rel=self,</products?page=0&perPage=20>;rel=first,</products?page=4&perPage=20>;rel=previous,</products?page=6&perPage=20>;rel=next,</products?page=26&perPage=20>;rel=last"
   },
   "body": [
-    { "id": 1, "name": "Widget #1" },
-    { "id": 2, "name": "Widget #2" },
-    { "id": 3, "name": "Widget #3" }
+    {
+      "id": 1,
+      "name": "Widget #1"
+    },
+    {
+      "id": 2,
+      "name": "Widget #2"
+    },
+    {
+      "id": 3,
+      "name": "Widget #3"
+    }
   ]
 }
 ```
@@ -185,7 +196,7 @@ defined in the [Request](#request) input section.
 When a request is executed, it can fail due to temporary errors such as network
 errors. These instances need to be handled in the script.
 
-[//]: # "@formatter:off"
+[//]: # (@formatter:off)
 
 ```go
 if !response.body.success {
@@ -197,21 +208,21 @@ for j in response.body.jobs {
 	reqs = append(reqs, {
 		url: format("http://my.server.com/jobs/%s/config", j.id),
 		method: "GET",
-		content_type: "application/json",
+		content_type: "application/json", 
 		accept: "application/json",
-		timeout: "5s"
+		timeout: "5s" 
 	})
 }
 
 responses := execute_request(reqs...)
 for r in responses {
 	if is_error(r) {
-		// TODO: Handle it appropriately. The error value has the request and
+		// TODO: Handle it appropriately. The error value has the request and 
 		//  error string:
 		//  r.value.{request, error}
-		continue
+		continue 
 	}
-
+	
 	asset := new_asset("job")
 	asset.name = r.body.name
 	exec_cfg := r.body["execution-config"]
@@ -224,7 +235,7 @@ for r in responses {
 }
 ```
 
-[//]: # "@formatter:on"
+[//]: # (@formatter:on)
 
 If the request passed to the function fails validation, a runtime error is
 thrown.

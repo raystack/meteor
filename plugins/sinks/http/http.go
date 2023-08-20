@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/pkg/errors"
+	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
@@ -54,6 +54,10 @@ type Sink struct {
 }
 
 func New(c httpClient, logger log.Logger) plugins.Syncer {
+	if cl, ok := c.(*http.Client); ok {
+		cl.Transport = otelhttpclient.NewHTTPTransport(cl.Transport)
+	}
+
 	s := &Sink{
 		logger: logger,
 		client: c,
@@ -63,39 +67,36 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 	return s
 }
 
-func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = s.BasePlugin.Init(ctx, config); err != nil {
-		return err
-	}
-
-	return
+func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
+	return s.BasePlugin.Init(ctx, config)
 }
 
-func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
+func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		metadata := record.Data()
 		s.logger.Info("sinking record to http", "record", metadata.Urn)
 		payload, err := json.Marshal(metadata)
 		if err != nil {
-			return errors.Wrap(err, "failed to build http payload")
+			return fmt.Errorf("build http payload: %w", err)
 		}
-		if err = s.send(payload); err != nil {
-			return errors.Wrap(err, "error sending data")
+
+		if err = s.send(ctx, payload); err != nil {
+			return fmt.Errorf("send data: %w", err)
 		}
 
 		s.logger.Info("successfully sinked record to http", "record", metadata.Urn)
 	}
 
-	return
+	return nil
 }
 
-func (s *Sink) Close() (err error) { return }
+func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(payloadBytes []byte) (err error) {
+func (s *Sink) send(ctx context.Context, payloadBytes []byte) error {
 	// send request
-	req, err := http.NewRequest(s.config.Method, s.config.URL, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, s.config.Method, s.config.URL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return
+		return err
 	}
 
 	for hdrKey, hdrVal := range s.config.Headers {
@@ -107,16 +108,18 @@ func (s *Sink) send(payloadBytes []byte) (err error) {
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
+	defer plugins.DrainBody(res)
+
 	if res.StatusCode == s.config.SuccessCode {
-		return
+		return nil
 	}
 
 	var bodyBytes []byte
 	bodyBytes, err = io.ReadAll(res.Body)
 	if err != nil {
-		return
+		return err
 	}
 	err = fmt.Errorf("http returns %d: %v", res.StatusCode, string(bodyBytes))
 
