@@ -8,17 +8,16 @@ import (
 	"net/url"
 	"strings"
 
+	_ "github.com/prestodb/presto-go-client/presto" // presto driver
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	"github.com/raystack/meteor/plugins/sqlutil"
-
-	_ "github.com/prestodb/presto-go-client/presto" // presto driver
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -46,7 +45,7 @@ type Extractor struct {
 	plugins.BaseExtractor
 	logger          log.Logger
 	config          Config
-	client          *sql.DB
+	db              *sql.DB
 	excludedCatalog map[string]bool
 
 	// These below values are used to recreate a connection for each catalog
@@ -67,7 +66,8 @@ func New(logger log.Logger) *Extractor {
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
@@ -77,23 +77,27 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedCatalog = sqlutil.BuildBoolMap(excludeList)
 
 	// create presto client
-	if e.client, err = sql.Open("presto", e.config.ConnectionURL); err != nil {
-		return fmt.Errorf("failed to create client: %w", err)
+	e.db, err = sqlutil.OpenWithOtel("presto", e.config.ConnectionURL, semconv.DBSystemKey.String("presto"))
+	if err != nil {
+		return fmt.Errorf("create a client: %w", err)
 	}
 
-	if err = e.extractConnectionComponents(e.config.ConnectionURL); err != nil {
-		err = fmt.Errorf("failed to split configs from connection string: %w", err)
-		return
+	if err := e.extractConnectionComponents(e.config.ConnectionURL); err != nil {
+		return fmt.Errorf("split configs from connection string: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract collects metadata of the database through emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
-	defer e.client.Close()
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	defer e.db.Close()
 
-	catalogs, err := e.getCatalogs()
+	catalogs, err := e.getCatalogs(ctx)
+	if err != nil {
+		return err
+	}
+
 	for _, catalog := range catalogs {
 		// Open a new connection to the given catalogs list
 		// to collect schemas information
@@ -106,20 +110,20 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 
 		dbQuery := fmt.Sprintf("SHOW SCHEMAS IN %s", catalog)
 
-		dbs, err := sqlutil.FetchDBs(db, e.logger, dbQuery)
+		dbs, err := sqlutil.FetchDBs(ctx, db, e.logger, dbQuery)
 		if err != nil {
-			return fmt.Errorf("failed to extract tables from %s: %w", catalog, err)
+			return fmt.Errorf("extract tables from %s: %w", catalog, err)
 		}
 		for _, database := range dbs {
 			showTablesQuery := fmt.Sprintf("SHOW TABLES FROM %s.%s", catalog, database)
-			tables, err := sqlutil.FetchTablesInDB(db, database, showTablesQuery)
+			tables, err := sqlutil.FetchTablesInDB(ctx, db, database, showTablesQuery)
 			if err != nil {
 				e.logger.Error("failed to get tables, skipping database", "catalog", catalog, "error", err)
 				continue
 			}
 
 			for _, table := range tables {
-				result, err := e.processTable(db, catalog, database, table)
+				result, err := e.processTable(ctx, db, catalog, database, table)
 				if err != nil {
 					e.logger.Error("failed to get table metadata, skipping table", "error", err)
 					continue
@@ -133,69 +137,75 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 }
 
 // getCatalogs prepares the list of catalogs
-func (e *Extractor) getCatalogs() (list []string, err error) {
+func (e *Extractor) getCatalogs(ctx context.Context) ([]string, error) {
 	// Get list of catalogs
-	catalogs, err := e.client.Query("SHOW CATALOGS")
+	rows, err := e.db.QueryContext(ctx, "SHOW CATALOGS")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the list of catalogs: %w", err)
+		return nil, fmt.Errorf("fetch catalogs: %w", err)
 	}
+	defer rows.Close()
 
-	for catalogs.Next() {
+	var catalogs []string
+	for rows.Next() {
 		var catalog string
-		if err = catalogs.Scan(&catalog); err != nil {
-			return nil, fmt.Errorf("failed to scan schema from %s: %w", catalog, err)
+		if err := rows.Scan(&catalog); err != nil {
+			return nil, fmt.Errorf("scan schema: %w", err)
 		}
+
 		if e.isExcludedCatalog(catalog) {
 			continue
 		}
-		list = append(list, catalog)
+
+		catalogs = append(catalogs, catalog)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over catalogs: %w", err)
 	}
 
-	return list, err
+	return catalogs, err
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(db *sql.DB, catalog string, database string, tableName string) (result *v1beta2.Asset, err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(db, catalog)
+func (e *Extractor) processTable(ctx context.Context, db *sql.DB, catalog, database, tableName string) (*v1beta2.Asset, error) {
+	columns, err := e.extractColumns(ctx, db, catalog)
 	if err != nil {
-		return result, fmt.Errorf("failed to extract columns: %w", err)
+		return nil, fmt.Errorf("extract columns: %w", err)
 	}
 	table, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("create Any struct: %w", err)
 	}
 	// push table to channel
-	result = &v1beta2.Asset{
+	return &v1beta2.Asset{
 		Urn:     models.NewURN("presto", e.UrnScope, "table", fmt.Sprintf("%s.%s.%s", catalog, database, tableName)),
 		Name:    tableName,
 		Service: "presto",
 		Type:    "table",
 		Data:    table,
-	}
-
-	return
+	}, nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(db *sql.DB, catalog string) (result []*v1beta2.Column, err error) {
+func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]*v1beta2.Column, error) {
+	//nolint:gosec
 	sqlStr := fmt.Sprintf(`SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,COMMENT
 				FROM %s.information_schema.columns
 				ORDER BY COLUMN_NAME ASC`, catalog)
-	rows, err := db.Query(sqlStr)
+	rows, err := db.QueryContext(ctx, sqlStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute a query to extract columns metadata: %w", err)
+		return nil, fmt.Errorf("execute a query to extract columns metadata: %w", err)
 	}
+	defer rows.Close()
 
+	var result []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, dataType, isNullableString, comment sql.NullString
 		err = rows.Scan(&fieldName, &dataType, &isNullableString, &comment)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan fields from query: %w", err)
+			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
 		result = append(result, &v1beta2.Column{
@@ -204,6 +214,9 @@ func (e *Extractor) extractColumns(db *sql.DB, catalog string) (result []*v1beta
 			IsNullable:  isNullable(isNullableString.String),
 			Description: comment.String,
 		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over columns: %w", err)
 	}
 
 	return result, nil
@@ -215,7 +228,7 @@ func isNullable(value string) bool {
 }
 
 // connection generates a connection string
-func (e *Extractor) connection(catalog string) (db *sql.DB, err error) {
+func (e *Extractor) connection(catalog string) (*sql.DB, error) {
 	var connStr string
 	if len(e.password) != 0 {
 		connStr = fmt.Sprintf("http://%s:%s@%s?catalog=%s", e.username, e.password, e.host, catalog)
@@ -227,17 +240,17 @@ func (e *Extractor) connection(catalog string) (db *sql.DB, err error) {
 }
 
 // extractConnectionComponents extracts the components from the connection URL
-func (e *Extractor) extractConnectionComponents(connectionURL string) (err error) {
+func (e *Extractor) extractConnectionComponents(connectionURL string) error {
 	connectionStr, err := url.Parse(connectionURL)
 	if err != nil {
-		err = fmt.Errorf("failed to parse connection url: %w", err)
-		return
+		return fmt.Errorf("parse connection url: %w", err)
 	}
+
 	e.host = connectionStr.Host
 	e.username = connectionStr.User.Username()
 	e.password, _ = connectionStr.User.Password()
 
-	return
+	return nil
 }
 
 // checks if the catalog is in the ignored catalogs

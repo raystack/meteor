@@ -11,7 +11,7 @@ type Config struct {
 	ExtractorFactory     *registry.ExtractorFactory
 	ProcessorFactory     *registry.ProcessorFactory
 	SinkFactory          *registry.SinkFactory
-	Monitor              Monitor
+	Monitor              []Monitor
 	Logger               log.Logger
 	MaxRetries           int
 	RetryInitialInterval time.Duration

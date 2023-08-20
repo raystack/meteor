@@ -1,25 +1,20 @@
 package agent
 
 import (
-	"reflect"
+	"context"
 )
+
+type PluginInfo struct {
+	RecipeName string
+	PluginName string
+	PluginType string
+	Success    bool
+	BatchSize  int
+}
 
 // Monitor is the interface for monitoring the agent.
 type Monitor interface {
-	RecordRun(run Run)
-	RecordPlugin(recipeName, pluginName, pluginType string, success bool)
-}
-
-// defaultMonitor is the default implementation of Monitor.
-type defaultMonitor struct{}
-
-func (m *defaultMonitor) RecordRun(run Run) {
-}
-
-func (m *defaultMonitor) RecordPlugin(recipeName, pluginName, pluginType string, success bool) {
-}
-
-func isNilMonitor(monitor Monitor) bool {
-	v := reflect.ValueOf(monitor)
-	return !v.IsValid() || reflect.DeepEqual(v.Interface(), reflect.Zero(v.Type()).Interface())
+	RecordRun(ctx context.Context, run Run)
+	RecordPlugin(ctx context.Context, pluginInfo PluginInfo)
+	RecordSinkRetryCount(ctx context.Context, pluginInfo PluginInfo)
 }

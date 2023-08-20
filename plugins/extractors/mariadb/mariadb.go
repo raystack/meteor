@@ -7,16 +7,15 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql" // used to register the mariadb driver
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/salt/log"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"github.com/raystack/meteor/plugins/sqlutil"
 )
 
 //go:embed README.md
@@ -77,7 +76,8 @@ func New(logger log.Logger) *Extractor {
 
 // Init initializes the extractor
 func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error) {
-	if err = e.BaseExtractor.Init(ctx, config); err != nil {
+	err = e.BaseExtractor.Init(ctx, config)
+	if err != nil {
 		return err
 	}
 
@@ -86,21 +86,21 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	e.excludedDbs = sqlutil.BuildBoolMap(excludeDBList)
 	e.excludedTbl = sqlutil.BuildBoolMap(e.config.Exclude.Tables)
 
-	// create mariadb client
-	if e.db, err = sql.Open("mysql", e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+	e.db, err = sqlutil.OpenWithOtel("mysql", e.config.ConnectionURL, semconv.DBSystemMariaDB)
+	if err != nil {
+		return fmt.Errorf("create a client: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // Extract collects metadata of the database through emitter
-func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	defer e.db.Close()
 	e.emit = emit
 
 	// Get list of databases
-	dbs, err := sqlutil.FetchDBs(e.db, e.logger, "SHOW DATABASES;")
+	dbs, err := sqlutil.FetchDBs(ctx, e.db, e.logger, "SHOW DATABASES;")
 	if err != nil {
 		return err
 	}
@@ -111,48 +111,48 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) (err error) {
 		if e.isExcludedDB(database) {
 			continue
 		}
-		if err := e.extractTables(database); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", database)
+		if err := e.extractTables(ctx, database); err != nil {
+			return fmt.Errorf("extract tables from %s: %w", database, err)
 		}
 	}
-	return
+	return nil
 }
 
 // extractTables extracts tables from a given database
-func (e *Extractor) extractTables(database string) (err error) {
+func (e *Extractor) extractTables(ctx context.Context, database string) error {
 	// extract tables
-	_, err = e.db.Exec(fmt.Sprintf("USE %s;", database))
+	_, err := e.db.ExecContext(ctx, fmt.Sprintf("USE %s;", database))
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute USE query on %s", database)
+		return fmt.Errorf("execute USE query on %s: %w", database, err)
 	}
 
 	// get list of tables
-	tables, err := sqlutil.FetchTablesInDB(e.db, database, "SHOW TABLES;")
+	tables, _ := sqlutil.FetchTablesInDB(ctx, e.db, database, "SHOW TABLES;")
 	for _, tableName := range tables {
 		// skip excluded tables
 		if e.isExcludedTable(tableName, database) {
 			continue
 		}
-		if err := e.processTable(database, tableName); err != nil {
-			return errors.Wrap(err, "failed to process table")
+		if err := e.processTable(ctx, database, tableName); err != nil {
+			return fmt.Errorf("process table: %w", err)
 		}
 	}
-	return
+
+	return nil
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(database string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(tableName)
+func (e *Extractor) processTable(ctx context.Context, database, tableName string) error {
+	columns, err := e.extractColumns(ctx, tableName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to extract columns")
+		return fmt.Errorf("extract columns: %w", err)
 	}
 	data, err := anypb.New(&v1beta2.Table{
 		Columns:    columns,
 		Attributes: &structpb.Struct{},
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to build Any struct")
+		return fmt.Errorf("build Any struct: %w", err)
 	}
 	// push table to channel
 	e.emit(models.NewRecord(&v1beta2.Asset{
@@ -162,27 +162,29 @@ func (e *Extractor) processTable(database string, tableName string) (err error) 
 		Service: "mariadb",
 		Data:    data,
 	}))
-	return
+	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]*v1beta2.Column, error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
 				WHERE table_name = ?
 				ORDER BY COLUMN_NAME ASC;`
-	rows, err := e.db.Query(sqlStr, tableName)
+	rows, err := e.db.QueryContext(ctx, sqlStr, tableName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to execute a query to extract columns metadata")
+		return nil, fmt.Errorf("execute a query to extract columns metadata: %w", err)
 	}
+	defer rows.Close()
 
+	var result []*v1beta2.Column
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
 		err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to scan fields from query")
+			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
 		result = append(result, &v1beta2.Column{
@@ -193,6 +195,10 @@ func (e *Extractor) extractColumns(tableName string) (result []*v1beta2.Column, 
 			Length:      int64(length),
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate column metadata results: %w", err)
+	}
+
 	return result, nil
 }
 

@@ -66,25 +66,48 @@ func RunCmd() *cobra.Command {
 			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
 			plugins.SetLog(lg)
 
-			mt, err := newStatsdMonitor(cfg)
-			if err != nil {
-				return err
+			// Monitoring system signals and creating context
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+
+			var mts []agent.Monitor
+			if cfg.StatsdEnabled {
+				mt, err := newStatsdMonitor(cfg)
+				if err != nil {
+					return err
+				}
+
+				mts = append(mts, mt)
+
+			}
+
+			if cfg.OtelEnabled {
+				doneOtlp, err := metrics.InitOtel(ctx, cfg, lg, Version)
+				if err != nil {
+					return err
+				}
+				defer doneOtlp()
+
+				mt, err := metrics.NewOtelMonitor()
+				if err != nil {
+					return err
+				}
+
+				if mt != nil {
+					mts = append(mts, mt)
+				}
 			}
 
 			runner := agent.NewAgent(agent.Config{
 				ExtractorFactory:     registry.Extractors,
 				ProcessorFactory:     registry.Processors,
 				SinkFactory:          registry.Sinks,
-				Monitor:              mt,
+				Monitor:              mts,
 				Logger:               lg,
 				MaxRetries:           cfg.MaxRetries,
 				RetryInitialInterval: time.Duration(cfg.RetryInitialIntervalSeconds) * time.Second,
 				StopOnSinkError:      cfg.StopOnSinkError,
 			})
-
-			// Monitoring system signals and creating context
-			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-			defer stop()
 
 			recipes, err := recipe.NewReader(lg, pathToConfig).Read(args[0])
 			if err != nil {
@@ -142,13 +165,9 @@ func RunCmd() *cobra.Command {
 }
 
 func newStatsdMonitor(cfg config.Config) (*metrics.StatsdMonitor, error) {
-	if !cfg.StatsdEnabled {
-		return nil, nil
-	}
-
 	client, err := metrics.NewStatsdClient(cfg.StatsdHost)
 	if err != nil {
 		return nil, err
 	}
-	return metrics.NewStatsdMonitor(client, cfg.StatsdPrefix), nil
+	return metrics.NewStatsdMonitor(client, cfg.AppName), nil
 }
