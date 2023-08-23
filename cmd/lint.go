@@ -28,7 +28,7 @@ func LintCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
-		Args:    cobra.MatchAll(cobra.ExactArgs(1)),
+		Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		Short:   "Check for issues in recipes",
 		Long: heredoc.Doc(`
 			Check for issues specified recipes.
@@ -193,14 +193,12 @@ func printConfigError(rcp recipe.Recipe, pluginNode recipe.PluginNode, err plugi
 }
 
 // findPluginByName checks plugin by provided name
-func findPluginByName(plugins []recipe.PluginRecipe, name string) (plugin recipe.PluginRecipe, exists bool) {
-	for _, p := range plugins {
+func findPluginByName(pp []recipe.PluginRecipe, name string) (recipe.PluginRecipe, bool) {
+	for _, p := range pp {
 		if p.Name == name {
-			exists = true
-			plugin = p
-			return
+			return p, true
 		}
 	}
 
-	return
+	return recipe.PluginRecipe{}, false
 }

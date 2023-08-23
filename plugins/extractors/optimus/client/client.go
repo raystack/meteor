@@ -2,17 +2,17 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"google.golang.org/grpc/credentials/insecure"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/pkg/errors"
+	og "github.com/raystack/meteor/metrics/otelgrpc"
 	pb "github.com/raystack/optimus/protos/raystack/optimus/core/v1beta1"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -42,13 +42,13 @@ type client struct {
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string, maxSizeInMB int) (err error) {
+func (c *client) Connect(ctx context.Context, host string, maxSizeInMB int) error {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
+	var err error
 	if c.conn, err = c.createConnection(dialTimeoutCtx, host, maxSizeInMB); err != nil {
-		err = errors.Wrap(err, "error creating connection")
-		return
+		return fmt.Errorf("create connection: %w", err)
 	}
 
 	c.NamespaceServiceClient = pb.NewNamespaceServiceClient(c.conn)
@@ -56,7 +56,7 @@ func (c *client) Connect(ctx context.Context, host string, maxSizeInMB int) (err
 	c.JobSpecificationServiceClient = pb.NewJobSpecificationServiceClient(c.conn)
 	c.JobRunServiceClient = pb.NewJobRunServiceClient(c.conn)
 
-	return
+	return nil
 }
 
 func (c *client) Close() error {
@@ -64,6 +64,8 @@ func (c *client) Close() error {
 }
 
 func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB int) (*grpc.ClientConn, error) {
+	m := og.NewOtelGRPCMonitor(host)
+
 	if maxSizeInMB <= 0 {
 		maxSizeInMB = GRPCMaxClientRecvSizeMB
 	}
@@ -84,10 +86,12 @@ func (c *client) createConnection(ctx context.Context, host string, maxSizeInMB 
 			grpc_retry.UnaryClientInterceptor(retryOpts...),
 			otelgrpc.UnaryClientInterceptor(),
 			grpc_prometheus.UnaryClientInterceptor,
+			m.UnaryClientInterceptor(),
 		)),
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(
 			otelgrpc.StreamClientInterceptor(),
 			grpc_prometheus.StreamClientInterceptor,
+			m.StreamClientInterceptor(),
 		)),
 	)
 

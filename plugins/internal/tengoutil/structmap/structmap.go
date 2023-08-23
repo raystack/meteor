@@ -74,7 +74,7 @@ func AsStructWithTag(tagName string, input, output interface{}) error {
 }
 
 func checkAssetDataHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_ reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		if t != reflect.TypeOf(v1beta2.Asset{}) && t != reflect.TypeOf(&v1beta2.Asset{}) {
 			return data, nil
 		}
@@ -95,7 +95,7 @@ func checkAssetDataHookFunc() mapstructure.DecodeHookFuncType {
 // stringToTimestampHookFunc returns a DecodeHookFunc that converts
 // strings to timestamppb.Timestamp.
 func stringToTimestampHookFunc(layout string) mapstructure.DecodeHookFuncType {
-	return func(_ reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		s, ok := data.(string)
 		if !ok {
 			return data, nil
@@ -115,7 +115,7 @@ func stringToTimestampHookFunc(layout string) mapstructure.DecodeHookFuncType {
 }
 
 func timeToTimestampHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_ reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		ts, ok := data.(time.Time)
 		if !ok {
 			return data, nil
@@ -129,7 +129,7 @@ func timeToTimestampHookFunc() mapstructure.DecodeHookFuncType {
 }
 
 func mapToAttributesHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_ reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		m, ok := data.(map[string]interface{})
 		if !ok {
 			return data, nil
@@ -148,7 +148,7 @@ func mapToAnyPBHookFunc() mapstructure.DecodeHookFuncType {
 		return nil, fmt.Errorf("mapstructure map to anypb hook: %s: %w", step, err)
 	}
 
-	return func(_ reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		m, ok := data.(map[string]interface{})
 		if !ok {
 			return data, nil
