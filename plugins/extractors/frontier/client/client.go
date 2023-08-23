@@ -9,6 +9,7 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	sh "github.com/raystack/frontier/proto/v1beta1"
+	og "github.com/raystack/meteor/metrics/otelgrpc"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -35,18 +36,19 @@ type client struct {
 	conn *grpc.ClientConn
 }
 
-func (c *client) Connect(ctx context.Context, host string) (err error) {
+func (c *client) Connect(ctx context.Context, host string) error {
 	dialTimeoutCtx, dialCancel := context.WithTimeout(ctx, time.Second*2)
 	defer dialCancel()
 
-	if c.conn, err = c.createConnection(dialTimeoutCtx, host); err != nil {
-		err = fmt.Errorf("error creating connection: %w", err)
-		return
+	var err error
+	c.conn, err = c.createConnection(dialTimeoutCtx, host)
+	if err != nil {
+		return fmt.Errorf("create connection: %w", err)
 	}
 
 	c.FrontierServiceClient = sh.NewFrontierServiceClient(c.conn)
 
-	return
+	return nil
 }
 
 func (c *client) Close() error {
@@ -54,6 +56,8 @@ func (c *client) Close() error {
 }
 
 func (c *client) createConnection(ctx context.Context, host string) (*grpc.ClientConn, error) {
+	m := og.NewOtelGRPCMonitor(host)
+
 	retryOpts := []grpc_retry.CallOption{
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponential(100 * time.Millisecond)),
 		grpc_retry.WithMax(GRPCMaxRetry),
@@ -70,10 +74,12 @@ func (c *client) createConnection(ctx context.Context, host string) (*grpc.Clien
 			grpc_retry.UnaryClientInterceptor(retryOpts...),
 			otelgrpc.UnaryClientInterceptor(),
 			grpc_prometheus.UnaryClientInterceptor,
+			m.UnaryClientInterceptor(),
 		)),
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient(
 			otelgrpc.StreamClientInterceptor(),
 			grpc_prometheus.StreamClientInterceptor,
+			m.StreamClientInterceptor(),
 		)),
 	)
 

@@ -15,21 +15,18 @@ import (
 	"testing"
 	"time"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/raystack/meteor/test/utils"
-
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/cmd"
+	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	_ "github.com/raystack/meteor/plugins/extractors"
 	_ "github.com/raystack/meteor/plugins/processors"
 	_ "github.com/raystack/meteor/plugins/sinks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -149,11 +146,10 @@ func listenToTopic(ctx context.Context, topic string, data *[]*v1beta2.Asset) er
 		msg, err := reader.ReadMessage(ctx)
 		if err != nil {
 			break
-
 		}
 		var convertMsg v1beta2.Asset
 		if err := proto.Unmarshal(msg.Value, &convertMsg); err != nil {
-			return errors.Wrap(err, "failed to parse kafka message")
+			return fmt.Errorf("parse kafka message: %w", err)
 		}
 		*data = append(*data, &convertMsg)
 	}
@@ -165,7 +161,7 @@ func listenToTopic(ctx context.Context, topic string, data *[]*v1beta2.Asset) er
 func setupKafka() error {
 	conn, err := kafka.DialLeader(context.TODO(), "tcp", net.JoinHostPort(broker.Host, strconv.Itoa(broker.Port)), testTopic, partition)
 	if err != nil {
-		return errors.Wrap(err, "failed to setup kafka connection")
+		return fmt.Errorf("setup kafka connection: %w", err)
 	}
 	defer func(conn *kafka.Conn) {
 		if err := conn.Close(); err != nil {
@@ -174,14 +170,14 @@ func setupKafka() error {
 	}(conn)
 
 	if err := conn.DeleteTopics(testTopic); err != nil {
-		return errors.Wrap(err, "failed to delete topic")
+		return fmt.Errorf("delete topic: %w", err)
 	}
 	if err := conn.CreateTopics(kafka.TopicConfig{
 		Topic:             testTopic,
 		NumPartitions:     1,
 		ReplicationFactor: 1,
 	}); err != nil {
-		return errors.Wrap(err, "failed to create topic")
+		return fmt.Errorf("create topic: %w", err)
 	}
 
 	return nil
@@ -197,7 +193,7 @@ func setupMySQL() (err error) {
 		fmt.Sprintf(`CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s';`, user, pass),
 		fmt.Sprintf(`GRANT ALL PRIVILEGES ON *.* TO '%s'@'%%';`, user),
 	}); err != nil {
-		return errors.Wrap(err, "failed to create database")
+		return fmt.Errorf("create database: %w", err)
 	}
 
 	// create and populate tables
@@ -207,7 +203,7 @@ func setupMySQL() (err error) {
 		"CREATE TABLE jobs (job_id int, job varchar(255), department varchar(255));",
 		"INSERT INTO jobs VALUES (2, 'test2', 'test22');",
 	}); err != nil {
-		return errors.Wrap(err, "failed to populate database")
+		return fmt.Errorf("populate database: %w", err)
 	}
 
 	return
@@ -245,10 +241,10 @@ func kafkaDockerSetup() (purge func() error, err error) {
 	kafkaRetryFn := func(resource *dockertest.Resource) (err error) {
 		// create client
 		if conn, err = kafka.Dial("tcp", brokerHost); err != nil {
-			return errors.Wrap(err, "failed to kafka create client")
+			return fmt.Errorf("kafka create client: %w", err)
 		}
 		if broker, err = conn.Controller(); err != nil {
-			return errors.Wrap(err, "failed to generate broker request")
+			return fmt.Errorf("generate broker request: %w", err)
 		}
 		return
 	}
@@ -280,7 +276,7 @@ func mysqlDockerSetup() (purge func() error, err error) {
 	mysqlRetryFn := func(resource *dockertest.Resource) (err error) {
 		db, err = sql.Open("mysql", fmt.Sprintf("root:%s@tcp(%s)/", pass, mysqlHost))
 		if err != nil {
-			return errors.Wrap(err, "failed to create mysql client")
+			return fmt.Errorf("create mysql client: %w", err)
 		}
 		return db.Ping()
 	}

@@ -83,7 +83,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		}
 
 		if err = s.send(ctx, userRequestBody); err != nil {
-			return errors.Wrap(err, "error sending data")
+			return fmt.Errorf("send data: %w", err)
 		}
 
 		s.logger.Info("successfully sinked record to frontier", "record", asset.Name)
@@ -92,10 +92,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	return nil
 }
 
-func (s *Sink) Close() (err error) {
-	return
-	//TODO: Connection closes even when some records are unpiblished
-	//TODO: return s.client.Close()
+func (*Sink) Close() error {
+	return nil
 }
 
 func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) error {
@@ -125,7 +123,7 @@ func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) er
 			return err
 		}
 	} else {
-		err = fmt.Errorf("not able to parse error returned %v", err)
+		err = fmt.Errorf("unable to parse error returned: %w", err)
 	}
 
 	return err
@@ -137,7 +135,7 @@ func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequest
 	var user assetsv1beta2.User
 	err := data.UnmarshalTo(&user)
 	if err != nil {
-		return &sh.UserRequestBody{}, errors.Wrap(err, "not a User struct")
+		return &sh.UserRequestBody{}, fmt.Errorf("not a User struct: %w", err)
 	}
 
 	if user.FullName == "" {

@@ -1,7 +1,8 @@
 package registry
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/raystack/meteor/plugins"
 )
 
@@ -19,7 +20,7 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 }
 
 // Info returns information about a Sink.
-func (f *SinkFactory) Info(name string) (info plugins.Info, err error) {
+func (f *SinkFactory) Info(name string) (plugins.Info, error) {
 	sink, err := f.Get(name)
 	if err != nil {
 		return plugins.Info{}, err
@@ -38,10 +39,11 @@ func (f *SinkFactory) List() map[string]plugins.Info {
 }
 
 // Register registers a Sink.
-func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) (err error) {
+func (f *SinkFactory) Register(name string, fn func() plugins.Syncer) error {
 	if _, ok := f.fnStore[name]; ok {
-		return errors.Errorf("duplicate syncer: %s", name)
+		return fmt.Errorf("duplicate syncer: %s", name)
 	}
+
 	f.fnStore[name] = fn
-	return
+	return nil
 }

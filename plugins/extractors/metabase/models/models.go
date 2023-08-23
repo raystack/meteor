@@ -7,11 +7,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	datasetQueryTypeQuery  = "query"
-	datasetQueryTypeNative = "native"
-)
-
 type Dashboard struct {
 	ID           int          `json:"id"`
 	CreatorID    int          `json:"creator_id"`

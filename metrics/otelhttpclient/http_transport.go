@@ -46,7 +46,7 @@ func NewHTTPTransport(baseTransport http.RoundTripper) http.RoundTripper {
 	}
 
 	icl := &httpTransport{roundTripper: baseTransport}
-	icl.createMeasures(otel.Meter("github.com/goto/meteor/metrics/otehttpclient"))
+	icl.createMeasures(otel.Meter("github.com/raystack/meteor/metrics/otehttpclient"))
 
 	return icl
 }
