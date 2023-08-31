@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"strings"
 	"sync"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
@@ -22,6 +23,9 @@ import (
 	"github.com/goto/meteor/utils"
 	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -60,6 +64,12 @@ type Exclude struct {
 
 const (
 	maxPageSizeDefault = 100
+
+	metricDatasetsDurn       = "meteor.bq.client.datasets.duration"
+	metricTablesDurn         = "meteor.bq.client.tables.duration"
+	metricTableDurn          = "meteor.bq.client.table.duration"
+	metricExcludedDatasetCtr = "meteor.bq.dataset.excluded"
+	metricExcludedTableCtr   = "meteor.bq.table.excluded"
 )
 
 var sampleConfig = `
@@ -108,6 +118,12 @@ type Extractor struct {
 	policyTagClient *datacatalog.PolicyTagManagerClient
 	newClient       NewClientFunc
 	randFn          randFn
+
+	datasetsDurn       metric.Int64Histogram
+	tablesDurn         metric.Int64Histogram
+	tableDurn          metric.Int64Histogram
+	excludedDatasetCtr metric.Int64Counter
+	excludedTableCtr   metric.Int64Counter
 }
 
 type randFn func(rndSeed int64) func(int64) int64
@@ -115,6 +131,23 @@ type randFn func(rndSeed int64) func(int64) int64
 type NewClientFunc func(ctx context.Context, logger log.Logger, config *Config) (*bigquery.Client, error)
 
 func New(logger log.Logger, newClient NewClientFunc, randFn randFn) *Extractor {
+	meter := otel.Meter("github.com/goto/meteor/plugins/extractors/bigquery")
+
+	datasetsDurn, err := meter.Int64Histogram(metricDatasetsDurn, metric.WithUnit("ms"))
+	handleOtelErr(err)
+
+	tablesDurn, err := meter.Int64Histogram(metricTablesDurn, metric.WithUnit("ms"))
+	handleOtelErr(err)
+
+	tableDurn, err := meter.Int64Histogram(metricTableDurn, metric.WithUnit("ms"))
+	handleOtelErr(err)
+
+	excludedDatasetCtr, err := meter.Int64Counter(metricExcludedDatasetCtr)
+	handleOtelErr(err)
+
+	excludedTableCtr, err := meter.Int64Counter(metricExcludedTableCtr)
+	handleOtelErr(err)
+
 	galc := auditlog.New(logger)
 
 	e := &Extractor{
@@ -122,6 +155,12 @@ func New(logger log.Logger, newClient NewClientFunc, randFn randFn) *Extractor {
 		galClient: galc,
 		newClient: newClient,
 		randFn:    randFn,
+
+		datasetsDurn:       datasetsDurn,
+		tablesDurn:         tablesDurn,
+		tableDurn:          tableDurn,
+		excludedDatasetCtr: excludedDatasetCtr,
+		excludedTableCtr:   excludedTableCtr,
 	}
 	e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
 	e.ScopeNotRequired = true
@@ -171,26 +210,47 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	// Fetch and iterate over datasets
 	pager := iterator.NewPager(e.client.Datasets(ctx), pageSize, "")
 	for {
-		var datasets []*bigquery.Dataset
-		nextToken, err := pager.NextPage(&datasets)
+		datasets, hasNext, err := e.fetchDatasetsNextPage(ctx, pager)
 		if err != nil {
-			return fmt.Errorf("fetch dataset: %w", err)
+			return err
 		}
 
 		for _, ds := range datasets {
 			if IsExcludedDataset(ds.DatasetID, e.config.Exclude.Datasets) {
+				e.excludedDatasetCtr.Add(
+					ctx, 1, metric.WithAttributes(attribute.String("bq.project_id", e.config.ProjectID)),
+				)
 				e.logger.Debug("excluding dataset from bigquery extract", "dataset_id", ds.DatasetID)
 				continue
 			}
 			e.extractTable(ctx, ds, emit)
 		}
 
-		if nextToken == "" {
+		if !hasNext {
 			break
 		}
 	}
 
 	return nil
+}
+
+func (e *Extractor) fetchDatasetsNextPage(ctx context.Context, pager *iterator.Pager) (datasets []*bigquery.Dataset, hasNext bool, err error) {
+	defer func(start time.Time) {
+		attrs := []attribute.KeyValue{attribute.String("bq.project_id", e.config.ProjectID)}
+		if err != nil {
+			attrs = append(attrs, attribute.String("bq.error_code", plugins.BQErrReason(err)))
+		}
+		e.datasetsDurn.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...),
+		)
+	}(time.Now())
+
+	nextToken, err := pager.NextPage(&datasets)
+	if err != nil {
+		return nil, false, fmt.Errorf("fetch dataset: %w", err)
+	}
+
+	return datasets, nextToken != "", nil
 }
 
 // CreateClient creates a bigquery client
@@ -227,8 +287,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 
 	pager := iterator.NewPager(ds.Tables(ctx), pageSize, "")
 	for {
-		var tables []*bigquery.Table
-		nextToken, err := pager.NextPage(&tables)
+		tables, hasNext, err := e.fetchTablesNextPage(ctx, ds.DatasetID, pager)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				break
@@ -240,6 +299,10 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 
 		for _, table := range tables {
 			if IsExcludedTable(ds.DatasetID, table.TableID, e.config.Exclude.Tables) {
+				e.excludedTableCtr.Add(ctx, 1, metric.WithAttributes(
+					attribute.String("bq.project_id", e.config.ProjectID),
+					attribute.String("bq.dataset_id", ds.DatasetID),
+				))
 				e.logger.Debug("excluding table from bigquery extract", "dataset_id", ds.DatasetID, "table_id", table.TableID)
 				continue
 			}
@@ -247,7 +310,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 			tableFQN := table.FullyQualifiedName()
 
 			e.logger.Debug("extracting table", "table", tableFQN)
-			tmd, err := table.Metadata(ctx)
+			tmd, err := e.fetchTableMetadata(ctx, table)
 			if err != nil {
 				e.logger.Error("failed to fetch table metadata", "err", err, "table", tableFQN)
 				continue
@@ -262,10 +325,35 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 			emit(models.NewRecord(asset))
 		}
 
-		if nextToken == "" {
+		if !hasNext {
 			break
 		}
 	}
+}
+
+func (e *Extractor) fetchTablesNextPage(
+	ctx context.Context, datasetID string, pager *iterator.Pager,
+) (tables []*bigquery.Table, hasNext bool, err error) {
+	defer func(start time.Time) {
+		attrs := []attribute.KeyValue{
+			attribute.String("bq.project_id", e.config.ProjectID),
+			attribute.String("bq.dataset_id", datasetID),
+		}
+		if err != nil {
+			attrs = append(attrs, attribute.String("bq.error_code", plugins.BQErrReason(err)))
+		}
+
+		e.tablesDurn.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...),
+		)
+	}(time.Now())
+
+	nextToken, err := pager.NextPage(&tables)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return tables, nextToken != "", nil
 }
 
 // Build the bigquery table metadata
@@ -274,7 +362,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	if e.config.IsCollectTableUsage {
 		// Fetch and extract logs first to build a map
 		var errL error
-		tableStats, errL = e.galClient.Collect(ctx, t.TableID)
+		tableStats, errL = e.galClient.Collect(ctx, t)
 		if errL != nil {
 			e.logger.Warn("error populating table stats usage", "error", errL)
 		}
@@ -637,6 +725,25 @@ func (e *Extractor) getMaxPageSize() int {
 	return maxPageSizeDefault
 }
 
+func (e *Extractor) fetchTableMetadata(ctx context.Context, tbl *bigquery.Table) (md *bigquery.TableMetadata, err error) {
+	defer func(start time.Time) {
+		attrs := []attribute.KeyValue{
+			attribute.String("bq.operation", "table.metadata"),
+			attribute.String("bq.project_id", tbl.ProjectID),
+			attribute.String("bq.dataset_id", tbl.DatasetID),
+		}
+		if err != nil {
+			attrs = append(attrs, attribute.String("bq.error_code", plugins.BQErrReason(err)))
+		}
+
+		e.tableDurn.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...),
+		)
+	}(time.Now())
+
+	return tbl.Metadata(ctx)
+}
+
 // Register the extractor to catalog
 func init() {
 	if err := registry.Extractors.Register("bigquery", func() plugins.Extractor {
@@ -660,4 +767,10 @@ func pickFirstNonZero(ints ...int) int {
 		}
 	}
 	return 0
+}
+
+func handleOtelErr(err error) {
+	if err != nil {
+		otel.Handle(err)
+	}
 }

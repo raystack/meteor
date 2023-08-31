@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/logging/logadmin"
+	"github.com/goto/meteor/plugins"
 	"github.com/goto/salt/log"
 	"github.com/pkg/errors"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	auditpb "google.golang.org/genproto/googleapis/cloud/audit"
@@ -23,20 +28,34 @@ type Config struct {
 	UsageProjectIDs     []string
 }
 
-const advancedFilterTemplate = `protoPayload.methodName="jobservice.jobcompleted" AND ` +
-	`resource.type="bigquery_resource" AND NOT ` +
-	`protoPayload.serviceData.jobCompletedEvent.job.jobConfiguration.query.query:(INFORMATION_SCHEMA OR __TABLES__) AND ` +
-	`timestamp >= "%s" AND timestamp < "%s" AND %s`
+const (
+	advancedFilterTemplate = `protoPayload.methodName="jobservice.jobcompleted" AND ` +
+		`resource.type="bigquery_resource" AND NOT ` +
+		`protoPayload.serviceData.jobCompletedEvent.job.jobConfiguration.query.query:(INFORMATION_SCHEMA OR __TABLES__) AND ` +
+		`timestamp >= "%s" AND timestamp < "%s" AND %s`
+
+	metricTableDurn = "meteor.bq.client.table.duration"
+)
 
 type AuditLog struct {
 	logger log.Logger
 	client *logadmin.Client
 	config Config
+
+	histogram metric.Int64Histogram
 }
 
 func New(logger log.Logger) *AuditLog {
+	h, err := otel.Meter("github.com/goto/meteor/plugins/extractors/bigquery").
+		Int64Histogram(metricTableDurn, metric.WithUnit("ms"))
+	if err != nil {
+		otel.Handle(err)
+	}
+
 	return &AuditLog{
 		logger: logger,
+
+		histogram: h,
 	}
 }
 
@@ -69,12 +88,27 @@ func (l *AuditLog) createClient(ctx context.Context) (*logadmin.Client, error) {
 	return logadmin.NewClient(ctx, l.config.ProjectID, option.WithCredentialsJSON([]byte(l.config.ServiceAccountJSON)))
 }
 
-func (l *AuditLog) Collect(ctx context.Context, tableID string) (*TableStats, error) {
+func (l *AuditLog) Collect(ctx context.Context, tbl *bigquery.Table) (stats *TableStats, err error) {
+	defer func(start time.Time) {
+		attrs := []attribute.KeyValue{
+			attribute.String("bq.operation", "table.audit_logs"),
+			attribute.String("bq.project_id", tbl.ProjectID),
+			attribute.String("bq.dataset_id", tbl.DatasetID),
+		}
+		if err != nil {
+			attrs = append(attrs, attribute.String("bq.error_code", plugins.BQErrReason(err)))
+		}
+
+		l.histogram.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...),
+		)
+	}(time.Now())
+
 	if l.client == nil {
 		return nil, errors.New("auditlog client is nil")
 	}
 
-	filter := l.buildFilter(tableID)
+	filter := l.buildFilter(tbl.TableID)
 	it := l.client.Entries(ctx,
 		logadmin.ProjectIDs(l.config.UsageProjectIDs),
 		logadmin.Filter(filter))
@@ -82,7 +116,7 @@ func (l *AuditLog) Collect(ctx context.Context, tableID string) (*TableStats, er
 	l.logger.Info("getting logs in these projects", "projects", l.config.UsageProjectIDs)
 	l.logger.Info("getting logs with the filter", "filter", filter)
 
-	tableStats := NewTableStats()
+	stats = NewTableStats()
 	for {
 		entry, err := it.Next()
 		if errors.Is(err, iterator.Done) {
@@ -98,12 +132,12 @@ func (l *AuditLog) Collect(ctx context.Context, tableID string) (*TableStats, er
 			continue
 		}
 
-		if errF := tableStats.Populate(logData); errF != nil {
+		if errF := stats.Populate(logData); errF != nil {
 			l.logger.Warn("error populating logdata", "err", errF)
 			continue
 		}
 	}
-	return tableStats, nil
+	return stats, nil
 }
 
 func (l *AuditLog) buildFilter(tableID string) string {
