@@ -45,7 +45,7 @@ func LintCmd() *cobra.Command {
 			$ meteor lint .
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load("./meteor.yaml")

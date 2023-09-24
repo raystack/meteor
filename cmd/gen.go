@@ -31,7 +31,7 @@ func GenCmd() *cobra.Command {
 			$ meteor gen my-template.yaml -o ./output-dir -d ./data.yaml
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			templatePath := args[0]

@@ -55,7 +55,7 @@ func RunCmd() *cobra.Command {
 		`),
 		Args: cobra.ExactArgs(1),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(configFile)

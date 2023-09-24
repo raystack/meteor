@@ -19,7 +19,7 @@ func ListCmd() *cobra.Command {
 		Use:   "list <command>",
 		Short: "List available plugins",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 	cmd.AddCommand(ListExtCmd())
@@ -49,7 +49,7 @@ func ListExtCmd() *cobra.Command {
 			$ meteor list e
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			extractors := registry.Extractors.List()
@@ -89,7 +89,7 @@ func ListSinksCmd() *cobra.Command {
 			$ meteor list s
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			sinks := registry.Sinks.List()
@@ -128,7 +128,7 @@ func ListProccCmd() *cobra.Command {
 			$ meteor list p
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			processors := registry.Processors.List()

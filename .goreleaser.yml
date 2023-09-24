@@ -2,12 +2,19 @@ project_name: meteor
 
 release:
   prerelease: auto
-  draft: true
 
 before:
   hooks:
     - go mod tidy
     - make clean
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^build:"
 
 builds:
   - main: ./main.go
@@ -59,14 +66,6 @@ checksum:
 snapshot:
   name_template: "{{ .Tag }}-next"
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^build:"
-
 dockers:
   - goos: linux
     goarch: amd64
@@ -78,6 +77,24 @@ dockers:
       - "docker.io/raystack/{{.ProjectName}}:{{ .Version }}"
       - "docker.io/raystack/{{.ProjectName}}:{{ .Version }}-amd64"
 
+nfpms:
+  - maintainer: Raystack
+    description: "Metadata collection tool."
+    homepage: https://github.com/raystack/meteor
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+      - apk
+
+scoops:
+  - homepage: "https://github.com/raystack/meteor"
+    description: "Metadata collection tool."
+    license: Apache 2.0
+    bucket:
+      owner: raystack
+      name: scoop-bucket
+
 brews:
   - name: meteor
     homepage: "https://github.com/raystack/meteor"
@@ -87,7 +104,6 @@ brews:
       name: homebrew-tap
     license: "Apache 2.0"
     folder: Formula
-
     dependencies:
       - name: git
     install: |-

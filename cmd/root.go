@@ -20,7 +20,7 @@ func New() *cobra.Command {
 			$ meteor gen recipe --extractor=date --sink console
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 			"help:learn": heredoc.Doc(`
 				Use 'meteor <command> <subcommand> --help' for more information about a command.
 				Read the manual at https://raystack.github.io/meteor/

@@ -17,7 +17,7 @@ func InfoCmd() *cobra.Command {
 		Use:   "info <command>",
 		Short: "Display plugin information",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 	cmd.AddCommand(InfoSinkCmd())
@@ -41,7 +41,7 @@ func InfoSinkCmd() *cobra.Command {
 		`),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sinks []string
@@ -86,7 +86,7 @@ func InfoExtCmd() *cobra.Command {
 		`),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var extractors []string
@@ -130,7 +130,7 @@ func InfoProccCmd() *cobra.Command {
 		`),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var processors []string
