@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/googleapis/gax-go/v2/apierror"
 	"github.com/mcuadros/go-defaults"
 	"github.com/mitchellh/mapstructure"
 	"github.com/raystack/meteor/models"
@@ -122,6 +123,16 @@ func CaraMLStoreURN(scope, project, featureTable string) string {
 func DrainBody(resp *http.Response) {
 	_, _ = io.Copy(io.Discard, resp.Body)
 	_ = resp.Body.Close()
+}
+
+func BQErrReason(err error) string {
+	reason := "UNKNOWN"
+	var apiErr *apierror.APIError
+	if errors.As(err, &apiErr) {
+		reason = apiErr.Reason()
+	}
+
+	return reason
 }
 
 func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err error) {
