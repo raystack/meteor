@@ -18,7 +18,7 @@ func NewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Bootstrap new recipes",
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 	}
 
@@ -58,7 +58,7 @@ func NewRecipeCmd() *cobra.Command {
 			$ meteor new recipe sample -e bigquery -s compass > recipe.yaml
 		`),
 		Annotations: map[string]string{
-			"group:core": "true",
+			"group": "core",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var sinkList []string
