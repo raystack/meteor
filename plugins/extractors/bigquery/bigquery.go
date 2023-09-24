@@ -20,6 +20,7 @@ import (
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery/auditlog"
+	"github.com/raystack/meteor/plugins/extractors/bigquery/upstream"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
 	"github.com/raystack/salt/log"
@@ -53,6 +54,7 @@ type Config struct {
 	IsCollectTableUsage  bool     `json:"collect_table_usage" yaml:"collect_table_usage" mapstructure:"collect_table_usage" default:"false"`
 	UsagePeriodInDay     int64    `json:"usage_period_in_day" yaml:"usage_period_in_day" mapstructure:"usage_period_in_day" default:"7"`
 	UsageProjectIDs      []string `json:"usage_project_ids" yaml:"usage_project_ids" mapstructure:"usage_project_ids"`
+	BuildViewLineage     bool     `json:"build_view_lineage" yaml:"build_view_lineage" mapstructure:"build_view_lineage" default:"false"`
 }
 
 type Exclude struct {
@@ -83,6 +85,7 @@ exclude:
 	- dataset_c.table_a
 max_page_size: 100
 include_column_profile: true
+build_view_lineage: true
 # Only one of service_account_base64 / service_account_json is needed. 
 # If both are present, service_account_base64 takes precedence
 service_account_base64: ____base64_encoded_service_account____
@@ -432,7 +435,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		e.logger.Warn("error creating Any struct", "error", err)
 	}
 
-	return &v1beta2.Asset{
+	asset := &v1beta2.Asset{
 		Urn:         tableURN,
 		Name:        t.TableID,
 		Type:        "table",
@@ -440,7 +443,17 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		Service:     "bigquery",
 		Data:        table,
 		Labels:      md.Labels,
-	}, nil
+	}
+
+	if e.config.BuildViewLineage && (md.Type == bigquery.ViewTable || md.Type == bigquery.MaterializedView) {
+		query := getViewQuery(md)
+		upstreamResources := getUpstreamResources(query)
+		asset.Lineage = &v1beta2.Lineage{
+			Upstreams: upstreamResources,
+		}
+	}
+
+	return asset, nil
 }
 
 // Extract table schema
@@ -742,6 +755,32 @@ func (e *Extractor) fetchTableMetadata(ctx context.Context, tbl *bigquery.Table)
 	}(time.Now())
 
 	return tbl.Metadata(ctx)
+}
+
+func getViewQuery(md *bigquery.TableMetadata) string {
+	switch md.Type {
+	case bigquery.ViewTable:
+		return md.ViewQuery
+	case bigquery.MaterializedView:
+		return md.MaterializedView.Query
+	}
+	return ""
+}
+
+func getUpstreamResources(query string) []*v1beta2.Resource {
+	upstreamDependencies := upstream.ParseTopLevelUpstreamsFromQuery(query)
+	uniqueUpstreamDependencies := upstream.UniqueFilterResources(upstreamDependencies)
+	var upstreams []*v1beta2.Resource
+	for _, dependency := range uniqueUpstreamDependencies {
+		urn := plugins.BigQueryURN(dependency.Project, dependency.Dataset, dependency.Name)
+		upstreams = append(upstreams, &v1beta2.Resource{
+			Urn:     urn,
+			Name:    dependency.Name,
+			Type:    "table",
+			Service: "bigquery",
+		})
+	}
+	return upstreams
 }
 
 // Register the extractor to catalog
