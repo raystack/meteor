@@ -706,7 +706,20 @@ func (e *Extractor) getPolicyTagList(ctx context.Context, col *bigquery.FieldSch
 			continue
 		}
 
-		pt = append(pt, fmt.Sprintf("policy_tag:%s:%s", policyTag.DisplayName, policyTag.Name))
+		policyTagSplit := strings.Split(name, "/")
+		if len(policyTagSplit) < 2 {
+			e.logger.Error("error splitting policy tag ", "policy_tag", name, "err", "incorrect format")
+			continue
+		}
+
+		taxonomyResourceName := strings.Join(policyTagSplit[:len(policyTagSplit)-2], "/")
+		taxonomy, err := e.policyTagClient.GetTaxonomy(ctx, &datacatalogpb.GetTaxonomyRequest{Name: taxonomyResourceName})
+		if err != nil {
+			e.logger.Error("error fetching taxonomy", "taxonomy", taxonomy, "err", err)
+			continue
+		}
+
+		pt = append(pt, fmt.Sprintf("%s:%s:%s", taxonomy.DisplayName, policyTag.DisplayName, policyTag.Name))
 	}
 
 	return pt
