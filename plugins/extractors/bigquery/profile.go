@@ -1,11 +1,12 @@
 package bigquery
 
 import (
+	"cloud.google.com/go/bigquery"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins/extractors/bigquery/auditlog"
 )
 
-func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats) *v1beta2.TableProfile {
+func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats, md *bigquery.TableMetadata) *v1beta2.TableProfile {
 	var tableUsage int64
 	var commonJoins []*v1beta2.TableCommonJoin
 	var filterConditions []string
@@ -41,5 +42,6 @@ func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.Tabl
 		UsageCount:  tableUsage,
 		CommonJoins: commonJoins,
 		Filters:     filterConditions,
+		TotalRows:   int64(md.NumRows),
 	}
 }

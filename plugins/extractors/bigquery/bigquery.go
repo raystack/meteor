@@ -374,7 +374,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	tableFQN := t.FullyQualifiedName()
 	tableURN := plugins.BigQueryURN(t.ProjectID, t.DatasetID, t.TableID)
 
-	tableProfile := e.buildTableProfile(tableURN, tableStats)
+	tableProfile := e.buildTableProfile(tableURN, tableStats, md)
 	var partitionField string
 	partitionData := make(map[string]interface{})
 	if md.TimePartitioning != nil {

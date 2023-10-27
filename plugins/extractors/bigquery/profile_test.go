@@ -6,6 +6,7 @@ package bigquery
 import (
 	"testing"
 
+	"cloud.google.com/go/bigquery"
 	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/plugins/extractors/bigquery/auditlog"
@@ -22,7 +23,7 @@ func TestBuildTableProfile(t *testing.T) {
 			},
 		}
 
-		tp := extr.buildTableProfile(tableURN, tableStats)
+		tp := extr.buildTableProfile(tableURN, tableStats, &bigquery.TableMetadata{})
 
 		assert.Empty(t, tp.UsageCount)
 		assert.Empty(t, tp.CommonJoins)
@@ -35,7 +36,7 @@ func TestBuildTableProfile(t *testing.T) {
 			},
 		}
 
-		tp := extr.buildTableProfile(tableURN, nil)
+		tp := extr.buildTableProfile(tableURN, nil, &bigquery.TableMetadata{})
 
 		assert.Empty(t, tp.UsageCount)
 		assert.Empty(t, tp.CommonJoins)
@@ -77,7 +78,9 @@ func TestBuildTableProfile(t *testing.T) {
 			},
 		}
 
-		tp := extr.buildTableProfile(tableURN, tableStats)
+		tp := extr.buildTableProfile(tableURN, tableStats, &bigquery.TableMetadata{
+			NumRows: 42,
+		})
 
 		assert.EqualValues(t, 5, tp.UsageCount)
 		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
@@ -94,5 +97,6 @@ func TestBuildTableProfile(t *testing.T) {
 			Conditions: []string{"ON t1.somefield = t2.anotherfield"},
 		})
 		assert.Contains(t, tp.Filters, "WHERE t1.somefield = 'somevalue'")
+		assert.Equal(t, tp.TotalRows, int64(42))
 	})
 }
