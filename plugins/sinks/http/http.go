@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/models"
+	v1beta2 "github.com/goto/meteor/models/gotocompany/assets/v1beta2"
 	"github.com/goto/meteor/plugins"
 	"github.com/goto/meteor/registry"
 	"github.com/goto/salt/log"
@@ -26,6 +28,10 @@ type Config struct {
 	Headers     map[string]string `mapstructure:"headers"`
 	Method      string            `mapstructure:"method" validate:"required"`
 	SuccessCode int               `mapstructure:"success_code" default:"200"`
+	Script      *struct {
+		Engine string `mapstructure:"engine" validate:"required,oneof=tengo"`
+		Source string `mapstructure:"source" validate:"required"`
+	} `mapstructure:"script"`
 }
 
 var info = plugins.Info{
@@ -34,11 +40,21 @@ var info = plugins.Info{
 	Tags:        []string{"http", "sink"},
 	SampleConfig: heredoc.Doc(`
 	# The url (hostname and route) of the http service
-	url: https://compass.com/route
+	url: https://compass.requestcatcher.com/{{ .Type }}/{{ .Urn }}
 	method: "PUT"
 	# Additional HTTP headers, multiple headers value are separated by a comma
 	headers:
 	  X-Other-Header: value1, value2
+	script:
+	  engine: tengo
+	  source: |
+		payload := {
+			details: {
+				some_key: asset.urn,
+				another_key: asset.name
+			}
+		}
+		sink(payload)
 	`),
 }
 
@@ -75,12 +91,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		metadata := record.Data()
 		s.logger.Info("sinking record to http", "record", metadata.Urn)
-		payload, err := json.Marshal(metadata)
-		if err != nil {
-			return fmt.Errorf("build http payload: %w", err)
-		}
 
-		if err = s.send(ctx, payload); err != nil {
+		if err := s.send(ctx, metadata); err != nil {
 			return fmt.Errorf("send data: %w", err)
 		}
 
@@ -92,9 +104,29 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 
 func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(ctx context.Context, payloadBytes []byte) error {
+func (s *Sink) send(ctx context.Context, asset *v1beta2.Asset) error {
+	t := template.Must(template.New("url").Parse(s.config.URL))
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, asset); err != nil {
+		return fmt.Errorf("build http url: %w", err)
+	}
+	url := buf.String()
+
+	if s.config.Script != nil {
+		return s.executeScript(ctx, url, asset)
+	}
+
+	payload, err := json.Marshal(asset)
+	if err != nil {
+		return fmt.Errorf("build http payload: %w", err)
+	}
+
 	// send request
-	req, err := http.NewRequestWithContext(ctx, s.config.Method, s.config.URL, bytes.NewBuffer(payloadBytes))
+	return s.makeRequest(ctx, url, payload)
+}
+
+func (s *Sink) makeRequest(ctx context.Context, url string, payload []byte) error {
+	req, err := http.NewRequestWithContext(ctx, s.config.Method, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}

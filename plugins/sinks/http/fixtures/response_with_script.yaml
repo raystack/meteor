@@ -1,0 +1,43 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"details":{"another_key":"index1","some_key":"elasticsearch.index1"}}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+    url: http://127.0.0.1:54943/table/elasticsearch.index1
+    method: POST
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 11 Jul 2022 09:32:21 GMT
+    status: 200 OK
+    code: 200
+    duration: 274.68µs
+- request:
+    body: '{"details":{"another_key":"index2","some_key":"elasticsearch.index2"}}'
+    form: {}
+    headers:
+      Accept:
+      - application/json
+      Content-Type:
+      - application/json
+    url: http://127.0.0.1:54943/table/elasticsearch.index2
+    method: POST
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 11 Jul 2022 09:32:21 GMT
+    status: 200 OK
+    code: 200
+    duration: 173.792µs
