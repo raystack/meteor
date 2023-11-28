@@ -15,8 +15,11 @@ sinks:
     labels:
       myCustom: $properties.attributes.myCustomField
       sampleLabel: $properties.labels.sampleLabelField
+    remove_unset_fields_in_data: false
 ```
+### *Notes*
 
+- Setting `remove_unset_fields_in_data` to `true` will not populate fields in final data which are not set initially in source. Defaults to `false`.
 ## Contributing
 
 Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.

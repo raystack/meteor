@@ -8,6 +8,7 @@ source:
   config:
     project_id: google-project-id
     table_pattern: gofood.fact_
+    max_preview_rows: 3
     exclude:
       datasets:
         - dataset_a
@@ -49,7 +50,7 @@ source:
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to filter which bigquery table to scan (whitelist) | *optional* |
 | `max_page_size` | `int` | `100` | max page size hint used for fetching datasets/tables/rows from bigquery | *optional* |
 | `include_column_profile` | `bool` | `true` | true if you want to profile the column value such min, max, med, avg, top, and freq | *optional* |
-| `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching. Default to `30`. | *optional* |
+| `max_preview_rows` | `int` | `30` | max number of preview rows to fetch, `0` will skip preview fetching, `-1` will restrict adding preview_rows key in asset data . Default to `30`. | *optional* |
 | `mix_values` | `bool` | `false` | true if you want to mix the column values with the preview rows. Default to `false`. | *optional* |
 | `collect_table_usage` | `boolean` | `false` | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`. | *optional* |
 | `usage_period_in_day` | `int` | `7` | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`. | *optional* |
@@ -60,7 +61,8 @@ source:
 - Leaving `service_account_json` and `service_account_base64` blank will default
   to [Google's default authentication][google-default-auth]. It is
   recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
-- Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs
+- Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs.
+- Setting `max_preview_rows` to `-1` will restrict adding preview_rows key in asset data
 
 ## Outputs
 
