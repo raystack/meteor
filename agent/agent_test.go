@@ -82,7 +82,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -113,7 +113,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -146,7 +146,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      registry.NewSinkFactory(),
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -183,7 +183,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -222,7 +222,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -263,7 +263,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -305,7 +305,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -346,7 +346,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -394,7 +394,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -441,7 +441,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.False(t, run.Success)
@@ -491,7 +491,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.True(t, run.Success)
@@ -542,7 +542,7 @@ func TestAgentRun(t *testing.T) {
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
 			StopOnSinkError:  true,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 
 		run := r.Run(ctx, validRecipe)
@@ -594,7 +594,7 @@ func TestAgentRun(t *testing.T) {
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
 			StopOnSinkError:  false,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 
 		run := r.Run(ctx, validRecipe)
@@ -657,7 +657,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.NoError(t, run.Error)
@@ -713,7 +713,7 @@ func TestAgentRun(t *testing.T) {
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 			Logger:           utils.Logger,
 			TimerFn:          timerFn,
 		})
@@ -769,7 +769,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
 			Logger:               utils.Logger,
-			Monitor:              []agent.Monitor{monitor},
+			Monitor:              monitor,
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Extractor returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
@@ -824,7 +824,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
 			Logger:               utils.Logger,
-			Monitor:              []agent.Monitor{monitor},
+			Monitor:              monitor,
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Sink returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
 		})
@@ -884,7 +884,7 @@ func TestAgentRun(t *testing.T) {
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
 			Logger:               utils.Logger,
-			Monitor:              []agent.Monitor{monitor},
+			Monitor:              monitor,
 			MaxRetries:           5,
 			RetryInitialInterval: 10 * time.Second,
 		})
@@ -1065,7 +1065,7 @@ func TestAgentRunMultiple(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{monitor},
+			Monitor:          monitor,
 		})
 		runs := r.RunMultiple(ctx, recipeList)
 
@@ -1152,7 +1152,7 @@ func TestValidate(t *testing.T) {
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
 			Logger:           utils.Logger,
-			Monitor:          []agent.Monitor{newMockMonitor()},
+			Monitor:          newMockMonitor(),
 		})
 
 		var expectedErrs []error
