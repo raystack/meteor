@@ -70,16 +70,7 @@ func RunCmd() *cobra.Command {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var mts []agent.Monitor
-			if cfg.StatsdEnabled {
-				mt, err := newStatsdMonitor(cfg)
-				if err != nil {
-					return err
-				}
-
-				mts = append(mts, mt)
-
-			}
+			var mts agent.Monitor
 
 			if cfg.OtelEnabled {
 				doneOtlp, err := metrics.InitOtel(ctx, cfg, lg, Version)
@@ -88,7 +79,7 @@ func RunCmd() *cobra.Command {
 				}
 				defer doneOtlp()
 
-				mts = append(mts, metrics.NewOtelMonitor())
+				mts = metrics.NewOtelMonitor()
 			}
 
 			runner := agent.NewAgent(agent.Config{
@@ -155,12 +146,4 @@ func RunCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&configFile, "config", "c", "./meteor.yaml", "file path for agent level config")
 
 	return cmd
-}
-
-func newStatsdMonitor(cfg config.Config) (*metrics.StatsdMonitor, error) {
-	client, err := metrics.NewStatsdClient(cfg.StatsdHost)
-	if err != nil {
-		return nil, err
-	}
-	return metrics.NewStatsdMonitor(client, cfg.AppName), nil
 }

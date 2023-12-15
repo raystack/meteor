@@ -1,1 +1,1 @@
-STATSD_ENABLED: not-a-boolean
+OTEL_ENABLED: not-a-boolean

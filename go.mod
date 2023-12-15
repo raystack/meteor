@@ -18,7 +18,6 @@ require (
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/dnaeon/go-vcr/v2 v2.0.1
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210708134649-33f644c8e327
-	github.com/etsy/statsd v0.9.0
 	github.com/go-kivik/couchdb v2.0.0+incompatible
 	github.com/go-kivik/kivik v2.0.0+incompatible
 	github.com/go-playground/validator/v10 v10.11.0
