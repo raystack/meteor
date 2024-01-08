@@ -11,11 +11,10 @@ import (
 
 	"github.com/goto/meteor/metrics/otelhttpclient"
 	"github.com/goto/meteor/plugins/internal/urlbuilder"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"google.golang.org/api/idtoken"
 )
 
-var authScopes = []string{"https://www.googleapis.com/auth/userinfo.email"}
+var authScope = "https://www.googleapis.com/auth/userinfo.email"
 
 type Client struct {
 	urlb    urlbuilder.Source
@@ -30,7 +29,7 @@ type ClientParams struct {
 }
 
 func NewClient(ctx context.Context, params ClientParams) (Client, error) {
-	httpClient, err := authenticatedClient(ctx, params.ServiceAccountJSON, authScopes...)
+	httpClient, err := authenticatedClient(ctx, params.ServiceAccountJSON, authScope)
 	if err != nil {
 		return Client{}, fmt.Errorf("new Merlin client: %w", err)
 	}
@@ -149,16 +148,29 @@ func (c Client) exec(req *http.Request, result interface{}) error {
 
 func authenticatedClient(ctx context.Context, serviceAccountJSON []byte, scopes ...string) (*http.Client, error) {
 	if len(serviceAccountJSON) == 0 {
-		return google.DefaultClient(ctx, scopes...)
+		return http.DefaultClient, nil
 	}
 
-	creds, err := google.CredentialsFromJSON(ctx, serviceAccountJSON, authScopes...)
+	creds, err := idtoken.NewClient(ctx, authScope, idtoken.WithCredentialsJSON(serviceAccountJSON))
 	if err != nil {
 		return nil, fmt.Errorf("google credentials from JSON: %w", err)
 	}
 
-	return oauth2.NewClient(ctx, creds.TokenSource), nil
+	return creds, nil
 }
+
+// func authenticatedClient(ctx context.Context, serviceAccountJSON []byte, scopes ...string) (*http.Client, error) {
+// 	if len(serviceAccountJSON) == 0 {
+// 		return google.DefaultClient(ctx, scopes...)
+// 	}
+
+// 	creds, err := google.CredentialsFromJSON(ctx, serviceAccountJSON, authScopes...)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("google credentials from JSON: %w", err)
+// 	}
+
+// 	return oauth2.NewClient(ctx, creds.TokenSource), nil
+// }
 
 // drainBody drains and closes the response body to avoid the following
 // gotcha:
