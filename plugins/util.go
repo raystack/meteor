@@ -145,5 +145,10 @@ func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err erro
 	ss := strings.FieldsFunc(fqn, func(r rune) bool {
 		return r == ':' || r == '.'
 	})
+	if len(ss) < 3 {
+		return "", "", "", fmt.Errorf(
+			"unexpected BigQuery table FQN '%s', expected in format projectID:datasetID.tableID", fqn,
+		)
+	}
 	return ss[0], ss[1], ss[2], nil
 }
