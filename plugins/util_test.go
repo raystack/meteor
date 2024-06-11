@@ -41,6 +41,11 @@ func TestBigQueryTableFQNToURN(t *testing.T) {
 			fqn:         "bq-raw-internal:dagstream_production_feast09_s2id13_30min_demand",
 			expectedErr: "map URN: unexpected BigQuery table FQN 'bq-raw-internal:dagstream_production_feast09_s2id13_30min_demand', expected in format",
 		},
+		{
+			name:        "Invalid",
+			fqn:         ":.",
+			expectedErr: "map URN: unexpected BigQuery table FQN ':.', expected in format",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
