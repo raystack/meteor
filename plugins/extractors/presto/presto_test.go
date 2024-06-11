@@ -35,8 +35,8 @@ var (
 func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository:   "prestodb/presto:0.284",
-		Tag:          "0.270",
+		Repository:   "prestodb/presto",
+		Tag:          "latest",
 		ExposedPorts: []string{"8080"},
 		PortBindings: map[docker.Port][]docker.PortBinding{"8080": {{HostIP: "0.0.0.0", HostPort: port}}},
 	}
