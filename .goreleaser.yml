@@ -1,3 +1,5 @@
+version: 2
+
 project_name: meteor
 
 release:
@@ -25,34 +27,19 @@ builds:
       - -X github.com/raystack/meteor/cmd.Version={{.Tag}}
       - -X github.com/raystack/meteor/cmd.BuildCommit={{.FullCommit}}
       - -X github.com/raystack/meteor/cmd.BuildDate={{.Date}}
-    goos: [linux]
+    goos: ["linux", "windows"]
     goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
       - CGO_ENABLED=0
-  - main: ./main.go
-    id: "darwin"
-    binary: meteor
-    flags: [-a]
-    ldflags:
-      - -X github.com/raystack/meteor/cmd.Version={{.Tag}}
-      - -X github.com/raystack/meteor/cmd.BuildCommit={{.FullCommit}}
-      - -X github.com/raystack/meteor/cmd.BuildDate={{.Date}}
-    goos: [darwin]
-    goarch: [amd64, 386, arm, arm64]
-    env:
-      - CGO_ENABLED=0
-  - main: ./main.go
-    id: "windows"
-    binary: meteor
-    flags: [-a]
-    ldflags:
-      - -X github.com/raystack/meteor/cmd.Version={{.Tag}}
-      - -X github.com/raystack/meteor/cmd.BuildCommit={{.FullCommit}}
-      - -X github.com/raystack/meteor/cmd.BuildDate={{.Date}}
-    goos: [windows]
-    goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
-    env:
-      - CGO_ENABLED=0
+    ignore: # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
+      - goos: linux
+        goarch: 386
+      - goos: linux
+        goarch: arm
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm
 
 archives:
   - id: "archives"
@@ -91,7 +78,7 @@ scoops:
   - homepage: "https://github.com/raystack/meteor"
     description: "Metadata collection tool."
     license: Apache 2.0
-    bucket:
+    repository:
       owner: raystack
       name: scoop-bucket
 
@@ -99,11 +86,11 @@ brews:
   - name: meteor
     homepage: "https://github.com/raystack/meteor"
     description: "Metadata collection tool."
-    tap:
+    repository:
       owner: raystack
       name: homebrew-tap
     license: "Apache 2.0"
-    folder: Formula
+    directory: Formula
     dependencies:
       - name: git
     install: |-
