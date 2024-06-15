@@ -27,7 +27,7 @@ builds:
       - -X github.com/raystack/meteor/cmd.Version={{.Tag}}
       - -X github.com/raystack/meteor/cmd.BuildCommit={{.FullCommit}}
       - -X github.com/raystack/meteor/cmd.BuildDate={{.Date}}
-    goos: ["linux", "windows"]
+    goos: ["linux", "windows", "darwin"]
     goarch: [amd64, arm64] # skip goarch 386 and arm due to conflicts with "github.com/blastrain/vitess-sqlparser" library
     env:
       - CGO_ENABLED=0
