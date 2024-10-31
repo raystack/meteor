@@ -27,7 +27,7 @@ type Agent struct {
 	extractorFactory *registry.ExtractorFactory
 	processorFactory *registry.ProcessorFactory
 	sinkFactory      *registry.SinkFactory
-	monitor          []Monitor
+	monitor          Monitor
 	logger           log.Logger
 	retrier          *retrier
 	stopOnSinkError  bool
@@ -279,8 +279,8 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 	}
 
 	retryNotification := func(e error, d time.Duration) {
-		for _, mt := range r.monitor {
-			mt.RecordSinkRetryCount(ctx, pluginInfo)
+		if r.monitor != nil {
+			r.monitor.RecordSinkRetryCount(ctx, pluginInfo)
 		}
 
 		r.logger.Warn(
@@ -302,9 +302,6 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 		)
 
 		pluginInfo.Success = err == nil
-		for _, mt := range r.monitor {
-			mt.RecordPlugin(ctx, pluginInfo) // this can be deleted when statsd is removed
-		}
 		if err != nil {
 			// once it reaches here, it means that the retry has been exhausted and still got error
 			r.logger.Error("error running sink", "sink", sr.Name, "error", err.Error())
@@ -328,8 +325,8 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 }
 
 func (r *Agent) logAndRecordMetrics(ctx context.Context, run Run) {
-	for _, monitor := range r.monitor {
-		monitor.RecordRun(ctx, run)
+	if r.monitor != nil {
+		r.monitor.RecordRun(ctx, run)
 	}
 
 	if run.Success {

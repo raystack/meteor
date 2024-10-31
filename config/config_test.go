@@ -25,8 +25,6 @@ func TestLoad(t *testing.T) {
 			expected: config.Config{
 				AppName:                     "meteor",
 				LogLevel:                    "info",
-				StatsdEnabled:               false,
-				StatsdHost:                  "localhost:8125",
 				OtelEnabled:                 false,
 				OtelCollectorAddr:           "localhost:4317",
 				OtelTraceSampleProbability:  1,
@@ -43,8 +41,6 @@ func TestLoad(t *testing.T) {
 			expected: config.Config{
 				AppName:                     "meteor",
 				LogLevel:                    "info",
-				StatsdEnabled:               false,
-				StatsdHost:                  "localhost:8125",
 				OtelEnabled:                 false,
 				OtelCollectorAddr:           "localhost:4317",
 				OtelTraceSampleProbability:  1,

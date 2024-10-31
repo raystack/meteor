@@ -14,8 +14,6 @@ type Config struct {
 	MaxRetries                  int     `mapstructure:"MAX_RETRIES" default:"5"`
 	RetryInitialIntervalSeconds int     `mapstructure:"RETRY_INITIAL_INTERVAL_SECONDS" default:"5"`
 	StopOnSinkError             bool    `mapstructure:"STOP_ON_SINK_ERROR" default:"false"`
-	StatsdEnabled               bool    `mapstructure:"STATSD_ENABLED" default:"false"`
-	StatsdHost                  string  `mapstructure:"STATSD_HOST" default:"localhost:8125"`
 	OtelEnabled                 bool    `mapstructure:"OTEL_ENABLED" default:"false"`
 	OtelCollectorAddr           string  `mapstructure:"OTEL_COLLECTOR_ADDR" default:"localhost:4317"`
 	OtelTraceSampleProbability  float64 `mapstructure:"OTEL_TRACE_SAMPLE_PROBABILITY" default:"1"`
