@@ -13,7 +13,6 @@ import (
 	"time"
 
 	kafkaLib "github.com/IBM/sarama"
-
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
@@ -22,7 +21,6 @@ import (
 	"github.com/raystack/meteor/plugins/extractors/kafka"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
-	kafkaLib "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
