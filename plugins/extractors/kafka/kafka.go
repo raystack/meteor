@@ -58,6 +58,11 @@ type AuthConfig struct {
 		// certificate authority file for TLS client authentication
 		CAFile string `mapstructure:"ca_file"`
 	} `mapstructure:"tls"`
+
+	SASL struct {
+		Enabled   bool   `mapstructure:"enabled"`
+		Mechanism string `mapstructure:"mechanism"`
+	}
 }
 
 var sampleConfig = `broker: "localhost:9092"`
@@ -74,7 +79,7 @@ var info = plugins.Info{
 type Extractor struct {
 	plugins.BaseExtractor
 	// internal states
-	conn       *kafka.Conn
+	conn       sarama.Consumer
 	logger     log.Logger
 	config     Config
 	clientDurn metric.Int64Histogram
@@ -104,69 +109,91 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
-	// create default dialer
-	dialer := &kafka.Dialer{
-		Timeout:   10 * time.Second,
-		DualStack: true,
-	}
+	consumerConfig := sarama.NewConfig()
 
 	if e.config.Auth.TLS.Enabled {
 		tlsConfig, err := e.createTLSConfig()
 		if err != nil {
 			return fmt.Errorf("create tls config: %w", err)
 		}
+		consumerConfig.Net.TLS.Enable = true
+		consumerConfig.Net.TLS.Config = tlsConfig
 
-		dialer.TLS = tlsConfig
+		if e.config.Auth.SASL.Enabled {
+			consumerConfig.Net.SASL.Enable = true
+			if e.config.Auth.SASL.Mechanism == sarama.SASLTypeOAuth {
+				consumerConfig.Net.SASL.Mechanism = sarama.SASLTypeOAuth
+				consumerConfig.Net.SASL.TokenProvider = NewKubernetesTokenProvider()
+			}
 	}
 
-	// create connection
-	e.conn, err = dialer.DialContext(ctx, "tcp", e.config.Broker)
+	consumer, err := sarama.NewConsumer([]string{e.config.Broker}, consumerConfig)
 	if err != nil {
-		return fmt.Errorf("create connection: %w", err)
+		fmt.Printf("Error is here !! %s", err.Error())
+		return fmt.Errorf("failed to create kafka consumer for brokers %s and config %+v. Error %s", e.config.Broker,
+			consumerConfig, err.Error())
 	}
-
+	e.conn = consumer
 	return nil
 }
 
 // Extract checks if the extractor is ready to extract
 // if so, then extracts metadata from the kafka broker
-func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.conn.Close()
 
-	partitions, err := e.readPartitions(ctx)
-	if err != nil {
-		return fmt.Errorf("fetch partitions: %w", err)
-	}
+	defer func(start time.Time) {
+		attributes := []attribute.KeyValue{
+			attribute.String("kafka.broker", e.config.Broker),
+			attribute.Bool("success", err == nil),
+		}
+		if err != nil {
+			errorCode := "UNKNOWN"
+			var kErr kafka.Error
+			if errors.As(err, &kErr) {
+				errorCode = strings.ReplaceAll(
+					strings.ToUpper(kErr.Title()), " ", "_",
+				)
+			}
+			attributes = append(attributes, attribute.String("kafka.error_code", errorCode))
+		}
 
-	// collect topic list from partition list
-	topics := map[string]int{}
-	for _, p := range partitions {
-		topics[p.Topic]++
+		e.clientDurn.Record(
+			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attributes...),
+		)
+	}(time.Now())
+	topics, err := e.conn.Topics()
+	if err != nil {
+		return fmt.Errorf("fetch topics: %w", err)
 	}
 
 	// build and push topics
-	for topic, numOfPartitions := range topics {
+	for _, topic := range topics {
 		// skip if topic is a default topic
 		_, isDefaultTopic := defaultTopics[topic]
 		if isDefaultTopic {
 			continue
 		}
 
-		asset, err := e.buildAsset(topic, numOfPartitions)
+		partitions, err := e.conn.Partitions(topic)
+		if err != nil {
+			e.logger.Error("failed to fetch partitions for topic", "err", err, "topic", topic)
+			continue
+		}
+		asset, err := e.buildAsset(topic, len(partitions))
 		if err != nil {
 			e.logger.Error("failed to build asset", "err", err, "topic", topic)
 			continue
 		}
 		emit(models.NewRecord(asset))
 	}
-
 	return nil
 }
 
 func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 	authConfig := e.config.Auth.TLS
 
-	if authConfig.CertFile == "" || authConfig.KeyFile == "" || authConfig.CAFile == "" {
+	if authConfig.CAFile == "" {
 		//nolint:gosec
 		return &tls.Config{
 			InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
@@ -178,9 +205,13 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 		return nil, fmt.Errorf("create cert: %w", err)
 	}
 
-	caCert, err := os.ReadFile(authConfig.CAFile)
-	if err != nil {
-		return nil, fmt.Errorf("read ca cert file: %w", err)
+	var cert tls.Certificate
+	var err error
+	if authConfig.CertFile != "" && authConfig.KeyFile != "" {
+		cert, err = tls.LoadX509KeyPair(authConfig.CertFile, authConfig.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("create cert: %w", err)
+		}
 	}
 
 	caCertPool := x509.NewCertPool()
@@ -213,31 +244,6 @@ func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (*v1beta2.
 		Type:    "topic",
 		Data:    topic,
 	}, nil
-}
-
-func (e *Extractor) readPartitions(ctx context.Context) (partitions []kafka.Partition, err error) {
-	defer func(start time.Time) {
-		attributes := []attribute.KeyValue{
-			attribute.String("kafka.broker", e.config.Broker),
-			attribute.Bool("success", err == nil),
-		}
-		if err != nil {
-			errorCode := "UNKNOWN"
-			var kErr kafka.Error
-			if errors.As(err, &kErr) {
-				errorCode = strings.ReplaceAll(
-					strings.ToUpper(kErr.Title()), " ", "_",
-				)
-			}
-			attributes = append(attributes, attribute.String("kafka.error_code", errorCode))
-		}
-
-		e.clientDurn.Record(
-			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attributes...),
-		)
-	}(time.Now())
-
-	return e.conn.ReadPartitions()
 }
 
 func init() {
