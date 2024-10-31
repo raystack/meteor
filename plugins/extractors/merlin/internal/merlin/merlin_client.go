@@ -11,8 +11,12 @@ import (
 
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/idtoken"
+)
+
+const (
+	audience = "sdk.caraml"
 )
 
 var authScopes = []string{"https://www.googleapis.com/auth/userinfo.email"}
@@ -152,12 +156,12 @@ func authenticatedClient(ctx context.Context, serviceAccountJSON []byte, scopes 
 		return google.DefaultClient(ctx, scopes...)
 	}
 
-	creds, err := google.CredentialsFromJSON(ctx, serviceAccountJSON, authScopes...)
+	client, err := idtoken.NewClient(ctx, audience, idtoken.WithCredentialsJSON(serviceAccountJSON))
 	if err != nil {
 		return nil, fmt.Errorf("google credentials from JSON: %w", err)
 	}
 
-	return oauth2.NewClient(ctx, creds.TokenSource), nil
+	return client, nil
 }
 
 // drainBody drains and closes the response body to avoid the following
