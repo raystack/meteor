@@ -10,19 +10,57 @@ sinks:
   config:
     method: POST
     success_code: 200
-    url: https://compass.com/v1beta1/asset
+    url: https://compass.requestcatcher.com/v1beta2/asset/{{ .Type }}/{{ .Urn }}
     headers:
       Header-1: value11,value12
+    script:
+      engine: tengo
+      source: |
+        payload := {
+          details: {
+            some_key: asset.urn,
+            another_key: asset.name
+          }
+        }
+        sink(payload)
 ```
 
 ## Config Defination
 
-| Key | Value | Example | Description |  |
-| :-- | :---- | :------ | :---------- | :-- |
-|`url` | `string` | `http://compass.production.com/v1beta1/asset` | URL to the http server, contains all the info needed to make the request, like port and route | *required*|
-| `method` | `string` | `POST` | the method string of by which the request is to be made, e.g. POST/PATCH/GET | *required* |
-| `success_code` | `integer` | `200` |  to identify the expected success code the http server returns, defult is `200` | *optional* |
-| `headers` | `map` | `"Content-Type": "application/json"` | to add any header/headers that may be required for making the request | *optional* |
+| Key            | Value     | Example                                                                   | Description                                                                                                                                                                                                                                                                                         |            |
+| :------------- | :-------- | :------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
+| `url`          | `string`  | `https://compass.requestcatcher.com/v1beta2/asset/{{ .Type }}/{{ .Urn }}` | URL to the http server, contains all the info needed to make the request, like port and route, support go [text/template](https://pkg.go.dev/text/template) (see the properties in [v1beta2.Asset](https://github.com/goto/meteor/blob/main/models/gotocompany/assets/v1beta2/asset.pb.go#L25-L68)) | _required_ |
+| `method`       | `string`  | `POST`                                                                    | the method string of by which the request is to be made, e.g. POST/PATCH/GET                                                                                                                                                                                                                        | _required_ |
+| `success_code` | `integer` | `200`                                                                     | to identify the expected success code the http server returns, defult is `200`                                                                                                                                                                                                                      | _optional_ |
+| `headers`      | `map`     | `"Content-Type": "application/json"`                                      | to add any header/headers that may be required for making the request                                                                                                                                                                                                                               | _optional_ |
+| `script`       | `Object`  | see [Script](#Script)                                                     | Script for building custom payload                                                                                                                                                                                                                                                                  | \*optional |
+
+## Script
+
+| Key      | Value    | Example              | Description                                                                          |            |
+| :------- | :------- | :------------------- | :----------------------------------------------------------------------------------- | :--------- |
+| `engine` | `string` | `tengo`              | Script engine. Only `"tengo"` is supported currently                                 | _required_ |
+| `source` | `string` | see [Usage](#Usage). | [Tengo][tengo] script used to map the request into custom payload to be sent to url. | _required_ |
+
+### Script Globals
+
+- [`asset`](#recipe_scope)
+- [`sink(Payload)`](#sinkpayload)
+- [`exit`](#exit)
+
+#### `asset`
+
+The asset record emitted by the extractor and processors is made available in the script
+environment as `asset`. The field names will be as
+per the [`Asset` proto definition](https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/asset.proto#L14).
+
+#### `sink(Payload)`
+
+Send http request to url with payload.
+
+#### `exit()`
+
+Terminates the script execution.
 
 ## Contributing
 

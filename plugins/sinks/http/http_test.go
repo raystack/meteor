@@ -154,6 +154,46 @@ func TestSink(t *testing.T) {
 		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
 		assert.NoError(t, err)
 	})
+
+	t.Run("should return no error when using templates", func(t *testing.T) {
+		r, err := recorder.New("fixtures/response_with_script")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() {
+			err := r.Stop()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}()
+		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
+		config := map[string]interface{}{
+			"success_code": success_code,
+			"url":          "http://127.0.0.1:54943/{{ .Type }}/{{ .Urn }}",
+			"method":       "POST",
+			"headers": map[string]string{
+				"Content-Type": "application/json",
+				"Accept":       "application/json",
+			},
+			"script": map[string]interface{}{
+				"engine": "tengo",
+				"source": `
+					payload := {
+						details: {
+							some_key: asset.urn,
+							another_key: asset.name
+						}
+					}
+					sink(payload)
+				`,
+			},
+		}
+		err = httpSink.Init(context.TODO(), plugins.Config{RawConfig: config})
+		assert.NoError(t, err)
+		defer httpSink.Close()
+		err = httpSink.Sink(context.TODO(), getExpectedVal(t))
+		assert.NoError(t, err)
+	})
 }
 
 func getExpectedVal(t *testing.T) []models.Record {
