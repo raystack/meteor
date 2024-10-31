@@ -28,20 +28,20 @@ test-plugins:
 	@echo " > Testing plugins with tag 'plugins'"
 	go test $(if $(filter .,$(PLUGIN)),./plugins,$(if $(PLUGIN),./plugins/$(PLUGIN)/...,./plugins/...)) -tags=plugins -coverprofile=coverage-plugins$(subst .,root,$(subst /,-,$(if $(PLUGIN),-$(PLUGIN),))).out -parallel=1
 
-test-coverage: # test test-plugins
+test-coverage:
 	cp coverage.out coverage-all.out
 	tail -n +2 coverage-plugins.out >> coverage-all.out
 	go tool cover -html=coverage-all.out
 
-generate-proto: ## regenerate protos
+generate-proto:
 	@echo " > cloning protobuf from raystack/proton"
 	@echo " > generating protobuf"
 	@buf generate --template buf.gen.yaml https://github.com/raystack/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --path raystack/assets/v1beta2
 	@echo " > protobuf compilation finished"
 
-lint: ## Lint with golangci-lint
+lint:
 	golangci-lint run
 
-install: ## install required dependencies
+install:
 	@echo "> installing dependencies"
 	go install github.com/vektra/mockery/v2@v2.14.0
