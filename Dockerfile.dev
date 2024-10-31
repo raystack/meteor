@@ -6,6 +6,6 @@ RUN ["make", "build-dev"]
 FROM alpine:latest
 COPY --from=base /build/meteor /usr/bin/meteor
 RUN apk update
-RUN apk add ca-certificates
+RUN apk add ca-certificates curl
 
 CMD ["meteor"]
