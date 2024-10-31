@@ -41,20 +41,21 @@ var summary string
 type Config struct {
 	ProjectID string `json:"project_id" yaml:"project_id" mapstructure:"project_id" validate:"required"`
 	// ServiceAccountBase64 takes precedence over ServiceAccountJSON field
-	ServiceAccountBase64 string   `json:"service_account_base64" yaml:"service_account_base64" mapstructure:"service_account_base64"`
-	ServiceAccountJSON   string   `json:"service_account_json" yaml:"service_account_json" mapstructure:"service_account_json"`
-	MaxPageSize          int      `json:"max_page_size" yaml:"max_page_size" mapstructure:"max_page_size"`
-	DatasetPageSize      int      `json:"dataset_page_size" mapstructure:"dataset_page_size"`
-	TablePageSize        int      `json:"table_page_size" mapstructure:"table_page_size"`
-	TablePattern         string   `json:"table_pattern" yaml:"table_pattern" mapstructure:"table_pattern"`
-	Exclude              Exclude  `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
-	IncludeColumnProfile bool     `json:"include_column_profile" yaml:"include_column_profile" mapstructure:"include_column_profile"`
-	MaxPreviewRows       int      `json:"max_preview_rows" yaml:"max_preview_rows" mapstructure:"max_preview_rows" default:"30"`
-	MixValues            bool     `json:"mix_values" mapstructure:"mix_values" default:"false"`
-	IsCollectTableUsage  bool     `json:"collect_table_usage" yaml:"collect_table_usage" mapstructure:"collect_table_usage" default:"false"`
-	UsagePeriodInDay     int64    `json:"usage_period_in_day" yaml:"usage_period_in_day" mapstructure:"usage_period_in_day" default:"7"`
-	UsageProjectIDs      []string `json:"usage_project_ids" yaml:"usage_project_ids" mapstructure:"usage_project_ids"`
-	BuildViewLineage     bool     `json:"build_view_lineage" yaml:"build_view_lineage" mapstructure:"build_view_lineage" default:"false"`
+	ServiceAccountBase64 string  `mapstructure:"service_account_base64"`
+	ServiceAccountJSON   string  `mapstructure:"service_account_json"`
+	MaxPageSize          int     `mapstructure:"max_page_size"`
+	DatasetPageSize      int     `mapstructure:"dataset_page_size"`
+	TablePageSize        int     `mapstructure:"table_page_size"`
+	TablePattern         string  `mapstructure:"table_pattern"`
+	Exclude              Exclude `mapstructure:"exclude"`
+	IncludeColumnProfile bool    `mapstructure:"include_column_profile"`
+	// MaxPreviewRows can also be set to -1 to restrict adding preview_rows key in asset data
+	MaxPreviewRows      int      `mapstructure:"max_preview_rows" default:"30"`
+	MixValues           bool     `mapstructure:"mix_values" default:"false"`
+	IsCollectTableUsage bool     `mapstructure:"collect_table_usage" default:"false"`
+	UsagePeriodInDay    int64    `mapstructure:"usage_period_in_day" default:"7"`
+	UsageProjectIDs     []string `mapstructure:"usage_project_ids"`
+	BuildViewLineage    bool     `mapstructure:"build_view_lineage" default:"false"`
 }
 
 type Exclude struct {
@@ -443,15 +444,19 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 			}
 		}
 	}
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:       e.buildColumns(ctx, md.Schema, md),
-		PreviewFields: previewFields,
-		PreviewRows:   previewRows,
-		Profile:       tableProfile,
-		Attributes:    utils.TryParseMapToProto(attributesData),
-		CreateTime:    timestamppb.New(md.CreationTime),
-		UpdateTime:    timestamppb.New(md.LastModifiedTime),
-	})
+	tableData := &v1beta2.Table{
+		Columns:    e.buildColumns(ctx, md.Schema, md),
+		Profile:    tableProfile,
+		Attributes: utils.TryParseMapToProto(attributesData),
+		CreateTime: timestamppb.New(md.CreationTime),
+		UpdateTime: timestamppb.New(md.LastModifiedTime),
+	}
+	maxPreviewRows := e.config.MaxPreviewRows
+	if maxPreviewRows != -1 {
+		tableData.PreviewFields = previewFields
+		tableData.PreviewRows = previewRows
+	}
+	table, err := anypb.New(tableData)
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)
 	}
@@ -513,7 +518,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 
 func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (fields []string, rows *structpb.ListValue, err error) {
 	maxPreviewRows := e.config.MaxPreviewRows
-	if maxPreviewRows == 0 {
+	if maxPreviewRows <= 0 {
 		return nil, nil, nil
 	}
 
