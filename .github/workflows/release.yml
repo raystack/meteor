@@ -1,5 +1,4 @@
-name: release
-
+name: Release
 on:
   push:
     tags:
@@ -18,8 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "stable"
-          cache: true
+          go-version-file: "go.mod"
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:

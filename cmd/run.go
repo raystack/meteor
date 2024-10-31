@@ -120,10 +120,10 @@ func RunCmd() *cobra.Command {
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					failures++
-					row = append(row, term.FailureIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf(strconv.Itoa(run.RecordCount)))
+					row = append(row, term.FailureIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf("%s", strconv.Itoa(run.RecordCount)))
 				} else {
 					success++
-					row = append(row, term.SuccessIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf(strconv.Itoa(run.RecordCount)))
+					row = append(row, term.SuccessIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf("%s", strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
 				if err = bar.Add(1); err != nil {

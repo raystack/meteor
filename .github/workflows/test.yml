@@ -1,5 +1,4 @@
 name: Test
-
 on:
   push:
   pull_request:
@@ -10,12 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
-          cache: true
+          go-version-file: "go.mod"
       - name: Install dependencies
         run: sudo apt-get install build-essential
       - name: Run Test
@@ -32,12 +30,12 @@ jobs:
       plugins: ${{ steps.set-matrix.outputs.plugins }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - id: set-matrix
         run: |
           echo "plugins=$(find plugins -mindepth 2 -maxdepth 2 -type d | sed 's/plugins\///' | awk 'BEGIN{printf "["} {printf "%s\"%s\"",sep,$0; sep=","} END{print ",\".\"]"}')" >> $GITHUB_OUTPUT
 
-  plugins-test:
+  plugins:
     needs: pretest
     runs-on: ubuntu-latest
     if: |
@@ -49,12 +47,11 @@ jobs:
         plugins: ${{ fromJson(needs.pretest.outputs.plugins) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
-          cache: true
+          go-version-file: "go.mod"
       - name: Install dependencies
         run: sudo apt-get install build-essential
       - name: Run Test
@@ -67,15 +64,14 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    needs: [test, plugins-test]
+    needs: [test, plugins]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'
-          cache: true
+          go-version-file: "go.mod"
       - name: Download coverage
         uses: actions/download-artifact@v3
         with:
