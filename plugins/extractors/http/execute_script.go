@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -19,8 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plugins.Emit) error {
-	scriptCfg := e.config.Script
+func (e *Extractor) executeScript(ctx context.Context, res interface{}, scriptCfg Script, emit plugins.Emit) error {
 	s, err := tengoutil.NewSecureScript(
 		([]byte)(scriptCfg.Source), e.scriptGlobals(ctx, res, emit),
 	)
@@ -40,12 +40,23 @@ func (e *Extractor) executeScript(ctx context.Context, res interface{}, emit plu
 		return fmt.Errorf("run: %w", err)
 	}
 
+	err = e.convertTengoObjToRequest(c.Get("request").Value())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plugins.Emit) map[string]interface{} {
+	req, err := e.convertRequestToTengoObj()
+	if err != nil {
+		e.logger.Error(err.Error())
+	}
+
 	return map[string]interface{}{
 		"recipe_scope": &tengo.String{Value: e.UrnScope},
+		"request":      req,
 		"response":     res,
 		"new_asset": &tengo.UserFunction{
 			Name:  "new_asset",
@@ -66,6 +77,30 @@ func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plu
 			},
 		},
 	}
+}
+
+func (e *Extractor) convertTengoObjToRequest(obj interface{}) error {
+	r, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(r, &e.config.Request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (e *Extractor) convertRequestToTengoObj() (tengo.Object, error) {
+	var res map[string]interface{}
+	r, err := json.Marshal(e.config.Request)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(r, &res)
+	if err != nil {
+		return nil, err
+	}
+	return tengo.FromInterface(res)
 }
 
 func newAssetWrapper() tengo.CallableFunc {

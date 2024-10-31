@@ -29,17 +29,20 @@ func init() {
 //go:embed README.md
 var summary string
 
+type Script struct {
+	Engine          string `mapstructure:"engine" validate:"required,oneof=tengo"`
+	Source          string `mapstructure:"source" validate:"required"`
+	MaxAllocs       int64  `mapstructure:"max_allocs" validate:"gt=100" default:"5000"`
+	MaxConstObjects int    `mapstructure:"max_const_objects" validate:"gt=10" default:"500"`
+}
+
 // Config holds the set of configuration for the HTTP extractor.
 type Config struct {
 	Request      RequestConfig `mapstructure:"request"`
 	SuccessCodes []int         `mapstructure:"success_codes" validate:"dive,gte=200,lt=300" default:"[200]"`
 	Concurrency  int           `mapstructure:"concurrency" validate:"gte=1,lte=100" default:"5"`
-	Script       struct {
-		Engine          string `mapstructure:"engine" validate:"required,oneof=tengo"`
-		Source          string `mapstructure:"source" validate:"required"`
-		MaxAllocs       int64  `mapstructure:"max_allocs" validate:"gt=100" default:"5000"`
-		MaxConstObjects int    `mapstructure:"max_const_objects" validate:"gt=10" default:"500"`
-	} `mapstructure:"script"`
+	Script       Script        `mapstructure:"script"`
+	BeforeScript *Script       `mapstructure:"before_script"`
 }
 
 type RequestConfig struct {
@@ -122,12 +125,17 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // executes the script. The script has access to the response and can use the
 // same to 'emit' assets from within the script.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	if e.config.BeforeScript != nil {
+		if err := e.executeScript(ctx, nil, *e.config.BeforeScript, emit); err != nil {
+			return fmt.Errorf("http extractor: execute script: %w", err)
+		}
+	}
 	res, err := e.executeRequest(ctx, e.config.Request)
 	if err != nil {
 		return fmt.Errorf("http extractor: execute request: %w", err)
 	}
 
-	if err := e.executeScript(ctx, res, emit); err != nil {
+	if err := e.executeScript(ctx, res, e.config.Script, emit); err != nil {
 		return fmt.Errorf("http extractor: execute script: %w", err)
 	}
 

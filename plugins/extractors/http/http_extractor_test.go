@@ -203,6 +203,66 @@ func TestExtract(t *testing.T) {
 			},
 		},
 		{
+			name: "MatchRequestBeforeScript",
+			rawCfg: map[string]interface{}{
+				"before_script": map[string]interface{}{
+					"engine": "tengo",
+					"source": heredoc.Doc(`
+						fmt := import("fmt")
+						reqs := []
+						reqs = append(reqs, {
+							url: "{{serverURL}}/token",
+							method: "GET",
+							content_type: "application/json",
+							accept: "application/json",
+							timeout: "5s"
+						})
+						  
+						responses := execute_request(reqs...)
+						for r in responses {
+						  if is_error(r) {
+							continue
+						  }
+						  request.Headers = {"Authorization": format("Bearer %s", r.body.data.token)}
+						}
+					`),
+					"max_allocs":        5000,
+					"max_const_objects": 500,
+				},
+				"request": map[string]interface{}{
+					"url":          "{{serverURL}}/api/v2/endpoint",
+					"content_type": "application/json",
+					"accept":       "application/json",
+				},
+				"script": map[string]interface{}{
+					"engine": "tengo",
+					"source": "// do nothing",
+				},
+			},
+			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/token":
+					testutils.Respond(t, w, http.StatusOK,
+						`{"header":{"process_time":0.130462645,"messages":[],"error_code":""},"data":{"token":"testToken123123","service_id":1,"expires_at":1711537963}}`,
+					)
+				case "/api/v2/endpoint":
+					assert.Equal(t, r.Method, http.MethodGet)
+					assert.Equal(t, r.URL.Path, "/api/v2/endpoint")
+					assert.Equal(t, r.URL.RawQuery, "")
+					h := r.Header
+					assert.Equal(t, "", h.Get("Content-Type"))
+					assert.Equal(t, "Bearer testToken123123", h.Get("Authorization"))
+					assert.Equal(t, "application/json", h.Get("Accept"))
+					data, err := io.ReadAll(r.Body)
+					assert.NoError(t, err)
+					assert.Empty(t, data)
+					testutils.Respond(t, w, http.StatusOK, `[]`)
+				default:
+					t.Error("Unexpected HTTP call on", r.URL.Path)
+				}
+			},
+		},
+		{
 			name: "MatchRequestAdvanced",
 			rawCfg: map[string]interface{}{
 				"request": map[string]interface{}{
@@ -890,4 +950,8 @@ func replaceServerURL(cfg map[string]interface{}, serverURL string) {
 	reqCfg["url"] = strings.Replace(reqCfg["url"].(string), "{{serverURL}}", serverURL, 1)
 	scriptCfg := cfg["script"].(map[string]interface{})
 	scriptCfg["source"] = strings.Replace(scriptCfg["source"].(string), "{{serverURL}}", serverURL, -1)
+	beforeScriptCfg, ok := cfg["before_script"].(map[string]interface{})
+	if ok {
+		beforeScriptCfg["source"] = strings.Replace(beforeScriptCfg["source"].(string), "{{serverURL}}", serverURL, -1)
+	}
 }
