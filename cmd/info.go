@@ -161,7 +161,7 @@ func InfoProccCmd() *cobra.Command {
 
 func inform(typ string, summary string, err error) error {
 	if err != nil {
-		fmt.Println(term.Redf("ERROR:"), term.Redf(err.Error()))
+		fmt.Println(term.Redf("ERROR: %s", err.Error()))
 		fmt.Println(term.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
 		return nil
 	}
