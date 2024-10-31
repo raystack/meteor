@@ -772,6 +772,7 @@ func TestAgentRun(t *testing.T) {
 			Monitor:              monitor,
 			MaxRetries:           2,                    // need to retry "at least" 2 times since Extractor returns RetryError twice
 			RetryInitialInterval: 1 * time.Millisecond, // this is to override default retry interval to reduce test time
+			SinkBatchSize:        1,
 		})
 		run := r.Run(ctx, validRecipe)
 		assert.NoError(t, run.Error)

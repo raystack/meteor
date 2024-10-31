@@ -91,6 +91,7 @@ func RunCmd() *cobra.Command {
 				MaxRetries:           cfg.MaxRetries,
 				RetryInitialInterval: time.Duration(cfg.RetryInitialIntervalSeconds) * time.Second,
 				StopOnSinkError:      cfg.StopOnSinkError,
+				SinkBatchSize:        cfg.SinkBatchSize,
 			})
 
 			recipes, err := recipe.NewReader(lg, pathToConfig).Read(args[0])

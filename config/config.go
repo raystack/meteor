@@ -17,6 +17,7 @@ type Config struct {
 	OtelEnabled                 bool    `mapstructure:"OTEL_ENABLED" default:"false"`
 	OtelCollectorAddr           string  `mapstructure:"OTEL_COLLECTOR_ADDR" default:"localhost:4317"`
 	OtelTraceSampleProbability  float64 `mapstructure:"OTEL_TRACE_SAMPLE_PROBABILITY" default:"1"`
+	SinkBatchSize               int     `mapstructure:"SINK_BATCH_SIZE" default:"1"`
 }
 
 func Load(configFile string) (Config, error) {
