@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
@@ -110,7 +111,6 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	consumerConfig := sarama.NewConfig()
-
 	if e.config.Auth.TLS.Enabled {
 		tlsConfig, err := e.createTLSConfig()
 		if err != nil {
@@ -118,13 +118,14 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		}
 		consumerConfig.Net.TLS.Enable = true
 		consumerConfig.Net.TLS.Config = tlsConfig
+	}
 
-		if e.config.Auth.SASL.Enabled {
-			consumerConfig.Net.SASL.Enable = true
-			if e.config.Auth.SASL.Mechanism == sarama.SASLTypeOAuth {
-				consumerConfig.Net.SASL.Mechanism = sarama.SASLTypeOAuth
-				consumerConfig.Net.SASL.TokenProvider = NewKubernetesTokenProvider()
-			}
+	if e.config.Auth.SASL.Enabled {
+		consumerConfig.Net.SASL.Enable = true
+		if e.config.Auth.SASL.Mechanism == sarama.SASLTypeOAuth {
+			consumerConfig.Net.SASL.Mechanism = sarama.SASLTypeOAuth
+			consumerConfig.Net.SASL.TokenProvider = NewKubernetesTokenProvider()
+		}
 	}
 
 	consumer, err := sarama.NewConsumer([]string{e.config.Broker}, consumerConfig)
@@ -133,6 +134,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return fmt.Errorf("failed to create kafka consumer for brokers %s and config %+v. Error %s", e.config.Broker,
 			consumerConfig, err.Error())
 	}
+
 	e.conn = consumer
 	return nil
 }
@@ -162,6 +164,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attributes...),
 		)
 	}(time.Now())
+
 	topics, err := e.conn.Topics()
 	if err != nil {
 		return fmt.Errorf("fetch topics: %w", err)
@@ -200,11 +203,6 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 		}, nil
 	}
 
-	cert, err := tls.LoadX509KeyPair(authConfig.CertFile, authConfig.KeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("create cert: %w", err)
-	}
-
 	var cert tls.Certificate
 	var err error
 	if authConfig.CertFile != "" && authConfig.KeyFile != "" {
@@ -212,6 +210,11 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("create cert: %w", err)
 		}
+	}
+
+	caCert, err := os.ReadFile(authConfig.CAFile)
+	if err != nil {
+		return nil, fmt.Errorf("read ca cert file: %w", err)
 	}
 
 	caCertPool := x509.NewCertPool()
@@ -231,7 +234,7 @@ func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (*v1beta2.
 		Profile: &v1beta2.TopicProfile{
 			NumberOfPartitions: int64(numOfPartitions),
 		},
-		Attributes: &structpb.Struct{},
+		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
 	})
 	if err != nil {
 		e.logger.Warn("error creating Any struct", "error", err)
