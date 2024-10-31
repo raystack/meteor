@@ -19,7 +19,7 @@ jobs:
       - name: Run Test
         run: make test
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: coverage
           path: coverage.out
@@ -57,7 +57,7 @@ jobs:
       - name: Run Test
         run: make test-plugins PLUGIN=${{ matrix.plugins }}
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: coverage-plugins
           path: coverage-plugins*.out
