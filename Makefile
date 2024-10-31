@@ -1,7 +1,7 @@
 NAME="github.com/raystack/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
-PROTON_COMMIT := "42b77358cbb68335607e99794f729e4a558974a5"
+PROTON_COMMIT := "ae895e033f71df187c62d7cf9431a2e259ddd423"
 .PHONY: all build clean test
 
 all: build
