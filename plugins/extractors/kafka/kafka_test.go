@@ -35,7 +35,6 @@ var (
 
 func TestMain(m *testing.M) {
 	var broker *kafkaLib.Broker
-
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "moeenz/docker-kafka-kraft",
@@ -55,6 +54,7 @@ func TestMain(m *testing.M) {
 		time.Sleep(30 * time.Second)
 		conn, err := kafkaLib.NewClient([]string{brokerHost}, nil)
 		if err != nil {
+			fmt.Printf("error creating client ")
 			return
 		}
 
@@ -70,9 +70,9 @@ func TestMain(m *testing.M) {
 			conn.Close()
 			return
 		}
-
 		return
 	}
+
 	purgeContainer, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
 		log.Fatal(err)
@@ -85,8 +85,6 @@ func TestMain(m *testing.M) {
 
 	// run tests
 	code := m.Run()
-
-	conn.Close()
 
 	// purge container
 	if err := purgeContainer(); err != nil {
@@ -179,7 +177,6 @@ func TestExtract(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
@@ -226,12 +223,14 @@ func TestExtract(t *testing.T) {
 }
 
 func setup(broker *kafkaLib.Broker) (err error) {
+
 	// create client connection to create topics
 	conn, err := kafkaLib.NewClient([]string{brokerHost}, nil)
 	if err != nil {
 		fmt.Printf("error creating client ")
 		return
 	}
+
 	defer conn.Close()
 
 	// create topics
@@ -241,6 +240,7 @@ func setup(broker *kafkaLib.Broker) (err error) {
 		"meteor-test-topic-3": {NumPartitions: 1, ReplicationFactor: 1},
 		"__consumer_offsets":  {NumPartitions: 1, ReplicationFactor: 1},
 	}
+
 	createTopicRequest := &kafkaLib.CreateTopicsRequest{TopicDetails: topicConfigs}
 	_, err = broker.CreateTopics(createTopicRequest)
 	if err != nil {
