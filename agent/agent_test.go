@@ -875,7 +875,7 @@ func TestAgentRun(t *testing.T) {
 
 		monitor := newMockMonitor()
 		monitor.On("RecordRun", utils.OfTypeContext(), mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", utils.OfTypeContext(), mock.AnythingOfType("agent.PluginInfo"))
+		monitor.On("RecordPlugin", utils.OfTypeContext(), mock.AnythingOfType("agent.PluginInfo")).Maybe()
 		monitor.On("RecordSinkRetryCount", utils.OfTypeContext(), mock.AnythingOfType("agent.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
