@@ -26,7 +26,6 @@ config.yaml
 meteor
 _recipes
 meteor.yaml
-vendor
 
 # plugins
 meteor-plugin-*

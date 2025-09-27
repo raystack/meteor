@@ -11,6 +11,50 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMaxComputeURN(t *testing.T) {
+	t.Run("should create maxcompute URN", func(t *testing.T) {
+		project := "my-project"
+		schema := "my-dataset"
+		table := "my-table"
+
+		actual := plugins.MaxComputeURN(project, schema, table)
+		expected := "urn:maxcompute:my-project:table:my-project.my-dataset.my-table"
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestMaxComputeTableFQNToURN(t *testing.T) {
+	cases := []struct {
+		name        string
+		fqn         string
+		expected    string
+		expectedErr string
+	}{
+		{
+			name:     "Valid",
+			fqn:      "mc-raw-internal.dagstream.production_feast09_s2id13_30min_demand",
+			expected: "urn:maxcompute:mc-raw-internal:table:mc-raw-internal.dagstream.production_feast09_s2id13_30min_demand",
+		},
+		{
+			name:        "Invalid1",
+			fqn:         "test1.test2",
+			expectedErr: "map URN: unexpected MaxCompute table FQN 'test1.test2', expected in format",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			urn, err := plugins.MaxComputeTableFQNToURN(tc.fqn)
+			if tc.expectedErr != "" {
+				assert.ErrorContains(t, err, tc.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.expected, urn)
+		})
+	}
+}
+
 func TestBigQueryURN(t *testing.T) {
 	t.Run("should create bigquery URN", func(t *testing.T) {
 		project := "my-project"

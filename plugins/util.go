@@ -17,6 +17,8 @@ import (
 	"github.com/raystack/meteor/models"
 )
 
+const numberOfFqnComponents = 3
+
 var validate *validator.Validate
 
 func init() {
@@ -70,6 +72,22 @@ func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	return err
 }
 
+// MaxComputeTableFQNToURN get URN from FQN (Fully Qualified Name) MaxCompute
+func MaxComputeTableFQNToURN(fqn string) (string, error) {
+	projectName, schemaName, tableName, err := parseMaxComputeTableFQN(fqn)
+	if err != nil {
+		return "", fmt.Errorf("map URN: %w", err)
+	}
+
+	return MaxComputeURN(projectName, schemaName, tableName), nil
+}
+
+func MaxComputeURN(projectName, schemaName, tableName string) string {
+	fqn := fmt.Sprintf("%s.%s.%s", projectName, schemaName, tableName)
+	return models.NewURN("maxcompute", projectName, "table", fqn)
+}
+
+// BigQueryTableFQNToURN get URN from FQN (Fully Qualified Name) BigQuery
 func BigQueryTableFQNToURN(fqn string) (string, error) {
 	projectID, datasetID, tableID, err := parseBQTableFQN(fqn)
 	if err != nil {
@@ -145,9 +163,20 @@ func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err erro
 	ss := strings.FieldsFunc(fqn, func(r rune) bool {
 		return r == ':' || r == '.'
 	})
-	if len(ss) < 3 {
+	if len(ss) != numberOfFqnComponents {
 		return "", "", "", fmt.Errorf(
 			"unexpected BigQuery table FQN '%s', expected in format projectID:datasetID.tableID", fqn,
+		)
+	}
+	return ss[0], ss[1], ss[2], nil
+}
+
+func parseMaxComputeTableFQN(fqn string) (projectName, schemaName, tableName string, err error) { //nolint:revive
+	// fqn is projectID.schema.tableID format.
+	ss := strings.Split(fqn, ".")
+	if len(ss) != numberOfFqnComponents {
+		return "", "", "", fmt.Errorf(
+			"unexpected MaxCompute table FQN '%s', expected in format projectName.schemaName.tableName", fqn,
 		)
 	}
 	return ss[0], ss[1], ss[2], nil
