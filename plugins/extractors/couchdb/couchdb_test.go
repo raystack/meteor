@@ -46,14 +46,14 @@ func TestMain(m *testing.M) {
 	}
 	// setup test
 	opts := dockertest.RunOptions{
-		Repository: "docker.io/bitnami/couchdb",
+		Repository: "couchdb",
 		Tag:        "3",
 		Env: []string{
 			"COUCHDB_USER=" + user,
 			"COUCHDB_PASSWORD=" + pass,
 		},
 		Mounts: []string{
-			fmt.Sprintf("%s/localConfig:/opt/bitnami/couchdb/etc/local.d:rw", pwd),
+			fmt.Sprintf("%s/localConfig:/opt/couchdb/etc/local.d:rw", pwd),
 		},
 		ExposedPorts: []string{port},
 		PortBindings: map[docker.Port][]docker.PortBinding{

@@ -19,10 +19,11 @@ jobs:
       - name: Run Test
         run: make test
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.out
+          overwrite: true
 
   pretest:
     runs-on: ubuntu-latest
@@ -39,7 +40,7 @@ jobs:
     needs: pretest
     runs-on: ubuntu-latest
     if: |
-      github.ref == 'refs/heads/main' || 
+      github.ref == 'refs/heads/main' ||
       github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch'
     strategy:
@@ -57,10 +58,11 @@ jobs:
       - name: Run Test
         run: make test-plugins PLUGIN=${{ matrix.plugins }}
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage-plugins
+          name: coverage-plugins-${{ strategy.job-index }}
           path: coverage-plugins*.out
+          overwrite: true
 
   coverage:
     runs-on: ubuntu-latest
@@ -73,13 +75,14 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Download coverage
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: coverage
       - name: Download plugins coverage
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: coverage-plugins
+          pattern: coverage-plugins-*
+          merge-multiple: true
       - name: Install goveralls and send coverage
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
