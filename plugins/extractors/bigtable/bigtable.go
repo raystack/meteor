@@ -189,7 +189,7 @@ func (c Config) clientOptions() []option.ClientOption {
 		return nil
 	}
 
-	return []option.ClientOption{option.WithCredentialsJSON(c.serviceAccountJSON)}
+	return []option.ClientOption{option.WithAuthCredentialsJSON(option.ServiceAccount, c.serviceAccountJSON)}
 }
 
 func createInstanceAdminClient(ctx context.Context, config Config) (InstanceAdminClient, error) {

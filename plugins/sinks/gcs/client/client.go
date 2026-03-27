@@ -18,7 +18,7 @@ type GCSWriter struct {
 }
 
 func NewWriter(ctx context.Context, serviceAccountJSON []byte, bucketname string, filepath string) (*GCSWriter, error) {
-	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(serviceAccountJSON))
+	client, err := storage.NewClient(ctx, option.WithAuthCredentialsJSON(option.ServiceAccount, serviceAccountJSON))
 	if err != nil {
 		return nil, errors.Wrap(err, "error in creating client")
 	}

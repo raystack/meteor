@@ -290,11 +290,11 @@ func CreateClient(ctx context.Context, logger log.Logger, config *Config) (*bigq
 		config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
-	return bigquery.NewClient(ctx, config.ProjectID, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+	return bigquery.NewClient(ctx, config.ProjectID, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(config.ServiceAccountJSON)))
 }
 
 func (e *Extractor) createPolicyTagClient(ctx context.Context) (*datacatalog.PolicyTagManagerClient, error) {
-	policyManager, err := datacatalog.NewPolicyTagManagerClient(ctx, option.WithCredentialsJSON([]byte(e.config.ServiceAccountJSON)))
+	policyManager, err := datacatalog.NewPolicyTagManagerClient(ctx, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(e.config.ServiceAccountJSON)))
 	if err != nil {
 		return nil, err
 	}

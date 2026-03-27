@@ -156,7 +156,7 @@ func authenticatedClient(ctx context.Context, serviceAccountJSON []byte, scopes 
 		return google.DefaultClient(ctx, scopes...)
 	}
 
-	client, err := idtoken.NewClient(ctx, audience, idtoken.WithCredentialsJSON(serviceAccountJSON))
+	client, err := idtoken.NewClient(ctx, audience, idtoken.WithAuthCredentialsJSON(idtoken.ServiceAccount, serviceAccountJSON))
 	if err != nil {
 		return nil, fmt.Errorf("google credentials from JSON: %w", err)
 	}

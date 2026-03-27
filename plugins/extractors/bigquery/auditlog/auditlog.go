@@ -85,7 +85,7 @@ func (l *AuditLog) createClient(ctx context.Context) (*logadmin.Client, error) {
 		return logadmin.NewClient(ctx, l.config.ProjectID)
 	}
 
-	return logadmin.NewClient(ctx, l.config.ProjectID, option.WithCredentialsJSON([]byte(l.config.ServiceAccountJSON)))
+	return logadmin.NewClient(ctx, l.config.ProjectID, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(l.config.ServiceAccountJSON)))
 }
 
 func (l *AuditLog) Collect(ctx context.Context, tbl *bigquery.Table) (stats *TableStats, err error) {

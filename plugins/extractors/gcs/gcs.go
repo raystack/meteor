@@ -207,7 +207,7 @@ func createClient(ctx context.Context, logger log.Logger, config Config) (*stora
 		config.ServiceAccountJSON = string(serviceAccountJSON)
 	}
 
-	return storage.NewClient(ctx, option.WithCredentialsJSON([]byte(config.ServiceAccountJSON)))
+	return storage.NewClient(ctx, option.WithAuthCredentialsJSON(option.ServiceAccount, []byte(config.ServiceAccountJSON)))
 }
 
 // Register the extractor to catalog

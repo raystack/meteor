@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	mockCtx = mock.AnythingOfType("*context.emptyCtx")
+	mockCtx = mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil })
 	ctx     = context.TODO()
 )
 

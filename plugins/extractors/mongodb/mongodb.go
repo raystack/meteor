@@ -199,18 +199,9 @@ func (e *Extractor) isExcludedDB(dbName string, excludeDatabases []string) bool 
 }
 
 // Create mongo client and tries to connect
-func createAndConnnectClient(ctx context.Context, uri string) (client *mongo.Client, err error) {
+func createAndConnnectClient(ctx context.Context, uri string) (*mongo.Client, error) {
 	clientOptions := options.Client().ApplyURI(uri)
-	client, err = mongo.NewClient(clientOptions)
-	if err != nil {
-		return
-	}
-	err = client.Connect(ctx)
-	if err != nil {
-		return
-	}
-
-	return
+	return mongo.Connect(ctx, clientOptions)
 }
 
 func init() {
