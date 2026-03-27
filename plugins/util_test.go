@@ -60,6 +60,50 @@ func TestBigQueryTableFQNToURN(t *testing.T) {
 	}
 }
 
+func TestMaxComputeURN(t *testing.T) {
+	t.Run("should create maxcompute URN", func(t *testing.T) {
+		project := "my-project"
+		schema := "my-schema"
+		table := "my-table"
+
+		actual := plugins.MaxComputeURN(project, schema, table)
+		expected := "urn:maxcompute:my-project:table:my-project.my-schema.my-table"
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestMaxComputeTableFQNToURN(t *testing.T) {
+	cases := []struct {
+		name        string
+		fqn         string
+		expected    string
+		expectedErr string
+	}{
+		{
+			name:     "Valid",
+			fqn:      "my-project.my-schema.my-table",
+			expected: "urn:maxcompute:my-project:table:my-project.my-schema.my-table",
+		},
+		{
+			name:        "Invalid - missing component",
+			fqn:         "my-project.my-table",
+			expectedErr: "map URN: unexpected MaxCompute table FQN",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			urn, err := plugins.MaxComputeTableFQNToURN(tc.fqn)
+			if tc.expectedErr != "" {
+				assert.ErrorContains(t, err, tc.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.expected, urn)
+		})
+	}
+}
+
 func TestKafkaURN(t *testing.T) {
 	cases := []struct {
 		name     string

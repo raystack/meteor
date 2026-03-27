@@ -146,7 +146,7 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("should skip and no error when ListProjectNamespaces failed", func(t *testing.T) {
+	t.Run("should skip and no error when ListJobSpecification failed", func(t *testing.T) {
 		var err error
 		ctx := context.TODO()
 
@@ -191,7 +191,7 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("should skip and no error when ListProjectNamespaces failed", func(t *testing.T) {
+	t.Run("should skip and no error when GetJobTask failed", func(t *testing.T) {
 		var err error
 		ctx := context.TODO()
 
@@ -316,6 +316,13 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 				},
 				Secrets: []*pb.ProjectSpecification_ProjectSecret{},
 			},
+			{
+				Name: "projectMaxCompute-A",
+				Config: map[string]string{
+					"FOO": "bar",
+				},
+				Secrets: []*pb.ProjectSpecification_ProjectSecret{},
+			},
 		},
 	}, nil).Once()
 
@@ -334,6 +341,17 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		ProjectName: "project-B",
 	}, mock.Anything).Return(&pb.ListProjectNamespacesResponse{
 		Namespaces: []*pb.NamespaceSpecification{},
+	}, nil).Once()
+
+	client.On("ListProjectNamespaces", ctx, &pb.ListProjectNamespacesRequest{
+		ProjectName: "projectMaxCompute-A",
+	}, mock.Anything).Return(&pb.ListProjectNamespacesResponse{
+		Namespaces: []*pb.NamespaceSpecification{
+			{
+				Name:   "namespaceMaxCompute-A",
+				Config: map[string]string{},
+			},
+		},
 	}, nil).Once()
 
 	client.On("ListJobSpecification", ctx, &pb.ListJobSpecificationRequest{
@@ -473,6 +491,80 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 		},
 	}, nil).Once()
 
+	client.On("ListJobSpecification", ctx, &pb.ListJobSpecificationRequest{
+		ProjectName:   "projectMaxCompute-A",
+		NamespaceName: "namespaceMaxCompute-A",
+	}, mock.Anything).Return(&pb.ListJobSpecificationResponse{
+		Jobs: []*pb.JobSpecification{
+			{
+				Version:       1,
+				Name:          "jobMaxCompute-B",
+				Owner:         "jane_doe@example.com",
+				StartDate:     "2021-01-01",
+				EndDate:       "",
+				Interval:      "0 19 1 * *",
+				DependsOnPast: false,
+				CatchUp:       true,
+				TaskName:      "mc2mc",
+				Config:        []*pb.JobConfigItem{},
+				WindowSize:       "720h",
+				WindowOffset:     "-720h",
+				WindowTruncateTo: "M",
+				Dependencies:     []*pb.JobDependency{},
+				Assets: map[string]string{
+					"query.sql": "SELECT * FROM projectZ.schemaY.tableX",
+				},
+				Hooks:       []*pb.JobSpecHook{},
+				Description: "sample description for jobMaxCompute-B",
+				Labels: map[string]string{
+					"orchestrator": "optimus",
+				},
+				Behavior: &pb.JobSpecification_Behavior{
+					Retry: &pb.JobSpecification_Behavior_Retry{
+						Count: 0,
+						Delay: &durationpb.Duration{
+							Seconds: 0,
+						},
+						ExponentialBackoff: false,
+					},
+					Notify: []*pb.JobSpecification_Behavior_Notifiers{},
+				},
+			},
+			{
+				Version:       1,
+				Name:          "jobMaxCompute-C",
+				Owner:         "jane_doe@example.com",
+				StartDate:     "2021-01-01",
+				EndDate:       "",
+				Interval:      "0 19 1 * *",
+				DependsOnPast: false,
+				CatchUp:       true,
+				TaskName:      "gcs2mc",
+				Config:        []*pb.JobConfigItem{},
+				WindowSize:       "720h",
+				WindowOffset:     "-720h",
+				WindowTruncateTo: "M",
+				Dependencies:     []*pb.JobDependency{},
+				Assets:           map[string]string{},
+				Hooks:            []*pb.JobSpecHook{},
+				Description:      "sample description for jobMaxCompute-C",
+				Labels: map[string]string{
+					"orchestrator": "optimus",
+				},
+				Behavior: &pb.JobSpecification_Behavior{
+					Retry: &pb.JobSpecification_Behavior_Retry{
+						Count: 0,
+						Delay: &durationpb.Duration{
+							Seconds: 0,
+						},
+						ExponentialBackoff: false,
+					},
+					Notify: []*pb.JobSpecification_Behavior_Notifiers{},
+				},
+			},
+		},
+	}, nil).Once()
+
 	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
 		ProjectName:   "project-A",
 		NamespaceName: "namespace-A",
@@ -521,6 +613,38 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 			Name:        "task-C",
 			Description: "task's description C",
 			Image:       "task's image C",
+			Destination: &pb.JobTask_Destination{},
+		},
+	}, nil).Once()
+
+	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
+		ProjectName:   "projectMaxCompute-A",
+		NamespaceName: "namespaceMaxCompute-A",
+		JobName:       "jobMaxCompute-B",
+	}, mock.Anything).Return(&pb.GetJobTaskResponse{
+		Task: &pb.JobTask{
+			Name:        "task-MC-B",
+			Description: "task's description MC-B",
+			Image:       "task's image MC-B",
+			Destination: &pb.JobTask_Destination{
+				Destination: "maxcompute://mc-dst-project.mc-dst-schema.mc-dst-table",
+			},
+			Dependencies: []*pb.JobTask_Dependency{
+				{Dependency: "bigquery://src-bq-project:src-bq-dataset.src-bq-table"},
+				{Dependency: "maxcompute://mc-src-project.mc-src-schema.mc-src-table"},
+			},
+		},
+	}, nil).Once()
+
+	client.On("GetJobTask", ctx, &pb.GetJobTaskRequest{
+		ProjectName:   "projectMaxCompute-A",
+		NamespaceName: "namespaceMaxCompute-A",
+		JobName:       "jobMaxCompute-C",
+	}, mock.Anything).Return(&pb.GetJobTaskResponse{
+		Task: &pb.JobTask{
+			Name:        "task-MC-C",
+			Description: "task's description MC-C",
+			Image:       "task's image MC-C",
 			Destination: &pb.JobTask_Destination{},
 		},
 	}, nil).Once()

@@ -70,6 +70,31 @@ func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
 	return err
 }
 
+func MaxComputeTableFQNToURN(fqn string) (string, error) {
+	projectID, schemaName, tableName, err := parseMaxComputeTableFQN(fqn)
+	if err != nil {
+		return "", fmt.Errorf("map URN: %w", err)
+	}
+
+	return MaxComputeURN(projectID, schemaName, tableName), nil
+}
+
+func MaxComputeURN(projectID, schemaName, tableName string) string {
+	fqn := fmt.Sprintf("%s.%s.%s", projectID, schemaName, tableName)
+	return models.NewURN("maxcompute", projectID, "table", fqn)
+}
+
+func parseMaxComputeTableFQN(fqn string) (projectID, schemaName, tableName string, err error) {
+	const numberOfFqnComponents = 3
+	ss := strings.Split(fqn, ".")
+	if len(ss) != numberOfFqnComponents {
+		return "", "", "", fmt.Errorf(
+			"unexpected MaxCompute table FQN '%s', expected in format projectID.schemaName.tableName", fqn,
+		)
+	}
+	return ss[0], ss[1], ss[2], nil
+}
+
 func BigQueryTableFQNToURN(fqn string) (string, error) {
 	projectID, datasetID, tableID, err := parseBQTableFQN(fqn)
 	if err != nil {
