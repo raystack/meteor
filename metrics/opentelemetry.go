@@ -7,7 +7,7 @@ import (
 
 	"github.com/raystack/meteor/config"
 	"github.com/raystack/meteor/recipe"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/contrib/samplers/probability/consistent"

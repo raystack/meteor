@@ -23,7 +23,7 @@ import (
 	"github.com/raystack/meteor/plugins/extractors/bigquery/upstream"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"

@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 //go:embed README.md

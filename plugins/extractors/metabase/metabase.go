@@ -13,7 +13,7 @@ import (
 	m "github.com/raystack/meteor/plugins/extractors/metabase/models"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

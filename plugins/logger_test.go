@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"github.com/stretchr/testify/assert"
 )
 

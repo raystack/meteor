@@ -11,9 +11,8 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/recipe"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
-	"github.com/raystack/salt/printer"
-	"github.com/raystack/salt/term"
+	"github.com/raystack/salt/cli/printer"
+	log "github.com/raystack/salt/observability/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -69,8 +68,8 @@ func LintCmd() *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				fmt.Println(term.Yellowf("No recipe found in [%s]", args[0]))
-				fmt.Println(term.Blue("\nUse 'meteor gen recipe' to generate a new recipe."))
+				fmt.Println(printer.Yellowf("No recipe found in [%s]", args[0]))
+				fmt.Println(printer.Blue("\nUse 'meteor gen recipe' to generate a new recipe."))
 				return nil
 			}
 
@@ -81,15 +80,15 @@ func LintCmd() *cobra.Command {
 				var icon string
 
 				if len(errs) == 0 {
-					icon = term.SuccessIcon()
+					icon = printer.Icon("success")
 					success++
 				} else {
-					icon = term.FailureIcon()
+					icon = printer.Icon("failure")
 					printLintErrors(errs, recipe)
 					failures++
 				}
 
-				row = []string{fmt.Sprintf("%s  %s", icon, recipe.Name), term.Greyf("(%d errors, 0 warnings)", len(errs))}
+				row = []string{fmt.Sprintf("%s  %s", icon, recipe.Name), printer.Greyf("(%d errors, 0 warnings)", len(errs))}
 				report = append(report, row)
 			}
 

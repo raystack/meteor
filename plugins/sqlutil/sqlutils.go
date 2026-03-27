@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"go.nhat.io/otelsql"
 	"go.opentelemetry.io/otel/attribute"
 )

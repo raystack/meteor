@@ -57,7 +57,7 @@ func TestLoad(t *testing.T) {
 				configFile: "testdata/invalid-config.yaml",
 			},
 			expected:    config.Config{},
-			expectedErr: "unable to load config to struct",
+			expectedErr: "failed to unmarshal config",
 		},
 	}
 	for _, tt := range tests {

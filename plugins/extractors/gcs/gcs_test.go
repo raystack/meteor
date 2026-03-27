@@ -19,7 +19,7 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
-	slog "github.com/raystack/salt/log"
+	slog "github.com/raystack/salt/observability/logger"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"

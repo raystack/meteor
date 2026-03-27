@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 type Config struct {

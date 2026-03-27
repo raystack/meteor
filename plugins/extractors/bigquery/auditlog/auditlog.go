@@ -9,7 +9,7 @@ import (
 	"cloud.google.com/go/logging/logadmin"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"

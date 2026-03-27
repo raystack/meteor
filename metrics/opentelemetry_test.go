@@ -8,7 +8,7 @@ import (
 	"github.com/raystack/meteor/config"
 	"github.com/raystack/meteor/metrics"
 	"github.com/raystack/meteor/recipe"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"github.com/stretchr/testify/assert"
 )
 

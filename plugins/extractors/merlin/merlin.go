@@ -16,7 +16,7 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 // init register the extractor to the catalog

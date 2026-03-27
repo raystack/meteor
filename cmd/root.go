@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/raystack/salt/cmdx"
+	"github.com/raystack/salt/cli/commander"
 	"github.com/spf13/cobra"
 )
 
@@ -31,10 +31,7 @@ func New() *cobra.Command {
 		},
 	}
 
-	// Help topics
-	cmdx.SetHelp(cmd)
-	cmd.AddCommand(cmdx.SetCompletionCmd("meteor"))
-	cmd.AddCommand(cmdx.SetRefCmd(cmd))
+	commander.New(cmd).Init()
 
 	cmd.AddCommand(VersionCmd())
 	cmd.AddCommand(GenCmd())

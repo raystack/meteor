@@ -3,7 +3,7 @@ package utils
 import (
 	"io"
 
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 // Logger set with writer

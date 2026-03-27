@@ -1,6 +1,6 @@
 package plugins
 
-import "github.com/raystack/salt/log"
+import log "github.com/raystack/salt/observability/logger"
 
 var (
 	logger log.Logger = log.NewLogrus(log.LogrusWithLevel("INFO"))

@@ -21,7 +21,7 @@ import (
 	"github.com/raystack/meteor/plugins/extractors/bigquery"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
-	slog "github.com/raystack/salt/log"
+	slog "github.com/raystack/salt/observability/logger"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
 	"google.golang.org/protobuf/types/known/anypb"

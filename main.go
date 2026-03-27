@@ -10,7 +10,7 @@ import (
 	_ "github.com/raystack/meteor/plugins/extractors"
 	_ "github.com/raystack/meteor/plugins/processors"
 	_ "github.com/raystack/meteor/plugins/sinks"
-	"github.com/raystack/salt/cmdx"
+	"github.com/raystack/salt/cli/commander"
 )
 
 const (
@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	if cmdx.IsCmdErr(err) {
+	if commander.IsCommandErr(err) {
 		if !strings.HasSuffix(err.Error(), "\n") {
 			fmt.Println()
 		}

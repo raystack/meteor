@@ -16,9 +16,8 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/recipe"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
-	"github.com/raystack/salt/printer"
-	"github.com/raystack/salt/term"
+	"github.com/raystack/salt/cli/printer"
+	log "github.com/raystack/salt/observability/logger"
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
@@ -100,7 +99,7 @@ func RunCmd() *cobra.Command {
 			}
 
 			if len(recipes) == 0 {
-				fmt.Println(term.WarningIcon(), term.Yellowf("No recipe found in [%s]", args[0]))
+				fmt.Println(printer.Icon("warning"), printer.Yellowf("No recipe found in [%s]", args[0]))
 				return nil
 			}
 
@@ -120,10 +119,10 @@ func RunCmd() *cobra.Command {
 				if run.Error != nil {
 					lg.Error(run.Error.Error(), "recipe", run.Recipe.Name)
 					failures++
-					row = append(row, term.FailureIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf("%s", strconv.Itoa(run.RecordCount)))
+					row = append(row, printer.Icon("failure"), run.Recipe.Name, printer.Grey(run.Recipe.Source.Name), printer.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), printer.Greyf("%s", strconv.Itoa(run.RecordCount)))
 				} else {
 					success++
-					row = append(row, term.SuccessIcon(), run.Recipe.Name, term.Grey(run.Recipe.Source.Name), term.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), term.Greyf("%s", strconv.Itoa(run.RecordCount)))
+					row = append(row, printer.Icon("success"), run.Recipe.Name, printer.Grey(run.Recipe.Source.Name), printer.Greyf("%v ms", strconv.Itoa(run.DurationInMs)), printer.Greyf("%s", strconv.Itoa(run.RecordCount)))
 				}
 				report = append(report, row)
 				if err = bar.Add(1); err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/frontier/client"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

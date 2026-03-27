@@ -13,7 +13,7 @@ import (
 	"github.com/raystack/meteor/plugins/internal/tengoutil"
 	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 func init() {

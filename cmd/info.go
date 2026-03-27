@@ -6,8 +6,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/printer"
-	"github.com/raystack/salt/term"
+	"github.com/raystack/salt/cli/printer"
 	"github.com/spf13/cobra"
 )
 
@@ -161,8 +160,8 @@ func InfoProccCmd() *cobra.Command {
 
 func inform(typ string, summary string, err error) error {
 	if err != nil {
-		fmt.Println(term.Redf("ERROR: %s", err.Error()))
-		fmt.Println(term.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
+		fmt.Println(printer.Redf("ERROR: %s", err.Error()))
+		fmt.Println(printer.Bluef("\nUse 'meteor list %s' for the list of supported %s.", typ, typ))
 		return nil
 	}
 

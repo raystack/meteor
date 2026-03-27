@@ -11,7 +11,7 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/protobuf/types/known/anypb"

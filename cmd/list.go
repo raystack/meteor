@@ -7,8 +7,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/printer"
-	"github.com/raystack/salt/term"
+	"github.com/raystack/salt/cli/printer"
 
 	"github.com/spf13/cobra"
 )
@@ -60,7 +59,7 @@ func ListExtCmd() *cobra.Command {
 
 			for n, i := range extractors {
 				report = append(report, []string{
-					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+					printer.Greenf("#%02d", index), n, i.Description, printer.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
 				})
 				index++
 			}
@@ -99,7 +98,7 @@ func ListSinksCmd() *cobra.Command {
 			index := 1
 			for n, i := range sinks {
 				report = append(report, []string{
-					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+					printer.Greenf("#%02d", index), n, i.Description, printer.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
 				})
 				index++
 			}
@@ -139,7 +138,7 @@ func ListProccCmd() *cobra.Command {
 
 			for n, i := range processors {
 				report = append(report, []string{
-					term.Greenf("#%02d", index), n, i.Description, term.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
+					printer.Greenf("#%02d", index), n, i.Description, printer.Greyf(" (%s)", strings.Join(i.Tags, ", ")),
 				})
 				index++
 			}

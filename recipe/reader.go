@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/raystack/meteor/generator"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"gopkg.in/yaml.v3"
 )
 

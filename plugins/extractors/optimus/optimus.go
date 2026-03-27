@@ -14,7 +14,7 @@ import (
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
 	pb "github.com/raystack/optimus/protos/raystack/optimus/core/v1beta1"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 

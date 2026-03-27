@@ -14,7 +14,7 @@ import (
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/recipe"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/salt/log"
+	log "github.com/raystack/salt/observability/logger"
 )
 
 // TimerFn of function type
