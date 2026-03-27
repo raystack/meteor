@@ -20,6 +20,7 @@ import (
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
 	"github.com/raystack/salt/log"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -91,22 +92,33 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
-	for _, record := range batch {
-		asset := record.Data()
-		s.logger.Info("sinking record to compass", "record", asset.GetUrn())
-
-		compassPayload, err := s.buildCompassPayload(asset)
-		if err != nil {
-			return fmt.Errorf("build compass payload: %w", err)
-		}
-		if err = s.send(ctx, compassPayload); err != nil {
-			return fmt.Errorf("send data: %w", err)
-		}
-
-		s.logger.Info("successfully sinked record to compass", "record", asset.GetUrn())
+	if len(batch) == 0 {
+		return nil
 	}
 
-	return nil
+	errGroup := errgroup.Group{}
+	errGroup.SetLimit(len(batch))
+
+	for _, record := range batch {
+		record := record
+		errGroup.Go(func() error {
+			asset := record.Data()
+			s.logger.Info("sinking record to compass", "record", asset.GetUrn())
+
+			compassPayload, err := s.buildCompassPayload(asset)
+			if err != nil {
+				return fmt.Errorf("build compass payload: %w", err)
+			}
+			if err := s.send(ctx, compassPayload); err != nil {
+				return fmt.Errorf("send data: %w", err)
+			}
+
+			s.logger.Info("successfully sinked record to compass", "record", asset.GetUrn())
+			return nil
+		})
+	}
+
+	return errGroup.Wait()
 }
 
 func (*Sink) Close() error { return nil }
@@ -214,21 +226,27 @@ func (s *Sink) buildLineage(asset *v1beta2.Asset) (upstreams, downstreams []Line
 		return nil, nil
 	}
 
-	for _, upstream := range lineage.Upstreams {
-		upstreams = append(upstreams, LineageRecord{
-			URN:     upstream.Urn,
-			Type:    upstream.Type,
-			Service: upstream.Service,
-		})
-	}
-	for _, downstream := range lineage.Downstreams {
-		downstreams = append(downstreams, LineageRecord{
-			URN:     downstream.Urn,
-			Type:    downstream.Type,
-			Service: downstream.Service,
-		})
+	if lineage.GetUpstreams() != nil {
+		for _, upstream := range lineage.GetUpstreams() {
+			upstreams = append(upstreams, LineageRecord{
+				URN:     upstream.Urn,
+				Type:    upstream.Type,
+				Service: upstream.Service,
+			})
+		}
 	}
 
+	if lineage.GetDownstreams() != nil {
+		for _, downstream := range lineage.GetDownstreams() {
+			downstreams = append(downstreams, LineageRecord{
+				URN:     downstream.Urn,
+				Type:    downstream.Type,
+				Service: downstream.Service,
+			})
+		}
+	}
+
+	s.logger.Info(fmt.Sprintf("build lineage request for %s", asset.GetUrn()), "upstreams", upstreams, "downstreams", downstreams)
 	return upstreams, downstreams
 }
 
@@ -246,13 +264,13 @@ func (*Sink) buildOwners(asset *v1beta2.Asset) []Owner {
 }
 
 func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
-	total := len(s.config.Labels) + len(asset.Labels)
+	total := len(s.config.Labels) + len(asset.GetLabels())
 	if total == 0 {
 		return nil, nil
 	}
 
 	labels := make(map[string]string, total)
-	for k, v := range asset.Labels {
+	for k, v := range asset.GetLabels() {
 		labels[k] = v
 	}
 
