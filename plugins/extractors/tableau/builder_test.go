@@ -145,6 +145,69 @@ func TestBuildLineageResource(t *testing.T) {
 		assert.Equal(t, expectedResource, res)
 	})
 
+	t.Run("building nil table should return error", func(t *testing.T) {
+		e := New(testutils.Logger)
+		res, err := e.buildLineageResources(nil)
+		assert.EqualError(t, err, "no table found")
+		assert.Nil(t, res)
+	})
+
+	t.Run("building maxcompute DatabaseServer resource with schema", func(t *testing.T) {
+		table := &Table{
+			ID:       "id_table_1",
+			Name:     "table1",
+			FullName: "mc_project.my_schema.table1",
+			Schema:   "my_schema",
+			Database: Database{
+				"id":             "db_server",
+				"name":           "mc_project",
+				"connectionType": "maxcompute_jdbc",
+				"hostName":       "",
+				"port":           -1,
+				"service":        "",
+			},
+		}
+		e := New(testutils.Logger)
+		res, err := e.buildLineageResources(table)
+
+		expectedResource := &v1beta2.Resource{
+			Urn:     "urn:maxcompute:mc_project:table:mc_project.my_schema.table1",
+			Type:    "table",
+			Service: "maxcompute",
+		}
+
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResource, res)
+	})
+
+	t.Run("building maxcompute DatabaseServer resource without schema", func(t *testing.T) {
+		table := &Table{
+			ID:       "id_table_1",
+			Name:     "table1",
+			FullName: "mc_project.mc_project.table1",
+			Schema:   "mc_project",
+			Database: Database{
+				"id":             "db_server",
+				"name":           "mc_project",
+				"connectionType": "maxcompute_jdbc",
+				"hostName":       "",
+				"port":           -1,
+				"service":        "",
+			},
+		}
+		e := New(testutils.Logger)
+		res, err := e.buildLineageResources(table)
+
+		expectedResource := &v1beta2.Resource{
+			Urn:     "urn:maxcompute:mc_project:table:mc_project.default.table1",
+			Type:    "table",
+			Service: "maxcompute",
+		}
+
+		assert.Nil(t, err)
+		assert.Equal(t, expectedResource, res)
+	})
+
 	t.Run("building Unknown resource from interface", func(t *testing.T) {
 		table := &Table{
 			Name: "table_name",
