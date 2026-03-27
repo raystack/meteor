@@ -1,31 +1,88 @@
 # Processor
 
-A recipe can have none or many processors registered, depending upon the way the user wants metadata to be processed. A processor is basically a function that:
+A recipe can have none or many processors registered, depending upon how the user wants metadata to be processed. A processor is a function that takes each asset record, transforms it, and passes it to the next stage.
 
-* expects a list of data
-* processes the list
-* returns a list
+## How Processors Work
 
-The result from a processor will be passed on to the next processor until there is no more processor, hence the flow is sequential.
+Processors execute **sequentially** in the order they are defined in the recipe. The output of one processor becomes the input of the next, forming a transformation pipeline:
+
+```
+Extractor → Processor 1 → Processor 2 → Processor 3 → Sink
+```
+
+If no processors are defined, records flow directly from the extractor to the sink unchanged.
+
+## Error Handling
+
+If a processor encounters an error during execution, the entire recipe run fails. There is no skip-on-error behavior — you must fix the processor configuration to resolve the issue.
 
 ## Built-in Processors
 
-### metadata
+### Enrich
 
-This processor will set and overwrite metadata with given fields in the config.
+Append custom key-value attributes to each asset's data. Useful for adding metadata that is not present in the source system.
 
 ```yaml
 processors:
-  - name: metadata
+  - name: enrich
     config:
-      fieldA: valueA
-      fieldB: valueB
+      attributes:
+        team: data-platform
+        environment: production
 ```
+
+### Labels
+
+Append key-value labels to each asset. Labels are useful for categorization and filtering in downstream catalog services.
+
+```yaml
+processors:
+  - name: labels
+    config:
+      labels:
+        source: meteor
+        classification: internal
+```
+
+### Script
+
+Transform assets using a [Tengo](https://github.com/d5/tengo) script. The script processor gives you full control — including the ability to make HTTP calls to external services for enrichment.
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        asset.labels["processed"] = "true"
+```
+
+## Writing a Recipe with Processors
 
 | key | Description | requirement |
 | :--- | :--- | :--- |
-| `name` | contains the name of processor | required |
-| `config` | different processors will require different config | required |
+| `name` | Name of the processor to use | required |
+| `config` | Processor-specific configuration | required |
+
+## Example: Chaining Multiple Processors
+
+```yaml
+processors:
+  - name: enrich
+    config:
+      attributes:
+        domain: payments
+  - name: labels
+    config:
+      labels:
+        source: meteor
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        asset.name = asset.name + " [" + asset.service + "]"
+```
+
+In this example, each asset first gets enriched with a `domain` attribute, then gets labeled with `source: meteor`, and finally has its name modified by the script processor.
 
 More info about available processors can be found [here](../reference/processors.md).
-

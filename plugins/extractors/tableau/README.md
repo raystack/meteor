@@ -48,6 +48,16 @@ source:
 | `dashboard_urn` | `tableau::{identifier}/workbook/{workbook_id}` |
 | `dashboard_source` | `tableau` |
 
+## MaxCompute Support
+
+The Tableau extractor supports extracting lineage from MaxCompute data sources connected via JDBC. When a Tableau workbook uses a MaxCompute connection, the extractor will:
+
+- Detect connections of type `maxcompute_jdbc`
+- Generate URNs in the format `maxcompute://{project}.{schema}.{table}` (defaults to `default` schema if not specified)
+- Include MaxCompute tables as upstream lineage for the dashboard
+
+No additional configuration is required — MaxCompute connections are detected automatically.
+
 ## Contributing
 
 Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

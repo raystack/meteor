@@ -27,24 +27,52 @@ sinks: # required - at least 1 sink defined
 * **Console**
 
 ```yaml
-name: sample-recipe
 sinks:
   - name: console
 ```
 
 Print metadata to stdout.
 
+* **Compass**
+
+```yaml
+sinks:
+  - name: compass
+    config:
+      host: https://compass.example.com
+      type: sample-compass-type
+      mapping:
+        new_fieldname: "json_field_name"
+        id: "resource.urn"
+        displayName: "resource.name"
+```
+
+Upload metadata to [Compass](https://github.com/raystack/compass), Raystack's metadata catalog service. Supports lineage and ownership.
+
 * **File**
 
 ```yaml
 sinks:
-    name: file
+  - name: file
     config:
-        path: "./dir/sample.yaml"
-        format: "yaml"
+      path: "./dir/sample.yaml"
+      format: "yaml"
 ```
 
 Sinks metadata to a file in `json/yaml` format as per the config defined.
+
+* **Frontier**
+
+```yaml
+sinks:
+  - name: frontier
+    config:
+      host: frontier.example.com
+      headers:
+        X-Frontier-Email: meteor@raystack.io
+```
+
+Upsert users to a Frontier service. Request will be sent via GRPC.
 
 * **Google Cloud Storage**
 
@@ -52,60 +80,56 @@ Sinks metadata to a file in `json/yaml` format as per the config defined.
 sinks:
   - name: gcs
     config:
-     project_id: google-project-id
-     url: gcs://bucket_name/target_folder
-     object_prefix : github-users
-     service_account_base64: <base64 encoded service account key>
-     service_account_json:
-      {
-        "type": "service_account",
-        "private_key_id": "xxxxxxx",
-        "private_key": "xxxxxxx",
-        "client_email": "xxxxxxx",
-        "client_id": "xxxxxxx",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "xxxxxxx",
-        "client_x509_cert_url": "xxxxxxx",
-      }
+      project_id: google-project-id
+      url: gcs://bucket_name/target_folder
+      object_prefix: github-users
+      service_account_base64: <base64 encoded service account key>
 ```
 
-Sinks json data to a file as ndjson format in Google Cloud Storage bucket
+Sinks JSON data as ndjson format in a Google Cloud Storage bucket.
 
-* **http**
+* **HTTP**
 
 ```yaml
 sinks:
-  name: http
-  config:
-    method: POST
-    success_code: 200
-    url: https://compass.com/v1beta1/asset
-    headers:
-      Header-1: value11,value12
+  - name: http
+    config:
+      method: POST
+      success_code: 200
+      url: https://example.com/v1/metadata
+      headers:
+        Header-1: value11,value12
 ```
 
-Sinks metadata to a http destination as per the config defined.
+Sinks metadata to an HTTP destination as per the config defined.
+
+* **Kafka**
+
+```yaml
+sinks:
+  - name: kafka
+    config:
+      brokers: "localhost:9092"
+      topic: metadata-topic
+      key_path: ".resource.urn"
+```
+
+Publish metadata as JSON messages to a Kafka topic. Supports message keying for partition control.
 
 * **Stencil**
 
 ```yaml
 sinks:
-  name: stencil
-  config:
-    host: https://stencil.com
-    namespace_id: myNamespace
-    schema_id: mySchema
-    format: json
-    send_format_header: false
+  - name: stencil
+    config:
+      host: https://stencil.com
+      namespace_id: myNamespace
+      schema_id: mySchema
+      format: json
+      send_format_header: false
 ```
 
 Upload metadata of a given schema `format` in the existing `namespace_id` present in Stencil. Request will be sent via HTTP to a given host.
-
-## Upcoming sinks
-
-* HTTP
-* Kafka
 
 ## Serializer
 

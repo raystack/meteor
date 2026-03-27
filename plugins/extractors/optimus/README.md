@@ -34,6 +34,16 @@ source:
 | `lineage.downstreams[0].service` | `bigquery` |
 | `properties.attributes` | `{}` |
 
+### MaxCompute Support
+
+The Optimus extractor supports MaxCompute as a dependency source. When a job references MaxCompute resources (with the `maxcompute://` prefix), the extractor will:
+
+- Parse MaxCompute fully-qualified names in the format `maxcompute://project.schema.table`
+- Generate URNs using `maxcompute://{project}.{schema}.{table}`
+- Include MaxCompute resources as upstream or downstream lineage entries with service `maxcompute`
+
+You can also specify a `project_id` in the extractor config to scope lineage extraction to a specific project.
+
 ## Contributing
 
 Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

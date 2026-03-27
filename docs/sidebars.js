@@ -11,6 +11,7 @@ module.exports = {
         "guides/manage_recipes",
         "guides/run_recipes",
         "guides/deployment",
+        "guides/troubleshooting",
       ],
     },
     {
@@ -21,7 +22,8 @@ module.exports = {
         "concepts/recipe",
         "concepts/source",
         "concepts/processor",
-        "concepts/sink"
+        "concepts/sink",
+        "concepts/context_graph",
       ],
     },
     {
@@ -34,6 +36,13 @@ module.exports = {
         "reference/extractors",
         "reference/processors",
         "reference/sinks"
+      ],
+    },
+    {
+      type: "category",
+      label: "Examples",
+      items: [
+        "example/README",
       ],
     },
     {

@@ -6,3 +6,4 @@ A bit confused about various terms mentioned, and their usage?? Navigate through
 * [Source](source.md)
 * [Sink](sink.md)
 * [Processor](processor.md)
+* [Context Graph for AI](context_graph.md)
