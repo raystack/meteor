@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - name: Install dependencies
@@ -19,7 +19,7 @@ jobs:
       - name: Run Test
         run: make test
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.out
@@ -31,7 +31,7 @@ jobs:
       plugins: ${{ steps.set-matrix.outputs.plugins }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - id: set-matrix
         run: |
           echo "plugins=$(find plugins -mindepth 2 -maxdepth 2 -type d | sed 's/plugins\///' | awk 'BEGIN{printf "["} {printf "%s\"%s\"",sep,$0; sep=","} END{print ",\".\"]"}')" >> $GITHUB_OUTPUT
@@ -48,9 +48,9 @@ jobs:
         plugins: ${{ fromJson(needs.pretest.outputs.plugins) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - name: Install dependencies
@@ -58,7 +58,7 @@ jobs:
       - name: Run Test
         run: make test-plugins PLUGIN=${{ matrix.plugins }}
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-plugins-${{ strategy.job-index }}
           path: coverage-plugins*.out
@@ -69,17 +69,17 @@ jobs:
     needs: [test, plugins]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: "go.mod"
       - name: Download coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage
       - name: Download plugins coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: coverage-plugins-*
           merge-multiple: true

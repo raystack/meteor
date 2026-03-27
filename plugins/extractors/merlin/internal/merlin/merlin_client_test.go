@@ -42,6 +42,7 @@ func TestNewClient(t *testing.T) {
 			name:   "WithoutCredentials",
 			params: ClientParams{BaseURL: "http://company.com/api/merlin/"},
 			errStr: "google: could not find default credentials",
+			ctx:    context.Background(),
 		},
 		{
 			name: "WithInvalidCredentials",
@@ -50,6 +51,7 @@ func TestNewClient(t *testing.T) {
 				ServiceAccountJSON: []byte(`{"chuck": "norris"}`),
 			},
 			errStr: "google credentials from JSON: missing 'type' field in credentials",
+			ctx:    context.Background(),
 		},
 		{
 			name: "WithInvalidURL",

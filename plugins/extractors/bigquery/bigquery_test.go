@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "ghcr.io/goccy/bigquery-emulator",
-		Tag:        "0.3",
+		Tag:        "0.6",
 		Env:        []string{},
 		Mounts: []string{
 			fmt.Sprintf("%s/testdata:/work/testdata", pwd),
@@ -155,7 +155,7 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(seed int64) func(int64) int64) []*v1beta2.Asset {
 		extr := bigquery.New(utils.Logger, mockClient, randomizer)
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		err := extr.Init(ctx, cfg)
 

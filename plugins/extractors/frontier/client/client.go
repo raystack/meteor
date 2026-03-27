@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -80,6 +81,10 @@ func (c *client) createConnection(ctx context.Context, host string) (*grpc.Clien
 			m.StreamClientInterceptor(),
 		)),
 	)
+
+	if !strings.Contains(host, "://") {
+		host = "passthrough:///" + host
+	}
 
 	return grpc.NewClient(host, opts...)
 }

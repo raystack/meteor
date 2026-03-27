@@ -48,8 +48,13 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			return err
 		}
-		_, err = db.Query("SELECT 1")
-		return
+		// Query catalogs to ensure Presto is fully initialized, not just accepting connections
+		rows, err := db.Query("SHOW CATALOGS")
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		return rows.Err()
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {

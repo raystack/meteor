@@ -3,6 +3,7 @@ package caramlstore
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	grpcmw "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -129,6 +130,10 @@ func (c *gRPCClient) createConnection(ctx context.Context, hostURL string, maxSi
 		)),
 	}
 	opts = append(opts, c.opts...)
+
+	if !strings.Contains(hostURL, "://") {
+		hostURL = "passthrough:///" + hostURL
+	}
 
 	return grpc.NewClient(hostURL, opts...)
 }

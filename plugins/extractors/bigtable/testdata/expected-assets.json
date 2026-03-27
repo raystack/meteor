@@ -4,7 +4,7 @@
         "data": {
             "@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
             "attributes": {
-                "column_family": "[{\"Name\":\"family-a\",\"GCPolicy\":\"\"}]"
+                "column_family": "[{\"Name\":\"family-a\",\"GCPolicy\":\"\",\"FullGCPolicy\":null,\"ValueType\":null}]"
             },
             "columns": [],
             "create_time": null,
