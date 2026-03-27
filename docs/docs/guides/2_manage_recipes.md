@@ -28,7 +28,7 @@ $ meteor new recipe sample -e postgres -s console -p enrich > recipe.yaml
 
 # if not sure about the list of plugins you can choose from
 # the cli is interactive
-$ meteor run recipe sample
+$ meteor new recipe sample
 ```
 
 ## Generating multiple recipes from a template
@@ -37,7 +37,7 @@ Usually it may be required by user to generate multiple recipes with similar con
 
 ```bash
 # generate multiple recipes with same template
-$ meteor run  template.yaml --d <templates-data> --o <output-directory>
+$ meteor gen template.yaml -d <templates-data> -o <output-directory>
 ```
 
 ## Linting Recipe\(s\)
