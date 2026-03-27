@@ -5,6 +5,7 @@ package tengoutil
 
 import (
 	"testing"
+	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/stretchr/testify/assert"
@@ -54,5 +55,58 @@ func TestNewSecureScript(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = s.Compile()
 		assert.NoError(t, err)
+	})
+
+	t.Run("Allows import of custom http module", func(t *testing.T) {
+		s, err := NewSecureScript(([]byte)(heredoc.Doc(`
+			http := import("http")
+			response := http.get("http://example.com")
+			response.body
+		`)), nil)
+		assert.NoError(t, err)
+		_, err = s.Compile()
+		assert.NoError(t, err)
+	})
+
+	t.Run("HTTP GET with headers", func(t *testing.T) {
+		s, err := NewSecureScript(([]byte)(heredoc.Doc(`
+			http := import("http")
+			headers := { "User-Agent": "test-agent", "Accept": "application/json" }
+			response := http.get("http://example.com", headers)
+			response.body
+		`)), nil)
+		assert.NoError(t, err)
+		_, err = s.Compile()
+		assert.NoError(t, err)
+	})
+
+	t.Run("HTTP GET with invalid URL argument type", func(t *testing.T) {
+		s, err := NewSecureScript(([]byte)(heredoc.Doc(`
+			http := import("http")
+			http.get(12345)
+		`)), nil)
+		assert.NoError(t, err)
+		_, err = s.Compile()
+		assert.NoError(t, err)
+		_, err = s.Run()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unsupported protocol scheme")
+	})
+
+	t.Run("HTTP GET with timeout", func(t *testing.T) {
+		s, err := NewSecureScript(([]byte)(heredoc.Doc(`
+			http := import("http")
+			response := http.get("http://example.com")
+			response.body
+		`)), nil)
+		assert.NoError(t, err)
+		originalTimeout := defaultTimeout
+		defaultTimeout = 1 * time.Millisecond
+		defer func() { defaultTimeout = originalTimeout }()
+		_, err = s.Compile()
+		assert.NoError(t, err)
+		_, err = s.Run()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "context deadline exceeded")
 	})
 }
