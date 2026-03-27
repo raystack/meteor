@@ -12,9 +12,17 @@ import (
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 )
 
+const (
+	bigquery                 = "bigquery"
+	mssql                    = "mssql"
+	maxcompute               = "maxcompute"
+	maxcomputeDefaultSchema  = "default"
+)
+
 // https://help.tableau.com/current/api/rest_api/en-us/REST/rest_api_concepts_connectiontype.htm
 var connectionTypeMap = map[string]string{
-	"sqlserver": "mssql",
+	"sqlserver":       mssql,
+	"maxcompute_jdbc": maxcompute,
 }
 
 func mapConnectionTypeToSource(ct string) string {
@@ -90,12 +98,12 @@ type DatabaseServer struct {
 	Service        string `json:"service"`
 }
 
-// parseBQTableFullName would parse table full name into splitted strings (project id, dataset, table name)
+// parseBigQueryTableFullName would parse table full name into splitted strings (project id, dataset, table name)
 // Full name found in tableau with biqquery source is like this
 // sometimes table name can also be the same as full name (e.g. project-id.schema.table1)
 // `project-id.schema.table1`
 // [project-id.schema].[table1]`
-func parseBQTableFullName(fullName string) (splittedFN []string, err error) {
+func parseBigQueryTableFullName(fullName string) (splittedFN []string, err error) {
 	omitedChars := "`" + "\\[\\]"
 	re := regexp.MustCompile("[" + omitedChars + "]")
 	cleanedFN := re.ReplaceAllString(fullName, "")
@@ -112,16 +120,22 @@ func (dbs *DatabaseServer) CreateResource(tableInfo Table) (resource *v1beta2.Re
 
 	var urn string
 	switch source {
-	case "bigquery":
+	case bigquery:
 		// bigquery::sample-project/dataset_a/invoice
 		// sometimes table name can be the same as full name (e.g. project-id.schema.table1), so we build URN with the full name instead
-		fullNameSplitted, err := parseBQTableFullName(tableInfo.FullName)
+		fullNameSplitted, err := parseBigQueryTableFullName(tableInfo.FullName)
 		if err != nil {
 			// assume fullNameSplitted[0] is the project ID
 			urn = plugins.BigQueryURN(fullNameSplitted[0], tableInfo.Schema, tableInfo.Name)
 			break
 		}
 		urn = plugins.BigQueryURN(fullNameSplitted[0], fullNameSplitted[1], fullNameSplitted[2])
+	case maxcompute:
+		schema := tableInfo.Schema
+		if schema == dbs.Name {
+			schema = maxcomputeDefaultSchema
+		}
+		urn = plugins.MaxComputeURN(dbs.Name, schema, tableInfo.Name)
 	default:
 		// postgres::postgres:5432/postgres/user
 		host := fmt.Sprintf("%s:%d", dbs.HostName, dbs.Port)
