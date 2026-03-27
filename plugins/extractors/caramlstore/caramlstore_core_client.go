@@ -110,27 +110,25 @@ func (c *gRPCClient) createConnection(ctx context.Context, hostURL string, maxSi
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(gRPCMaxClientSendSizeMB<<20),
 			grpc.MaxCallRecvMsgSize(maxSizeInMB<<20),
 		),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithUnaryInterceptor(grpcmw.ChainUnaryClient(
 			grpcretry.UnaryClientInterceptor(
 				grpcretry.WithBackoff(grpcretry.BackoffExponential(100*time.Millisecond)),
 				grpcretry.WithMax(gRPCMaxRetry),
 			),
-			otelgrpc.UnaryClientInterceptor(),
 			grpcprom.UnaryClientInterceptor,
 			m.UnaryClientInterceptor(),
 		)),
 		grpc.WithStreamInterceptor(grpcmw.ChainStreamClient(
-			otelgrpc.StreamClientInterceptor(),
 			grpcprom.StreamClientInterceptor,
 			m.StreamClientInterceptor(),
 		)),
 	}
 	opts = append(opts, c.opts...)
 
-	return grpc.DialContext(ctx, hostURL, opts...)
+	return grpc.NewClient(hostURL, opts...)
 }

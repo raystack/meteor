@@ -160,7 +160,7 @@ func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, 
 		return
 	}
 	result = r[index].(map[string]interface{})["mappings"].(map[string]interface{})["properties"].(map[string]interface{})
-	res.Body.Close()
+	_ = res.Body.Close()
 	return
 }
 

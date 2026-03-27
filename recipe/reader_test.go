@@ -2,7 +2,6 @@ package recipe_test
 
 import (
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/raystack/meteor/recipe"
@@ -119,12 +118,8 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should parse variable in recipe with value from env vars prefixed with METEOR_", func(t *testing.T) {
-		os.Setenv("METEOR_SOURCE_USERNAME", username)
-		os.Setenv("METEOR_SOURCE_PASSWORD", password)
-		defer func() {
-			os.Unsetenv("METEOR_SOURCE_USERNAME")
-			os.Unsetenv("METEOR_SOURCE_PASSWORD")
-		}()
+		t.Setenv("METEOR_SOURCE_USERNAME", username)
+		t.Setenv("METEOR_SOURCE_PASSWORD", password)
 
 		reader := recipe.NewReader(testLog, emptyConfigPath)
 		recipes, err := reader.Read("./testdata/testdir/test-recipe-variables.yaml")
@@ -176,12 +171,8 @@ func TestReaderRead(t *testing.T) {
 	})
 
 	t.Run("should return recipes on success", func(t *testing.T) {
-		os.Setenv("METEOR_SOURCE_USERNAME", username)
-		os.Setenv("METEOR_SOURCE_PASSWORD", password)
-		defer func() {
-			os.Unsetenv("METEOR_SOURCE_USERNAME")
-			os.Unsetenv("METEOR_SOURCE_PASSWORD")
-		}()
+		t.Setenv("METEOR_SOURCE_USERNAME", username)
+		t.Setenv("METEOR_SOURCE_PASSWORD", password)
 
 		reader := recipe.NewReader(testLog, emptyConfigPath)
 		results, err := reader.Read("./testdata/testdir")

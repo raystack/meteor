@@ -177,7 +177,7 @@ func (u *URLBuilder) URL() *url.URL {
 
 	p := u.path
 	for name, value := range u.pathParams {
-		p = strings.Replace(p, "{"+name+"}", url.PathEscape(value), -1)
+		p = strings.ReplaceAll(p, "{"+name+"}", url.PathEscape(value))
 	}
 	urlv.Path = path.Join(urlv.Path, p)
 

@@ -515,7 +515,7 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		Name:        field.Name,
 		Description: field.Description,
 		DataType:    string(field.Type),
-		IsNullable:  !(field.Required || field.Repeated),
+		IsNullable:  !field.Required && !field.Repeated,
 		Attributes:  utils.TryParseMapToProto(attributesMap),
 	}
 
