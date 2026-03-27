@@ -12,17 +12,21 @@ that particular extractor can be found by visiting the link in the `type` field.
 
 | Type                              | Attributes | Profile | Schema | Lineage | Ownership | Custom |
 | :-------------------------------- | :--------- | :------ | :----- | :------ | :-------- | :----- |
+| [`bigquery`][bigquery-readme]     | ✅         | ✅      | ✅     | ✅      | ✗         | ✗      |
+| [`bigtable`][bigtable-readme]     | ✅         | ✗       | ✅     | ✗       | ✗         | ✗      |
+| [`cassandra`][cassandra-readme]   | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`clickhouse`][clickhouse-readme] | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`couchdb`][couchdb-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
+| [`csv`][csv-readme]               | ✅         | ✗       | ✅     | ✗       | ✗         | ✗      |
+| [`elastic`][elastic-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
+| [`mariadb`][mariadb-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`mongodb`][mongodb-readme]       | ✅         | ✅      | ✗      | ✗       | ✗         | ✗      |
 | [`mssql`][mssql-readme]           | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`mysql`][mysql-readme]           | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`postgres`][postgres-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`cassandra`][cassandra-readme]   | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`oracle`][oracle-readme]         | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`mariadb`][mariadb-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`redshift`][redshift-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
+| [`postgres`][postgres-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`presto`][presto-readme]         | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
+| [`redshift`][redshift-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 | [`snowflake`][snowflake-readme]   | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
 
 ### Dashboard
@@ -31,9 +35,9 @@ that particular extractor can be found by visiting the link in the `type` field.
 | :---------------------------- | :-- | :---- | :------ | :--- | :----- |
 | [`grafana`][grafana-readme]   | ✅  | ✅    | ✗       | ✗    | ✗      |
 | [`metabase`][metabase-readme] | ✅  | ✅    | ✗       | ✗    | ✗      |
+| [`redash`][redash-readme]     | ✅  | ✗     | ✗       | ✗    | ✗      |
 | [`superset`][superset-readme] | ✅  | ✅    | ✅      | ✗    | ✗      |
 | [`tableau`][tableau-readme]   | ✅  | ✅    | ✅      | ✗    | ✗      |
-| [`redash`][redash-readme]     | ✅  | ✗     | ✗       | ✗    | ✗      |
 
 ### Topic
 
@@ -90,23 +94,27 @@ of asset.
 
 <!--- Not using relative links because that breaks the docs build -->
 
+[bigquery-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigquery/README.md
+[bigtable-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigtable/README.md
+[cassandra-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/cassandra/README.md
 [clickhouse-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/clickhouse/README.md
 [couchdb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/couchdb/README.md
+[csv-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/csv/README.md
+[elastic-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/elastic/README.md
+[mariadb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mariadb/README.md
 [mongodb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mongodb/README.md
 [mssql-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mssql/README.md
 [mysql-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mysql/README.md
-[postgres-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/postgres/README.md
-[cassandra-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/cassandra/README.md
 [oracle-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/oracle/README.md
-[mariadb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mariadb/README.md
-[redshift-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redshift/README.md
+[postgres-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/postgres/README.md
 [presto-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/presto/README.md
+[redshift-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redshift/README.md
 [snowflake-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/snowflake/README.md
 [grafana-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/grafana/README.md
 [metabase-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/metabase/README.md
+[redash-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redash/README.md
 [superset-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/superset/README.md
 [tableau-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/tableau/README.md
-[redash-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redash/README.md
 [kafka-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/kafka/README.md
 [github-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/github/README.md
 [frontier-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/frontier/README.md

@@ -125,6 +125,27 @@ sinks:
       X-Other-Header: value1, value2
 ```
 
+## Kafka
+
+`kafka`
+
+Publish metadata as JSON messages to a Kafka topic.
+
+```yaml
+sinks:
+  - name: kafka
+    config:
+      brokers: "localhost:9092"
+      topic: metadata-topic
+      key_path: ".resource.urn"
+```
+
+| Key | Description | |
+| :-- | :---------- | :- |
+| `brokers` | Comma-separated list of Kafka broker addresses | *required* |
+| `topic` | Kafka topic to publish messages to | *required* |
+| `key_path` | JSON path to extract the Kafka message key from the asset | *optional* |
+
 _**Notes**_
 
 Compass' Type requires certain fields to be sent, hence why `mapping` config is needed to map value from any of our metadata models to any field name when sending to Compass. Supports getting value from nested fields.

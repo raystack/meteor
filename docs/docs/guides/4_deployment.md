@@ -1,7 +1,125 @@
 # Deployment
 
-After we are done with running and verifying that the recipes works with the data-source and sink you have mentioned.
-You may want to automate the process of metadata collection on some regular basis as a cron job.
-One can setup user for the same.
+After verifying that your recipes work with the intended data sources and sinks, you can automate metadata collection on a regular schedule.
 
-In raystack we use helm chart to set it up, and you can refer the same [here](https://github.com/raystack/charts).
+## Cron Job
+
+The simplest deployment option. Schedule Meteor as a cron job on any Linux or macOS machine.
+
+```bash
+# Run every 6 hours
+0 */6 * * * /usr/local/bin/meteor run /path/to/recipes/ >> /var/log/meteor.log 2>&1
+```
+
+Make sure the user running the cron job has the necessary credentials and environment variables configured. You can source them from a file:
+
+```bash
+0 */6 * * * . /etc/meteor/env && /usr/local/bin/meteor run /path/to/recipes/
+```
+
+## Docker
+
+Meteor publishes Docker images that can be used in any container environment.
+
+```bash
+docker run --rm \
+  -v /path/to/recipes:/recipes \
+  -e METEOR_BIGQUERY_PROJECT_ID=my-project \
+  raystack/meteor run /recipes/
+```
+
+### Docker Compose
+
+```yaml
+version: "3.8"
+services:
+  meteor:
+    image: raystack/meteor:latest
+    volumes:
+      - ./recipes:/recipes
+    environment:
+      - METEOR_BIGQUERY_PROJECT_ID=my-project
+    command: ["run", "/recipes/"]
+```
+
+## Kubernetes CronJob
+
+For Kubernetes-native deployments, use a CronJob resource:
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: meteor
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: meteor
+              image: raystack/meteor:latest
+              command: ["meteor", "run", "/recipes/"]
+              volumeMounts:
+                - name: recipes
+                  mountPath: /recipes
+              envFrom:
+                - secretRef:
+                    name: meteor-secrets
+          volumes:
+            - name: recipes
+              configMap:
+                name: meteor-recipes
+          restartPolicy: OnFailure
+```
+
+Store recipes in a ConfigMap and credentials in a Secret:
+
+```bash
+kubectl create configmap meteor-recipes --from-file=recipes/
+kubectl create secret generic meteor-secrets --from-env-file=.env
+```
+
+## Helm Chart
+
+Raystack provides a Helm chart for Meteor. Refer to the [charts repository](https://github.com/raystack/charts) for configuration options and installation instructions.
+
+```bash
+helm repo add raystack https://raystack.github.io/charts
+helm install meteor raystack/meteor -f values.yaml
+```
+
+## Systemd Service
+
+For Linux hosts, create a systemd timer for scheduled execution:
+
+```ini
+# /etc/systemd/system/meteor.service
+[Unit]
+Description=Meteor metadata collection
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/meteor run /etc/meteor/recipes/
+EnvironmentFile=/etc/meteor/env
+```
+
+```ini
+# /etc/systemd/system/meteor.timer
+[Unit]
+Description=Run Meteor every 6 hours
+
+[Timer]
+OnCalendar=*-*-* 00/6:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable with:
+
+```bash
+sudo systemctl enable --now meteor.timer
+```

@@ -4,7 +4,7 @@ Meteor is a plugin driven agent for collecting metadata. Meteor has plugins to s
 
 Meteor agent uses recipes as a set of instructions which are configured by user. Recipes contains configurations about the source from which the metadata will be fetched, information about metadata processors and the destination to where the metadata will be sent.
 
-Meteor’s plugin system allows new plugins to be easily added. With 50+ plugins and many more coming soon to extract and sink metadata, it is easy to start collecting metadata from various sources and sink to any data catalog or store.
+Meteor’s plugin system allows new plugins to be easily added. With 40+ plugins to extract and sink metadata, it is easy to start collecting metadata from various sources and sink to any data catalog or store.
 
 ## Key Features
 
