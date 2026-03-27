@@ -134,12 +134,15 @@ func RunCmd() *cobra.Command {
 			// Print the report
 			if failures > 0 {
 				fmt.Println("\nSome recipes were not successful")
+				err = fmt.Errorf("%d recipes failed", failures)
+				// Disable usage message on recipe failure
+				cmd.SilenceUsage = true
 			} else {
 				fmt.Println("\nAll recipes ran successful")
 			}
 			fmt.Printf("%d failing, %d successful, and %d total\n\n", failures, success, len(recipes))
 			printer.Table(os.Stdout, report)
-			return nil
+			return err
 		},
 	}
 
