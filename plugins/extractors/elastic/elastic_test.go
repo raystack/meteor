@@ -17,8 +17,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "elasticsearch",
-		Tag:        "7.13.2",
+		Tag:        "8.17.0",
 		Env: []string{
 			"discovery.type=single-node",
 			"ES_JAVA_OPTS=-Xms512m -Xmx512m",

@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mysql",
-		Tag:        "8.0.25",
+		Tag:        "8.0",
 		Env: []string{
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
 		},

@@ -19,7 +19,6 @@ require (
 	github.com/d5/tengo/v2 v2.17.0
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/dnaeon/go-vcr/v2 v2.0.1
-	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.19.3
 	github.com/go-kivik/couchdb v2.0.0+incompatible
 	github.com/go-kivik/kivik v2.0.0+incompatible
