@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 
-	_ "github.com/prestodb/presto-go-client/presto" // presto driver
+	prestoClient "github.com/prestodb/presto-go-client/presto" // presto driver
 	"github.com/raystack/meteor/models"
 	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
@@ -158,7 +159,7 @@ func (e *Extractor) getCatalogs(ctx context.Context) ([]string, error) {
 
 		catalogs = append(catalogs, catalog)
 	}
-	if err := rows.Err(); err != nil {
+	if err := rows.Err(); err != nil && !isPrestoEOF(err) {
 		return nil, fmt.Errorf("iterate over catalogs: %w", err)
 	}
 
@@ -215,11 +216,18 @@ func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string
 			Description: comment.String,
 		})
 	}
-	if err := rows.Err(); err != nil {
+	if err := rows.Err(); err != nil && !isPrestoEOF(err) {
 		return nil, fmt.Errorf("iterate over columns: %w", err)
 	}
 
 	return result, nil
+}
+
+// isPrestoEOF returns true if err is a *presto.EOF, which the
+// presto-go-client returns after all rows have been successfully consumed.
+func isPrestoEOF(err error) bool {
+	var eof *prestoClient.EOF
+	return errors.As(err, &eof)
 }
 
 // isNullable returns true if the string is "YES"

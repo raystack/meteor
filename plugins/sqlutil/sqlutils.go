@@ -3,12 +3,21 @@ package sqlutil
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
+	prestoClient "github.com/prestodb/presto-go-client/presto"
 	log "github.com/raystack/salt/observability/logger"
 	"go.nhat.io/otelsql"
 	"go.opentelemetry.io/otel/attribute"
 )
+
+// isPrestoEOF returns true if the error is a *presto.EOF, which the
+// presto-go-client returns after all rows have been successfully consumed.
+func isPrestoEOF(err error) bool {
+	var eof *prestoClient.EOF
+	return errors.As(err, &eof)
+}
 
 func FetchDBs(ctx context.Context, db *sql.DB, logger log.Logger, query string) ([]string, error) {
 	res, err := db.QueryContext(ctx, query)
@@ -27,7 +36,7 @@ func FetchDBs(ctx context.Context, db *sql.DB, logger log.Logger, query string) 
 		dbs = append(dbs, database)
 
 	}
-	if err := res.Err(); err != nil {
+	if err := res.Err(); err != nil && !isPrestoEOF(err) {
 		return nil, fmt.Errorf("iterate rows: %w", err)
 	}
 	return dbs, nil
@@ -49,7 +58,7 @@ func FetchTablesInDB(ctx context.Context, db *sql.DB, dbName, query string) ([]s
 		}
 		tbls = append(tbls, table)
 	}
-	if err := rows.Err(); err != nil {
+	if err := rows.Err(); err != nil && !isPrestoEOF(err) {
 		return nil, fmt.Errorf("iterate rows: %w", err)
 	}
 
