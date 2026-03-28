@@ -12,7 +12,7 @@ The metadata catalog era was about **collecting and displaying**. The AI era is 
 
 Today, Meteor extracts assets and pushes them to sinks as flat records. Each asset carries some lineage, some ownership, some schema information. But there is no entity resolution across sources. There is no cross-source relationship inference. The extraction model is batch-only, and the relationship vocabulary is limited to upstream/downstream lineage.
 
-Meteor's job is to produce the richest, most connected, most current representation of an organization's metadata — and deliver it to Compass, which stores, indexes, and serves it. Meteor owns the supply side. Collection, resolution, and graph construction. Everything that happens before the data reaches the store.
+Meteor's job is to produce the richest, most connected, most current raw observations of an organization's metadata — and deliver them to Compass, which resolves entities, constructs the graph, indexes, and serves it. Meteor owns the supply side. Collection, enrichment, and delivery. Everything that happens before the data reaches the store. Entity resolution and graph construction belong in Compass, which has the full graph context needed to make those decisions.
 
 ## What Changes
 
@@ -22,7 +22,7 @@ Meteor currently treats each extracted asset as an independent record flowing th
 
 This means:
 
-- **Entity resolution across sources.** The same logical table appears in BigQuery, dbt, Tableau, and Airflow. Today, Meteor emits four separate assets. It should recognize these as one entity with four facets and merge them before delivery. Compass stores resolved entities, but Meteor is the one that sees all sources and does the resolution.
+- **Rich observations from every source.** The same logical table appears in BigQuery, dbt, Tableau, and Airflow. Meteor emits observations from each source with enough context — URNs, schemas, names, service identifiers — for Compass to resolve them into unified entities. Meteor doesn't need to know what's already in the graph. It delivers what it finds. Compass, which holds the full graph, handles entity resolution and deduplication.
 - **Richer relationship types.** Lineage (upstream/downstream) is one relationship. Ownership, read-access, produced-by, documented-in, tested-by, derived-from — these all matter for AI reasoning. Extractors should capture these relationships at the source, and the asset model should carry them.
 - **Temporal awareness.** Meteor should track what changed between extraction runs. Schema evolution, ownership transfers, new assets, removed assets. Delivering deltas rather than full snapshots makes the downstream graph fresher and the pipeline more efficient.
 
@@ -53,9 +53,9 @@ Today, Meteor pushes individual asset records to sinks. Each record is self-cont
 
 For Compass to build a proper graph, Meteor should deliver richer payloads:
 
-- **Resolved entities.** When Meteor determines that assets from different sources are the same logical entity, it should communicate that resolution, not leave it to the sink to figure out.
+- **Source-annotated observations.** Each observation carries its source identity, extraction timestamp, and enough context for Compass to perform entity resolution. Meteor doesn't resolve entities — it delivers the raw material for Compass to resolve them against the full graph.
 - **Typed relationships.** Beyond upstream/downstream edges, Meteor should deliver the full set of relationships it discovered during extraction — ownership, read/write patterns, documentation links, test coverage.
-- **Cross-source edges.** Some relationships only become visible when you see multiple sources together. A BigQuery table is produced by an Airflow job and consumed by a Tableau dashboard. No single extractor sees this full chain. Meteor, seeing all sources, can infer and deliver these cross-source edges.
+- **Cross-source hints.** Some relationships only become visible when you see multiple sources together. A BigQuery table is produced by an Airflow job and consumed by a Tableau dashboard. Meteor can annotate observations with cross-source hints (matching URNs, shared identifiers) that help Compass infer and construct cross-source edges in the graph.
 
 ## Architecture Direction
 
@@ -65,36 +65,36 @@ The pipeline model stays. Extract, process, deliver. But the internals evolve:
 Sources (extractors + event receivers)
           │
           v
-    Graph Builder
-    - entity resolution
-    - cross-source edge inference
-    - deduplication
+    Enrichment Pipeline
+    - relationship extraction
+    - cross-source hint annotation
     - change detection
+    - metadata enrichment
           │
           v
     Sinks
-    - Compass (primary: rich graph delivery)
+    - Compass (primary: rich observation delivery)
     - Kafka, GCS, HTTP (secondary: streaming, storage)
     - traditional sinks (backward compatible)
 ```
 
-**Graph Builder** replaces the current flat record stream as the core processing layer. It sees assets from across sources, resolves entities, infers cross-source relationships, deduplicates, and detects changes. This is the new center of Meteor — the intelligence layer between extraction and delivery.
+**Enrichment Pipeline** replaces the current flat record stream as the core processing layer. It enriches observations with typed relationships, cross-source hints, and change metadata. Entity resolution and graph construction happen in Compass, not here — Meteor's job is to deliver the richest possible raw observations.
 
-**Event Receivers** complement extractors. Instead of only pulling metadata on a schedule, Meteor can also receive events and convert them into graph updates. A webhook from GitHub on a schema migration merge. A notification from PagerDuty when an incident opens. These become nodes and edges in the graph without waiting for the next batch run.
+**Event Receivers** complement extractors. Instead of only pulling metadata on a schedule, Meteor can also receive events and convert them into graph updates. A webhook from GitHub on a schema migration merge. A notification from PagerDuty when an incident opens. These become observations delivered to Compass without waiting for the next batch run.
 
-**Compass as the primary sink.** While Meteor retains its multi-sink architecture, Compass becomes the primary destination. The delivery protocol between Meteor and Compass should evolve from flat asset upserts to rich graph payloads — resolved entities, typed relationships, and change deltas.
+**Compass as the primary sink.** While Meteor retains its multi-sink architecture, Compass becomes the primary destination. The delivery protocol between Meteor and Compass should evolve from flat asset upserts to rich observation payloads — typed relationships, cross-source hints, and change deltas. Compass receives these observations and handles entity resolution, deduplication, and graph construction.
 
 ## Priorities
 
 Not all of this happens at once. The ordering reflects what delivers value fastest with the least disruption.
 
-**First: Strengthen the graph model.** Enrich the relationship model beyond lineage. Add entity resolution across sources. Deliver resolved entities and typed relationships to Compass. Everything else builds on this, and it can be done without breaking existing recipes.
+**First: Strengthen the observation model.** Enrich the relationship model beyond lineage. Deliver typed relationships and cross-source hints to Compass. Entity resolution happens in Compass — Meteor's job is to deliver rich, well-annotated observations. Everything else builds on this, and it can be done without breaking existing recipes.
 
 **Second: Expand coverage.** Add extractors for code repositories, documentation systems, API schemas, and infrastructure topology. Each new source makes the context graph more complete and more valuable. This is where Meteor's plugin architecture pays off.
 
 **Third: Go incremental.** Add change detection to existing extractors. Build the event receiver framework. Support delta delivery to sinks. This makes the graph fresher without increasing load.
 
-**Fourth: Cross-source intelligence.** Build the graph builder layer that sees assets from multiple sources together, infers cross-source edges, and detects patterns no single extractor can see. This is the hardest piece — it requires Meteor to move beyond per-recipe isolation.
+**Fourth: Cross-source hints.** Build the enrichment layer that annotates observations with cross-source hints — shared identifiers, matching URNs, compatible schemas — that help Compass construct cross-source edges during entity resolution. This requires Meteor to see observations from multiple sources together to annotate effectively, but the actual graph construction and resolution happen in Compass.
 
 ## What Stays the Same
 
@@ -123,13 +123,14 @@ The principle is simple: Compass is the graph store, Kafka is the event bus, obj
 
 ## What Gets Simplified
 
-- **Per-source isolation.** Today each recipe runs one source in isolation. For entity resolution and cross-source relationships, Meteor needs a mode where it can see assets from multiple sources together.
+- **Per-source isolation.** Today each recipe runs one source in isolation. For cross-source hint annotation, Meteor needs a mode where it can see observations from multiple sources together to annotate shared identifiers and matching URNs.
 - **Manual enrichment.** Much of what processors do today — adding labels, enriching fields — should eventually be inferrable from the graph itself. The script processor remains for custom logic, but the common cases should be automatic.
 
 ## What Doesn't Belong in Meteor
 
-Meteor is the collection and graph construction layer. It does not own persistence, querying, or serving. Specifically:
+Meteor is the collection and delivery layer. It does not own persistence, resolution, querying, or serving. Specifically:
 
+- **Entity resolution and graph construction** belong in Compass. Compass has the full graph context needed to match incoming observations against existing entities, deduplicate, and construct the unified graph. Meteor delivers raw observations; Compass resolves them.
 - **MCP server, context composition, and AI serving** belong in Compass. Compass is the always-on service with the full persisted graph. It is the natural interface for AI agents to query.
 - **Semantic search and embeddings** belong in Compass. Indexing and retrieval are query-side concerns, not collection-side.
 - **Change feeds and subscriptions** belong in Compass. Consumers subscribe to the store, not the pipeline.
@@ -141,4 +142,4 @@ Meteor's job is to make Compass's graph as rich, connected, and current as possi
 
 Every team building AI agents will need a way to ground those agents in organizational context. The metadata is scattered across dozens of systems. Someone needs to collect it, connect it, and deliver it in a form that a graph store can serve.
 
-Meteor already knows how to collect. The next step is to connect — richer extraction, entity resolution, cross-source relationships, and incremental delivery. That is the roadmap.
+Meteor already knows how to collect. The next step is to enrich — richer extraction, typed relationships, cross-source hints, and incremental delivery. Entity resolution and graph construction happen in Compass, where the full context lives. Meteor's job is to deliver the richest possible raw material. That is the roadmap.
