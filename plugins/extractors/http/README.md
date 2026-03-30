@@ -1,23 +1,13 @@
 # http
 
 Generic Extractor capable of using the HTTP response from an external API for
-constructing the following assets types:
+constructing entities of any supported type:
 
-- [`Bucket`][proton-bucket]
-- [`Dashboard`][proton-dashboard]
-- [`Experiment`][proton-experiment]
-- [`FeatureTable`][proton-featuretable]
-- [`Group`][proton-group]
-- [`Job`][proton-job]
-- [`Metric`][proton-metric]
-- [`Model`][proton-model]
-- [`Application`][proton-application]
-- [`Table`][proton-table]
-- [`Topic`][proton-topic]
-- [`User`][proton-user]
+`bucket`, `dashboard`, `experiment`, `feature_table`, `group`, `job`, `metric`,
+`model`, `application`, `table`, `topic`, `user`.
 
 The user specified script has access to the response, if the API call was
-successful, and can use it for constructing and emitting assets using a custom
+successful, and can use it for constructing and emitting entities using a custom
 script. Currently, [Tengo][tengo] is the only supported script engine.
 
 Refer Tengo documentation for script language syntax and supported
@@ -64,7 +54,7 @@ source:
 | `success_codes`            | `[]int`  | `[200]`                                | The list of status codes that would be considered as a successful response. Default is `[200]`. | ✘         |
 | `concurrency`              | `int`    | `5`                                    | Number of concurrent child requests to execute. Default is `5`                                  | ✘         |
 | `script.engine`            | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅         |
-| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more assets.                           | ✅         |
+| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more entities.                         | ✅         |
 | `script.max_allocs`        | `int`    | 10000                                  | The max number of object allocations allowed during the script run time. Default is `5000`.     | ✘         |
 | `script.max_const_objects` | `int`    | 1000                                   | The maximum number of constant objects in the compiled script. Default is `500`.                | ✘         |
 
@@ -98,8 +88,8 @@ source:
 
 - [`recipe_scope`](#recipe_scope)
 - [`response`](#response)
-- [`new_asset(string): Asset`](#new_assetstring-asset)
-- [`emit(Asset)`](#emitasset)
+- [`new_asset(string): Entity`](#new_assetstring-entity)
+- [`emit(Entity)`](#emitentity)
 - [`execute_request(...requests): []Response`](#executerequestrequests-response)
 - [`exit`](#exit)
 
@@ -149,41 +139,32 @@ HTTP response received with the `status_code`, `header` and `body`. Ex:
 The header names are always in lower case. See
 [Worked Example](#worked-example) for detailed usage.
 
-#### `new_asset(string): Asset`
+#### `new_asset(string): Entity`
 
-Takes a single string parameter and returns an asset instance. The `type`
+Takes a single string parameter and returns an entity instance. The `type`
 parameter can be one of the following:
 
-- `"bucket"` ([proto][proton-bucket])
-- `"dashboard"` ([proto][proton-dashboard])
-- `"experiment"` ([proto][proton-experiment])
-- `"feature_table"` ([proto][proton-featuretable])
-- `"group"` ([proto][proton-group])
-- `"job"` ([proto][proton-job])
-- `"metric"` ([proto][proton-metric])
-- `"model"` ([proto][proton-model])
-- `"application"` ([proto][proton-application])
-- `"table"` ([proto][proton-table])
-- `"topic"` ([proto][proton-topic])
-- `"user"` ([proto][proton-user])
+`"bucket"`, `"dashboard"`, `"experiment"`, `"feature_table"`, `"group"`,
+`"job"`, `"metric"`, `"model"`, `"application"`, `"table"`, `"topic"`,
+`"user"`.
 
-The asset can then be modified in the script to set properties that are
-available for the given asset type.
+The entity can then be modified in the script. All type-specific data is set
+under `asset.properties` as flat key-value pairs. Note: the variable is still
+called `asset` in tengo scripts for backward compatibility.
 
-**WARNING:** Do not overwrite the `data` property, set fields on it instead.
-Translating script object into proto fails otherwise.
+**WARNING:** Do not overwrite the `properties` map, set fields on it instead.
 
 ```go
 // Bad
-asset.data = {full_name: "Daiyamondo Jozu"}
+asset.properties = {full_name: "Daiyamondo Jozu"}
 
 // Good
-asset.data.full_name = "Daiyamondo Jozu"
+asset.properties.full_name = "Daiyamondo Jozu"
 ```
 
-#### `emit(Asset)`
+#### `emit(Entity)`
 
-Takes an asset and emits the asset that can then be consumed by the
+Takes an entity and emits it as a record that can then be consumed by the
 processor/sink.
 
 #### `execute_request(...requests): []Response`
@@ -208,28 +189,27 @@ for j in response.body.jobs {
 	reqs = append(reqs, {
 		url: format("http://my.server.com/jobs/%s/config", j.id),
 		method: "GET",
-		content_type: "application/json", 
+		content_type: "application/json",
 		accept: "application/json",
-		timeout: "5s" 
+		timeout: "5s"
 	})
 }
 
 responses := execute_request(reqs...)
 for r in responses {
 	if is_error(r) {
-		// TODO: Handle it appropriately. The error value has the request and 
+		// TODO: Handle it appropriately. The error value has the request and
 		//  error string:
 		//  r.value.{request, error}
-		continue 
+		continue
 	}
-	
+
 	asset := new_asset("job")
 	asset.name = r.body.name
-	exec_cfg := r.body["execution-config"]
-	asset.data.attributes = {
+	asset.properties.attributes = {
 	  "job_id": r.body.jid,
-	  "job_parallelism": exec_cfg["job-parallelism"],
-	  "config": exec_cfg["user-config"]
+	  "job_parallelism": r.body["execution-config"]["job-parallelism"],
+	  "config": r.body["execution-config"]["user-config"]
 	}
 	emit(asset)
 }
@@ -247,7 +227,7 @@ Terminates the script execution.
 ## Output
 
 The output of the extractor depends on the user specified script. It can emit 0
-or more assets.
+or more entities (as Records).
 
 ### Worked Example
 
@@ -326,23 +306,23 @@ source:
           }
 
           asset := new_asset("user")
-          // URN format: "urn:{service}:{scope}:{type}:{id}"
+          // URN format: "urn:{source}:{scope}:{type}:{id}"
           asset.urn = format("urn:%s:staging:user:%s", "my_usr_svc", u.employee_id)
           asset.name = u.fullname
-          asset.service = "my_usr_svc"
+          asset.source = "my_usr_svc"
           // asset.type = "user" // not required, new_asset("user") sets the field.
-          asset.data.email = u.work_email
-          asset.data.username = u.employee_id
-          asset.data.first_name = u.legal_first_name
-          asset.data.last_name = u.legal_last_name
-          asset.data.full_name = u.fullname
-          asset.data.display_name = u.fullname
-          asset.data.title = u.business_title
-          asset.data.status = u.terminated == "true" ? "suspended" : "active"
-          asset.data.manager_email = u.manager_email
-          asset.data.attributes = {
+          asset.properties.email = u.work_email
+          asset.properties.username = u.employee_id
+          asset.properties.first_name = u.legal_first_name
+          asset.properties.last_name = u.legal_last_name
+          asset.properties.full_name = u.fullname
+          asset.properties.display_name = u.fullname
+          asset.properties.title = u.business_title
+          asset.properties.status = u.terminated == "true" ? "suspended" : "active"
+          asset.properties.manager_email = u.manager_email
+          asset.properties.attributes = {
             manager_id:           u.manager_id,
-            cost_center_id:       u.cost_center_id, 
+            cost_center_id:       u.cost_center_id,
             supervisory_org_name: u.supervisory_org_name,
             location_id:          u.location_id,
             service_job_id:       response.header["x-job-id"]
@@ -351,7 +331,7 @@ source:
         }
 ```
 
-This would emit a 'User' asset for each user object in `response.data`. Note
+This would emit a `user` entity for each user object in `response.data`. Note
 that the response headers can be accessed under `response.header` and can be
 used as needed.
 
@@ -369,17 +349,5 @@ Refer to
 the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
 for information on contributing to this module.
 
-[proton-bucket]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/bucket.proto#L13
-[proton-dashboard]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/dashboard.proto#L14
-[proton-experiment]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/experiment.proto#L15
-[proton-featuretable]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/feature_table.proto#L32
-[proton-group]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/group.proto#L12
-[proton-job]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/job.proto#L13
-[proton-metric]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/metric.proto#L13
-[proton-model]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/model.proto#L17
-[proton-application]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/application.proto#L11
-[proton-table]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/table.proto#L14
-[proton-topic]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/topic.proto#L14
-[proton-user]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/user.proto#L15
 [tengo]: https://github.com/d5/tengo
 [tengo-stdlib]: https://github.com/d5/tengo/blob/v2.13.0/docs/stdlib.md

@@ -1,6 +1,6 @@
 # Http
 
-Compass is a search and discovery engine built for querying application deployments, datasets and meta resources. It can also optionally track data flow relationships between these resources and allow the user to view a representation of the data flow graph.
+Send metadata to any HTTP endpoint. Can optionally transform the payload using a Tengo script before sending.
 
 ## Usage
 
@@ -10,7 +10,7 @@ sinks:
   config:
     method: POST
     success_code: 200
-    url: https://compass.requestcatcher.com/v1beta2/asset/{{ .Type }}/{{ .Urn }}
+    url: https://compass.requestcatcher.com/v1/entity/{{ .Type }}/{{ .Urn }}
     headers:
       Header-1: value11,value12
     script:
@@ -25,34 +25,38 @@ sinks:
         sink(payload)
 ```
 
-## Config Defination
+## Config Definition
 
-| Key            | Value     | Example                                                                   | Description                                                                                                                                                                                                                                                                                         |            |
-| :------------- | :-------- | :------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
-| `url`          | `string`  | `https://compass.requestcatcher.com/v1beta2/asset/{{ .Type }}/{{ .Urn }}` | URL to the http server, contains all the info needed to make the request, like port and route, support go [text/template](https://pkg.go.dev/text/template) (see the properties in [v1beta2.Asset](https://github.com/goto/meteor/blob/main/models/gotocompany/assets/v1beta2/asset.pb.go#L25-L68)) | _required_ |
-| `method`       | `string`  | `POST`                                                                    | the method string of by which the request is to be made, e.g. POST/PATCH/GET                                                                                                                                                                                                                        | _required_ |
-| `success_code` | `integer` | `200`                                                                     | to identify the expected success code the http server returns, defult is `200`                                                                                                                                                                                                                      | _optional_ |
-| `headers`      | `map`     | `"Content-Type": "application/json"`                                      | to add any header/headers that may be required for making the request                                                                                                                                                                                                                               | _optional_ |
-| `script`       | `Object`  | see [Script](#Script)                                                     | Script for building custom payload                                                                                                                                                                                                                                                                  | \*optional |
+| Key            | Value     | Example                                                                    | Description                                                                                                                                                                                               |            |
+| :------------- | :-------- | :------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
+| `url`          | `string`  | `https://compass.requestcatcher.com/v1/entity/{{ .Type }}/{{ .Urn }}`      | URL to the http server. Supports Go [text/template](https://pkg.go.dev/text/template) with Entity fields (`Urn`, `Type`, `Name`, `Source`, `Description`).                                               | _required_ |
+| `method`       | `string`  | `POST`                                                                     | The HTTP verb/method for the request, e.g. POST/PATCH/GET                                                                                                                                                 | _required_ |
+| `success_code` | `integer` | `200`                                                                      | Expected success status code. Default is `200`.                                                                                                                                                           | _optional_ |
+| `headers`      | `map`     | `"Content-Type": "application/json"`                                       | Headers to send with the request.                                                                                                                                                                         | _optional_ |
+| `script`       | `Object`  | see [Script](#Script)                                                      | Script for building custom payload.                                                                                                                                                                       | _optional_ |
 
 ## Script
 
 | Key      | Value    | Example              | Description                                                                          |            |
 | :------- | :------- | :------------------- | :----------------------------------------------------------------------------------- | :--------- |
 | `engine` | `string` | `tengo`              | Script engine. Only `"tengo"` is supported currently                                 | _required_ |
-| `source` | `string` | see [Usage](#Usage). | [Tengo][tengo] script used to map the request into custom payload to be sent to url. | _required_ |
+| `source` | `string` | see [Usage](#Usage). | [Tengo][tengo] script used to map the entity into a custom payload to be sent to url. | _required_ |
 
 ### Script Globals
 
-- [`asset`](#recipe_scope)
+- [`asset`](#asset)
 - [`sink(Payload)`](#sinkpayload)
 - [`exit`](#exit)
 
 #### `asset`
 
-The asset record emitted by the extractor and processors is made available in the script
-environment as `asset`. The field names will be as
-per the [`Asset` proto definition](https://github.com/goto/proton/blob/5b5dc72/gotocompany/assets/v1beta2/asset.proto#L14).
+The entity record emitted by the extractor and processors is made available in
+the script environment as `asset`. Note: the variable is still called `asset`
+in tengo scripts for backward compatibility, but it represents an Entity.
+
+The `asset` object has the following fields: `urn`, `type`, `name`,
+`description`, `source`, and `properties` (flat key-value map with all
+type-specific metadata).
 
 #### `sink(Payload)`
 
@@ -65,3 +69,5 @@ Terminates the script execution.
 ## Contributing
 
 Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.
+
+[tengo]: https://github.com/d5/tengo
