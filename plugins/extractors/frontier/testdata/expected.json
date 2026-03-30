@@ -1,76 +1,46 @@
 [
-  {
-      "create_time": null,
-      "data": {
-          "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
-          "attributes": {},
-          "create_time": "1970-01-01T00:40:00Z",
-          "display_name": "",
-          "email": "user1@raystack.com",
-          "first_name": "",
-          "full_name": "fullname-A",
-          "last_name": "",
-          "manager_email": "",
-          "memberships": [
-              {
-                  "group_urn": "grpname-A:grpId-A",
-                  "role": [
-                  ]
-              }
-          ],
-          "profiles": [],
-          "status": "active",
-          "title": "",
-          "update_time": "1970-01-01T00:35:00Z",
-          "username": "user-A"
-      },
-      "description": "",
-      "event": null,
-      "labels": {},
-      "lineage": null,
-      "name": "fullname-A",
-      "owners": [],
-      "service": "frontier",
-      "type": "user",
-      "update_time": null,
-      "url": "",
-      "urn": "urn:frontier:test-frontier:user:user-A"
-  },
-  {
-      "create_time": null,
-      "data": {
-          "@type": "type.googleapis.com/raystack.assets.v1beta2.User",
-          "attributes": {},
-          "create_time": "1970-01-01T00:20:00Z",
-          "display_name": "",
-          "email": "user2@raystack.com",
-          "first_name": "",
-          "full_name": "fullname-B",
-          "last_name": "",
-          "manager_email": "",
-          "memberships": [
-              {
-                  "group_urn": "grpname-B:grpId-B",
-                  "role": [
-                  ]
-              }
-          ],
-          "profiles": [],
-          "status": "active",
-          "title": "",
-          "update_time": "1970-01-01T00:15:00Z",
-          "username": "user-B"
-      },
-      "description": "",
-      "event": null,
-      "labels": {},
-      "lineage": null,
-      "name": "fullname-B",
-      "owners": [],
-      "service": "frontier",
-      "type": "user",
-      "update_time": null,
-      "url": "",
-      "urn": "urn:frontier:test-frontier:user:user-B"
-  }
+    {
+        "create_time": null,
+        "description": "",
+        "name": "fullname-A",
+        "properties": {
+            "create_time": "1970-01-01T00:40:00Z",
+            "email": "user1@raystack.com",
+            "full_name": "fullname-A",
+            "memberships": [
+                {
+                    "group_urn": "grpname-A:grpId-A"
+                }
+            ],
+            "status": "active",
+            "update_time": "1970-01-01T00:35:00Z",
+            "username": "user-A"
+        },
+        "source": "frontier",
+        "type": "user",
+        "update_time": null,
+        "urn": "urn:frontier:test-frontier:user:user-A"
+    },
+    {
+        "create_time": null,
+        "description": "",
+        "name": "fullname-B",
+        "properties": {
+            "create_time": "1970-01-01T00:20:00Z",
+            "email": "user2@raystack.com",
+            "full_name": "fullname-B",
+            "memberships": [
+                {
+                    "group_urn": "grpname-B:grpId-B"
+                }
+            ],
+            "status": "active",
+            "update_time": "1970-01-01T00:15:00Z",
+            "username": "user-B"
+        },
+        "source": "frontier",
+        "type": "user",
+        "update_time": null,
+        "urn": "urn:frontier:test-frontier:user:user-B"
+    }
 ]

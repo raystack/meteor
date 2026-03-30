@@ -358,7 +358,7 @@ func TestExtract(t *testing.T) {
 		err = extractor.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		actual := emitter.GetAllData()
+		actual := emitter.GetAllEntities()
 		utils.AssertProtosWithJSONFile(t, "testdata/expected-assets.json", actual)
 	})
 }

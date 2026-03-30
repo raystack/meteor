@@ -164,7 +164,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		actual := emitter.GetAllData()
+		actual := emitter.GetAllEntities()
 		utils.AssertProtosWithJSONFile(t, "testdata/expected-assets.json", actual)
 	})
 
@@ -198,7 +198,7 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.ErrorIs(t, err, expectedErr)
-		assert.Len(t, emitter.GetAllData(), 0)
+		assert.Len(t, emitter.GetAllEntities(), 0)
 	})
 
 	t.Run("should return no error when failed get table info", func(t *testing.T) {
@@ -235,6 +235,6 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		assert.Len(t, emitter.GetAllData(), 0)
+		assert.Len(t, emitter.GetAllEntities(), 0)
 	})
 }

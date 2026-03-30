@@ -151,7 +151,7 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
 		models.NewEntity("urn:postgres:test-postgres:table:test_db.article", "table", "article", "postgres", map[string]interface{}{
 			"columns": []interface{}{
-				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false, "length": float64(0)},
+				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false},
 				map[string]interface{}{"name": "name", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
 			},
 			"grants": []interface{}{
@@ -163,7 +163,7 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 		}),
 		models.NewEntity("urn:postgres:test-postgres:table:test_db.post", "table", "post", "postgres", map[string]interface{}{
 			"columns": []interface{}{
-				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false, "length": float64(0)},
+				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false},
 				map[string]interface{}{"name": "title", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
 			},
 			"grants": []interface{}{

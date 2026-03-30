@@ -118,6 +118,18 @@ func sanitizeValue(v interface{}) interface{} {
 			out[i] = sanitizeValue(item)
 		}
 		return out
+	case []map[string]interface{}:
+		out := make([]interface{}, len(val))
+		for i, item := range val {
+			out[i] = sanitizeMap(item)
+		}
+		return out
+	case []string:
+		out := make([]interface{}, len(val))
+		for i, item := range val {
+			out[i] = item
+		}
+		return out
 	default:
 		return v
 	}

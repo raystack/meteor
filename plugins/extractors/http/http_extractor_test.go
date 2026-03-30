@@ -403,6 +403,8 @@ func TestExtract(t *testing.T) {
 							"supervisory_org_name": structpb.NewStringValue("Research and Development"),
 						}}),
 					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 				}},
 			}},
 		},
@@ -536,6 +538,7 @@ func TestExtract(t *testing.T) {
 							"create_time": "2022-08-08T03:17:54Z",
 							"update_time": "2022-08-08T03:17:54Z",
 						},
+						"labels": nil,
 						"lineage": map[string]interface{}{
 							"upstreams": []interface{}{
 								map[string]interface{}{
@@ -570,6 +573,7 @@ func TestExtract(t *testing.T) {
 							"create_time": "2022-09-19T22:42:04Z",
 							"update_time": "2022-09-21T13:23:02Z",
 						},
+						"labels": nil,
 						"lineage": map[string]interface{}{
 							"upstreams": []interface{}{
 								map[string]interface{}{
@@ -687,6 +691,8 @@ func TestExtract(t *testing.T) {
 							}}),
 						}}),
 					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 				}},
 				},
 				{
@@ -748,6 +754,8 @@ func TestExtract(t *testing.T) {
 							}}),
 						}}),
 					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 				}},
 				},
 				{
@@ -789,7 +797,9 @@ func TestExtract(t *testing.T) {
 								"STREAMS":                           structpb.NewStringValue(`[{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"5","INPUT_SCHEMA_PROTO_CLASS":"company.esb.booking.GoFoodBookingLogMessage","INPUT_SCHEMA_TABLE":"gofood_booking","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0039","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-booking-log"},{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"1","INPUT_SCHEMA_PROTO_CLASS":"company.esb.gofood.NearbyEventMessage","INPUT_SCHEMA_TABLE":"gofood_nearby","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0040","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-nearby-log"}]`),
 							}}),
 						}}),
-					}}),
+				}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 				}},
 				},
 			},
@@ -886,7 +896,16 @@ func TestExtract(t *testing.T) {
 			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				testutils.Respond(t, w, http.StatusOK, `{}`)
 			},
-			expectedErr: "Runtime Error: new asset: unexpected type: invalid",
+			expected: []*meteorv1beta1.Entity{
+				{
+					Type: "invalid",
+					Properties: buildProps(t, map[string]interface{}{
+						"data":    map[string]interface{}{},
+						"lineage": map[string]interface{}{},
+						"labels":  map[string]interface{}{},
+					}),
+				},
+			},
 		},
 		{
 			name: "EmitInvalidValue",

@@ -286,7 +286,10 @@ func newAsset(typ string) (tengo.Object, error) {
 
 	return &tengo.Map{
 		Value: map[string]tengo.Object{
-			"type": &tengo.String{Value: typ},
+			"type":    &tengo.String{Value: typ},
+			"data":    &tengo.Map{Value: map[string]tengo.Object{}},
+			"lineage": &tengo.Map{Value: map[string]tengo.Object{}},
+			"labels":  &tengo.Map{Value: map[string]tengo.Object{}},
 		},
 	}, nil
 }

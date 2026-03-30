@@ -166,8 +166,8 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 				"total_rows": float64(3),
 			},
 			"columns": []interface{}{
-				map[string]interface{}{"name": "EMPID", "data_type": "NUMBER", "length": float64(22)},
-				map[string]interface{}{"name": "NAME", "data_type": "VARCHAR2", "length": float64(30)},
+				map[string]interface{}{"name": "EMPID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
+				map[string]interface{}{"name": "NAME", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(30)},
 				map[string]interface{}{"name": "SALARY", "data_type": "NUMBER", "is_nullable": true, "length": float64(22)},
 			},
 		}),
@@ -176,8 +176,8 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 				"total_rows": float64(4),
 			},
 			"columns": []interface{}{
-				map[string]interface{}{"name": "ID", "data_type": "NUMBER", "length": float64(22)},
-				map[string]interface{}{"name": "TITLE", "description": "Department Name", "data_type": "VARCHAR2", "length": float64(20)},
+				map[string]interface{}{"name": "ID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
+				map[string]interface{}{"name": "TITLE", "description": "Department Name", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(20)},
 				map[string]interface{}{"name": "BUDGET", "data_type": "FLOAT", "is_nullable": true, "length": float64(22)},
 			},
 		}),

@@ -151,7 +151,7 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
 		models.NewEntity("urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "mssql", map[string]interface{}{
 			"columns": []interface{}{
-				map[string]interface{}{"name": "applicant_id", "data_type": "int", "is_nullable": true, "length": float64(0)},
+				map[string]interface{}{"name": "applicant_id", "data_type": "int", "is_nullable": true},
 				map[string]interface{}{"name": "first_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
 				map[string]interface{}{"name": "last_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
 			},
@@ -160,7 +160,7 @@ func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 			"columns": []interface{}{
 				map[string]interface{}{"name": "department", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
 				map[string]interface{}{"name": "job", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
-				map[string]interface{}{"name": "job_id", "data_type": "int", "is_nullable": true, "length": float64(0)},
+				map[string]interface{}{"name": "job_id", "data_type": "int", "is_nullable": true},
 			},
 		}),
 	}

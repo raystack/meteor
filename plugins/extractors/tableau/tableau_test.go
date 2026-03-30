@@ -106,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		actuals := emitter.GetAllData()
+		actuals := emitter.GetAllEntities()
 		testutils.AssertProtosWithJSONFile(t, "./testdata/dashboards_proto.json", actuals)
 	})
 }
