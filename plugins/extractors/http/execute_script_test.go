@@ -27,11 +27,11 @@ func TestNewAsset(t *testing.T) {
 		{typ: "table"},
 		{typ: "topic"},
 		{typ: "user"},
+		{typ: "custom_type"},
 	}
 	for _, tc := range cases {
-		knownTypes := knownEntityTypes()
 		t.Run(tc.typ, func(t *testing.T) {
-			obj, err := newAsset(knownTypes, tc.typ)
+			obj, err := newAsset(tc.typ)
 			require.NoError(t, err)
 
 			m, ok := obj.(*tengo.Map)
@@ -45,4 +45,10 @@ func TestNewAsset(t *testing.T) {
 			assert.Equal(t, tc.typ, typStr.Value)
 		})
 	}
+}
+
+func TestNewAssetEmptyType(t *testing.T) {
+	_, err := newAsset("")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "type must not be empty")
 }

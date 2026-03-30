@@ -259,11 +259,6 @@ func (s *Sink) send(ctx context.Context, tableURN string, record interface{}) er
 	}
 }
 
-// getSource returns the source from entity properties or falls back to entity source.
-func getSource(entity *meteorv1beta1.Entity) string {
-	return entity.GetSource()
-}
-
 // buildJsonProperties builds the json schema properties
 func buildJsonProperties(entity *meteorv1beta1.Entity, columns []column) map[string]JsonProperty {
 	if len(columns) == 0 {
@@ -271,7 +266,7 @@ func buildJsonProperties(entity *meteorv1beta1.Entity, columns []column) map[str
 	}
 
 	columnRecord := make(map[string]JsonProperty)
-	source := getSource(entity)
+	source := entity.GetSource()
 
 	for _, col := range columns {
 		dataType := typeToJSONSchemaType(source, col.DataType)
@@ -332,7 +327,7 @@ func buildAvroFields(entity *meteorv1beta1.Entity, columns []column) []AvroField
 		return nil
 	}
 
-	source := getSource(entity)
+	source := entity.GetSource()
 
 	var fields []AvroFields
 	for _, col := range columns {

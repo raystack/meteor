@@ -3,12 +3,13 @@ package enrich
 import (
 	"context"
 	_ "embed"
+	"fmt"
 
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -61,7 +62,15 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) (err error)
 func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
 	entity := src.Entity()
 	p.logger.Debug("enriching record", "record", entity.GetUrn())
-	customProps := utils.GetAttributes(entity)
+
+	props := entity.GetProperties()
+	var customProps map[string]interface{}
+	if props != nil {
+		customProps = props.AsMap()
+	}
+	if customProps == nil {
+		customProps = make(map[string]interface{})
+	}
 
 	// update custom properties using value from config
 	for key, value := range p.config.Attributes {
@@ -72,12 +81,13 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 	}
 
 	// save custom properties
-	result, err := utils.SetAttributes(entity, customProps)
+	newProps, err := structpb.NewStruct(customProps)
 	if err != nil {
-		return src, err
+		return src, fmt.Errorf("set properties: %w", err)
 	}
+	entity.Properties = newProps
 
-	return models.NewRecord(result, src.Edges()...), nil
+	return models.NewRecord(entity, src.Edges()...), nil
 }
 
 func init() {

@@ -131,26 +131,18 @@ func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) er
 
 func (s *Sink) buildUserRequestBody(record models.Record) (*sh.UserRequestBody, error) {
 	entity := record.Entity()
-	props := entity.GetProperties()
-	if props == nil {
+
+	propMap := entity.GetProperties().AsMap()
+	if propMap == nil {
 		return &sh.UserRequestBody{}, errors.New("empty entity properties")
 	}
 
-	fields := props.GetFields()
-
-	fullName := ""
-	if v, ok := fields["full_name"]; ok {
-		fullName = v.GetStringValue()
-	}
+	fullName, _ := propMap["full_name"].(string)
 	if fullName == "" {
-		// fallback to entity name
 		fullName = entity.GetName()
 	}
 
-	email := ""
-	if v, ok := fields["email"]; ok {
-		email = v.GetStringValue()
-	}
+	email, _ := propMap["email"].(string)
 
 	if fullName == "" {
 		return &sh.UserRequestBody{}, errors.New("empty user name")
@@ -159,12 +151,14 @@ func (s *Sink) buildUserRequestBody(record models.Record) (*sh.UserRequestBody, 
 		return &sh.UserRequestBody{}, errors.New("empty user email")
 	}
 
-	var attributes *structpb.Struct
-	if v, ok := fields["attributes"]; ok {
-		attributes = v.GetStructValue()
-	}
-	if attributes == nil {
+	attrMap, _ := propMap["attributes"].(map[string]interface{})
+	if attrMap == nil {
 		return &sh.UserRequestBody{}, errors.New("empty user attributes")
+	}
+
+	attributes, err := structpb.NewStruct(attrMap)
+	if err != nil {
+		return &sh.UserRequestBody{}, fmt.Errorf("build attributes struct: %w", err)
 	}
 
 	requestBody := &sh.UserRequestBody{

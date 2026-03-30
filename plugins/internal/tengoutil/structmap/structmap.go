@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -46,7 +45,6 @@ func AsStruct(input, output interface{}) error {
 func AsStructWithTag(tagName string, input, output interface{}) error {
 	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			checkEntityHookFunc(),
 			stringToTimestampHookFunc(time.RFC3339),
 			timeToTimestampHookFunc(),
 			mapstructure.StringToTimeHookFunc(time.RFC3339),
@@ -68,21 +66,6 @@ func AsStructWithTag(tagName string, input, output interface{}) error {
 	}
 
 	return nil
-}
-
-func checkEntityHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
-		if t != reflect.TypeOf(meteorv1beta1.Entity{}) && t != reflect.TypeOf(&meteorv1beta1.Entity{}) {
-			return data, nil
-		}
-
-		_, ok := data.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("mapstructure check entity: unexpected type: %T", data)
-		}
-
-		return data, nil
-	}
 }
 
 // stringToTimestampHookFunc returns a DecodeHookFunc that converts

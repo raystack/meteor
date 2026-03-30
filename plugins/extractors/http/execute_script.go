@@ -102,7 +102,6 @@ func (e *Extractor) convertRequestToTengoObj() (tengo.Object, error) {
 }
 
 func newAssetWrapper() tengo.CallableFunc {
-	knownTypes := knownEntityTypes()
 	return func(args ...tengo.Object) (tengo.Object, error) {
 		if len(args) != 1 {
 			return nil, tengo.ErrWrongNumArguments
@@ -117,7 +116,7 @@ func newAssetWrapper() tengo.CallableFunc {
 			}
 		}
 
-		return newAsset(knownTypes, typ)
+		return newAsset(typ)
 	}
 }
 
@@ -280,9 +279,9 @@ func executeRequestWrapper(ctx context.Context, concurrency int, executeRequest 
 	}
 }
 
-func newAsset(knownTypes map[string]bool, typ string) (tengo.Object, error) {
-	if !knownTypes[typ] {
-		return nil, fmt.Errorf("new asset: unexpected type: %s", typ)
+func newAsset(typ string) (tengo.Object, error) {
+	if typ == "" {
+		return nil, fmt.Errorf("new asset: type must not be empty")
 	}
 
 	return &tengo.Map{
@@ -310,13 +309,3 @@ func argsToRequestConfigs(args []tengo.Object, validate *validator.Validate) ([]
 	return reqs, nil
 }
 
-func knownEntityTypes() map[string]bool {
-	types := map[string]bool{}
-	for _, typ := range []string{
-		"bucket", "dashboard", "experiment", "feature_table", "group",
-		"job", "metric", "model", "application", "table", "topic", "user",
-	} {
-		types[typ] = true
-	}
-	return types
-}
