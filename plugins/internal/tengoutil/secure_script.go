@@ -25,7 +25,7 @@ var httpModule = map[string]tengo.Object{
 	"get": httpGetFunction,
 }
 
-func NewSecureScript(input []byte, globals map[string]interface{}) (*tengo.Script, error) {
+func NewSecureScript(input []byte, globals map[string]any) (*tengo.Script, error) {
 	s := tengo.NewScript(input)
 
 	modules := stdlib.GetModuleMap(

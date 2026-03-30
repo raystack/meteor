@@ -81,11 +81,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to fetch user", "error", err)
 			continue
 		}
-		props := map[string]interface{}{
-			"email":    usr.GetEmail(),
-			"username": usr.GetLogin(),
+		props := map[string]any{
+			"email":     usr.GetEmail(),
+			"username":  usr.GetLogin(),
 			"full_name": usr.GetName(),
-			"status":   "active",
+			"status":    "active",
 		}
 		entity := models.NewEntity(
 			models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),

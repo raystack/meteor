@@ -26,7 +26,7 @@ var host = "http://compass.com"
 
 func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
-		invalidConfigs := []map[string]interface{}{
+		invalidConfigs := []map[string]any{
 			{
 				"host": "",
 			},
@@ -53,7 +53,7 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 		}})
 		require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestSink(t *testing.T) {
 				ctx := context.TODO()
 
 				compassSink := compass.New(client, testutils.Logger)
-				err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+				err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 					"host": host,
 				}})
 				require.NoError(t, err)
@@ -91,19 +91,19 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 		}})
 		require.NoError(t, err)
 
-		props, err := structpb.NewStruct(map[string]interface{}{
+		props, err := structpb.NewStruct(map[string]any{
 			"url": "http://test.com",
-			"labels": map[string]interface{}{
+			"labels": map[string]any{
 				"labelA": "valueLabelA",
 				"labelB": "valueLabelB",
 			},
-			"columns": []interface{}{
-				map[string]interface{}{
+			"columns": []any{
+				map[string]any{
 					"name":        "id",
 					"description": "It is the ID",
 					"data_type":   "INT",
@@ -137,7 +137,7 @@ func TestSink(t *testing.T) {
 		assert.Equal(t, "topic information", entityReq.Description)
 		assert.Equal(t, "kafka", entityReq.Source)
 		assert.Equal(t, "http://test.com", entityReq.Properties["url"])
-		assert.Equal(t, map[string]interface{}{"labelA": "valueLabelA", "labelB": "valueLabelB"}, entityReq.Properties["labels"])
+		assert.Equal(t, map[string]any{"labelA": "valueLabelA", "labelB": "valueLabelB"}, entityReq.Properties["labels"])
 		// Data fields are flattened into properties.
 		assert.NotNil(t, entityReq.Properties["columns"])
 	})
@@ -148,7 +148,7 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 		}})
 		require.NoError(t, err)
@@ -180,7 +180,7 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 		}})
 		require.NoError(t, err)
@@ -224,7 +224,7 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 			"headers": map[string]string{
 				"Compass-User-UUID": "meteor@raystack.io",
@@ -253,13 +253,13 @@ func TestSink(t *testing.T) {
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
-		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
 			"host": host,
 		}})
 		require.NoError(t, err)
 
-		props, err := structpb.NewStruct(map[string]interface{}{
-			"attributes": map[string]interface{}{
+		props, err := structpb.NewStruct(map[string]any{
+			"attributes": map[string]any{
 				"attrA": "valueA",
 			},
 		})
@@ -328,7 +328,7 @@ func reqURL(req *http.Request) string {
 	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
 }
 
-func decodeBody(t *testing.T, req *http.Request, v interface{}) {
+func decodeBody(t *testing.T, req *http.Request, v any) {
 	t.Helper()
 	// Find the index of this request in the mock to get the stored body.
 	bodyBytes, err := io.ReadAll(req.Body)

@@ -105,7 +105,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		err := newExtractor().Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"password": "pass",
 			},
 		})
@@ -118,7 +118,7 @@ func TestExtract(t *testing.T) {
 		extr := newExtractor()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":     host,
 				"user":     user,
 				"password": pass,
@@ -191,19 +191,19 @@ func newExtractor() *elastic.Extractor {
 
 func getExpectedVal(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index1", "table", "index1", "elasticsearch", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "SomeStr", "data_type": "text"},
+		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index1", "table", "index1", "elasticsearch", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "SomeStr", "data_type": "text"},
 			},
-			"profile": map[string]interface{}{
+			"profile": map[string]any{
 				"total_rows": float64(1),
 			},
 		}),
-		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index2", "table", "index2", "elasticsearch", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "SomeStr", "data_type": "text"},
+		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index2", "table", "index2", "elasticsearch", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "SomeStr", "data_type": "text"},
 			},
-			"profile": map[string]interface{}{
+			"profile": map[string]any{
 				"total_rows": float64(1),
 			},
 		}),

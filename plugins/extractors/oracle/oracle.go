@@ -152,11 +152,11 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		return nil, fmt.Errorf("scan row count: %w", err)
 	}
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"columns": columns,
 	}
 	if rowCount > 0 {
-		props["profile"] = map[string]interface{}{
+		props["profile"] = map[string]any{
 			"total_rows": rowCount,
 		}
 	}
@@ -169,7 +169,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]interface{}, error) {
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]any, error) {
 	sqlStr := `select utc.column_name, utc.data_type,
 			decode(utc.char_used, 'C', utc.char_length, utc.data_length) as data_length,
 			utc.nullable, nvl(ucc.comments, '') as col_comment
@@ -185,7 +185,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var fieldDesc sql.NullString
@@ -195,7 +195,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 			continue
 		}
 
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName,
 			"data_type":   dataType,
 			"is_nullable": isNullable(isNullableString),

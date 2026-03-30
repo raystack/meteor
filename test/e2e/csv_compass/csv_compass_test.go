@@ -14,10 +14,10 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/cmd"
-	"github.com/raystack/meteor/plugins/sinks/compass"
 	_ "github.com/raystack/meteor/plugins/extractors"
 	_ "github.com/raystack/meteor/plugins/processors"
 	_ "github.com/raystack/meteor/plugins/sinks"
+	"github.com/raystack/meteor/plugins/sinks/compass"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -81,7 +81,7 @@ sinks:
 	assert.NotNil(t, emp.Properties, "properties should contain flattened table data")
 	// Columns from CSV header should be in properties.
 	if columns, ok := emp.Properties["columns"]; ok {
-		cols, ok := columns.([]interface{})
+		cols, ok := columns.([]any)
 		require.True(t, ok, "columns should be an array")
 		assert.Len(t, cols, 4, "employees.csv has 4 columns")
 	}

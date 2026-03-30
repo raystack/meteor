@@ -45,7 +45,7 @@ func TestBasePluginValidate(t *testing.T) {
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, nil)
 		err := basePlugin.Validate(plugins.Config{
 			URNScope:  "test-scope",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestBasePluginValidate(t *testing.T) {
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &invalidConfig)
 		err := basePlugin.Validate(plugins.Config{
 			URNScope:  "test-scope",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.Equal(t, err, plugins.InvalidConfigError{
@@ -83,7 +83,7 @@ func TestBasePluginValidate(t *testing.T) {
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &validConfig)
 		err := basePlugin.Validate(plugins.Config{
 			URNScope: "test-scope",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"FieldA": "test-value",
 			},
 		})
@@ -101,7 +101,7 @@ func TestBasePluginInit(t *testing.T) {
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &invalidConfig)
 		err := basePlugin.Init(context.Background(), plugins.Config{
 			URNScope:  "test-scope",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -115,7 +115,7 @@ func TestBasePluginInit(t *testing.T) {
 		basePlugin := plugins.NewBasePlugin(plugins.Info{}, &validConfig)
 		err := basePlugin.Init(context.Background(), plugins.Config{
 			URNScope: "test-scope",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"FieldA": "test-value",
 			},
 		})

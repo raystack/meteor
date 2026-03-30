@@ -122,7 +122,7 @@ func (e *Extractor) buildDashboard(ctx context.Context, id int) (models.Record, 
 	}
 
 	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", id))
-	props := map[string]interface{}{
+	props := map[string]any{
 		"charts": charts,
 	}
 	if dashboard.URL != "" {
@@ -148,7 +148,7 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Dashboard, error) 
 }
 
 // getChartsList gets a list of charts from superset server
-func (e *Extractor) getChartsList(ctx context.Context, id int) ([]map[string]interface{}, error) {
+func (e *Extractor) getChartsList(ctx context.Context, id int) ([]map[string]any, error) {
 	const listChartsRoute = "/api/v1/dashboard/{id}/charts"
 	targetURL := e.urlb.New().Path(listChartsRoute).PathParamInt("id", int64(id)).URL()
 
@@ -159,9 +159,9 @@ func (e *Extractor) getChartsList(ctx context.Context, id int) ([]map[string]int
 		return nil, fmt.Errorf("fetch chart details: %w", err)
 	}
 
-	var charts []map[string]interface{}
+	var charts []map[string]any
 	for _, res := range data.Result {
-		chart := map[string]interface{}{
+		chart := map[string]any{
 			"urn":           models.NewURN("superset", e.UrnScope, "chart", fmt.Sprintf("%d", res.SliceId)),
 			"name":          res.SliceName,
 			"source":        "superset",
@@ -182,7 +182,7 @@ func (e *Extractor) getAccessToken(ctx context.Context) (string, error) {
 	const loginRoute = "/api/v1/security/login"
 	targetURL := e.urlb.New().Path(loginRoute).URL()
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"username": e.config.Username,
 		"password": e.config.Password,
 		"provider": e.config.Provider,
@@ -213,7 +213,7 @@ func (e *Extractor) getCsrfToken(ctx context.Context) (string, error) {
 // makeRequest helper function to avoid rewriting a request
 //
 //nolint:revive
-func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
+func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result any) error {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)

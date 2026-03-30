@@ -95,7 +95,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid", func(t *testing.T) {
 		err := mongodb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			}})
 
@@ -110,7 +110,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host),
 			}})
 		if err != nil {
@@ -127,7 +127,7 @@ func TestExtract(t *testing.T) {
 
 func setup(ctx context.Context) (err error) {
 	// create and populate connections collection
-	err = createCollection(ctx, "connections", []interface{}{
+	err = createCollection(ctx, "connections", []any{
 		bson.D{{Key: "name", Value: "Albert"}, {Key: "relation", Value: "mutual"}},
 		bson.D{{Key: "name", Value: "Josh"}, {Key: "relation", Value: "following"}},
 		bson.D{{Key: "name", Value: "Abish"}, {Key: "relation", Value: "follower"}},
@@ -137,7 +137,7 @@ func setup(ctx context.Context) (err error) {
 	}
 
 	// create and populate posts collection
-	err = createCollection(ctx, "posts", []interface{}{
+	err = createCollection(ctx, "posts", []any{
 		bson.D{{Key: "title", Value: "World"}, {Key: "body", Value: "Hello World"}},
 		bson.D{{Key: "title", Value: "Mars"}, {Key: "body", Value: "Hello Mars"}},
 	})
@@ -146,7 +146,7 @@ func setup(ctx context.Context) (err error) {
 	}
 
 	// create and populate stats collection
-	err = createCollection(ctx, "stats", []interface{}{
+	err = createCollection(ctx, "stats", []any{
 		bson.D{{Key: "views", Value: "500"}, {Key: "likes", Value: "200"}},
 	})
 	if err != nil {
@@ -156,7 +156,7 @@ func setup(ctx context.Context) (err error) {
 	return
 }
 
-func createCollection(ctx context.Context, collectionName string, data []interface{}) (err error) {
+func createCollection(ctx context.Context, collectionName string, data []any) (err error) {
 	collection := client.Database(testDB).Collection(collectionName)
 	_, err = collection.InsertMany(ctx, data)
 	return
@@ -164,18 +164,18 @@ func createCollection(ctx context.Context, collectionName string, data []interfa
 
 func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".connections", "table", "connections", "mongodb", map[string]interface{}{
-			"profile": map[string]interface{}{
+		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".connections", "table", "connections", "mongodb", map[string]any{
+			"profile": map[string]any{
 				"total_rows": float64(3),
 			},
 		}),
-		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".posts", "table", "posts", "mongodb", map[string]interface{}{
-			"profile": map[string]interface{}{
+		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".posts", "table", "posts", "mongodb", map[string]any{
+			"profile": map[string]any{
 				"total_rows": float64(2),
 			},
 		}),
-		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".stats", "table", "stats", "mongodb", map[string]interface{}{
-			"profile": map[string]interface{}{
+		models.NewEntity("urn:mongodb:test-mongodb:collection:"+testDB+".stats", "table", "stats", "mongodb", map[string]any{
+			"profile": map[string]any{
 				"total_rows": float64(1),
 			},
 		}),

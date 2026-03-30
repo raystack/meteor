@@ -109,7 +109,7 @@ type Client interface {
 	Init(ctx context.Context, cfg Config) (err error)
 	GetAllProjects(ctx context.Context) (ps []*Project, err error)
 	GetDetailedWorkbooksByProjectName(ctx context.Context, projectName string) (wbs []*Workbook, err error)
-	makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) (err error)
+	makeRequest(ctx context.Context, route, method, url string, payload, result any) (err error)
 }
 
 type client struct {
@@ -208,11 +208,11 @@ func (c *client) getAuthToken(ctx context.Context) (authToken, siteID string, er
 	const signinRoute = "/auth/signin"
 	targetURL := c.urlb.New().Path(signinRoute).URL()
 
-	payload := map[string]interface{}{
-		"credentials": map[string]interface{}{
+	payload := map[string]any{
+		"credentials": map[string]any{
 			"name":     c.config.Username,
 			"password": c.config.Password,
-			"site": map[string]interface{}{
+			"site": map[string]any{
 				"contentUrl": c.config.Sitename,
 			},
 		},
@@ -228,7 +228,7 @@ func (c *client) getAuthToken(ctx context.Context) (authToken, siteID string, er
 // helper function to avoid rewriting a request
 //
 //nolint:revive
-func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
+func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result any) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)

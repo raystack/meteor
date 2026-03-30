@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func AsMap(v interface{}) (interface{}, error) {
+func AsMap(v any) (any, error) {
 	// Cannot use mapstructure here because of
 	// 1. https://github.com/mitchellh/mapstructure/issues/249
 	// 2. Handling for fields with type *timestamp.Timestamp
@@ -30,7 +30,7 @@ func AsMap(v interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("structmap: %T as map: marshal: %w", v, err)
 	}
 
-	var res interface{}
+	var res any
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, fmt.Errorf("structmap: %T as map: unmarshal: %w", v, err)
 	}
@@ -38,11 +38,11 @@ func AsMap(v interface{}) (interface{}, error) {
 	return res, nil
 }
 
-func AsStruct(input, output interface{}) error {
+func AsStruct(input, output any) error {
 	return AsStructWithTag("json", input, output)
 }
 
-func AsStructWithTag(tagName string, input, output interface{}) error {
+func AsStructWithTag(tagName string, input, output any) error {
 	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			stringToTimestampHookFunc(time.RFC3339),
@@ -71,7 +71,7 @@ func AsStructWithTag(tagName string, input, output interface{}) error {
 // stringToTimestampHookFunc returns a DecodeHookFunc that converts
 // strings to timestamppb.Timestamp.
 func stringToTimestampHookFunc(layout string) mapstructure.DecodeHookFuncType {
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data any) (any, error) {
 		s, ok := data.(string)
 		if !ok {
 			return data, nil
@@ -91,7 +91,7 @@ func stringToTimestampHookFunc(layout string) mapstructure.DecodeHookFuncType {
 }
 
 func timeToTimestampHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
+	return func(_, t reflect.Type, data any) (any, error) {
 		ts, ok := data.(time.Time)
 		if !ok {
 			return data, nil
@@ -105,8 +105,8 @@ func timeToTimestampHookFunc() mapstructure.DecodeHookFuncType {
 }
 
 func mapToStructPBHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
-		m, ok := data.(map[string]interface{})
+	return func(_, t reflect.Type, data any) (any, error) {
+		m, ok := data.(map[string]any)
 		if !ok {
 			return data, nil
 		}

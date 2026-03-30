@@ -145,9 +145,9 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 		return
 	}
 
-	props := map[string]interface{}{}
+	props := map[string]any{}
 	if totalRows > 0 {
-		props["profile"] = map[string]interface{}{
+		props["profile"] = map[string]any{
 			"total_rows": totalRows,
 		}
 	}

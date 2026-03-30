@@ -18,7 +18,7 @@ import (
 	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
 )
 
-func (e *Extractor) executeScript(ctx context.Context, res interface{}, scriptCfg Script, emit plugins.Emit) error {
+func (e *Extractor) executeScript(ctx context.Context, res any, scriptCfg Script, emit plugins.Emit) error {
 	s, err := tengoutil.NewSecureScript(
 		([]byte)(scriptCfg.Source), e.scriptGlobals(ctx, res, emit),
 	)
@@ -46,13 +46,13 @@ func (e *Extractor) executeScript(ctx context.Context, res interface{}, scriptCf
 	return nil
 }
 
-func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plugins.Emit) map[string]interface{} {
+func (e *Extractor) scriptGlobals(ctx context.Context, res any, emit plugins.Emit) map[string]any {
 	req, err := e.convertRequestToTengoObj()
 	if err != nil {
 		e.logger.Error(err.Error())
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"recipe_scope": &tengo.String{Value: e.UrnScope},
 		"request":      req,
 		"response":     res,
@@ -77,7 +77,7 @@ func (e *Extractor) scriptGlobals(ctx context.Context, res interface{}, emit plu
 	}
 }
 
-func (e *Extractor) convertTengoObjToRequest(obj interface{}) error {
+func (e *Extractor) convertTengoObjToRequest(obj any) error {
 	r, err := json.Marshal(obj)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (e *Extractor) convertTengoObjToRequest(obj interface{}) error {
 	return nil
 }
 func (e *Extractor) convertRequestToTengoObj() (tengo.Object, error) {
-	var res map[string]interface{}
+	var res map[string]any
 	r, err := json.Marshal(e.config.Request)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 			return nil, tengo.ErrWrongNumArguments
 		}
 
-		m, ok := tengo.ToInterface(args[0]).(map[string]interface{})
+		m, ok := tengo.ToInterface(args[0]).(map[string]any)
 		if !ok {
 			return nil, tengo.ErrInvalidArgumentType{
 				Name:     "asset",
@@ -142,7 +142,7 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 		source, _ := m["service"].(string)
 
 		// Everything else goes into properties
-		props := make(map[string]interface{})
+		props := make(map[string]any)
 		for k, v := range m {
 			switch k {
 			case "urn", "type", "name", "service":
@@ -190,7 +190,7 @@ func executeRequestWrapper(ctx context.Context, concurrency int, executeRequest 
 	}
 
 	type result struct {
-		resp interface{}
+		resp any
 		err  error
 	}
 	processJobs := func(ctx context.Context, n int, ch <-chan job) []result {
@@ -311,4 +311,3 @@ func argsToRequestConfigs(args []tengo.Object, validate *validator.Validate) ([]
 	}
 	return reqs, nil
 }
-

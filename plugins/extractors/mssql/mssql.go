@@ -132,14 +132,14 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	e.emit(models.NewRecord(models.NewEntity(
 		models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
 		"table", tableName, "mssql",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	)))
 
 	return nil
 }
 
 // getColumns extract columns from the given table
-func (e *Extractor) getColumns(ctx context.Context, database, tableName string) ([]interface{}, error) {
+func (e *Extractor) getColumns(ctx context.Context, database, tableName string) ([]any, error) {
 	//nolint:gosec
 	query := fmt.Sprintf(
 		`SELECT COLUMN_NAME, DATA_TYPE,
@@ -153,7 +153,7 @@ func (e *Extractor) getColumns(ctx context.Context, database, tableName string) 
 	}
 	defer rows.Close()
 
-	var columns []interface{}
+	var columns []any
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
@@ -161,7 +161,7 @@ func (e *Extractor) getColumns(ctx context.Context, database, tableName string) 
 			e.logger.Error("failed to scan fields", "error", err)
 			continue
 		}
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName,
 			"data_type":   dataType,
 			"is_nullable": e.isNullable(isNullableString),

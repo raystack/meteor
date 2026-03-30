@@ -20,7 +20,7 @@ func NewURN(service, scope, kind, id string) string {
 // NewEntity creates an entity with properties from a map.
 // Values in props are sanitized to be compatible with structpb.NewStruct:
 // map[string]string is converted to map[string]interface{}, etc.
-func NewEntity(urn, typ, name, source string, props map[string]interface{}) *meteorv1beta1.Entity {
+func NewEntity(urn, typ, name, source string, props map[string]any) *meteorv1beta1.Entity {
 	var properties *structpb.Struct
 	if len(props) > 0 {
 		sanitized := sanitizeMap(props)
@@ -82,7 +82,7 @@ func RecordToJSON(r Record) ([]byte, error) {
 		edgesJSON = append(edgesJSON, b)
 	}
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"entity": json.RawMessage(entityJSON),
 	}
 	if len(edgesJSON) > 0 {
@@ -94,38 +94,38 @@ func RecordToJSON(r Record) ([]byte, error) {
 
 // sanitizeMap recursively converts typed maps (e.g., map[string]string) to
 // map[string]interface{} so they are compatible with structpb.NewStruct.
-func sanitizeMap(m map[string]interface{}) map[string]interface{} {
-	out := make(map[string]interface{}, len(m))
+func sanitizeMap(m map[string]any) map[string]any {
+	out := make(map[string]any, len(m))
 	for k, v := range m {
 		out[k] = sanitizeValue(v)
 	}
 	return out
 }
 
-func sanitizeValue(v interface{}) interface{} {
+func sanitizeValue(v any) any {
 	switch val := v.(type) {
 	case map[string]string:
-		out := make(map[string]interface{}, len(val))
+		out := make(map[string]any, len(val))
 		for k, v := range val {
 			out[k] = v
 		}
 		return out
-	case map[string]interface{}:
+	case map[string]any:
 		return sanitizeMap(val)
-	case []interface{}:
-		out := make([]interface{}, len(val))
+	case []any:
+		out := make([]any, len(val))
 		for i, item := range val {
 			out[i] = sanitizeValue(item)
 		}
 		return out
-	case []map[string]interface{}:
-		out := make([]interface{}, len(val))
+	case []map[string]any:
+		out := make([]any, len(val))
 		for i, item := range val {
 			out[i] = sanitizeMap(item)
 		}
 		return out
 	case []string:
-		out := make([]interface{}, len(val))
+		out := make([]any, len(val))
 		for i, item := range val {
 			out[i] = item
 		}

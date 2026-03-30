@@ -134,7 +134,7 @@ func (e *Extractor) buildDashboard(wb *Workbook) (models.Record, error) {
 	// Build charts
 	charts := e.buildCharts(dashboardURN, wb)
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"charts":       charts,
 		"id":           wb.ID,
 		"name":         wb.Name,
@@ -159,11 +159,11 @@ func (e *Extractor) buildDashboard(wb *Workbook) (models.Record, error) {
 	return models.NewRecord(entity, edges...), nil
 }
 
-func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook) []map[string]interface{} {
-	var charts []map[string]interface{}
+func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook) []map[string]any {
+	var charts []map[string]any
 	for _, sh := range wb.Sheets {
 		chartURN := models.NewURN("tableau", e.UrnScope, "sheet", sh.ID)
-		chart := map[string]interface{}{
+		chart := map[string]any{
 			"urn":           chartURN,
 			"name":          sh.Name,
 			"dashboard_urn": dashboardURN,

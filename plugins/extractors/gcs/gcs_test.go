@@ -93,7 +93,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
 		err := New(utils.Logger, createClient).Init(context.TODO(), plugins.Config{
 			URNScope: "test",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"wrong-config": "sample-project",
 			},
 		})
@@ -107,7 +107,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-gcs",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":             "google-project-id",
 				"service_account_base64": "----", // invalid
 			},
@@ -121,7 +121,7 @@ func TestInit(t *testing.T) {
 		ctx := context.Background()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-gcs",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -136,7 +136,7 @@ func TestExtract(t *testing.T) {
 		ctx := context.Background()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-gcs",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":   "google-project-id",
 				"extract_blob": "true",
 			},
@@ -163,11 +163,11 @@ func replaceWithStaticTimestamp(t *testing.T, actual []*meteorv1beta1.Entity) {
 		return
 	}
 	props := actual[0].Properties.AsMap()
-	blobs, ok := props["blobs"].([]interface{})
+	blobs, ok := props["blobs"].([]any)
 	if !ok || len(blobs) == 0 {
 		return
 	}
-	blob, ok := blobs[0].(map[string]interface{})
+	blob, ok := blobs[0].(map[string]any)
 	if !ok {
 		return
 	}

@@ -38,9 +38,9 @@ func (s *Sink) executeScript(ctx context.Context, url string, entity *meteorv1be
 	}
 	return nil
 }
-func (s *Sink) scriptGlobals(ctx context.Context, url string) map[string]interface{} {
-	return map[string]interface{}{
-		"asset": map[string]interface{}{},
+func (s *Sink) scriptGlobals(ctx context.Context, url string) map[string]any {
+	return map[string]any{
+		"asset": map[string]any{},
 		"sink": &tengo.UserFunction{
 			Name:  "sink",
 			Value: s.executeRequestWrapper(ctx, url),

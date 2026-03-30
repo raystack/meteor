@@ -57,7 +57,7 @@ type AdminClient_TableInfo_Call struct {
 // TableInfo is a helper method to define mock.On call
 //   - ctx context.Context
 //   - table string
-func (_e *AdminClient_Expecter) TableInfo(ctx interface{}, table interface{}) *AdminClient_TableInfo_Call {
+func (_e *AdminClient_Expecter) TableInfo(ctx any, table any) *AdminClient_TableInfo_Call {
 	return &AdminClient_TableInfo_Call{Call: _e.mock.On("TableInfo", ctx, table)}
 }
 
@@ -111,7 +111,7 @@ type AdminClient_Tables_Call struct {
 
 // Tables is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *AdminClient_Expecter) Tables(ctx interface{}) *AdminClient_Tables_Call {
+func (_e *AdminClient_Expecter) Tables(ctx any) *AdminClient_Tables_Call {
 	return &AdminClient_Tables_Call{Call: _e.mock.On("Tables", ctx)}
 }
 

@@ -105,7 +105,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := cassandra.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"password": pass,
 				"host":     host,
 			},
@@ -123,7 +123,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"user_id":  user,
 				"password": pass,
 				"host":     host,
@@ -182,18 +182,18 @@ func execute(queries []string) (err error) {
 // getExpected returns the expected result
 func getExpected() []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".applicant", "table", "applicant", "cassandra", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "applicantid", "data_type": "int"},
-				map[string]interface{}{"name": "first_name", "data_type": "text"},
-				map[string]interface{}{"name": "last_name", "data_type": "text"},
+		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".applicant", "table", "applicant", "cassandra", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "applicantid", "data_type": "int"},
+				map[string]any{"name": "first_name", "data_type": "text"},
+				map[string]any{"name": "last_name", "data_type": "text"},
 			},
 		}),
-		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".jobs", "table", "jobs", "cassandra", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "department", "data_type": "text"},
-				map[string]interface{}{"name": "job", "data_type": "text"},
-				map[string]interface{}{"name": "jobid", "data_type": "int"},
+		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".jobs", "table", "jobs", "cassandra", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "department", "data_type": "text"},
+				map[string]any{"name": "job", "data_type": "text"},
+				map[string]any{"name": "jobid", "data_type": "int"},
 			},
 		}),
 	}

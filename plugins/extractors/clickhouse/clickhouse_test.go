@@ -88,7 +88,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			}})
 
@@ -102,7 +102,7 @@ func TestExtract(t *testing.T) {
 		extr := newExtractor()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("tcp://%s?username=default&password=%s&debug=true", host, pass),
 			},
 		})
@@ -122,18 +122,18 @@ func TestExtract(t *testing.T) {
 
 func getExpected() []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "clickhouse", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "applicant_id", "data_type": "Int32"},
-				map[string]interface{}{"name": "last_name", "data_type": "String"},
-				map[string]interface{}{"name": "first_name", "data_type": "String"},
+		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "clickhouse", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "applicant_id", "data_type": "Int32"},
+				map[string]any{"name": "last_name", "data_type": "String"},
+				map[string]any{"name": "first_name", "data_type": "String"},
 			},
 		}),
-		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "clickhouse", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "job_id", "data_type": "Int32"},
-				map[string]interface{}{"name": "job", "data_type": "String"},
-				map[string]interface{}{"name": "department", "data_type": "String"},
+		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "clickhouse", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "job_id", "data_type": "Int32"},
+				map[string]any{"name": "job", "data_type": "String"},
+				map[string]any{"name": "department", "data_type": "String"},
 			},
 		}),
 	}

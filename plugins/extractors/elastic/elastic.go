@@ -84,7 +84,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	if err != nil {
 		return errors.Wrap(err, "failed to fetch cluster information")
 	}
-	var r map[string]interface{}
+	var r map[string]any
 	err = json.NewDecoder(res.Body).Decode(&r)
 	if err != nil {
 		return
@@ -97,11 +97,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			err = err1
 			return
 		}
-		var columns []interface{}
+		var columns []any
 		for i := range docProperties {
-			columns = append(columns, map[string]interface{}{
+			columns = append(columns, map[string]any{
 				"name":      i,
-				"data_type": docProperties[i].(map[string]interface{})["type"].(string),
+				"data_type": docProperties[i].(map[string]any)["type"].(string),
 			})
 		}
 		countRes, err1 := e.client.Search(
@@ -111,18 +111,18 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			err = err1
 			return
 		}
-		var t map[string]interface{}
+		var t map[string]any
 		err = json.NewDecoder(countRes.Body).Decode(&t)
 		if err != nil {
 			res.Body.Close()
 			return
 		}
-		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
-		props := map[string]interface{}{
+		docCount := len(t["hits"].(map[string]any)["hits"].([]any))
+		props := map[string]any{
 			"columns": columns,
 		}
 		if docCount > 0 {
-			props["profile"] = map[string]interface{}{
+			props["profile"] = map[string]any{
 				"total_rows": int64(docCount),
 			}
 		}
@@ -136,8 +136,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 }
 
 // listIndexInfo returns the properties of the index
-func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, err error) {
-	var r map[string]interface{}
+func (e *Extractor) listIndexInfo(index string) (result map[string]any, err error) {
+	var r map[string]any
 	res, err := e.client.Indices.GetMapping(
 		e.client.Indices.GetMapping.WithIndex(index),
 	)
@@ -150,7 +150,7 @@ func (e *Extractor) listIndexInfo(index string) (result map[string]interface{}, 
 		res.Body.Close()
 		return
 	}
-	result = r[index].(map[string]interface{})["mappings"].(map[string]interface{})["properties"].(map[string]interface{})
+	result = r[index].(map[string]any)["mappings"].(map[string]any)["properties"].(map[string]any)
 	_ = res.Body.Close()
 	return
 }

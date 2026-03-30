@@ -26,7 +26,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
 		err := bt.New(utils.Logger, nil, nil).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"wrong-config": "sample-project",
 			},
 		})
@@ -37,7 +37,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if project_id is empty", func(t *testing.T) {
 		err := bt.New(utils.Logger, nil, nil).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "",
 			},
 		})
@@ -51,7 +51,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":             "google-project-id",
 				"service_account_base64": "----", // invalid
 			},
@@ -71,7 +71,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -94,7 +94,7 @@ func TestInit(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -117,7 +117,7 @@ func TestInit(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -153,7 +153,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -188,7 +188,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})
@@ -224,7 +224,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigtable",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": "google-project-id",
 			},
 		})

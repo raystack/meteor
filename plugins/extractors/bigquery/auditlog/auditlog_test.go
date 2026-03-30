@@ -96,16 +96,16 @@ func TestParsePayload(t *testing.T) {
 	})
 
 	t.Run("should parse with metadata if service data not exists and metadata exist", func(t *testing.T) {
-		loggingData, err := structpb.NewStruct(map[string]interface{}{
-			"jobCompletedEvent": map[string]interface{}{
+		loggingData, err := structpb.NewStruct(map[string]any{
+			"jobCompletedEvent": map[string]any{
 				"event_name": "name",
-				"job": map[string]interface{}{
-					"job_statistics": map[string]interface{}{
-						"referenced_tables": []interface{}{map[string]interface{}{
+				"job": map[string]any{
+					"job_statistics": map[string]any{
+						"referenced_tables": []any{map[string]any{
 							"project_id": "project_id",
 						}},
 					},
-					"job_status": map[string]interface{}{
+					"job_status": map[string]any{
 						"state": "DONE",
 					},
 				},

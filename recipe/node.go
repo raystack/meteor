@@ -25,11 +25,11 @@ type PluginNode struct {
 }
 
 // decodeConfig decodes the plugins config
-func (plug PluginNode) decodeConfig() (map[string]interface{}, error) {
-	config := make(map[string]interface{})
+func (plug PluginNode) decodeConfig() (map[string]any, error) {
+	config := make(map[string]any)
 
 	for key, val := range plug.Config {
-		var configVal interface{}
+		var configVal any
 		if err := val.Decode(&configVal); err != nil {
 			return nil, fmt.Errorf("error decoding config :%w", err)
 		}

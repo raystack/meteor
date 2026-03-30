@@ -6,12 +6,12 @@ import (
 
 type BasePlugin struct {
 	UrnScope  string
-	RawConfig map[string]interface{}
+	RawConfig map[string]any
 	info      Info
-	configRef interface{}
+	configRef any
 }
 
-func NewBasePlugin(info Info, configRef interface{}) BasePlugin {
+func NewBasePlugin(info Info, configRef any) BasePlugin {
 	return BasePlugin{
 		info:      info,
 		configRef: configRef,

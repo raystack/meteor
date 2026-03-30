@@ -16,7 +16,7 @@ import (
 var summary string
 
 type Config struct {
-	Attributes map[string]interface{} `mapstructure:"attributes" validate:"required"`
+	Attributes map[string]any `mapstructure:"attributes" validate:"required"`
 }
 
 // Processor work in a list of data
@@ -64,12 +64,12 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 	p.logger.Debug("enriching record", "record", entity.GetUrn())
 
 	props := entity.GetProperties()
-	var customProps map[string]interface{}
+	var customProps map[string]any
 	if props != nil {
 		customProps = props.AsMap()
 	}
 	if customProps == nil {
-		customProps = make(map[string]interface{})
+		customProps = make(map[string]any)
 	}
 
 	// update custom properties using value from config

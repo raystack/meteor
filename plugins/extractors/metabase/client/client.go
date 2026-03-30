@@ -134,7 +134,7 @@ func (c *client) getSessionID(ctx context.Context) (string, error) {
 	const createSessionRoute = "/api/session"
 	targetURL := c.urlb.New().Path(createSessionRoute).URL()
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"username": c.username,
 		"password": c.password,
 	}
@@ -149,7 +149,7 @@ func (c *client) getSessionID(ctx context.Context) (string, error) {
 }
 
 //nolint:revive
-func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
+func (c *client) makeRequest(ctx context.Context, route, method, url string, payload, result any) error {
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)

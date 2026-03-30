@@ -117,7 +117,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 
-		var blobs []map[string]interface{}
+		var blobs []map[string]any
 		if e.config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
@@ -131,10 +131,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]map[string]interface{}, error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]map[string]any, error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
-	var blobs []map[string]interface{}
+	var blobs []map[string]any
 	for {
 		object, err := it.Next()
 		if errors.Is(err, iterator.Done) {
@@ -148,10 +148,10 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID stri
 	}
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []map[string]interface{}) models.Record {
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []map[string]any) models.Record {
 	urn := models.NewURN("gcs", projectID, "bucket", b.Name)
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"location":     b.Location,
 		"storage_type": b.StorageClass,
 	}
@@ -169,8 +169,8 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	return models.NewRecord(entity)
 }
 
-func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) map[string]interface{} {
-	b := map[string]interface{}{
+func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) map[string]any {
+	b := map[string]any{
 		"urn":  models.NewURN("gcs", projectID, "object", fmt.Sprintf("%s/%s", blob.Bucket, blob.Name)),
 		"name": blob.Name,
 		"size": blob.Size,

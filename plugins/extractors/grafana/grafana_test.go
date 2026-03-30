@@ -37,7 +37,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
 		err := grafana.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": "",
 				"api_key":  "qwerty123",
 			}})
@@ -48,7 +48,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
 		err := grafana.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": testServer.URL,
 				"api_key":  "",
 			}})
@@ -65,10 +65,10 @@ func TestExtract(t *testing.T) {
 				"dashboard",
 				"new-dashboard-copy",
 				"grafana",
-				map[string]interface{}{
+				map[string]any{
 					"url": fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
-					"charts": []interface{}{
-						map[string]interface{}{
+					"charts": []any{
+						map[string]any{
 							"urn":              "urn:grafana:test-grafana:panel:HzK8qNW7z.2",
 							"name":             "Panel Title",
 							"type":             "timeseries",
@@ -85,11 +85,11 @@ func TestExtract(t *testing.T) {
 				"dashboard",
 				"test-dashboard-updated",
 				"grafana",
-				map[string]interface{}{
+				map[string]any{
 					"url":         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
 					"description": "this is description for testing",
-					"charts": []interface{}{
-						map[string]interface{}{
+					"charts": []any{
+						map[string]any{
 							"urn":              "urn:grafana:test-grafana:panel:5WsKOvW7z.4",
 							"name":             "Panel Random",
 							"type":             "table",
@@ -101,7 +101,7 @@ func TestExtract(t *testing.T) {
 							"dashboard_urn":    "grafana.5WsKOvW7z",
 							"dashboard_source": "grafana",
 						},
-						map[string]interface{}{
+						map[string]any{
 							"urn":              "urn:grafana:test-grafana:panel:5WsKOvW7z.2",
 							"name":             "Panel Title",
 							"type":             "timeseries",
@@ -119,7 +119,7 @@ func TestExtract(t *testing.T) {
 		extractor := grafana.New(utils.Logger)
 		err := extractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": testServer.URL,
 				"api_key":  "qwerty123",
 			},

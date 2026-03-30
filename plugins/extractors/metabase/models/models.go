@@ -88,17 +88,17 @@ type Database struct {
 	CreatedAt                MetabaseTime `json:"created_at"`
 	UpdatedAt                MetabaseTime `json:"updated_at"`
 	Details                  struct {
-		Db                string      `json:"db"`
-		Host              string      `json:"host"`
-		Port              int         `json:"port"`
-		Dbname            string      `json:"dbname"`
-		User              string      `json:"user"`
-		Password          string      `json:"password"`
-		SSL               bool        `json:"ssl"`
-		AdditionalOptions interface{} `json:"additional-options"`
-		TunnelEnabled     bool        `json:"tunnel-enabled"`
-		ProjectID         string      `json:"project-id"`
-		DatasetID         string      `json:"dataset-id"`
+		Db                string `json:"db"`
+		Host              string `json:"host"`
+		Port              int    `json:"port"`
+		Dbname            string `json:"dbname"`
+		User              string `json:"user"`
+		Password          string `json:"password"`
+		SSL               bool   `json:"ssl"`
+		AdditionalOptions any    `json:"additional-options"`
+		TunnelEnabled     bool   `json:"tunnel-enabled"`
+		ProjectID         string `json:"project-id"`
+		DatasetID         string `json:"dataset-id"`
 	} `json:"details"`
 }
 
@@ -114,8 +114,8 @@ type Collection struct {
 type CardDatasetQuery struct {
 	Type  string `json:"type"`
 	Query struct {
-		SourceTable int           `json:"source-table"`
-		Filter      []interface{} `json:"filter"`
+		SourceTable int   `json:"source-table"`
+		Filter      []any `json:"filter"`
 	} `json:"query"`
 	Native   NativeDatasetQuery `json:"native"`
 	Database int                `json:"database"`

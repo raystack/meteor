@@ -82,7 +82,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := mariadb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			}})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -97,7 +97,7 @@ func TestExtract(t *testing.T) {
 
 		err := newExtractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
 			}})
 		if err != nil {

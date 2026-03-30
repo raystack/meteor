@@ -26,7 +26,7 @@ type TemplateData struct {
 	Processors map[string]string
 }
 
-var TemplateFuncs = map[string]interface{}{
+var TemplateFuncs = map[string]any{
 	"indent": indent,
 	"rawfmt": rawfmt,
 }

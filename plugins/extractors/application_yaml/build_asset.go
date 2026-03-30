@@ -13,7 +13,7 @@ const (
 func buildRecord(scope string, svc Application) models.Record {
 	urn := models.NewURN(service, scope, typ, svc.Name)
 
-	props := map[string]interface{}{}
+	props := map[string]any{}
 	if svc.ID != "" {
 		props["id"] = svc.ID
 	}

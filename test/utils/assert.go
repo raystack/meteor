@@ -1,13 +1,14 @@
 package utils
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"reflect"
-	"sort"
+	"slices"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/nsf/jsondiff"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ import (
 func AssertEqualProto(t *testing.T, expected, actual proto.Message) {
 	t.Helper()
 
-	if diff := cmp.Diff(actual, expected, protocmp.Transform()); diff != "" {
+	if diff := gocmp.Diff(actual, expected, protocmp.Transform()); diff != "" {
 		msg := fmt.Sprintf(
 			"Not equal:\n"+
 				"expected:\n\t'%s'\n"+
@@ -32,7 +33,7 @@ func AssertEqualProto(t *testing.T, expected, actual proto.Message) {
 	}
 }
 
-func AssertEqualProtos(t *testing.T, expected, actual interface{}) {
+func AssertEqualProtos(t *testing.T, expected, actual any) {
 	t.Helper()
 
 	defer func() {
@@ -83,16 +84,16 @@ func AssertJSONFile(t *testing.T, expectedFilePath string, actual []*meteorv1bet
 	AssertJSON(t, expected, actual, expectedDiff)
 }
 
-func AssertJSONEq(t *testing.T, expected, actual interface{}) {
+func AssertJSONEq(t *testing.T, expected, actual any) {
 	t.Helper()
 
 	AssertJSON(t, expected, actual, jsondiff.FullMatch)
 }
 
-func AssertJSON(t *testing.T, expected, actual interface{}, expectedDiff jsondiff.Difference) {
+func AssertJSON(t *testing.T, expected, actual any, expectedDiff jsondiff.Difference) {
 	t.Helper()
 
-	asBytes := func(v interface{}) []byte {
+	asBytes := func(v any) []byte {
 		switch v := v.(type) {
 		case []byte:
 			return v
@@ -118,8 +119,8 @@ func AssertJSON(t *testing.T, expected, actual interface{}, expectedDiff jsondif
 }
 
 func SortedEntities(entities []*meteorv1beta1.Entity) []*meteorv1beta1.Entity {
-	sort.Slice(entities, func(i, j int) bool {
-		return entities[i].Name < entities[j].Name
+	slices.SortFunc(entities, func(a, b *meteorv1beta1.Entity) int {
+		return cmp.Compare(a.Name, b.Name)
 	})
 	return entities
 }

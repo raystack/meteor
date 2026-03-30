@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func LoadJSON(t *testing.T, filePath string, v interface{}) {
+func LoadJSON(t *testing.T, filePath string, v any) {
 	t.Helper()
 
 	data, err := os.ReadFile(filePath)

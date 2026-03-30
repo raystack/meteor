@@ -108,7 +108,7 @@ func (e *Extractor) buildRecord(gsuiteUser *admin.User) models.Record {
 		status = "suspended"
 	}
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"email":     gsuiteUser.PrimaryEmail,
 		"full_name": gsuiteUser.Name.FullName,
 	}
@@ -155,7 +155,7 @@ func (e *Extractor) fetchUsers(ctx context.Context) (*admin.Users, error) {
 	return users, nil
 }
 
-func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) (result []interface{}) {
+func (e *Extractor) buildMapFromGsuiteSlice(value any) (result []any) {
 	if value == nil {
 		return
 	}
@@ -165,7 +165,7 @@ func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) (result []interfa
 		return
 	}
 
-	list, ok := gsuiteSlice.Interface().([]interface{})
+	list, ok := gsuiteSlice.Interface().([]any)
 	if !ok {
 		return
 	}
@@ -177,7 +177,7 @@ func (e *Extractor) buildMapFromGsuiteSlice(value interface{}) (result []interfa
 	return
 }
 
-func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]interface{}) {
+func (e *Extractor) buildMapFromGsuiteMap(value any) (result map[string]any) {
 	if value == nil {
 		return
 	}
@@ -187,7 +187,7 @@ func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]
 		return
 	}
 
-	result = make(map[string]interface{})
+	result = make(map[string]any)
 	for _, key := range gsuiteMap.MapKeys() {
 		keyString := fmt.Sprintf("%v", key.Interface())
 		value := gsuiteMap.MapIndex(key).Interface()
@@ -198,7 +198,7 @@ func (e *Extractor) buildMapFromGsuiteMap(value interface{}) (result map[string]
 	return
 }
 
-func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result map[string]interface{}) {
+func (e *Extractor) buildMapFromGsuiteMapRawMessage(value any) (result map[string]any) {
 	if value == nil {
 		return
 	}
@@ -208,7 +208,7 @@ func (e *Extractor) buildMapFromGsuiteMapRawMessage(value interface{}) (result m
 		return
 	}
 
-	result = make(map[string]interface{})
+	result = make(map[string]any)
 	for _, key := range gsuiteMap.MapKeys() {
 		keyString := fmt.Sprintf("%v", key.Interface())
 		value := gsuiteMap.MapIndex(key)

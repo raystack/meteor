@@ -28,7 +28,7 @@ func TestFullPayload(t *testing.T) {
 	defer server.Close()
 
 	compassSink := compass.New(&http.Client{}, testutils.Logger)
-	err := compassSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]interface{}{
+	err := compassSink.Init(context.TODO(), plugins.Config{RawConfig: map[string]any{
 		"host": server.URL,
 		"headers": map[string]string{
 			"Compass-User-UUID": "test@raystack.io",
@@ -41,19 +41,19 @@ func TestFullPayload(t *testing.T) {
 		"table",
 		"users",
 		"bigquery",
-		map[string]interface{}{
+		map[string]any{
 			"description": "User accounts table",
 			"url":         "https://console.cloud.google.com/bigquery?p=myproject&d=dataset&t=users",
-			"columns": []interface{}{
-				map[string]interface{}{"name": "id", "data_type": "INT64", "description": "Primary key"},
-				map[string]interface{}{"name": "email", "data_type": "STRING", "description": "User email"},
-				map[string]interface{}{"name": "created_at", "data_type": "TIMESTAMP", "description": "Account creation time"},
+			"columns": []any{
+				map[string]any{"name": "id", "data_type": "INT64", "description": "Primary key"},
+				map[string]any{"name": "email", "data_type": "STRING", "description": "User email"},
+				map[string]any{"name": "created_at", "data_type": "TIMESTAMP", "description": "Account creation time"},
 			},
-			"attributes": map[string]interface{}{
+			"attributes": map[string]any{
 				"partition_field": "created_at",
-				"clustering":     "id",
+				"clustering":      "id",
 			},
-			"labels": map[string]interface{}{
+			"labels": map[string]any{
 				"team": "platform",
 				"pii":  "true",
 			},
@@ -95,18 +95,18 @@ func TestFullPayload(t *testing.T) {
 	// Properties should contain flattened data, labels, and URL.
 	props := entityResult.Properties
 	assert.Equal(t, "https://console.cloud.google.com/bigquery?p=myproject&d=dataset&t=users", props["url"])
-	labels, ok := props["labels"].(map[string]interface{})
+	labels, ok := props["labels"].(map[string]any)
 	require.True(t, ok, "labels should be in properties")
 	assert.Equal(t, "platform", labels["team"])
 	assert.Equal(t, "true", labels["pii"])
 
 	// Columns should be flattened from data.
-	columns, ok := props["columns"].([]interface{})
+	columns, ok := props["columns"].([]any)
 	require.True(t, ok, "columns should be in properties")
 	assert.Len(t, columns, 3)
 
 	// Attributes should be flattened from data.
-	attrs, ok := props["attributes"].(map[string]interface{})
+	attrs, ok := props["attributes"].(map[string]any)
 	require.True(t, ok, "attributes should be in properties")
 	assert.Equal(t, "created_at", attrs["partition_field"])
 

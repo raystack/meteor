@@ -29,17 +29,17 @@ func TestInit(t *testing.T) {
 	for _, c := range []plugins.Config{
 		{
 			URNScope:  urnScope,
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		},
 		{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"file": "not-exist",
 			},
 		},
 		{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"file":       "testdata/application.onlyrequired.yaml",
 				"env_prefix": "",
 			},
@@ -55,18 +55,18 @@ func TestExtract(t *testing.T) {
 
 	os.Clearenv()
 	cases := []struct {
-		name           string
-		env            map[string]string
-		cfg            plugins.Config
-		expectedEnts   []*meteorv1beta1.Entity
-		expectedEdges  []*meteorv1beta1.Edge
-		errStr         string
+		name          string
+		env           map[string]string
+		cfg           plugins.Config
+		expectedEnts  []*meteorv1beta1.Entity
+		expectedEdges []*meteorv1beta1.Edge
+		errStr        string
 	}{
 		{
 			name: "InvalidTemplate",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.invalidtmpl.yaml",
 				},
 			},
@@ -76,7 +76,7 @@ func TestExtract(t *testing.T) {
 			name: "TemplateExecFailure",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.execfail.yaml",
 				},
 			},
@@ -86,7 +86,7 @@ func TestExtract(t *testing.T) {
 			name: "UnknownField",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.unknownfld.yaml",
 				},
 			},
@@ -96,7 +96,7 @@ func TestExtract(t *testing.T) {
 			name: "ValidationFailure/Name",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.validationfail.yaml",
 				},
 			},
@@ -106,7 +106,7 @@ func TestExtract(t *testing.T) {
 			name: "ValidationFailure/ID",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.validationfail.yaml",
 				},
 			},
@@ -116,7 +116,7 @@ func TestExtract(t *testing.T) {
 			name: "ValidationFailure/URL",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.validationfail.yaml",
 				},
 			},
@@ -126,7 +126,7 @@ func TestExtract(t *testing.T) {
 			name: "OnlyRequiredFields",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.onlyrequired.yaml",
 				},
 			},
@@ -136,7 +136,7 @@ func TestExtract(t *testing.T) {
 					"application",
 					"test",
 					"application_yaml",
-					map[string]interface{}{
+					map[string]any{
 						"id": "test-id",
 					},
 				),
@@ -146,7 +146,7 @@ func TestExtract(t *testing.T) {
 			name: "Detailed",
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.detailed.yaml",
 				},
 			},
@@ -156,13 +156,13 @@ func TestExtract(t *testing.T) {
 					"application",
 					"test",
 					"application_yaml",
-					map[string]interface{}{
+					map[string]any{
 						"id":          "test-id",
 						"version":     "c23sdf6",
 						"url":         "http://company.com/myteam/test",
 						"create_time": "2006-01-02T15:04:05Z",
 						"update_time": "2006-01-02T15:04:05Z",
-						"labels":      map[string]interface{}{"x": "y"},
+						"labels":      map[string]any{"x": "y"},
 					},
 				)
 				e.Description = "My incredible project"
@@ -201,7 +201,7 @@ func TestExtract(t *testing.T) {
 			},
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file": "testdata/application.envvars.yaml",
 				},
 			},
@@ -211,7 +211,7 @@ func TestExtract(t *testing.T) {
 					"application",
 					"test",
 					"application_yaml",
-					map[string]interface{}{
+					map[string]any{
 						"id":      "test-id",
 						"version": "c23sdf6",
 						"url":     "http://company.com/myteam/test",
@@ -238,7 +238,7 @@ func TestExtract(t *testing.T) {
 			},
 			cfg: plugins.Config{
 				URNScope: urnScope,
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"file":       "testdata/application.envvars.yaml",
 					"env_prefix": "GCI",
 				},
@@ -249,7 +249,7 @@ func TestExtract(t *testing.T) {
 					"application",
 					"test",
 					"application_yaml",
-					map[string]interface{}{
+					map[string]any{
 						"id":      "test-id",
 						"version": "c23sdf6",
 						"url":     "http://company.com/myteam/test",

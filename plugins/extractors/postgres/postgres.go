@@ -151,7 +151,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		return nil, err
 	}
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"columns": columns,
 	}
 
@@ -171,7 +171,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]interface{}, error) {
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]any, error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -182,7 +182,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
@@ -190,7 +190,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 			e.logger.Error("failed to get fields", "error", err)
 			continue
 		}
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName,
 			"data_type":   dataType,
 			"is_nullable": isNullable(isNullableString),
@@ -207,7 +207,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	return result, nil
 }
 
-func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, tableName string) (map[string]interface{}, error) {
+func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, tableName string) (map[string]any, error) {
 	query := `SELECT grantee, string_agg(privilege_type, ',')
 	FROM information_schema.role_table_grants
 	WHERE table_name='%s' AND table_catalog='%s'
@@ -219,7 +219,7 @@ func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, 
 	}
 	defer rows.Close()
 
-	var usrs []interface{}
+	var usrs []any
 	for rows.Next() {
 		var grantee, privilege_type string
 		if err := rows.Scan(&grantee, &privilege_type); err != nil {
@@ -227,7 +227,7 @@ func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, 
 			continue
 		}
 
-		usrs = append(usrs, map[string]interface{}{
+		usrs = append(usrs, map[string]any{
 			"user":            grantee,
 			"privilege_types": ConvertStringListToInterface(strings.Split(privilege_type, ",")),
 		})
@@ -236,7 +236,7 @@ func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, 
 		return nil, fmt.Errorf("iterate over user privileges: %w", err)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"grants": usrs,
 	}, nil
 }
@@ -281,8 +281,8 @@ func init() {
 	}
 }
 
-func ConvertStringListToInterface(s []string) []interface{} {
-	out := make([]interface{}, len(s))
+func ConvertStringListToInterface(s []string) []any {
+	out := make([]any, len(s))
 	for i, v := range s {
 		out[i] = v
 	}

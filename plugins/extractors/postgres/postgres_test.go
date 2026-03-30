@@ -80,7 +80,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := postgres.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			}})
 
@@ -95,7 +95,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", user, pass, host),
 			}})
 		if err != nil {
@@ -149,27 +149,27 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:postgres:test-postgres:table:test_db.article", "table", "article", "postgres", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false},
-				map[string]interface{}{"name": "name", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
+		models.NewEntity("urn:postgres:test-postgres:table:test_db.article", "table", "article", "postgres", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "id", "data_type": "bigint", "is_nullable": false},
+				map[string]any{"name": "name", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
 			},
-			"grants": []interface{}{
-				map[string]interface{}{
+			"grants": []any{
+				map[string]any{
 					"user":            "test_user",
-					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+					"privilege_types": []any{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 				},
 			},
 		}),
-		models.NewEntity("urn:postgres:test-postgres:table:test_db.post", "table", "post", "postgres", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false},
-				map[string]interface{}{"name": "title", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
+		models.NewEntity("urn:postgres:test-postgres:table:test_db.post", "table", "post", "postgres", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "id", "data_type": "bigint", "is_nullable": false},
+				map[string]any{"name": "title", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
 			},
-			"grants": []interface{}{
-				map[string]interface{}{
+			"grants": []any{
+				map[string]any{
 					"user":            "test_user",
-					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
+					"privilege_types": []any{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 				},
 			},
 		}),

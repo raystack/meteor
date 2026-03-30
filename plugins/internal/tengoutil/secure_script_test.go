@@ -49,8 +49,8 @@ func TestNewSecureScript(t *testing.T) {
 		_, err = s.Compile()
 		assert.ErrorContains(t, err, "Compile Error: unresolved reference 'obj'")
 
-		s, err = NewSecureScript(([]byte)(`obj.prop = 1`), map[string]interface{}{
-			"obj": map[string]interface{}{},
+		s, err = NewSecureScript(([]byte)(`obj.prop = 1`), map[string]any{
+			"obj": map[string]any{},
 		})
 		assert.NoError(t, err)
 		_, err = s.Compile()

@@ -93,7 +93,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"wrong-config": "wrong-value",
 			},
 		})
@@ -104,10 +104,10 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid cert file", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"broker": brokerHost,
-				"auth_config": map[string]interface{}{
-					"tls": map[string]interface{}{
+				"auth_config": map[string]any{
+					"tls": map[string]any{
 						"enabled":   "true",
 						"cert_file": "non-existent-file",
 						"key_file":  "non-existent-file",
@@ -123,10 +123,10 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid ca cert", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"broker": brokerHost,
-				"auth_config": map[string]interface{}{
-					"tls": map[string]interface{}{
+				"auth_config": map[string]any{
+					"tls": map[string]any{
 						"enabled":   "true",
 						"cert_file": "testdata/example-cert.txt",
 						"key_file":  "testdata/example-key.txt",
@@ -142,10 +142,10 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for create connection", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"broker": brokerHost,
-				"auth_config": map[string]interface{}{
-					"tls": map[string]interface{}{
+				"auth_config": map[string]any{
+					"tls": map[string]any{
 						"enabled":              "true",
 						"insecure_skip_verify": "true",
 						"cert_file":            "testdata/example-cert.txt",
@@ -166,7 +166,7 @@ func TestExtract(t *testing.T) {
 		extr := newExtractor()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"broker": brokerHost,
 			},
 		})
@@ -178,13 +178,13 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []*meteorv1beta1.Entity{
-			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-1", "topic", "meteor-test-topic-1", "kafka", map[string]interface{}{
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-1", "topic", "meteor-test-topic-1", "kafka", map[string]any{
 				"number_of_partitions": float64(1),
 			}),
-			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-2", "topic", "meteor-test-topic-2", "kafka", map[string]interface{}{
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-2", "topic", "meteor-test-topic-2", "kafka", map[string]any{
 				"number_of_partitions": float64(1),
 			}),
-			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-3", "topic", "meteor-test-topic-3", "kafka", map[string]interface{}{
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-3", "topic", "meteor-test-topic-3", "kafka", map[string]any{
 				"number_of_partitions": float64(1),
 			}),
 		}

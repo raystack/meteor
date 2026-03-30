@@ -90,7 +90,7 @@ func (s *Sink) Close() (err error) {
 	return s.writer.Close()
 }
 
-func (s *Sink) push(ctx context.Context, payload interface{}) error {
+func (s *Sink) push(ctx context.Context, payload any) error {
 	kafkaValue, err := s.buildValue(payload)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (s *Sink) push(ctx context.Context, payload interface{}) error {
 	return nil
 }
 
-func (s *Sink) buildValue(value interface{}) ([]byte, error) {
+func (s *Sink) buildValue(value any) ([]byte, error) {
 	protoBytes, err := proto.Marshal(value.(proto.Message))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to serialize payload as a protobuf message")
@@ -123,7 +123,7 @@ func (s *Sink) buildValue(value interface{}) ([]byte, error) {
 }
 
 // we can optimize this by caching descriptor and key path
-func (s *Sink) buildKey(payload interface{}, keyPath string) ([]byte, error) {
+func (s *Sink) buildKey(payload any, keyPath string) ([]byte, error) {
 	if keyPath == "" {
 		return nil, nil
 	}
@@ -155,7 +155,7 @@ func (s *Sink) buildKey(payload interface{}, keyPath string) ([]byte, error) {
 	return proto.Marshal(dynamicMsgKey)
 }
 
-func (s *Sink) extractKeyFromPayload(fieldName string, value interface{}) (string, string, error) {
+func (s *Sink) extractKeyFromPayload(fieldName string, value any) (string, string, error) {
 	valueOf := reflect.ValueOf(value)
 	if valueOf.Kind() == reflect.Ptr {
 		valueOf = valueOf.Elem()

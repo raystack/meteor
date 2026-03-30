@@ -151,7 +151,7 @@ func (l *AuditLog) buildFilter(tableID string) string {
 	return fmt.Sprintf(advancedFilterTemplate, timeFromFormatted, timeNowFormatted, tableID)
 }
 
-func parsePayload(payload interface{}) (*LogData, error) {
+func parsePayload(payload any) (*LogData, error) {
 	pl, ok := payload.(*auditpb.AuditLog)
 	if !ok {
 		return nil, errors.New("parse payload to AuditLog")

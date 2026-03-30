@@ -105,7 +105,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 // grafanaDashboardToRecord converts a grafana dashboard to a meteor Record
 func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.Record {
-	var charts []map[string]interface{}
+	var charts []map[string]any
 	for _, panel := range dashboard.Dashboard.Panels {
 		// skip excluded panel ids
 		panelUID := fmt.Sprintf("%s.%d", dashboard.Dashboard.UID, panel.ID)
@@ -117,7 +117,7 @@ func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.R
 	}
 
 	urn := models.NewURN("grafana", e.UrnScope, "dashboard", dashboard.Dashboard.UID)
-	props := map[string]interface{}{
+	props := map[string]any{
 		"charts": charts,
 	}
 	if dashboard.Meta.URL != "" {
@@ -132,12 +132,12 @@ func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.R
 }
 
 // grafanaPanelToChart converts a grafana panel to a chart map
-func (e *Extractor) grafanaPanelToChart(panel Panel, dashboardUID, metaURL string) map[string]interface{} {
+func (e *Extractor) grafanaPanelToChart(panel Panel, dashboardUID, metaURL string) map[string]any {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL
 	}
-	chart := map[string]interface{}{
+	chart := map[string]any{
 		"urn":              models.NewURN("grafana", e.UrnScope, "panel", fmt.Sprintf("%s.%d", dashboardUID, panel.ID)),
 		"name":             panel.Title,
 		"type":             panel.Type,

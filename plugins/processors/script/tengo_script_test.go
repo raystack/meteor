@@ -30,19 +30,19 @@ func TestInit(t *testing.T) {
 			{
 				name: "WithoutScript",
 				cfg: plugins.Config{
-					RawConfig: map[string]interface{}{"engine": "tengo"},
+					RawConfig: map[string]any{"engine": "tengo"},
 				},
 			},
 			{
 				name: "WithoutEngine",
 				cfg: plugins.Config{
-					RawConfig: map[string]interface{}{"script": script},
+					RawConfig: map[string]any{"script": script},
 				},
 			},
 			{
 				name: "WithUnsupportedEngine",
 				cfg: plugins.Config{
-					RawConfig: map[string]interface{}{"script": script, "engine": "goja"},
+					RawConfig: map[string]any{"script": script, "engine": "goja"},
 				},
 			},
 		}
@@ -56,7 +56,7 @@ func TestInit(t *testing.T) {
 
 	t.Run("InvalidScript", func(t *testing.T) {
 		err := New(testutils.Logger).Init(ctx, plugins.Config{
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"script": `ast.owners = []`,
 				"engine": "tengo",
 			},
@@ -93,7 +93,7 @@ func TestProcess(t *testing.T) {
 				Source: "caramlstore",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
+					s, _ := structpb.NewStruct(map[string]any{
 						"namespace": "sauron",
 					})
 					return s
@@ -105,7 +105,7 @@ func TestProcess(t *testing.T) {
 				Source: "caramlstore",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
+					s, _ := structpb.NewStruct(map[string]any{
 						"namespace":     "sauron",
 						"script_engine": "tengo",
 					})
@@ -133,7 +133,7 @@ func TestProcess(t *testing.T) {
 				Source: "caramlstore",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
+					s, _ := structpb.NewStruct(map[string]any{
 						"namespace": "sauron",
 					})
 					return s
@@ -147,7 +147,7 @@ func TestProcess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p := New(testutils.Logger)
 			err := p.Init(ctx, plugins.Config{
-				RawConfig: map[string]interface{}{
+				RawConfig: map[string]any{
 					"script": tc.script,
 					"engine": "tengo",
 				},

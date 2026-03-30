@@ -34,12 +34,12 @@ var validRecipe = recipe.Recipe{
 		Name: "test-extractor",
 	},
 	Processors: []recipe.PluginRecipe{
-		{Name: "test-processor", Config: map[string]interface{}{
+		{Name: "test-processor", Config: map[string]any{
 			"proc-foo": "proc-bar",
 		}},
 	},
 	Sinks: []recipe.PluginRecipe{
-		{Name: "test-sink", Config: map[string]interface{}{
+		{Name: "test-sink", Config: map[string]any{
 			"url": "http://localhost:3000/data",
 		}},
 	},
@@ -919,14 +919,14 @@ func TestAgentRun(t *testing.T) {
 			Source: recipe.PluginRecipe{
 				Name:  "application_yaml",
 				Scope: "application-test",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"file": "../plugins/extractors/application_yaml/testdata/application.detailed.yaml",
 				},
 			},
 			Processors: []recipe.PluginRecipe{
 				{
 					Name: "script",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"engine": "tengo",
 						"script": heredoc.Doc(`
 							text := import("text")
@@ -936,13 +936,13 @@ func TestAgentRun(t *testing.T) {
 				},
 				{
 					Name: "labels",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"labels": map[string]string{"field_a": "1"},
 					},
 				},
 			},
 			Sinks: []recipe.PluginRecipe{
-				{Name: "test-sink", Config: map[string]interface{}{}},
+				{Name: "test-sink", Config: map[string]any{}},
 			},
 		})
 		assert.NoError(t, run.Error)
@@ -953,13 +953,13 @@ func TestAgentRun(t *testing.T) {
 			Type:        "application",
 			Description: "My amazing project",
 			Properties: func() *structpb.Struct {
-				s, _ := structpb.NewStruct(map[string]interface{}{
+				s, _ := structpb.NewStruct(map[string]any{
 					"id":          "test-id",
 					"version":     "c23sdf6",
 					"url":         "http://company.com/myteam/test",
 					"create_time": "2006-01-02T15:04:05Z",
 					"update_time": "2006-01-02T15:04:05Z",
-					"labels":      map[string]interface{}{"field_a": "1", "x": "y"},
+					"labels":      map[string]any{"field_a": "1", "x": "y"},
 				})
 				return s
 			}(),
@@ -982,13 +982,13 @@ func TestAgentRun(t *testing.T) {
 			Source: recipe.PluginRecipe{
 				Name:  "application_yaml",
 				Scope: "application-test",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"file": "../plugins/extractors/application_yaml/testdata/application.detailed.yaml",
 				},
 			},
 			Sinks: []recipe.PluginRecipe{{
 				Name: "file",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"path":      "./application_yaml-sink[yaml].out",
 					"format":    "yaml",
 					"overwrite": true,
@@ -1081,14 +1081,14 @@ func TestValidate(t *testing.T) {
 			Name: "sample",
 			Source: recipe.PluginRecipe{
 				Name: "test-extractor",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"proc-foo": "proc-bar",
 				},
 			},
 			Processors: []recipe.PluginRecipe{
 				{
 					Name: "test-processor",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"proc-foo": "proc-bar",
 					},
 				},
@@ -1096,7 +1096,7 @@ func TestValidate(t *testing.T) {
 			Sinks: []recipe.PluginRecipe{
 				{
 					Name: "test-sink",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"url": "http://localhost:3000/data",
 					},
 				},

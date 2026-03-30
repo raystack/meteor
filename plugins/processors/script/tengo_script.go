@@ -70,8 +70,8 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
 		return fmt.Errorf("script processor init: %w", err)
 	}
 
-	s, err := tengoutil.NewSecureScript(([]byte)(p.config.Script), map[string]interface{}{
-		"asset": map[string]interface{}{},
+	s, err := tengoutil.NewSecureScript(([]byte)(p.config.Script), map[string]any{
+		"asset": map[string]any{},
 	})
 	if err != nil {
 		return fmt.Errorf("script processor init: %w", err)
@@ -94,7 +94,7 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 		return models.Record{}, fmt.Errorf("script processor: %w", err)
 	}
 
-	assetMap, ok := m.(map[string]interface{})
+	assetMap, ok := m.(map[string]any)
 	if !ok {
 		return models.Record{}, fmt.Errorf("script processor: expected map[string]interface{}, got %T", m)
 	}

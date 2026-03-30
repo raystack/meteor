@@ -392,20 +392,20 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 
 	tp := e.buildTableProfile(tableURN, tableStats, md)
 	var partitionField string
-	partitionData := make(map[string]interface{})
+	partitionData := make(map[string]any)
 	if md.TimePartitioning != nil {
 		partitionField = md.TimePartitioning.Field
 		if partitionField == "" {
 			partitionField = "_PARTITIONTIME"
 		}
 		partitionData["partition_field"] = partitionField
-		partitionData["time_partition"] = map[string]interface{}{
+		partitionData["time_partition"] = map[string]any{
 			"partition_by":             string(md.TimePartitioning.Type),
 			"partition_expire_seconds": md.TimePartitioning.Expiration.Seconds(),
 		}
 	} else if md.RangePartitioning != nil {
 		partitionData["partition_field"] = md.RangePartitioning.Field
-		partitionData["range_partition"] = map[string]interface{}{
+		partitionData["range_partition"] = map[string]any{
 			"start":    md.RangePartitioning.Range.Start,
 			"end":      md.RangePartitioning.Range.End,
 			"interval": md.RangePartitioning.Range.Interval,
@@ -413,9 +413,9 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 	}
 	partitionData["require_partition_filter"] = md.RequirePartitionFilter
 
-	var clusteringFields []interface{}
+	var clusteringFields []any
 	if md.Clustering != nil && len(md.Clustering.Fields) > 0 {
-		clusteringFields = make([]interface{}, len(md.Clustering.Fields))
+		clusteringFields = make([]any, len(md.Clustering.Fields))
 		for idx, field := range md.Clustering.Fields {
 			clusteringFields[idx] = field
 		}
@@ -444,7 +444,7 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 	}
 
 	// Build properties
-	props := map[string]interface{}{
+	props := map[string]any{
 		"full_qualified_name": tableFQN,
 		"dataset":             t.DatasetID,
 		"project":             t.ProjectID,
@@ -468,7 +468,7 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 	}
 
 	// Table profile
-	profileMap := map[string]interface{}{}
+	profileMap := map[string]any{}
 	if tp.UsageCount > 0 {
 		profileMap["usage_count"] = tp.UsageCount
 	}
@@ -496,7 +496,7 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 	if maxPreviewRows != -1 && previewRows != nil {
 		props["preview_fields"] = previewFields
 		// Convert structpb.ListValue to []interface{} for properties map
-		previewRowsIface := make([]interface{}, 0, len(previewRows.Values))
+		previewRowsIface := make([]any, 0, len(previewRows.Values))
 		for _, v := range previewRows.Values {
 			previewRowsIface = append(previewRowsIface, v.AsInterface())
 		}
@@ -516,11 +516,11 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 }
 
 // Extract table schema
-func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm *bigquery.TableMetadata) []map[string]interface{} {
+func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm *bigquery.TableMetadata) []map[string]any {
 	var wg sync.WaitGroup
 
 	wg.Add(len(schema))
-	columns := make([]map[string]interface{}, len(schema))
+	columns := make([]map[string]any, len(schema))
 	for i, b := range schema {
 		index := i
 		go func(s *bigquery.FieldSchema) {
@@ -534,8 +534,8 @@ func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm
 	return columns
 }
 
-func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) map[string]interface{} {
-	col := map[string]interface{}{
+func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) map[string]any {
+	col := map[string]any{
 		"name":        field.Name,
 		"data_type":   string(field.Type),
 		"is_nullable": !field.Required && !field.Repeated,
@@ -573,7 +573,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *big
 		return nil, nil, nil
 	}
 
-	var tempRows []interface{}
+	var tempRows []any
 	totalRows := 0
 	ri := t.Read(ctx)
 	// fetch only the required amount of rows
@@ -601,7 +601,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *big
 			}
 		}
 
-		var temp []interface{}
+		var temp []any
 		var jsonBytes []byte
 		jsonBytes, err = json.Marshal(row)
 		if err != nil {
@@ -633,7 +633,7 @@ func (e *Extractor) buildPreview(ctx context.Context, t *bigquery.Table, md *big
 	return fields, rows, nil
 }
 
-func (e *Extractor) mixValuesIfNeeded(rows []interface{}, rndSeed int64) ([]interface{}, error) {
+func (e *Extractor) mixValuesIfNeeded(rows []any, rndSeed int64) ([]any, error) {
 	if !e.config.MixValues || len(rows) < 2 {
 		return rows, nil
 	}
@@ -666,7 +666,7 @@ func (e *Extractor) mixValuesIfNeeded(rows []interface{}, rndSeed int64) ([]inte
 	return mixedRows, nil
 }
 
-func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (map[string]interface{}, error) {
+func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (map[string]any, error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
 		return nil, nil
@@ -699,7 +699,7 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 		return nil, nil
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"min":    row.Min,
 		"max":    row.Max,
 		"avg":    row.Avg,
@@ -721,7 +721,7 @@ func (e *Extractor) buildColumnProfileQuery(col *bigquery.FieldSchema, tm *bigqu
 		COALESCE(CAST(APPROX_TOP_COUNT({{ .ColumnName }}, 1)[OFFSET(0)].value AS STRING), "") AS top
 	FROM
 		{{ .TableName }}`
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ColumnName": col.Name,
 		"TableName":  strings.ReplaceAll(tm.FullID, ":", "."),
 	}
@@ -746,12 +746,12 @@ func (e *Extractor) getColumnMode(col *bigquery.FieldSchema) string {
 	}
 }
 
-func (e *Extractor) getPolicyTagList(ctx context.Context, col *bigquery.FieldSchema) []interface{} {
+func (e *Extractor) getPolicyTagList(ctx context.Context, col *bigquery.FieldSchema) []any {
 	if col.PolicyTags == nil || e.policyTagClient == nil {
 		return nil
 	}
 
-	pt := make([]interface{}, 0, len(col.PolicyTags.Names))
+	pt := make([]any, 0, len(col.PolicyTags.Names))
 	for _, name := range col.PolicyTags.Names {
 		policyTag, err := e.policyTagClient.GetPolicyTag(ctx, &datacatalogpb.GetPolicyTagRequest{Name: name})
 		if err != nil {

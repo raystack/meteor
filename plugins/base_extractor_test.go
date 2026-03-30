@@ -41,7 +41,7 @@ func TestBaseExtractorValidate(t *testing.T) {
 		basePlugin := plugins.NewBaseExtractor(plugins.Info{}, &invalidConfig)
 		err := basePlugin.Validate(plugins.Config{
 			URNScope:  "test-scope",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -55,7 +55,7 @@ func TestBaseExtractorValidate(t *testing.T) {
 		basePlugin := plugins.NewBaseExtractor(plugins.Info{}, &validConfig)
 		err := basePlugin.Validate(plugins.Config{
 			URNScope: "test-scope",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"FieldA": "test-value",
 			},
 		})
@@ -73,7 +73,7 @@ func TestBaseExtractorInit(t *testing.T) {
 		baseExtractor := plugins.NewBaseExtractor(plugins.Info{}, &invalidConfig)
 		err := baseExtractor.Init(context.Background(), plugins.Config{
 			URNScope:  "test-scope",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -87,7 +87,7 @@ func TestBaseExtractorInit(t *testing.T) {
 		baseExtractor := plugins.NewBaseExtractor(plugins.Info{}, &validConfig)
 		err := baseExtractor.Init(context.Background(), plugins.Config{
 			URNScope: "test-scope",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"FieldA": "test-value",
 			},
 		})

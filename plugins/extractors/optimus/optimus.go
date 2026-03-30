@@ -162,19 +162,19 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 		edges = append(edges, models.OwnerEdge(urn, "urn:user:"+jobSpec.Owner, service))
 	}
 
-	props := map[string]interface{}{
-		"version":          jobSpec.Version,
-		"project":          project,
-		"project_id":       project,
-		"namespace":        namespace,
-		"owner":            jobSpec.Owner,
-		"interval":         jobSpec.Interval,
+	props := map[string]any{
+		"version":            jobSpec.Version,
+		"project":            project,
+		"project_id":         project,
+		"namespace":          namespace,
+		"owner":              jobSpec.Owner,
+		"interval":           jobSpec.Interval,
 		"depends_on_past":    jobSpec.DependsOnPast,
 		"task_name":          jobSpec.TaskName,
 		"window_size":        jobSpec.WindowSize,
 		"window_offset":      jobSpec.WindowOffset,
 		"window_truncate_to": jobSpec.WindowTruncateTo,
-		"task": map[string]interface{}{
+		"task": map[string]any{
 			"name":        task.Name,
 			"description": task.Description,
 			"image":       task.Image,
@@ -241,14 +241,13 @@ func (e *Extractor) buildDownstreamURNs(task *pb.JobTask) ([]string, error) {
 }
 
 func createResourceURN(dependency string) (string, error) {
-	switch {
-	case strings.HasPrefix(dependency, prefixBigQuery):
-		return createBigQueryResourceURN(strings.TrimPrefix(dependency, prefixBigQuery))
-	case strings.HasPrefix(dependency, prefixMaxcompute):
-		return createMaxComputeResourceURN(strings.TrimPrefix(dependency, prefixMaxcompute))
-	default:
-		return "", fmt.Errorf("%w: %s", errInvalidDependency, dependency)
+	if value, ok := strings.CutPrefix(dependency, prefixBigQuery); ok {
+		return createBigQueryResourceURN(value)
 	}
+	if value, ok := strings.CutPrefix(dependency, prefixMaxcompute); ok {
+		return createMaxComputeResourceURN(value)
+	}
+	return "", fmt.Errorf("%w: %s", errInvalidDependency, dependency)
 }
 
 func createBigQueryResourceURN(fqn string) (string, error) {
@@ -267,7 +266,7 @@ func createMaxComputeResourceURN(fqn string) (string, error) {
 	return urn, nil
 }
 
-func strOrNil(s string) interface{} {
+func strOrNil(s string) any {
 	if s == "" {
 		return nil
 	}

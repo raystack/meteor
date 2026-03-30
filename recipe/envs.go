@@ -54,12 +54,11 @@ func mapToMeteorKey(rawKey string) (string, bool) {
 	// we are doing everything in lowercase for case insensitivity
 	key := strings.ToLower(rawKey)
 	meteorPrefix := strings.ToLower(recipeEnvVarPrefix)
-	if !strings.HasPrefix(key, meteorPrefix) {
-		return "", false
-	}
-
 	// strips prefix - meteor_user_id becomes user_id
-	return key[len(meteorPrefix):], true
+	if stripped, ok := strings.CutPrefix(key, meteorPrefix); ok {
+		return stripped, true
+	}
+	return "", false
 }
 
 func loadDataFromYaml(path string) map[string]string {

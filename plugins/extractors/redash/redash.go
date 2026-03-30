@@ -99,7 +99,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 func (e *Extractor) buildDashboard(dashboard Results) models.Record {
 	dashboardUrn := models.NewURN("redash", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.Id))
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"user_id": dashboard.UserId,
 		"version": dashboard.Version,
 		"slug":    dashboard.Slug,
@@ -130,7 +130,7 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Results, error) {
 // makeRequest helper function to avoid rewriting a request
 //
 //nolint:revive
-func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result interface{}) error {
+func (e *Extractor) makeRequest(ctx context.Context, route, method, url string, payload, result any) error {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("encode the payload JSON: %w", err)

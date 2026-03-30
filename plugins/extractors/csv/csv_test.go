@@ -18,7 +18,7 @@ import (
 
 func TestInit(t *testing.T) {
 	t.Run("should return error if fileName and directory both are empty", func(t *testing.T) {
-		config := map[string]interface{}{}
+		config := map[string]any{}
 		err := csv.New(utils.Logger).Init(
 			context.TODO(),
 			plugins.Config{
@@ -35,7 +35,7 @@ func TestExtract(t *testing.T) {
 		extr := csv.New(utils.Logger)
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-csv",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"path": "./testdata/test.csv",
 			},
 		})
@@ -48,11 +48,11 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []*meteorv1beta1.Entity{
-			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]interface{}{
-				"columns": []interface{}{
-					map[string]interface{}{"name": "name"},
-					map[string]interface{}{"name": "age"},
-					map[string]interface{}{"name": "phone"},
+			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]any{
+				"columns": []any{
+					map[string]any{"name": "name"},
+					map[string]any{"name": "age"},
+					map[string]any{"name": "phone"},
 				},
 			}),
 		}
@@ -65,7 +65,7 @@ func TestExtract(t *testing.T) {
 		extr := csv.New(utils.Logger)
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-csv",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"path": "./testdata",
 			},
 		})
@@ -78,18 +78,18 @@ func TestExtract(t *testing.T) {
 		assert.NoError(t, err)
 
 		expected := []*meteorv1beta1.Entity{
-			models.NewEntity("urn:csv:test-csv:file:test-2.csv", "table", "test-2.csv", "csv", map[string]interface{}{
-				"columns": []interface{}{
-					map[string]interface{}{"name": "order"},
-					map[string]interface{}{"name": "transaction_id"},
-					map[string]interface{}{"name": "total_price"},
+			models.NewEntity("urn:csv:test-csv:file:test-2.csv", "table", "test-2.csv", "csv", map[string]any{
+				"columns": []any{
+					map[string]any{"name": "order"},
+					map[string]any{"name": "transaction_id"},
+					map[string]any{"name": "total_price"},
 				},
 			}),
-			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]interface{}{
-				"columns": []interface{}{
-					map[string]interface{}{"name": "name"},
-					map[string]interface{}{"name": "age"},
-					map[string]interface{}{"name": "phone"},
+			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]any{
+				"columns": []any{
+					map[string]any{"name": "name"},
+					map[string]any{"name": "age"},
+					map[string]any{"name": "phone"},
 				},
 			}),
 		}

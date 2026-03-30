@@ -193,14 +193,14 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	e.emit(models.NewRecord(models.NewEntity(
 		models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
 		"table", tableName, "Snowflake",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	)))
 
 	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, database, tableName string) ([]interface{}, error) {
+func (e *Extractor) extractColumns(ctx context.Context, database, tableName string) ([]any, error) {
 	// extract columns
 	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
@@ -217,7 +217,7 @@ func (e *Extractor) extractColumns(ctx context.Context, database, tableName stri
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString sql.NullString
 		var length int
@@ -225,7 +225,7 @@ func (e *Extractor) extractColumns(ctx context.Context, database, tableName stri
 		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName.String,
 			"data_type":   dataType.String,
 			"is_nullable": e.isNullable(isNullableString.String),

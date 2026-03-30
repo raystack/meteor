@@ -105,7 +105,7 @@ func (e *Extractor) buildTable(filePath string) (entity *meteorv1beta1.Entity, e
 	entity = models.NewEntity(
 		models.NewURN("csv", e.UrnScope, "file", fileName),
 		"table", fileName, "csv",
-		map[string]interface{}{"columns": e.buildColumns(content)},
+		map[string]any{"columns": e.buildColumns(content)},
 	)
 	return
 }
@@ -116,10 +116,10 @@ func (e *Extractor) readCSVFile(r io.Reader) (columns []string, err error) {
 	return reader.Read()
 }
 
-func (e *Extractor) buildColumns(csvColumns []string) []interface{} {
-	var result []interface{}
+func (e *Extractor) buildColumns(csvColumns []string) []any {
+	var result []any
 	for _, singleColumn := range csvColumns {
-		result = append(result, map[string]interface{}{"name": singleColumn})
+		result = append(result, map[string]any{"name": singleColumn})
 	}
 	return result
 }

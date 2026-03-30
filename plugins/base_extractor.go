@@ -7,7 +7,7 @@ type BaseExtractor struct {
 	BasePlugin
 }
 
-func NewBaseExtractor(info Info, configRef interface{}) BaseExtractor {
+func NewBaseExtractor(info Info, configRef any) BaseExtractor {
 	return BaseExtractor{
 		BasePlugin: NewBasePlugin(info, configRef),
 	}

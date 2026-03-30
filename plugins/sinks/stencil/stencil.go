@@ -153,7 +153,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		s.logger.Info("sinking record to stencil", "record", entity.GetUrn())
 
 		var (
-			payload interface{}
+			payload any
 			err     error
 		)
 		switch s.config.Format {
@@ -209,7 +209,7 @@ func (s *Sink) buildAvroStencilPayload(entity *meteorv1beta1.Entity, columns []c
 }
 
 // send helps to pass data to stencil
-func (s *Sink) send(ctx context.Context, tableURN string, record interface{}) error {
+func (s *Sink) send(ctx context.Context, tableURN string, record any) error {
 	schemaID := strings.ReplaceAll(tableURN, "/", ".")
 
 	const schemaRoute = "/v1beta1/namespaces/{namespaceID}/schemas/{schemaID}"

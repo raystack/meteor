@@ -56,7 +56,7 @@ func (c *Client) SearchAllDashboardUIDs(ctx context.Context) ([]string, error) {
 		return nil, fmt.Errorf("response with status: %d", res.StatusCode)
 	}
 
-	var searchResponses []map[string]interface{}
+	var searchResponses []map[string]any
 	if err := json.NewDecoder(res.Body).Decode(&searchResponses); err != nil {
 		return nil, err
 	}

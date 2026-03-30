@@ -40,7 +40,7 @@ $ docker run --rm raystack/meteor meteor list extractors
 
 ## Build from source
 
-Requires you to have `git` and `golang (version 1.16 or above)` installed.
+Requires you to have `git` and `golang (version 1.26 or above)` installed.
 
 ```bash
 #clone repo

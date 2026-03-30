@@ -6,15 +6,15 @@ import (
 )
 
 type tableProfile struct {
-	UsageCount  int64                    `json:"usage_count,omitempty"`
-	CommonJoins []map[string]interface{} `json:"common_joins,omitempty"`
-	Filters     []string                 `json:"filters,omitempty"`
-	TotalRows   int64                    `json:"total_rows,omitempty"`
+	UsageCount  int64            `json:"usage_count,omitempty"`
+	CommonJoins []map[string]any `json:"common_joins,omitempty"`
+	Filters     []string         `json:"filters,omitempty"`
+	TotalRows   int64            `json:"total_rows,omitempty"`
 }
 
 func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats, md *bigquery.TableMetadata) tableProfile {
 	var tableUsage int64
-	var commonJoins []map[string]interface{}
+	var commonJoins []map[string]any
 	var filterConditions []string
 
 	if e.config.IsCollectTableUsage && tableStats != nil {
@@ -28,7 +28,7 @@ func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.Tabl
 				for jc := range jd.Conditions {
 					joinConditions = append(joinConditions, jc)
 				}
-				commonJoins = append(commonJoins, map[string]interface{}{
+				commonJoins = append(commonJoins, map[string]any{
 					"urn":        joinedTableURN,
 					"count":      jd.Usage,
 					"conditions": joinConditions,

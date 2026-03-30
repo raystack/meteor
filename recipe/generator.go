@@ -8,8 +8,8 @@ import (
 )
 
 type TemplateData struct {
-	FileName string                 `json:"FileName" yaml:"FileName"`
-	Data     map[string]interface{} `json:"Data" yaml:"Data"`
+	FileName string         `json:"FileName" yaml:"FileName"`
+	Data     map[string]any `json:"Data" yaml:"Data"`
 }
 
 type TemplateConfig struct {

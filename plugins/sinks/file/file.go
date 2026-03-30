@@ -113,13 +113,13 @@ func (s *Sink) ndjsonOut(batch []models.Record) error {
 
 func (s *Sink) yamlOut(batch []models.Record) error {
 	// Convert records to JSON-friendly maps for yaml serialization
-	var data []map[string]interface{}
+	var data []map[string]any
 	for _, record := range batch {
 		jsonBytes, err := models.RecordToJSON(record)
 		if err != nil {
 			return err
 		}
-		var m map[string]interface{}
+		var m map[string]any
 		if err := json.Unmarshal(jsonBytes, &m); err != nil {
 			return err
 		}

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func ValueAsJSONReader(t *testing.T, v interface{}) io.ReadCloser {
+func ValueAsJSONReader(t *testing.T, v any) io.ReadCloser {
 	t.Helper()
 
 	var buf bytes.Buffer
@@ -18,7 +18,7 @@ func ValueAsJSONReader(t *testing.T, v interface{}) io.ReadCloser {
 	return io.NopCloser(&buf)
 }
 
-func Respond(t *testing.T, w http.ResponseWriter, status int, v interface{}) {
+func Respond(t *testing.T, w http.ResponseWriter, status int, v any) {
 	t.Helper()
 
 	if v == nil {

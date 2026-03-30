@@ -105,7 +105,7 @@ func (m *Monitor) RecordStream(ctx context.Context, start time.Time, method stri
 func (m *Monitor) UnaryClientInterceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context,
 		method string,
-		req, reply interface{},
+		req, reply any,
 		cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,

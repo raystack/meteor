@@ -62,18 +62,18 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.
 	entity := src.Entity()
 
 	// Get current properties as map
-	var propMap map[string]interface{}
+	var propMap map[string]any
 	if entity.GetProperties() != nil {
 		propMap = entity.GetProperties().AsMap()
 	}
 	if propMap == nil {
-		propMap = make(map[string]interface{})
+		propMap = make(map[string]any)
 	}
 
 	// Get existing labels or create new map
-	labels, _ := propMap["labels"].(map[string]interface{})
+	labels, _ := propMap["labels"].(map[string]any)
 	if labels == nil {
-		labels = make(map[string]interface{})
+		labels = make(map[string]any)
 	}
 
 	// Merge config labels

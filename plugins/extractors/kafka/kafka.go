@@ -223,7 +223,7 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 
 // Build topic metadata model using a topic and number of partitions
 func (e *Extractor) buildRecord(topicName string, numOfPartitions int) models.Record {
-	props := map[string]interface{}{
+	props := map[string]any{
 		"number_of_partitions": int64(numOfPartitions),
 	}
 

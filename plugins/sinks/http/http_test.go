@@ -28,7 +28,7 @@ var success_code int = 200
 func TestSink(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		httpSink := h.New(&http.Client{}, testutils.Logger)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"success_code": success_code,
 			"method":       "POST",
 			"headers": map[string]string{
@@ -42,7 +42,7 @@ func TestSink(t *testing.T) {
 
 	t.Run("should return no error for valid config, without optional values", func(t *testing.T) {
 		httpSink := h.New(&http.Client{}, testutils.Logger)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"url":    "http://sitename.com",
 			"method": "POST",
 		}
@@ -62,7 +62,7 @@ func TestSink(t *testing.T) {
 			}
 		}()
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"success_code": success_code,
 			"url":          "http://127.0.0.1:54927",
 			"method":       "PATCH",
@@ -108,7 +108,7 @@ func TestSink(t *testing.T) {
 					}
 				}()
 				httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
-				config := map[string]interface{}{
+				config := map[string]any{
 					"success_code": success_code,
 					"url":          fmt.Sprintf("http://127.0.0.1:%d", port),
 					"method":       "POST",
@@ -139,7 +139,7 @@ func TestSink(t *testing.T) {
 			}
 		}()
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"success_code": success_code,
 			"url":          "http://127.0.0.1:54943",
 			"method":       "POST",
@@ -167,7 +167,7 @@ func TestSink(t *testing.T) {
 			}
 		}()
 		httpSink := h.New(&http.Client{Transport: r}, testutils.Logger)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"success_code": success_code,
 			"url":          "http://127.0.0.1:54943/{{ .Type }}/{{ .Urn }}",
 			"method":       "POST",
@@ -175,7 +175,7 @@ func TestSink(t *testing.T) {
 				"Content-Type": "application/json",
 				"Accept":       "application/json",
 			},
-			"script": map[string]interface{}{
+			"script": map[string]any{
 				"engine": "tengo",
 				"source": `
 					payload := {
@@ -197,28 +197,28 @@ func TestSink(t *testing.T) {
 }
 
 func getExpectedVal(t *testing.T) []models.Record {
-	props1, err := structpb.NewStruct(map[string]interface{}{
-		"columns": []interface{}{
-			map[string]interface{}{
+	props1, err := structpb.NewStruct(map[string]any{
+		"columns": []any{
+			map[string]any{
 				"name":      "SomeStr",
 				"data_type": "text",
 			},
 		},
-		"profile": map[string]interface{}{
+		"profile": map[string]any{
 			"total_rows": float64(1),
 		},
 	})
 	if err != nil {
 		t.Fatal("error creating properties for test:", err)
 	}
-	props2, err := structpb.NewStruct(map[string]interface{}{
-		"columns": []interface{}{
-			map[string]interface{}{
+	props2, err := structpb.NewStruct(map[string]any{
+		"columns": []any{
+			map[string]any{
 				"name":      "SomeStr",
 				"data_type": "text",
 			},
 		},
-		"profile": map[string]interface{}{
+		"profile": map[string]any{
 			"total_rows": float64(1),
 		},
 	})

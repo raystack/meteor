@@ -18,24 +18,24 @@ import (
 func TestAsMap(t *testing.T) {
 	cases := []struct {
 		name        string
-		input       interface{}
-		expected    interface{}
+		input       any
+		expected    any
 		expectedErr bool
 	}{
 		{
 			name:     "MapStringToString",
 			input:    map[string]string{"key": "value"},
-			expected: map[string]interface{}{"key": "value"},
+			expected: map[string]any{"key": "value"},
 		},
 		{
 			name:     "MapIntToStringSlice",
 			input:    map[int][]string{1: {"s1", "s2"}},
-			expected: map[string]interface{}{"1": []interface{}{"s1", "s2"}},
+			expected: map[string]any{"1": []any{"s1", "s2"}},
 		},
 		{
 			name:     "StringSlice",
 			input:    []string{"s1", "s2"},
-			expected: []interface{}{"s1", "s2"},
+			expected: []any{"s1", "s2"},
 		},
 		{
 			name: "Entity",
@@ -45,7 +45,7 @@ func TestAsMap(t *testing.T) {
 				Source: "caramlstore",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
+					s, _ := structpb.NewStruct(map[string]any{
 						"namespace": "sauron",
 					})
 					return s
@@ -53,8 +53,8 @@ func TestAsMap(t *testing.T) {
 				CreateTime: timestamppb.New(time.Date(2022, time.September, 19, 22, 42, 0o4, 0, time.UTC)),
 				UpdateTime: timestamppb.New(time.Date(2022, time.September, 21, 13, 23, 0o2, 0, time.UTC)),
 			},
-			expected: map[string]interface{}{
-				"properties": map[string]interface{}{
+			expected: map[string]any{
+				"properties": map[string]any{
 					"namespace": "sauron",
 				},
 				"name":        "avg_dispatch_arrival_time_10_mins",
@@ -73,15 +73,15 @@ func TestAsMap(t *testing.T) {
 				Type:   "table",
 				Source: "cassandra",
 				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
+					s, _ := structpb.NewStruct(map[string]any{
 						"id":   "test-id",
 						"name": "test-name",
 					})
 					return s
 				}(),
 			},
-			expected: map[string]interface{}{
-				"properties": map[string]interface{}{
+			expected: map[string]any{
+				"properties": map[string]any{
 					"id":   "test-id",
 					"name": "test-name",
 				},
@@ -111,7 +111,7 @@ func TestAsStructWithTag(t *testing.T) {
 	type V struct {
 		Duration time.Duration `myspltag:"duration"`
 	}
-	input := map[string]interface{}{"duration": "5s"}
+	input := map[string]any{"duration": "5s"}
 	var v V
 	err := AsStructWithTag("myspltag", input, &v)
 	assert.NoError(t, err)
@@ -121,34 +121,34 @@ func TestAsStructWithTag(t *testing.T) {
 func TestAsStruct(t *testing.T) {
 	cases := []struct {
 		name        string
-		input       interface{}
-		output      interface{}
-		expected    interface{}
+		input       any
+		output      any
+		expected    any
 		expectedErr bool
 	}{
 		{
 			name:     "MapStringToString",
-			input:    map[string]interface{}{"key": "value"},
+			input:    map[string]any{"key": "value"},
 			output:   map[string]string{},
 			expected: map[string]string{"key": "value"},
 		},
 		{
 			name:     "MapIntToStringSlice",
-			input:    map[string]interface{}{"1": []interface{}{"s1", "s2"}},
+			input:    map[string]any{"1": []any{"s1", "s2"}},
 			output:   map[int][]string{},
 			expected: map[int][]string{1: {"s1", "s2"}},
 		},
 		{
 			name:     "StringSlice",
-			input:    []interface{}{"s1", "s2"},
+			input:    []any{"s1", "s2"},
 			output:   []string{},
 			expected: []string{"s1", "s2"},
 		},
 		{
 			name:        "MismatchedType",
-			input:       []interface{}{"s1"},
-			output:      map[string]interface{}{},
-			expected:    map[string]interface{}{},
+			input:       []any{"s1"},
+			output:      map[string]any{},
+			expected:    map[string]any{},
 			expectedErr: true,
 		},
 	}
@@ -163,19 +163,19 @@ func TestAsStruct(t *testing.T) {
 
 	protoCases := []struct {
 		name        string
-		input       interface{}
+		input       any
 		output      proto.Message
 		expected    proto.Message
 		expectedErr string
 	}{
 		{
 			name: "EntityBasic",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"urn":    "urn:test:scope:table:myentity",
 				"name":   "myentity",
 				"source": "test",
 				"type":   "table",
-				"properties": map[string]interface{}{
+				"properties": map[string]any{
 					"id":   "test-id",
 					"name": "test-name",
 				},
@@ -201,12 +201,12 @@ func TestAsStruct(t *testing.T) {
 		{
 			name:   "EntityWithProperties",
 			output: &meteorv1beta1.Entity{},
-			input: map[string]interface{}{
+			input: map[string]any{
 				"urn":    "urn:cassandra:test-cassandra:table:cassandra_meteor_test.applicant",
 				"name":   "applicant",
 				"source": "cassandra",
 				"type":   "table",
-				"properties": map[string]interface{}{
+				"properties": map[string]any{
 					"id":   "test-id",
 					"name": "test-name",
 				},
@@ -227,7 +227,7 @@ func TestAsStruct(t *testing.T) {
 		{
 			name:   "UnknownKeys",
 			output: &meteorv1beta1.Entity{},
-			input: map[string]interface{}{
+			input: map[string]any{
 				"does-not-exist": "value",
 				"urn":            "urn:cassandra:test-cassandra:table:cassandra_meteor_test.applicant",
 				"type":           "table",

@@ -173,12 +173,12 @@ func (e *Extractor) processTable(ctx context.Context, db *sql.DB, catalog, datab
 	return models.NewEntity(
 		models.NewURN("presto", e.UrnScope, "table", fmt.Sprintf("%s.%s.%s", catalog, database, tableName)),
 		"table", tableName, "presto",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	), nil
 }
 
 // extractColumns extracts columns from a given table
-func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]interface{}, error) {
+func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]any, error) {
 	//nolint:gosec
 	sqlStr := fmt.Sprintf(`SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,COMMENT
 				FROM %s.information_schema.columns
@@ -189,7 +189,7 @@ func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var fieldName, dataType, isNullableString, comment sql.NullString
 		err = rows.Scan(&fieldName, &dataType, &isNullableString, &comment)
@@ -197,7 +197,7 @@ func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName.String,
 			"data_type":   dataType.String,
 			"is_nullable": isNullable(isNullableString.String),

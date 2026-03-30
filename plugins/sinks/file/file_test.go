@@ -17,14 +17,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var validConfig = map[string]interface{}{
+var validConfig = map[string]any{
 	"path":   "./test-dir/sample.ndjson",
 	"format": "ndjson",
 }
 
 func TestValidate(t *testing.T) {
 	t.Run("should return error on invalid config", func(t *testing.T) {
-		invalidConfig := map[string]interface{}{}
+		invalidConfig := map[string]any{}
 		fileSink := f.New(testUtils.Logger)
 		err := fileSink.Validate(plugins.Config{RawConfig: invalidConfig})
 		assert.Error(t, err)
@@ -33,13 +33,13 @@ func TestValidate(t *testing.T) {
 
 func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
-		invalidConfig := map[string]interface{}{}
+		invalidConfig := map[string]any{}
 		fileSink := f.New(testUtils.Logger)
 		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: invalidConfig})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 	t.Run("should return error if file is not found ", func(t *testing.T) {
-		invalidConfig := map[string]interface{}{
+		invalidConfig := map[string]any{
 			"path":   "./some-dir",
 			"format": "ndjson",
 		}
@@ -59,7 +59,7 @@ func TestSink(t *testing.T) {
 		assert.NoError(t, sinkValidSetup(t, validConfig))
 	})
 	t.Run("should return no error with for valid yaml config", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"path":   "./test-dir/sample.yaml",
 			"format": "yaml",
 		}
@@ -67,14 +67,14 @@ func TestSink(t *testing.T) {
 
 	})
 	t.Run("should return error for invalid directory in yaml", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"path":   "./test-dir/some-dir/sample.yaml",
 			"format": "yaml",
 		}
 		assert.Error(t, sinkInvalidPath(t, config))
 	})
 	t.Run("should return error for invalid directory in ndjson", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"path":   "./test-dir/some-dir/sample.ndjson",
 			"format": "ndjson",
 		}
@@ -82,14 +82,14 @@ func TestSink(t *testing.T) {
 	})
 }
 
-func sinkInvalidPath(t *testing.T, config map[string]interface{}) error {
+func sinkInvalidPath(t *testing.T, config map[string]any) error {
 	t.Helper()
 
 	fileSink := f.New(testUtils.Logger)
 	return fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 }
 
-func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
+func sinkValidSetup(t *testing.T, config map[string]any) error {
 	t.Helper()
 
 	fileSink := f.New(testUtils.Logger)
@@ -103,28 +103,28 @@ func sinkValidSetup(t *testing.T, config map[string]interface{}) error {
 func getExpectedVal(t *testing.T) []models.Record {
 	t.Helper()
 
-	props1, err := structpb.NewStruct(map[string]interface{}{
-		"columns": []interface{}{
-			map[string]interface{}{
+	props1, err := structpb.NewStruct(map[string]any{
+		"columns": []any{
+			map[string]any{
 				"name":      "SomeStr",
 				"data_type": "text",
 			},
 		},
-		"profile": map[string]interface{}{
+		"profile": map[string]any{
 			"total_rows": float64(1),
 		},
 	})
 	if err != nil {
 		t.Fatal("error creating properties for test:", err)
 	}
-	props2, err := structpb.NewStruct(map[string]interface{}{
-		"columns": []interface{}{
-			map[string]interface{}{
+	props2, err := structpb.NewStruct(map[string]any{
+		"columns": []any{
+			map[string]any{
 				"name":      "SomeStr",
 				"data_type": "text",
 			},
 		},
-		"profile": map[string]interface{}{
+		"profile": map[string]any{
 			"total_rows": float64(1),
 		},
 	})

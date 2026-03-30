@@ -37,8 +37,8 @@ func TestNewURN(t *testing.T) {
 }
 
 func TestNewEntity(t *testing.T) {
-	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]interface{}{
-		"columns": []interface{}{"id", "name"},
+	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+		"columns": []any{"id", "name"},
 	})
 	assert.Equal(t, "urn:test:s:table:t1", entity.GetUrn())
 	assert.Equal(t, "table", entity.GetType())

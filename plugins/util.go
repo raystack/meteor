@@ -32,7 +32,7 @@ func init() {
 }
 
 // BuildConfig builds a config struct from a map
-func buildConfig(configMap map[string]interface{}, c interface{}) (err error) {
+func buildConfig(configMap map[string]any, c any) (err error) {
 	defaults.SetDefaults(c)
 
 	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{

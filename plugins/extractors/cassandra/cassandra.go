@@ -172,14 +172,14 @@ func (e *Extractor) processTable(keyspace string, tableName string) (err error) 
 	e.emit(models.NewRecord(models.NewEntity(
 		models.NewURN(service, e.UrnScope, "table", fmt.Sprintf("%s.%s", keyspace, tableName)),
 		"table", tableName, service,
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	)))
 
 	return
 }
 
 // extractColumns extract columns from a given table
-func (e *Extractor) extractColumns(keyspace string, tableName string) (columns []interface{}, err error) {
+func (e *Extractor) extractColumns(keyspace string, tableName string) (columns []any, err error) {
 	query := `SELECT column_name, type
               FROM system_schema.columns
               WHERE keyspace_name = ?
@@ -196,7 +196,7 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 			continue
 		}
 
-		columns = append(columns, map[string]interface{}{
+		columns = append(columns, map[string]any{
 			"name":      fieldName,
 			"data_type": dataType,
 		})

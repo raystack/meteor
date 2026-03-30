@@ -45,6 +45,6 @@ type AvroSchema struct {
 }
 
 type AvroFields struct {
-	Name string      `json:"name"`
-	Type interface{} `json:"type"`
+	Name string `json:"name"`
+	Type any    `json:"type"`
 }

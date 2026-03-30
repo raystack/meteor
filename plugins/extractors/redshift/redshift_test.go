@@ -276,7 +276,7 @@ func TestInit(t *testing.T) {
 
 		err := extractor.Init(context.Background(), plugins.Config{
 			URNScope:  "test-redshift",
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
@@ -292,7 +292,7 @@ func TestInit(t *testing.T) {
 
 		err := extractor.Init(context.Background(), plugins.Config{
 			URNScope: "test-redshift",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"cluster_id": "some-cluster-id",
 				"db_name":    "some-db-name",
 				"db_user":    "some-user",
@@ -345,7 +345,7 @@ func TestExtract(t *testing.T) {
 
 		err := extractor.Init(ctx, plugins.Config{
 			URNScope: "test-redshift",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"cluster_id": "some-cluster-id",
 				"db_name":    "some-db-name",
 				"db_user":    "some-user",

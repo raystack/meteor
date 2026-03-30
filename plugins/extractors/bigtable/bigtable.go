@@ -131,8 +131,8 @@ func getInstancesInfo(ctx context.Context, client InstancesFetcher) ([]string, e
 		return nil, err
 	}
 	var instanceNames []string
-	for i := 0; i < len(instanceInfos); i++ {
-		instanceNames = append(instanceNames, instanceInfos[i].Name)
+	for _, info := range instanceInfos {
+		instanceNames = append(instanceNames, info.Name)
 	}
 	return instanceNames, nil
 }
@@ -161,7 +161,7 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error 
 				entity := models.NewEntity(
 					models.NewURN(service, e.config.ProjectID, "table", fmt.Sprintf("%s.%s", instance, table)),
 					"table", table, service,
-					map[string]interface{}{
+					map[string]any{
 						"column_family": string(familyInfoBytes),
 					},
 				)

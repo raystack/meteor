@@ -136,20 +136,20 @@ func (e *Extractor) processTable(ctx context.Context, dbName string, docID strin
 	e.emit(models.NewRecord(models.NewEntity(
 		models.NewURN("couchdb", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, docID)),
 		"table", docID, "couchdb",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	)))
 
 	return
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []interface{}, err error) {
+func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []any, err error) {
 	size, rev, err := e.db.GetMeta(ctx, docID)
 	if err != nil {
 		return
 	}
 	row := e.db.Get(ctx, docID)
-	var fields map[string]interface{}
+	var fields map[string]any
 	err = row.ScanDoc(&fields)
 	if err != nil {
 		return
@@ -160,7 +160,7 @@ func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns [
 			continue
 		}
 
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":      k,
 			"data_type": reflect.ValueOf(fields[k]).Kind().String(),
 		}

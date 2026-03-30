@@ -184,7 +184,7 @@ func (e *Extractor) getTableMetadata(dbName, tableName string) (*meteorv1beta1.E
 	return models.NewEntity(
 		models.NewURN("redshift", e.config.ClusterID, "table", fmt.Sprintf("%s.%s.%s", e.config.ClusterID, dbName, tableName)),
 		"table", tableName, "redshift",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	), nil
 }
 
@@ -209,10 +209,10 @@ func (e *Extractor) GetColumn(dbName, tableName string) ([]*redshiftdataapiservi
 }
 
 // getColumnMetadata prepares the list of columns and the attached metadata
-func (*Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) ([]interface{}, error) {
-	var cols []interface{}
+func (*Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) ([]any, error) {
+	var cols []any
 	for _, column := range columnMetadata {
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        aws.StringValue(column.Name),
 			"data_type":   aws.StringValue(column.TypeName),
 			"is_nullable": isNullable(aws.Int64Value(column.Nullable)),

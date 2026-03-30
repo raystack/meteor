@@ -76,7 +76,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := oracle.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"password": "pass",
 				"host":     host,
 			},
@@ -93,7 +93,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("oracle://%s:%s@%s/%s", user, password, host, defaultDB),
 			},
 		})
@@ -161,24 +161,24 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:oracle:test-oracle:table:XE.EMPLOYEE", "table", "EMPLOYEE", "Oracle", map[string]interface{}{
-			"profile": map[string]interface{}{
+		models.NewEntity("urn:oracle:test-oracle:table:XE.EMPLOYEE", "table", "EMPLOYEE", "Oracle", map[string]any{
+			"profile": map[string]any{
 				"total_rows": float64(3),
 			},
-			"columns": []interface{}{
-				map[string]interface{}{"name": "EMPID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
-				map[string]interface{}{"name": "NAME", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(30)},
-				map[string]interface{}{"name": "SALARY", "data_type": "NUMBER", "is_nullable": true, "length": float64(22)},
+			"columns": []any{
+				map[string]any{"name": "EMPID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
+				map[string]any{"name": "NAME", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(30)},
+				map[string]any{"name": "SALARY", "data_type": "NUMBER", "is_nullable": true, "length": float64(22)},
 			},
 		}),
-		models.NewEntity("urn:oracle:test-oracle:table:XE.DEPARTMENT", "table", "DEPARTMENT", "Oracle", map[string]interface{}{
-			"profile": map[string]interface{}{
+		models.NewEntity("urn:oracle:test-oracle:table:XE.DEPARTMENT", "table", "DEPARTMENT", "Oracle", map[string]any{
+			"profile": map[string]any{
 				"total_rows": float64(4),
 			},
-			"columns": []interface{}{
-				map[string]interface{}{"name": "ID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
-				map[string]interface{}{"name": "TITLE", "description": "Department Name", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(20)},
-				map[string]interface{}{"name": "BUDGET", "data_type": "FLOAT", "is_nullable": true, "length": float64(22)},
+			"columns": []any{
+				map[string]any{"name": "ID", "data_type": "NUMBER", "is_nullable": false, "length": float64(22)},
+				map[string]any{"name": "TITLE", "description": "Department Name", "data_type": "VARCHAR2", "is_nullable": false, "length": float64(20)},
+				map[string]any{"name": "BUDGET", "data_type": "FLOAT", "is_nullable": true, "length": float64(22)},
 			},
 		}),
 	}

@@ -85,7 +85,7 @@ func TestBuildTableProfile(t *testing.T) {
 
 		// CommonJoins is now []map[string]interface{}
 		assert.Len(t, tp.CommonJoins, 3)
-		findJoin := func(urn string) map[string]interface{} {
+		findJoin := func(urn string) map[string]any {
 			for _, j := range tp.CommonJoins {
 				if j["urn"] == urn {
 					return j

@@ -29,7 +29,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := tableau.New(testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host": "invalid_host",
 			}})
 
@@ -38,7 +38,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for password missing with username", func(t *testing.T) {
 		err := tableau.New(testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":       host,
 				"version":    version,
 				"identifier": "my-tableau",
@@ -51,7 +51,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for site_id and auth_token missing", func(t *testing.T) {
 		err := tableau.New(testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":       host,
 				"version":    version,
 				"identifier": "my-tableau",
@@ -63,7 +63,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return no error for config with site_id and auth_token without username", func(t *testing.T) {
 		err := tableau.New(testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":       host,
 				"version":    version,
 				"identifier": "my-tableau",
@@ -90,7 +90,7 @@ func TestExtract(t *testing.T) {
 			}))
 		err = extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":       host,
 				"version":    version,
 				"identifier": "my-tableau",

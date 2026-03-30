@@ -148,13 +148,13 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	e.emit(models.NewRecord(models.NewEntity(
 		models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
 		"table", tableName, "mariadb",
-		map[string]interface{}{"columns": columns},
+		map[string]any{"columns": columns},
 	)))
 	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]interface{}, error) {
+func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]any, error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -166,7 +166,7 @@ func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]int
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
@@ -175,7 +175,7 @@ func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]int
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":        fieldName,
 			"data_type":   dataType,
 			"is_nullable": e.isNullable(isNullableString),

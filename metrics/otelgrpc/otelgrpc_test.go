@@ -3,7 +3,7 @@ package otelgrpc_test
 import (
 	"context"
 	"errors"
-	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -74,7 +74,7 @@ func Test_parseFullMethod(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := otelgrpc.ParseFullMethod(tt.args.fullMethod); !reflect.DeepEqual(got, tt.want) {
+			if got := otelgrpc.ParseFullMethod(tt.args.fullMethod); !slices.Equal(got, tt.want) {
 				t.Errorf("parseFullMethod() = %v, want %v", got, tt.want)
 			}
 		})

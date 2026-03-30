@@ -91,7 +91,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := couchdb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			},
 		})
@@ -107,7 +107,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("http://%s:%s@%s/", user, pass, host),
 			},
 		})
@@ -144,7 +144,7 @@ func setup() (err error) {
 	return
 }
 
-func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
+func execute(queries []map[string]any, db *kivik.DB) (err error) {
 	for _, query := range queries {
 		_, err := db.Put(context.TODO(), query["_id"].(string), query)
 		if kivik.StatusCode(err) == http.StatusConflict {
@@ -157,9 +157,9 @@ func execute(queries []map[string]interface{}, db *kivik.DB) (err error) {
 	return
 }
 
-func mockdata(dbName string) (mockSetupData []map[string]interface{}) {
+func mockdata(dbName string) (mockSetupData []map[string]any) {
 	for i := 0; i < docCount; i++ {
-		doc := map[string]interface{}{
+		doc := map[string]any{
 			"_id":    kivik.UserPrefix + dbName + strconv.Itoa(i),
 			"field1": 1,
 			"field2": "data",

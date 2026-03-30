@@ -29,7 +29,7 @@ const (
 func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		client := new(mockClient)
-		config := map[string]interface{}{
+		config := map[string]any{
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
 		}
@@ -41,7 +41,7 @@ func TestInit(t *testing.T) {
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
 			"username":       "user",
@@ -58,7 +58,7 @@ func TestInit(t *testing.T) {
 		assert.NoError(t, err)
 	})
 	t.Run("should allow session_id to replace username and password", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
 			"session_id":     "sample-session",
@@ -74,7 +74,7 @@ func TestInit(t *testing.T) {
 		assert.NoError(t, err)
 	})
 	t.Run("should return error on authentication failure", func(t *testing.T) {
-		config := map[string]interface{}{
+		config := map[string]any{
 			"host":           "sample-host",
 			"instance_label": "my-metabase",
 			"session_id":     "sample-session",
@@ -110,7 +110,7 @@ func TestExtract(t *testing.T) {
 		extr := metabase.New(client, plugins.GetLog())
 		err := extr.Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":           host,
 				"username":       "test-user",
 				"password":       "test-pass",
@@ -136,7 +136,7 @@ func TestExtract(t *testing.T) {
 		extr := metabase.New(client, plugins.GetLog())
 		err := extr.Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":           host,
 				"username":       "test-user",
 				"password":       "test-pass",
@@ -162,7 +162,7 @@ func TestExtract(t *testing.T) {
 		extr := metabase.New(client, plugins.GetLog())
 		err := extr.Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"host":           host,
 				"username":       "test-user",
 				"password":       "test-pass",
@@ -221,7 +221,7 @@ func getTable(t *testing.T, id int) m.Table {
 	return table
 }
 
-func readFromFiles(path string, data interface{}) error {
+func readFromFiles(path string, data any) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("opening %q: %w", path, err)

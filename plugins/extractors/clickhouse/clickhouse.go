@@ -119,7 +119,7 @@ func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error 
 		entity := models.NewEntity(
 			models.NewURN("clickhouse", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
 			"table", tableName, "clickhouse",
-			map[string]interface{}{"columns": columns},
+			map[string]any{"columns": columns},
 		)
 		emit(models.NewRecord(entity))
 	}
@@ -130,7 +130,7 @@ func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error 
 	return nil
 }
 
-func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]interface{}, error) {
+func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]any, error) {
 	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
 	rows, err := e.db.QueryContext(ctx, sqlStr)
@@ -139,7 +139,7 @@ func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string
 	}
 	defer rows.Close()
 
-	var result []interface{}
+	var result []any
 	for rows.Next() {
 		var colName, colDesc, dataType string
 		var temp1, temp2, temp3, temp4 string
@@ -147,7 +147,7 @@ func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string
 		if err != nil {
 			return nil, err
 		}
-		col := map[string]interface{}{
+		col := map[string]any{
 			"name":      colName,
 			"data_type": dataType,
 		}

@@ -145,7 +145,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := superset.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"user_id": "user",
 				"host":    host,
 			}})
@@ -160,7 +160,7 @@ func TestExtract(t *testing.T) {
 		extr := superset.New(utils.Logger)
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"username": user,
 				"password": pass,
 				"host":     host,
@@ -195,7 +195,7 @@ func setup() (err error) {
 // checkUser checks if the user exists
 // if so, it login through the given credentials
 func checkUser() (err error) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"password": pass,
 		"provider": provider,
 		"username": user,
@@ -224,7 +224,7 @@ func setCsrfToken() (err error) {
 }
 
 // makeRequest helper function to avoid rewriting a request
-func makeRequest(method, url string, payload interface{}, data interface{}) (err error) {
+func makeRequest(method, url string, payload any, data any) (err error) {
 	jsonifyPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to encode the payload JSON: %w", err)

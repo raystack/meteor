@@ -81,7 +81,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := mysql.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"invalid_config": "invalid_config_value",
 			}})
 
@@ -96,7 +96,7 @@ func TestExtract(t *testing.T) {
 
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"connection_url": fmt.Sprintf("%s:%s@tcp(%s)/", user, pass, host),
 			}})
 		if err != nil {
@@ -152,18 +152,18 @@ func execute(db *sql.DB, queries []string) (err error) {
 
 func getExpected(t *testing.T) []*meteorv1beta1.Entity {
 	return []*meteorv1beta1.Entity{
-		models.NewEntity("urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "mysql", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "applicant_id", "data_type": "int", "is_nullable": true},
-				map[string]interface{}{"name": "first_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
-				map[string]interface{}{"name": "last_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+		models.NewEntity("urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "mysql", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "applicant_id", "data_type": "int", "is_nullable": true},
+				map[string]any{"name": "first_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]any{"name": "last_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
 			},
 		}),
-		models.NewEntity("urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "mysql", map[string]interface{}{
-			"columns": []interface{}{
-				map[string]interface{}{"name": "department", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
-				map[string]interface{}{"name": "job", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
-				map[string]interface{}{"name": "job_id", "data_type": "int", "is_nullable": true},
+		models.NewEntity("urn:mysql:test-mysql:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "mysql", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "department", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]any{"name": "job", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]any{"name": "job_id", "data_type": "int", "is_nullable": true},
 			},
 		}),
 	}

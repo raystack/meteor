@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type ArgMatcher interface{ Matches(interface{}) bool }
+type ArgMatcher interface{ Matches(any) bool }
 
 func OfTypeContext() ArgMatcher {
 	return mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil })

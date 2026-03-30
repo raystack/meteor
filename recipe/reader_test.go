@@ -43,14 +43,14 @@ func TestReaderRead(t *testing.T) {
 					Source: recipe.PluginRecipe{
 						Name:  "test-source",
 						Scope: "my-scope",
-						Config: map[string]interface{}{
+						Config: map[string]any{
 							"foo": "bar",
 						},
 					},
 					Sinks: []recipe.PluginRecipe{
 						{
 							Name:   "test-sink",
-							Config: map[string]interface{}{},
+							Config: map[string]any{},
 						},
 					},
 				},
@@ -76,14 +76,14 @@ func TestReaderRead(t *testing.T) {
 					Source: recipe.PluginRecipe{
 						Name:  "test-source",
 						Scope: "my-scope",
-						Config: map[string]interface{}{
+						Config: map[string]any{
 							"foo": "bar",
 						},
 					},
 					Sinks: []recipe.PluginRecipe{
 						{
 							Name:   "test-sink",
-							Config: map[string]interface{}{},
+							Config: map[string]any{},
 						},
 					},
 				},
@@ -132,7 +132,7 @@ func TestReaderRead(t *testing.T) {
 				Source: recipe.PluginRecipe{
 					Name:  "test-source",
 					Scope: "my-scope",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"username": username,
 						"password": password,
 					},
@@ -140,13 +140,13 @@ func TestReaderRead(t *testing.T) {
 				Sinks: []recipe.PluginRecipe{
 					{
 						Name:   "test-sink",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 				Processors: []recipe.PluginRecipe{
 					{
 						Name:   "test-processor",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 			},
@@ -185,14 +185,14 @@ func TestReaderRead(t *testing.T) {
 				Source: recipe.PluginRecipe{
 					Name:  "test-source",
 					Scope: "my-scope",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"foo": "bar",
 					},
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
 						Name:   "test-sink",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 			},
@@ -201,7 +201,7 @@ func TestReaderRead(t *testing.T) {
 				Source: recipe.PluginRecipe{
 					Name:  "test-source",
 					Scope: "my-scope",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"username": username,
 						"password": password,
 					},
@@ -209,13 +209,13 @@ func TestReaderRead(t *testing.T) {
 				Sinks: []recipe.PluginRecipe{
 					{
 						Name:   "test-sink",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 				Processors: []recipe.PluginRecipe{
 					{
 						Name:   "test-processor",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 			},
@@ -224,14 +224,14 @@ func TestReaderRead(t *testing.T) {
 				Source: recipe.PluginRecipe{
 					Name:  "test-source",
 					Scope: "my-scope",
-					Config: map[string]interface{}{
+					Config: map[string]any{
 						"foo": "bar",
 					},
 				},
 				Sinks: []recipe.PluginRecipe{
 					{
 						Name:   "test-sink",
-						Config: map[string]interface{}{},
+						Config: map[string]any{},
 					},
 				},
 			},
@@ -255,7 +255,7 @@ func TestReaderRead(t *testing.T) {
 			Source: recipe.PluginRecipe{
 				Name:  "test-source",
 				Scope: "my-scope",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"username": username,
 					"password": password,
 				},
@@ -263,13 +263,13 @@ func TestReaderRead(t *testing.T) {
 			Sinks: []recipe.PluginRecipe{
 				{
 					Name:   "test-sink",
-					Config: map[string]interface{}{},
+					Config: map[string]any{},
 				},
 			},
 			Processors: []recipe.PluginRecipe{
 				{
 					Name:   "test-processor",
-					Config: map[string]interface{}{},
+					Config: map[string]any{},
 				},
 			},
 		}
@@ -287,7 +287,7 @@ func TestReaderRead(t *testing.T) {
 			Source: recipe.PluginRecipe{
 				Name:  "test-source",
 				Scope: "my-scope",
-				Config: map[string]interface{}{
+				Config: map[string]any{
 					"username": username,
 					"password": password,
 				},
@@ -295,13 +295,13 @@ func TestReaderRead(t *testing.T) {
 			Sinks: []recipe.PluginRecipe{
 				{
 					Name:   "test-sink",
-					Config: map[string]interface{}{},
+					Config: map[string]any{},
 				},
 			},
 			Processors: []recipe.PluginRecipe{
 				{
 					Name:   "test-processor",
-					Config: map[string]interface{}{},
+					Config: map[string]any{},
 				},
 			},
 		}

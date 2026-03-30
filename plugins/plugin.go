@@ -28,7 +28,7 @@ type Info struct {
 
 type Config struct {
 	URNScope  string
-	RawConfig map[string]interface{}
+	RawConfig map[string]any
 }
 
 type Plugin interface {

@@ -121,8 +121,8 @@ func varName(s, prefix string) (string, bool) {
 	}
 
 	r := strings.ToLower(s[len(prefix):])
-	if strings.HasPrefix(r, "_") {
-		return r[1:], true
+	if v, ok := strings.CutPrefix(r, "_"); ok {
+		return v, true
 	}
 	return r, true
 }

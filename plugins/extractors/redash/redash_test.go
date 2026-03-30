@@ -39,7 +39,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if for empty base_url in config", func(t *testing.T) {
 		err := redash.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": "",
 				"api_key":  "checkAPI",
 			}})
@@ -49,7 +49,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error if for empty api_key in config", func(t *testing.T) {
 		err := redash.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": testServer.URL,
 				"api_key":  "",
 			}})
@@ -62,12 +62,12 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		expectedData := []*meteorv1beta1.Entity{
-			models.NewEntity("urn:redash:test-redash:dashboard:421", "dashboard", "firstDashboard", "redash", map[string]interface{}{
+			models.NewEntity("urn:redash:test-redash:dashboard:421", "dashboard", "firstDashboard", "redash", map[string]any{
 				"user_id": float64(1),
 				"version": float64(1),
 				"slug":    "new-dashboard-copy",
 			}),
-			models.NewEntity("urn:redash:test-redash:dashboard:634", "dashboard", "secondDashboard", "redash", map[string]interface{}{
+			models.NewEntity("urn:redash:test-redash:dashboard:634", "dashboard", "secondDashboard", "redash", map[string]any{
 				"user_id": float64(1),
 				"version": float64(2),
 				"slug":    "test-dashboard-updated",
@@ -78,7 +78,7 @@ func TestExtract(t *testing.T) {
 		extractor := redash.New(utils.Logger)
 		err := extractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"base_url": testServer.URL,
 				"api_key":  "checkAPI",
 			},

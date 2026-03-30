@@ -56,7 +56,7 @@ type InstanceAdminClient_Instances_Call struct {
 
 // Instances is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *InstanceAdminClient_Expecter) Instances(ctx interface{}) *InstanceAdminClient_Instances_Call {
+func (_e *InstanceAdminClient_Expecter) Instances(ctx any) *InstanceAdminClient_Instances_Call {
 	return &InstanceAdminClient_Instances_Call{Call: _e.mock.On("Instances", ctx)}
 }
 

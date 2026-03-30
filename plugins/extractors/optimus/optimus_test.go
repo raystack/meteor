@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	validConfig = map[string]interface{}{
+	validConfig = map[string]any{
 		"host": "optimus:80",
 	}
 	urnScope = "test-optimus"
@@ -32,7 +32,7 @@ func TestInit(t *testing.T) {
 		extr := optimus.New(testutils.Logger, new(mockClient))
 		err := extr.Init(context.TODO(), plugins.Config{
 			URNScope:  urnScope,
-			RawConfig: map[string]interface{}{},
+			RawConfig: map[string]any{},
 		})
 
 		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -497,16 +497,16 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 	}, mock.Anything).Return(&pb.ListJobSpecificationResponse{
 		Jobs: []*pb.JobSpecification{
 			{
-				Version:       1,
-				Name:          "jobMaxCompute-B",
-				Owner:         "jane_doe@example.com",
-				StartDate:     "2021-01-01",
-				EndDate:       "",
-				Interval:      "0 19 1 * *",
-				DependsOnPast: false,
-				CatchUp:       true,
-				TaskName:      "mc2mc",
-				Config:        []*pb.JobConfigItem{},
+				Version:          1,
+				Name:             "jobMaxCompute-B",
+				Owner:            "jane_doe@example.com",
+				StartDate:        "2021-01-01",
+				EndDate:          "",
+				Interval:         "0 19 1 * *",
+				DependsOnPast:    false,
+				CatchUp:          true,
+				TaskName:         "mc2mc",
+				Config:           []*pb.JobConfigItem{},
 				WindowSize:       "720h",
 				WindowOffset:     "-720h",
 				WindowTruncateTo: "M",
@@ -531,16 +531,16 @@ func setupExtractExpectation(ctx context.Context, client *mockClient) {
 				},
 			},
 			{
-				Version:       1,
-				Name:          "jobMaxCompute-C",
-				Owner:         "jane_doe@example.com",
-				StartDate:     "2021-01-01",
-				EndDate:       "",
-				Interval:      "0 19 1 * *",
-				DependsOnPast: false,
-				CatchUp:       true,
-				TaskName:      "gcs2mc",
-				Config:        []*pb.JobConfigItem{},
+				Version:          1,
+				Name:             "jobMaxCompute-C",
+				Owner:            "jane_doe@example.com",
+				StartDate:        "2021-01-01",
+				EndDate:          "",
+				Interval:         "0 19 1 * *",
+				DependsOnPast:    false,
+				CatchUp:          true,
+				TaskName:         "gcs2mc",
+				Config:           []*pb.JobConfigItem{},
 				WindowSize:       "720h",
 				WindowOffset:     "-720h",
 				WindowTruncateTo: "M",

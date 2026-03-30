@@ -12,10 +12,10 @@ import (
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 )
 
-type executeRequestFunc func(ctx context.Context, reqCfg RequestConfig) (map[string]interface{}, error)
+type executeRequestFunc func(ctx context.Context, reqCfg RequestConfig) (map[string]any, error)
 
 func makeRequestExecutor(successCodes []int, httpClient *http.Client) executeRequestFunc {
-	return func(ctx context.Context, reqCfg RequestConfig) (map[string]interface{}, error) {
+	return func(ctx context.Context, reqCfg RequestConfig) (map[string]any, error) {
 		ctx, cancel := context.WithTimeout(ctx, reqCfg.Timeout)
 		defer cancel()
 
@@ -75,29 +75,29 @@ func addQueryParams(req *http.Request, params []QueryParam) {
 	req.URL.RawQuery = q.Encode()
 }
 
-func handleResponse(successCodes []int, resp *http.Response) (map[string]interface{}, error) {
+func handleResponse(successCodes []int, resp *http.Response) (map[string]any, error) {
 	if !has(successCodes, resp.StatusCode) {
 		return nil, fmt.Errorf("unsuccessful request: response status code: %d", resp.StatusCode)
 	}
 
-	h := make(map[string]interface{}, len(resp.Header))
+	h := make(map[string]any, len(resp.Header))
 	for k := range resp.Header {
 		h[strings.ToLower(k)] = resp.Header.Get(k)
 	}
 
-	var body interface{}
+	var body any
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
 		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"status_code": resp.StatusCode,
 		"header":      h,
 		"body":        body,
 	}, nil
 }
 
-func asReader(v interface{}) (io.Reader, error) {
+func asReader(v any) (io.Reader, error) {
 	if v == nil {
 		return nil, nil
 	}

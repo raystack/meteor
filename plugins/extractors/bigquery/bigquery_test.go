@@ -100,7 +100,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"wrong-config": "sample-project",
 			},
 		})
@@ -113,7 +113,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":          "sample-project",
 				"collect_table_usage": true,
 			},
@@ -127,7 +127,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":             projectID,
 				"service_account_base64": "----", // invalid
 			},
@@ -142,7 +142,7 @@ func TestInit(t *testing.T) {
 		defer cancel()
 		err := extr.Init(ctx, plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id": projectID,
 			},
 		})
@@ -171,11 +171,11 @@ func TestExtract(t *testing.T) {
 	t.Run("should return no error", func(t *testing.T) {
 		actual := runTest(t, plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":             projectID,
 				"max_preview_rows":       "1",
 				"include_column_profile": "true",
-				"exclude": map[string]interface{}{
+				"exclude": map[string]any{
 					"datasets": []string{"exclude_this_dataset"},
 					"tables":   []string{"dataset1.exclude_this_table"},
 				},
@@ -188,12 +188,12 @@ func TestExtract(t *testing.T) {
 	t.Run("with mix_values true", func(t *testing.T) {
 		cfg := plugins.Config{
 			URNScope: "test-bigquery",
-			RawConfig: map[string]interface{}{
+			RawConfig: map[string]any{
 				"project_id":             projectID,
 				"max_preview_rows":       "5",
 				"mix_values":             "true",
 				"include_column_profile": "true",
-				"exclude": map[string]interface{}{
+				"exclude": map[string]any{
 					"datasets": []string{"exclude_this_dataset"},
 					"tables":   []string{"dataset1.exclude_this_table"},
 				},

@@ -53,7 +53,7 @@ type RequestConfig struct {
 	Headers      map[string]string `mapstructure:"headers"`
 	ContentType  string            `mapstructure:"content_type" validate:"required,oneof=application/json"`
 	Accept       string            `mapstructure:"accept" validate:"required,oneof=application/json"`
-	Body         interface{}       `mapstructure:"body"`
+	Body         any               `mapstructure:"body"`
 	Timeout      time.Duration     `mapstructure:"timeout" validate:"min=1ms" default:"5s"`
 }
 

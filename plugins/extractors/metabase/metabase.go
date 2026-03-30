@@ -99,7 +99,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 
 // chartUpstream holds a chart map and its upstream URNs
 type chartUpstream struct {
-	chart    map[string]interface{}
+	chart     map[string]any
 	upstreams []string
 }
 
@@ -125,12 +125,12 @@ func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (models.R
 		}
 	}
 
-	charts := make([]map[string]interface{}, 0, len(chartData))
+	charts := make([]map[string]any, 0, len(chartData))
 	for _, cu := range chartData {
 		charts = append(charts, cu.chart)
 	}
 
-	props := map[string]interface{}{
+	props := map[string]any{
 		"charts":        charts,
 		"id":            dashboard.ID,
 		"collection_id": dashboard.CollectionID,
@@ -175,11 +175,11 @@ func (e *Extractor) buildChart(ctx context.Context, card m.Card, dashboardURN st
 		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
 	}
 
-	chart := map[string]interface{}{
-		"urn":          fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
-		"dashboard_urn": dashboardURN,
-		"source":       "metabase",
-		"name":         card.Name,
+	chart := map[string]any{
+		"urn":                    fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
+		"dashboard_urn":          dashboardURN,
+		"source":                 "metabase",
+		"name":                   card.Name,
 		"id":                     card.ID,
 		"collection_id":          card.CollectionID,
 		"creator_id":             card.CreatorID,

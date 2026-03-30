@@ -172,7 +172,7 @@ const (
 	upsertEdgeRoute   = "/raystack.compass.v1beta1.CompassService/UpsertEdge"
 )
 
-func (s *Sink) post(ctx context.Context, route string, payload interface{}) error {
+func (s *Sink) post(ctx context.Context, route string, payload any) error {
 	targetURL := s.urlb.New().Path(route).URL()
 
 	payloadBytes, err := json.Marshal(payload)

@@ -85,7 +85,7 @@ type DatabaseInterface interface {
 	CreateResourceURN(tableInfo Table) string
 }
 
-type Database map[string]interface{}
+type Database map[string]any
 
 type DatabaseServer struct {
 	ID             string `json:"id"`
