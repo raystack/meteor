@@ -13,7 +13,6 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -21,8 +20,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -183,12 +180,8 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to fetch partitions for topic", "err", err, "topic", topic)
 			continue
 		}
-		asset, err := e.buildAsset(topic, len(partitions))
-		if err != nil {
-			e.logger.Error("failed to build asset", "err", err, "topic", topic)
-			continue
-		}
-		emit(models.NewRecord(asset))
+		record := e.buildRecord(topic, len(partitions))
+		emit(record)
 	}
 	return nil
 }
@@ -229,24 +222,19 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 }
 
 // Build topic metadata model using a topic and number of partitions
-func (e *Extractor) buildAsset(topicName string, numOfPartitions int) (*v1beta2.Asset, error) {
-	topic, err := anypb.New(&v1beta2.Topic{
-		Profile: &v1beta2.TopicProfile{
-			NumberOfPartitions: int64(numOfPartitions),
-		},
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-	})
-	if err != nil {
-		e.logger.Warn("error creating Any struct", "error", err)
+func (e *Extractor) buildRecord(topicName string, numOfPartitions int) models.Record {
+	props := map[string]interface{}{
+		"number_of_partitions": int64(numOfPartitions),
 	}
 
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("kafka", e.UrnScope, "topic", topicName),
-		Name:    topicName,
-		Service: "kafka",
-		Type:    "topic",
-		Data:    topic,
-	}, nil
+	entity := models.NewEntity(
+		models.NewURN("kafka", e.UrnScope, "topic", topicName),
+		"topic",
+		topicName,
+		"kafka",
+		props,
+	)
+	return models.NewRecord(entity)
 }
 
 func init() {

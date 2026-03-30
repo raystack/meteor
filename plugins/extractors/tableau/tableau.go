@@ -7,13 +7,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //go:embed README.md
@@ -108,73 +105,80 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 		for _, wb := range workbooks {
-			dashboard, errB := e.buildDashboard(wb)
+			record, errB := e.buildDashboard(wb)
 			if errB != nil {
 				e.logger.Error("failed to build dashboard", "data", wb, "err", errB.Error())
 				continue
 			}
-			emit(models.NewRecord(dashboard))
+			emit(record)
 		}
 	}
 	return
 }
 
-func (e *Extractor) buildDashboard(wb *Workbook) (asset *v1beta2.Asset, err error) {
-	lineages := e.buildLineage(wb.UpstreamTables)
+func (e *Extractor) buildDashboard(wb *Workbook) (models.Record, error) {
 	dashboardURN := models.NewURN("tableau", e.UrnScope, "workbook", wb.ID)
-	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: e.buildCharts(dashboardURN, wb, lineages),
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"id":           wb.ID,
-			"name":         wb.Name,
-			"project_name": wb.ProjectName,
-			"uri":          wb.URI,
-			"owner_id":     wb.Owner.ID,
-			"owner_name":   wb.Owner.Name,
-			"owner_email":  wb.Owner.Email,
-		}),
-		CreateTime: timestamppb.New(wb.CreatedAt),
-		UpdateTime: timestamppb.New(wb.UpdatedAt),
-	})
-	if err != nil {
-		return nil, err
+
+	// Build lineage edges from upstream tables
+	var edges []*meteorv1beta1.Edge
+	lineageURNs := e.buildLineageURNs(wb.UpstreamTables)
+	for _, upstreamURN := range lineageURNs {
+		edges = append(edges, models.LineageEdge(upstreamURN, dashboardURN, "tableau"))
 	}
-	asset = &v1beta2.Asset{
-		Urn:         dashboardURN,
-		Name:        wb.Name,
-		Service:     "tableau",
-		Type:        "dashboard",
-		Description: wb.Description,
-		Data:        data,
-		Owners: []*v1beta2.Owner{
-			{
-				Urn:   wb.Owner.Email,
-				Name:  wb.Owner.Name,
-				Email: wb.Owner.Email,
-			},
-		},
-		Lineage: lineages,
+
+	// Build owner edge
+	if wb.Owner.Email != "" {
+		edges = append(edges, models.OwnerEdge(dashboardURN, "urn:user:"+wb.Owner.Email, "tableau"))
 	}
-	return
+
+	// Build charts
+	charts := e.buildCharts(dashboardURN, wb)
+
+	props := map[string]interface{}{
+		"charts":       charts,
+		"id":           wb.ID,
+		"name":         wb.Name,
+		"project_name": wb.ProjectName,
+		"uri":          wb.URI,
+		"owner_id":     wb.Owner.ID,
+		"owner_name":   wb.Owner.Name,
+		"owner_email":  wb.Owner.Email,
+	}
+	if !wb.CreatedAt.IsZero() {
+		props["create_time"] = wb.CreatedAt.Format("2006-01-02T15:04:05Z")
+	}
+	if !wb.UpdatedAt.IsZero() {
+		props["update_time"] = wb.UpdatedAt.Format("2006-01-02T15:04:05Z")
+	}
+
+	entity := models.NewEntity(dashboardURN, "dashboard", wb.Name, "tableau", props)
+	if wb.Description != "" {
+		entity.Description = wb.Description
+	}
+
+	return models.NewRecord(entity, edges...), nil
 }
 
-func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook, lineages *v1beta2.Lineage) (charts []*v1beta2.Chart) {
+func (e *Extractor) buildCharts(dashboardURN string, wb *Workbook) []map[string]interface{} {
+	var charts []map[string]interface{}
 	for _, sh := range wb.Sheets {
 		chartURN := models.NewURN("tableau", e.UrnScope, "sheet", sh.ID)
-		charts = append(charts, &v1beta2.Chart{
-			Urn:          chartURN,
-			Name:         sh.Name,
-			DashboardUrn: dashboardURN,
-			Source:       "tableau",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
-				"id":   sh.ID,
-				"name": sh.Name,
-			}),
-			CreateTime: timestamppb.New(sh.CreatedAt),
-			UpdateTime: timestamppb.New(sh.UpdatedAt),
-		})
+		chart := map[string]interface{}{
+			"urn":           chartURN,
+			"name":          sh.Name,
+			"dashboard_urn": dashboardURN,
+			"source":        "tableau",
+			"id":            sh.ID,
+		}
+		if !sh.CreatedAt.IsZero() {
+			chart["create_time"] = sh.CreatedAt.Format("2006-01-02T15:04:05Z")
+		}
+		if !sh.UpdatedAt.IsZero() {
+			chart["update_time"] = sh.UpdatedAt.Format("2006-01-02T15:04:05Z")
+		}
+		charts = append(charts, chart)
 	}
-	return
+	return charts
 }
 
 // Register the extractor to catalog

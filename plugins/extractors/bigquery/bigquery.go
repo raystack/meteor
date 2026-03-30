@@ -17,12 +17,11 @@ import (
 	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery/auditlog"
 	"github.com/raystack/meteor/plugins/extractors/bigquery/upstream"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,9 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //go:embed README.md
@@ -89,7 +86,7 @@ exclude:
 max_page_size: 100
 include_column_profile: true
 build_view_lineage: true
-# Only one of service_account_base64 / service_account_json is needed. 
+# Only one of service_account_base64 / service_account_json is needed.
 # If both are present, service_account_base64 takes precedence
 service_account_base64: ____base64_encoded_service_account____
 service_account_json: |-
@@ -337,12 +334,12 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 					e.logger.Error("failed to fetch table metadata", "err", err, "table", tableFQN)
 					return nil
 				}
-				asset, err := e.buildAsset(ctx, table, tmd)
+				record, err := e.buildRecord(ctx, table, tmd)
 				if err != nil {
 					e.logger.Error("failed to build asset", "err", err, "table", tableFQN)
 					return nil
 				}
-				emit(models.NewRecord(asset))
+				emit(record)
 				return nil
 			})
 		}
@@ -379,7 +376,7 @@ func (e *Extractor) fetchTablesNextPage(
 }
 
 // Build the bigquery table metadata
-func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (*v1beta2.Asset, error) {
+func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigquery.TableMetadata) (models.Record, error) {
 	var tableStats *auditlog.TableStats
 	if e.config.IsCollectTableUsage {
 		// Fetch and extract logs first to build a map
@@ -393,7 +390,7 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 	tableFQN := t.FullyQualifiedName()
 	tableURN := plugins.BigQueryURN(t.ProjectID, t.DatasetID, t.TableID)
 
-	tableProfile := e.buildTableProfile(tableURN, tableStats, md)
+	tp := e.buildTableProfile(tableURN, tableStats, md)
 	var partitionField string
 	partitionData := make(map[string]interface{})
 	if md.TimePartitioning != nil {
@@ -434,60 +431,96 @@ func (e *Extractor) buildAsset(ctx context.Context, t *bigquery.Table, md *bigqu
 		}
 	}
 
-	asset := &v1beta2.Asset{
-		Urn:         tableURN,
-		Name:        t.TableID,
-		Type:        "table",
-		Description: md.Description,
-		Service:     "bigquery",
-		// Data:        table,
-		Labels: md.Labels,
+	// Build lineage edges
+	var edges []*meteorv1beta1.Edge
+	if md.Type == bigquery.ViewTable || md.Type == bigquery.MaterializedView {
+		query := getViewQuery(md)
+		if e.config.BuildViewLineage {
+			upstreamURNs := getUpstreamURNs(query)
+			for _, upstreamURN := range upstreamURNs {
+				edges = append(edges, models.LineageEdge(upstreamURN, tableURN, "bigquery"))
+			}
+		}
 	}
-	attributesData := map[string]interface{}{
+
+	// Build properties
+	props := map[string]interface{}{
 		"full_qualified_name": tableFQN,
 		"dataset":             t.DatasetID,
 		"project":             t.ProjectID,
 		"type":                string(md.Type),
 		"partition_data":      partitionData,
-		"clustering_fields":   clusteringFields,
+	}
+	if len(clusteringFields) > 0 {
+		props["clustering_fields"] = clusteringFields
 	}
 
 	if md.Type == bigquery.ViewTable || md.Type == bigquery.MaterializedView {
 		query := getViewQuery(md)
-		attributesData["sql"] = query
-		if e.config.BuildViewLineage {
-			upstreamResources := getUpstreamResources(query)
-			asset.Lineage = &v1beta2.Lineage{
-				Upstreams: upstreamResources,
-			}
+		if query != "" {
+			props["sql"] = query
 		}
 	}
-	tableData := &v1beta2.Table{
-		Columns:    e.buildColumns(ctx, md.Schema, md),
-		Profile:    tableProfile,
-		Attributes: utils.TryParseMapToProto(attributesData),
-		CreateTime: timestamppb.New(md.CreationTime),
-		UpdateTime: timestamppb.New(md.LastModifiedTime),
+
+	columns := e.buildColumns(ctx, md.Schema, md)
+	if len(columns) > 0 {
+		props["columns"] = columns
 	}
+
+	// Table profile
+	profileMap := map[string]interface{}{}
+	if tp.UsageCount > 0 {
+		profileMap["usage_count"] = tp.UsageCount
+	}
+	if len(tp.CommonJoins) > 0 {
+		profileMap["common_joins"] = tp.CommonJoins
+	}
+	if len(tp.Filters) > 0 {
+		profileMap["filters"] = tp.Filters
+	}
+	if tp.TotalRows > 0 {
+		profileMap["total_rows"] = tp.TotalRows
+	}
+	if len(profileMap) > 0 {
+		props["profile"] = profileMap
+	}
+
+	if !md.CreationTime.IsZero() {
+		props["create_time"] = md.CreationTime.Format("2006-01-02T15:04:05Z")
+	}
+	if !md.LastModifiedTime.IsZero() {
+		props["update_time"] = md.LastModifiedTime.Format("2006-01-02T15:04:05Z")
+	}
+
 	maxPreviewRows := e.config.MaxPreviewRows
-	if maxPreviewRows != -1 {
-		tableData.PreviewFields = previewFields
-		tableData.PreviewRows = previewRows
+	if maxPreviewRows != -1 && previewRows != nil {
+		props["preview_fields"] = previewFields
+		// Convert structpb.ListValue to []interface{} for properties map
+		previewRowsIface := make([]interface{}, 0, len(previewRows.Values))
+		for _, v := range previewRows.Values {
+			previewRowsIface = append(previewRowsIface, v.AsInterface())
+		}
+		props["preview_rows"] = previewRowsIface
 	}
-	table, err := anypb.New(tableData)
-	if err != nil {
-		e.logger.Warn("error creating Any struct", "error", err)
+
+	if len(md.Labels) > 0 {
+		props["labels"] = md.Labels
 	}
-	asset.Data = table
-	return asset, nil
+
+	entity := models.NewEntity(tableURN, "table", t.TableID, "bigquery", props)
+	if md.Description != "" {
+		entity.Description = md.Description
+	}
+
+	return models.NewRecord(entity, edges...), nil
 }
 
 // Extract table schema
-func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm *bigquery.TableMetadata) []*v1beta2.Column {
+func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm *bigquery.TableMetadata) []map[string]interface{} {
 	var wg sync.WaitGroup
 
 	wg.Add(len(schema))
-	columns := make([]*v1beta2.Column, len(schema))
+	columns := make([]map[string]interface{}, len(schema))
 	for i, b := range schema {
 		index := i
 		go func(s *bigquery.FieldSchema) {
@@ -501,26 +534,24 @@ func (e *Extractor) buildColumns(ctx context.Context, schema bigquery.Schema, tm
 	return columns
 }
 
-func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) *v1beta2.Column {
-	attributesMap := map[string]interface{}{
-		"mode": e.getColumnMode(field),
+func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema, tm *bigquery.TableMetadata) map[string]interface{} {
+	col := map[string]interface{}{
+		"name":        field.Name,
+		"data_type":   string(field.Type),
+		"is_nullable": !field.Required && !field.Repeated,
+		"mode":        e.getColumnMode(field),
+	}
+	if field.Description != "" {
+		col["description"] = field.Description
 	}
 
 	colPolicyTags := e.getPolicyTagList(ctx, field)
 	if len(colPolicyTags) > 0 {
-		attributesMap["policy_tags"] = colPolicyTags
-	}
-
-	col := &v1beta2.Column{
-		Name:        field.Name,
-		Description: field.Description,
-		DataType:    string(field.Type),
-		IsNullable:  !field.Required && !field.Repeated,
-		Attributes:  utils.TryParseMapToProto(attributesMap),
+		col["policy_tags"] = colPolicyTags
 	}
 
 	if len(field.Schema) > 0 {
-		col.Columns = e.buildColumns(ctx, field.Schema, tm)
+		col["columns"] = e.buildColumns(ctx, field.Schema, tm)
 	}
 
 	if e.config.IncludeColumnProfile {
@@ -528,7 +559,9 @@ func (e *Extractor) buildColumn(ctx context.Context, field *bigquery.FieldSchema
 		if err != nil {
 			e.logger.Error("error fetching column's profile", "error", err)
 		}
-		col.Profile = profile
+		if profile != nil {
+			col["profile"] = profile
+		}
 	}
 
 	return col
@@ -633,7 +666,7 @@ func (e *Extractor) mixValuesIfNeeded(rows []interface{}, rndSeed int64) ([]inte
 	return mixedRows, nil
 }
 
-func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (*v1beta2.ColumnProfile, error) {
+func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSchema, tm *bigquery.TableMetadata) (map[string]interface{}, error) {
 	if col.Type == bigquery.BytesFieldType || col.Repeated || col.Type == bigquery.RecordFieldType {
 		e.logger.Info("Skip profiling " + col.Name + " column")
 		return nil, nil
@@ -666,15 +699,14 @@ func (e *Extractor) getColumnProfile(ctx context.Context, col *bigquery.FieldSch
 		return nil, nil
 	}
 
-	// map row data to column profile
-	return &v1beta2.ColumnProfile{
-		Min:    row.Min,
-		Max:    row.Max,
-		Avg:    row.Avg,
-		Med:    row.Med,
-		Unique: row.Unique,
-		Count:  row.Count,
-		Top:    row.Top,
+	return map[string]interface{}{
+		"min":    row.Min,
+		"max":    row.Max,
+		"avg":    row.Avg,
+		"med":    row.Med,
+		"unique": row.Unique,
+		"count":  row.Count,
+		"top":    row.Top,
 	}, nil
 }
 
@@ -806,20 +838,15 @@ func getViewQuery(md *bigquery.TableMetadata) string {
 	return ""
 }
 
-func getUpstreamResources(query string) []*v1beta2.Resource {
+func getUpstreamURNs(query string) []string {
 	upstreamDependencies := upstream.ParseTopLevelUpstreamsFromQuery(query)
 	uniqueUpstreamDependencies := upstream.UniqueFilterResources(upstreamDependencies)
-	var upstreams []*v1beta2.Resource
+	var urns []string
 	for _, dependency := range uniqueUpstreamDependencies {
 		urn := plugins.BigQueryURN(dependency.Project, dependency.Dataset, dependency.Name)
-		upstreams = append(upstreams, &v1beta2.Resource{
-			Urn:     urn,
-			Name:    dependency.Name,
-			Type:    "table",
-			Service: "bigquery",
-		})
+		urns = append(urns, urn)
 	}
-	return upstreams
+	return urns
 }
 
 // Register the extractor to catalog

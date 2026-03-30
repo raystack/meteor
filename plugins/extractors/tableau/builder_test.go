@@ -6,7 +6,6 @@ package tableau
 import (
 	"testing"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,16 +27,10 @@ func TestBuildLineageResource(t *testing.T) {
 			},
 		}
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:bigquery:database_server:table:database_server:access_data.table1",
-			Type:    "table",
-			Service: table.Database["connectionType"].(string),
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:bigquery:database_server:table:database_server:access_data.table1", urn)
 	})
 
 	t.Run("building other DatabaseServer resource from interface", func(t *testing.T) {
@@ -55,16 +48,10 @@ func TestBuildLineageResource(t *testing.T) {
 			},
 		}
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:postgres:localhost:5432:table:database_server.table1",
-			Type:    "table",
-			Service: table.Database["connectionType"].(string),
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:postgres:localhost:5432:table:database_server.table1", urn)
 	})
 
 	t.Run("building CloudFile resource from interface", func(t *testing.T) {
@@ -81,16 +68,10 @@ func TestBuildLineageResource(t *testing.T) {
 		}
 
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:gcs:gcs:bucket:database_cloud_file/table_name",
-			Type:    "bucket",
-			Service: table.Database["connectionType"].(string),
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:gcs:gcs:bucket:database_cloud_file/table_name", urn)
 	})
 
 	t.Run("building File resource from interface", func(t *testing.T) {
@@ -107,16 +88,10 @@ func TestBuildLineageResource(t *testing.T) {
 		}
 
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:file:/this/is/file:bucket:database_file.table_name",
-			Type:    "bucket",
-			Service: table.Database["connectionType"].(string),
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:file:/this/is/file:bucket:database_file.table_name", urn)
 	})
 
 	t.Run("building WebDataConnector resource from interface", func(t *testing.T) {
@@ -133,23 +108,17 @@ func TestBuildLineageResource(t *testing.T) {
 		}
 
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:web_data_connector:http://link_to_connector:table:database_wdc.table_name",
-			Type:    "table",
-			Service: table.Database["connectionType"].(string),
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:web_data_connector:http://link_to_connector:table:database_wdc.table_name", urn)
 	})
 
 	t.Run("building nil table should return error", func(t *testing.T) {
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(nil)
+		urn, err := e.buildLineageResourceURN(nil)
 		assert.EqualError(t, err, "no table found")
-		assert.Nil(t, res)
+		assert.Equal(t, "", urn)
 	})
 
 	t.Run("building maxcompute DatabaseServer resource with schema", func(t *testing.T) {
@@ -168,16 +137,10 @@ func TestBuildLineageResource(t *testing.T) {
 			},
 		}
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:maxcompute:mc_project:table:mc_project.my_schema.table1",
-			Type:    "table",
-			Service: "maxcompute",
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:maxcompute:mc_project:table:mc_project.my_schema.table1", urn)
 	})
 
 	t.Run("building maxcompute DatabaseServer resource without schema", func(t *testing.T) {
@@ -196,16 +159,10 @@ func TestBuildLineageResource(t *testing.T) {
 			},
 		}
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
-
-		expectedResource := &v1beta2.Resource{
-			Urn:     "urn:maxcompute:mc_project:table:mc_project.default.table1",
-			Type:    "table",
-			Service: "maxcompute",
-		}
+		urn, err := e.buildLineageResourceURN(table)
 
 		assert.Nil(t, err)
-		assert.Equal(t, expectedResource, res)
+		assert.Equal(t, "urn:maxcompute:mc_project:table:mc_project.default.table1", urn)
 	})
 
 	t.Run("building Unknown resource from interface", func(t *testing.T) {
@@ -219,10 +176,9 @@ func TestBuildLineageResource(t *testing.T) {
 		}
 
 		e := New(testutils.Logger)
-		res, err := e.buildLineageResources(table)
+		urn, err := e.buildLineageResourceURN(table)
 		assert.EqualError(t, err, "cannot build lineage resource, database structure unknown")
-		assert.Nil(t, res)
-
+		assert.Equal(t, "", urn)
 	})
 }
 
@@ -256,21 +212,11 @@ func TestBuildLineage(t *testing.T) {
 		UpstreamTables: upstreamTables,
 	}
 
-	expectedLineage := &v1beta2.Lineage{
-		Upstreams: []*v1beta2.Resource{
-			{
-				Urn:     "urn:postgres:localhost:5432:table:database_1.table_name_1",
-				Type:    "table",
-				Service: upstreamTables[0].Database["connectionType"].(string),
-			},
-			{
-				Urn:     "urn:gcs:gcs:bucket:database_2/table_name_2",
-				Type:    "bucket",
-				Service: upstreamTables[1].Database["connectionType"].(string),
-			},
-		},
+	expectedURNs := []string{
+		"urn:postgres:localhost:5432:table:database_1.table_name_1",
+		"urn:gcs:gcs:bucket:database_2/table_name_2",
 	}
 
 	e := New(testutils.Logger)
-	assert.Equal(t, expectedLineage, e.buildLineage(testDataWorkbook.UpstreamTables))
+	assert.Equal(t, expectedURNs, e.buildLineageURNs(testDataWorkbook.UpstreamTables))
 }

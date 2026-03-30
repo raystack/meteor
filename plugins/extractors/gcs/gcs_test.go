@@ -15,7 +15,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
@@ -23,8 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var client *storage.Client
@@ -149,7 +148,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
 
-		actual := emitter.GetAllData()
+		actual := emitter.GetAllEntities()
 
 		// the emulator returning dynamic timestamps
 		// replace them with static ones
@@ -159,16 +158,27 @@ func TestExtract(t *testing.T) {
 	})
 }
 
-func replaceWithStaticTimestamp(t *testing.T, actual []*v1beta2.Asset) {
-	b := new(v1beta2.Bucket)
-	err := actual[0].Data.UnmarshalTo(b)
-	assert.NoError(t, err)
+func replaceWithStaticTimestamp(t *testing.T, actual []*meteorv1beta1.Entity) {
+	if len(actual) == 0 || actual[0].Properties == nil {
+		return
+	}
+	props := actual[0].Properties.AsMap()
+	blobs, ok := props["blobs"].([]interface{})
+	if !ok || len(blobs) == 0 {
+		return
+	}
+	blob, ok := blobs[0].(map[string]interface{})
+	if !ok {
+		return
+	}
+	staticTime := "2023-06-13T03:46:12.372974Z"
+	blob["create_time"] = staticTime
+	blob["update_time"] = staticTime
+	blobs[0] = blob
+	props["blobs"] = blobs
 
-	time, err := time.Parse(time.RFC3339, "2023-06-13T03:46:12.372974Z")
+	// Reconstruct the properties struct
+	newProps, err := structpb.NewStruct(props)
 	assert.NoError(t, err)
-	b.Blobs[0].CreateTime = timestamppb.New(time)
-	b.Blobs[0].UpdateTime = timestamppb.New(time)
-
-	actual[0].Data, err = anypb.New(b)
-	assert.NoError(t, err)
+	actual[0].Properties = newProps
 }

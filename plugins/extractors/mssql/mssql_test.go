@@ -14,14 +14,13 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/mssql"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -111,7 +110,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
+		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllEntities())
 	})
 }
 
@@ -148,73 +147,21 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []*v1beta2.Asset {
-	data1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				DataType:   "int",
-				Name:       "applicant_id",
-				IsNullable: true,
-				Length:     0,
+func getExpected(t *testing.T) []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "mssql", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "applicant_id", "data_type": "int", "is_nullable": true},
+				map[string]interface{}{"name": "first_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]interface{}{"name": "last_name", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
 			},
-			{
-				DataType:   "varchar",
-				Name:       "first_name",
-				IsNullable: true,
-				Length:     255,
+		}),
+		models.NewEntity("urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "mssql", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "department", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]interface{}{"name": "job", "data_type": "varchar", "is_nullable": true, "length": float64(255)},
+				map[string]interface{}{"name": "job_id", "data_type": "int", "is_nullable": true},
 			},
-			{
-				DataType:   "varchar",
-				Name:       "last_name",
-				IsNullable: true,
-				Length:     255,
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal(err, "failed to build Any struct")
-	}
-	data2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				DataType:   "varchar",
-				Name:       "department",
-				IsNullable: true,
-				Length:     255,
-			},
-			{
-				DataType:   "varchar",
-				Name:       "job",
-				IsNullable: true,
-				Length:     255,
-			},
-			{
-				DataType:   "int",
-				Name:       "job_id",
-				IsNullable: true,
-				Length:     0,
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal(err, "failed to build Any struct")
-	}
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.applicant",
-			Name:    "applicant",
-			Type:    "table",
-			Data:    data1,
-			Service: "mssql",
-		},
-		{
-			Urn:     "urn:mssql:test-mssql:table:mockdata_meteor_metadata_test.jobs",
-			Name:    "jobs",
-			Type:    "table",
-			Data:    data2,
-			Service: "mssql",
-		},
+		}),
 	}
 }

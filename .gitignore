@@ -23,7 +23,7 @@
 # Project specific ignore
 .env
 config.yaml
-meteor
+/meteor
 _recipes
 meteor.yaml
 

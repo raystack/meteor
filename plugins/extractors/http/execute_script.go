@@ -13,11 +13,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/tengoutil"
 	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
-	"google.golang.org/protobuf/proto"
 )
 
 func (e *Extractor) executeScript(ctx context.Context, res interface{}, scriptCfg Script, emit plugins.Emit) error {
@@ -104,7 +102,6 @@ func (e *Extractor) convertRequestToTengoObj() (tengo.Object, error) {
 }
 
 func newAssetWrapper() tengo.CallableFunc {
-	typeURLs := knownTypeURLs()
 	return func(args ...tengo.Object) (tengo.Object, error) {
 		if len(args) != 1 {
 			return nil, tengo.ErrWrongNumArguments
@@ -119,7 +116,7 @@ func newAssetWrapper() tengo.CallableFunc {
 			}
 		}
 
-		return newAsset(typeURLs, typ)
+		return newAsset(typ)
 	}
 }
 
@@ -138,12 +135,31 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 			}
 		}
 
-		var ast v1beta2.Asset
-		if err := structmap.AsStruct(m, &ast); err != nil {
-			return nil, fmt.Errorf("emit asset: %w", err)
+		// Extract known fields from the map to build an Entity
+		urn, _ := m["urn"].(string)
+		typ, _ := m["type"].(string)
+		name, _ := m["name"].(string)
+		source, _ := m["service"].(string)
+
+		// Everything else goes into properties
+		props := make(map[string]interface{})
+		for k, v := range m {
+			switch k {
+			case "urn", "type", "name", "service":
+				// already handled
+			default:
+				props[k] = v
+			}
 		}
 
-		emit(models.NewRecord(&ast))
+		entity := models.NewEntity(urn, typ, name, source, props)
+
+		// Set description if present
+		if desc, ok := m["description"].(string); ok && desc != "" {
+			entity.Description = desc
+		}
+
+		emit(models.NewRecord(entity))
 
 		return tengo.UndefinedValue, nil
 	}
@@ -263,20 +279,17 @@ func executeRequestWrapper(ctx context.Context, concurrency int, executeRequest 
 	}
 }
 
-func newAsset(typeURLs map[string]string, typ string) (tengo.Object, error) {
-	u, ok := typeURLs[typ]
-	if !ok {
-		return nil, fmt.Errorf("new asset: unexpected type: %s", typ)
+func newAsset(typ string) (tengo.Object, error) {
+	if typ == "" {
+		return nil, fmt.Errorf("new asset: type must not be empty")
 	}
 
 	return &tengo.Map{
 		Value: map[string]tengo.Object{
-			"type": &tengo.String{Value: typ},
-			"data": &tengo.Map{
-				Value: map[string]tengo.Object{
-					"@type": &tengo.String{Value: u},
-				},
-			},
+			"type":    &tengo.String{Value: typ},
+			"data":    &tengo.Map{Value: map[string]tengo.Object{}},
+			"lineage": &tengo.Map{Value: map[string]tengo.Object{}},
+			"labels":  &tengo.Map{Value: map[string]tengo.Object{}},
 		},
 	}, nil
 }
@@ -299,49 +312,3 @@ func argsToRequestConfigs(args []tengo.Object, validate *validator.Validate) ([]
 	return reqs, nil
 }
 
-func knownTypeURLs() map[string]string {
-	typeURLs := make(map[string]string, 12)
-	for _, typ := range []string{
-		"bucket", "dashboard", "experiment", "feature_table", "group",
-		"job", "metric", "model", "application", "table", "topic", "user",
-	} {
-		typeURLs[typ] = typeURL(typ)
-	}
-	return typeURLs
-}
-
-func typeURL(typ string) string {
-	const prefix = "type.googleapis.com/"
-
-	var msg proto.Message
-	switch typ {
-	case "bucket":
-		msg = &v1beta2.Bucket{}
-	case "dashboard":
-		msg = &v1beta2.Dashboard{}
-	case "experiment":
-		msg = &v1beta2.Experiment{}
-	case "feature_table":
-		msg = &v1beta2.FeatureTable{}
-	case "group":
-		msg = &v1beta2.Group{}
-	case "job":
-		msg = &v1beta2.Job{}
-	case "metric":
-		msg = &v1beta2.Metric{}
-	case "model":
-		msg = &v1beta2.Model{}
-	case "application":
-		msg = &v1beta2.Application{}
-	case "table":
-		msg = &v1beta2.Table{}
-	case "topic":
-		msg = &v1beta2.Topic{}
-	case "user":
-		msg = &v1beta2.User{}
-	default:
-		panic(fmt.Errorf("unexpected type name: %s", typ))
-	}
-
-	return prefix + (string)(msg.ProtoReflect().Descriptor().FullName())
-}

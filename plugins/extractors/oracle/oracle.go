@@ -7,15 +7,13 @@ import (
 	"fmt"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	_ "github.com/sijms/go-ora/v2"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var summary string
@@ -130,7 +128,7 @@ func (*Extractor) getUserName(ctx context.Context, db *sql.DB) (string, error) {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, error) {
 	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
 		return nil, err
@@ -154,28 +152,25 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		return nil, fmt.Errorf("scan row count: %w", err)
 	}
 
-	table, err := anypb.New(&v1beta2.Table{
-		Columns: columns,
-		Profile: &v1beta2.TableProfile{
-			TotalRows: rowCount,
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
+	props := map[string]interface{}{
+		"columns": columns,
 	}
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-		Name:    tableName,
-		Service: "Oracle",
-		Type:    "table",
-		Data:    table,
-	}, nil
+	if rowCount > 0 {
+		props["profile"] = map[string]interface{}{
+			"total_rows": rowCount,
+		}
+	}
+
+	return models.NewEntity(
+		models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
+		"table", tableName, "Oracle",
+		props,
+	), nil
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
-	sqlStr := `select utc.column_name, utc.data_type, 
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]interface{}, error) {
+	sqlStr := `select utc.column_name, utc.data_type,
 			decode(utc.char_used, 'C', utc.char_length, utc.data_length) as data_length,
 			utc.nullable, nvl(ucc.comments, '') as col_comment
 			from USER_TAB_COLUMNS utc
@@ -190,7 +185,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var fieldDesc sql.NullString
@@ -200,13 +195,18 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 			continue
 		}
 
-		result = append(result, &v1beta2.Column{
-			Name:        fieldName,
-			DataType:    dataType,
-			Description: fieldDesc.String,
-			IsNullable:  isNullable(isNullableString),
-			Length:      int64(length),
-		})
+		col := map[string]interface{}{
+			"name":        fieldName,
+			"data_type":   dataType,
+			"is_nullable": isNullable(isNullableString),
+		}
+		if fieldDesc.String != "" {
+			col["description"] = fieldDesc.String
+		}
+		if length != 0 {
+			col["length"] = int64(length)
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over query results: %w", err)

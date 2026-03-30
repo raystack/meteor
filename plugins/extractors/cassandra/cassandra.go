@@ -6,12 +6,9 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/gocql/gocql"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins/sqlutil"
 
 	"github.com/raystack/meteor/plugins"
@@ -166,36 +163,25 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 
 // processTable build and push table to out channel
 func (e *Extractor) processTable(keyspace string, tableName string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(keyspace, tableName)
+	columns, err := e.extractColumns(keyspace, tableName)
 	if err != nil {
 		return errors.Wrap(err, "failed to extract columns")
 	}
 
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-	}
-
 	// push table to channel
-	e.emit(models.NewRecord(&v1beta2.Asset{
-		Urn:     models.NewURN(service, e.UrnScope, "table", fmt.Sprintf("%s.%s", keyspace, tableName)),
-		Name:    tableName,
-		Service: service,
-		Data:    table,
-		Type:    "table",
-	}))
+	e.emit(models.NewRecord(models.NewEntity(
+		models.NewURN(service, e.UrnScope, "table", fmt.Sprintf("%s.%s", keyspace, tableName)),
+		"table", tableName, service,
+		map[string]interface{}{"columns": columns},
+	)))
 
 	return
 }
 
 // extractColumns extract columns from a given table
-func (e *Extractor) extractColumns(keyspace string, tableName string) (columns []*v1beta2.Column, err error) {
-	query := `SELECT column_name, type 
-              FROM system_schema.columns 
+func (e *Extractor) extractColumns(keyspace string, tableName string) (columns []interface{}, err error) {
+	query := `SELECT column_name, type
+              FROM system_schema.columns
               WHERE keyspace_name = ?
               AND table_name = ?`
 	scanner := e.session.
@@ -210,9 +196,9 @@ func (e *Extractor) extractColumns(keyspace string, tableName string) (columns [
 			continue
 		}
 
-		columns = append(columns, &v1beta2.Column{
-			Name:     fieldName,
-			DataType: dataType,
+		columns = append(columns, map[string]interface{}{
+			"name":      fieldName,
+			"data_type": dataType,
 		})
 	}
 

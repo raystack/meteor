@@ -10,13 +10,10 @@ import (
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -130,33 +127,23 @@ func (e *Extractor) extractTables(ctx context.Context, dbName string) (err error
 
 // Build and push document to output channel
 func (e *Extractor) processTable(ctx context.Context, dbName string, docID string) (err error) {
-	var columns []*v1beta2.Column
-	columns, err = e.extractColumns(ctx, docID)
+	columns, err := e.extractColumns(ctx, docID)
 	if err != nil {
 		return
 	}
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		return err
-	}
+
 	// push table to channel
-	e.emit(models.NewRecord(&v1beta2.Asset{
-		Urn:     models.NewURN("couchdb", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, docID)),
-		Name:    docID,
-		Type:    "table",
-		Service: "couchdb",
-		Data:    table,
-	}))
+	e.emit(models.NewRecord(models.NewEntity(
+		models.NewURN("couchdb", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, docID)),
+		"table", docID, "couchdb",
+		map[string]interface{}{"columns": columns},
+	)))
 
 	return
 }
 
 // Extract columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []*v1beta2.Column, err error) {
+func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns []interface{}, err error) {
 	size, rev, err := e.db.GetMeta(ctx, docID)
 	if err != nil {
 		return
@@ -173,12 +160,17 @@ func (e *Extractor) extractColumns(ctx context.Context, docID string) (columns [
 			continue
 		}
 
-		columns = append(columns, &v1beta2.Column{
-			Name:        k,
-			DataType:    reflect.ValueOf(fields[k]).Kind().String(),
-			Description: rev,
-			Length:      size,
-		})
+		col := map[string]interface{}{
+			"name":      k,
+			"data_type": reflect.ValueOf(fields[k]).Kind().String(),
+		}
+		if rev != "" {
+			col["description"] = rev
+		}
+		if size != 0 {
+			col["length"] = size
+		}
+		columns = append(columns, col)
 	}
 	return
 }

@@ -12,13 +12,10 @@ import (
 
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -91,37 +88,25 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	}
 
 	for _, dashboard := range dashboards {
-		data, err := e.buildDashboard(dashboard)
-		if err != nil {
-			return fmt.Errorf("build dashboard: %w", err)
-		}
-		emit(models.NewRecord(data))
+		record := e.buildDashboard(dashboard)
+		emit(record)
 	}
 
 	return nil
 }
 
-// buildDashboard builds a dashboard from redash server
-func (e *Extractor) buildDashboard(dashboard Results) (*v1beta2.Asset, error) {
+// buildDashboard builds a dashboard record from redash server
+func (e *Extractor) buildDashboard(dashboard Results) models.Record {
 	dashboardUrn := models.NewURN("redash", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.Id))
 
-	data, err := anypb.New(&v1beta2.Dashboard{
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"user_id": dashboard.UserId,
-			"version": dashboard.Version,
-			"slug":    dashboard.Slug,
-		}),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
+	props := map[string]interface{}{
+		"user_id": dashboard.UserId,
+		"version": dashboard.Version,
+		"slug":    dashboard.Slug,
 	}
-	return &v1beta2.Asset{
-		Urn:     dashboardUrn,
-		Name:    dashboard.Name,
-		Service: "redash",
-		Type:    "dashboard",
-		Data:    data,
-	}, nil
+
+	entity := models.NewEntity(dashboardUrn, "dashboard", dashboard.Name, "redash", props)
+	return models.NewRecord(entity)
 }
 
 // getDashboardsList gets a list of dashboards from redash server

@@ -12,10 +12,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/registry"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/plugins"
 	log "github.com/raystack/salt/observability/logger"
@@ -85,7 +83,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	return
 }
 
-func (e *Extractor) buildTable(filePath string) (asset *v1beta2.Asset, err error) {
+func (e *Extractor) buildTable(filePath string) (entity *meteorv1beta1.Entity, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		err = errors.New("unable to open the csv file")
@@ -103,22 +101,12 @@ func (e *Extractor) buildTable(filePath string) (asset *v1beta2.Asset, err error
 		return
 	}
 
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    e.buildColumns(content),
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		return
-	}
 	fileName := stat.Name()
-	asset = &v1beta2.Asset{
-		Urn:     models.NewURN("csv", e.UrnScope, "file", fileName),
-		Name:    fileName,
-		Service: "csv",
-		Type:    "table",
-		Data:    table,
-	}
+	entity = models.NewEntity(
+		models.NewURN("csv", e.UrnScope, "file", fileName),
+		"table", fileName, "csv",
+		map[string]interface{}{"columns": e.buildColumns(content)},
+	)
 	return
 }
 
@@ -128,11 +116,10 @@ func (e *Extractor) readCSVFile(r io.Reader) (columns []string, err error) {
 	return reader.Read()
 }
 
-func (e *Extractor) buildColumns(csvColumns []string) (result []*v1beta2.Column) {
+func (e *Extractor) buildColumns(csvColumns []string) []interface{} {
+	var result []interface{}
 	for _, singleColumn := range csvColumns {
-		result = append(result, &v1beta2.Column{
-			Name: singleColumn,
-		})
+		result = append(result, map[string]interface{}{"name": singleColumn})
 	}
 	return result
 }

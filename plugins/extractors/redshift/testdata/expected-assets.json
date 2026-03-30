@@ -1,142 +1,82 @@
 [
     {
         "create_time": null,
-        "data": {
-            "@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-            "attributes": {},
+        "description": "",
+        "name": "sql_features",
+        "properties": {
             "columns": [
                 {
-                    "attributes": null,
-                    "columns": [],
                     "data_type": "character_data",
                     "description": "description",
                     "is_nullable": false,
-                    "length": "123",
-                    "name": "column_name",
-                    "profile": null
+                    "length": 123,
+                    "name": "column_name"
                 }
-            ],
-            "create_time": null,
-            "preview_fields": [],
-            "preview_rows": null,
-            "profile": null,
-            "update_time": null
+            ]
         },
-        "description": "",
-        "event": null,
-        "labels": {},
-        "lineage": null,
-        "name": "sql_features",
-        "owners": [],
-        "service": "redshift",
+        "source": "redshift",
         "type": "table",
         "update_time": null,
-        "url": "",
         "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.dev.sql_features"
     },
     {
         "create_time": null,
-        "data": {
-            "@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-            "attributes": {},
+        "description": "",
+        "name": "sql_features_info",
+        "properties": {
             "columns": [
                 {
-                    "attributes": null,
-                    "columns": [],
                     "data_type": "character_data",
                     "description": "description",
                     "is_nullable": false,
-                    "length": "123",
-                    "name": "column_name",
-                    "profile": null
+                    "length": 123,
+                    "name": "column_name"
                 }
-            ],
-            "create_time": null,
-            "preview_fields": [],
-            "preview_rows": null,
-            "profile": null,
-            "update_time": null
+            ]
         },
-        "description": "",
-        "event": null,
-        "labels": {},
-        "lineage": null,
-        "name": "sql_features_info",
-        "owners": [],
-        "service": "redshift",
+        "source": "redshift",
         "type": "table",
         "update_time": null,
-        "url": "",
         "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.dev.sql_features_info"
     },
     {
         "create_time": null,
-        "data": {
-            "@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-            "attributes": {},
+        "description": "",
+        "name": "sql_features",
+        "properties": {
             "columns": [
                 {
-                    "attributes": null,
-                    "columns": [],
                     "data_type": "character_data",
                     "description": "description",
                     "is_nullable": false,
-                    "length": "123",
-                    "name": "column_name",
-                    "profile": null
+                    "length": 123,
+                    "name": "column_name"
                 }
-            ],
-            "create_time": null,
-            "preview_fields": [],
-            "preview_rows": null,
-            "profile": null,
-            "update_time": null
+            ]
         },
-        "description": "",
-        "event": null,
-        "labels": {},
-        "lineage": null,
-        "name": "sql_features",
-        "owners": [],
-        "service": "redshift",
+        "source": "redshift",
         "type": "table",
         "update_time": null,
-        "url": "",
         "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.test.sql_features"
     },
     {
         "create_time": null,
-        "data": {
-            "@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-            "attributes": {},
+        "description": "",
+        "name": "sql_features_info",
+        "properties": {
             "columns": [
                 {
-                    "attributes": null,
-                    "columns": [],
                     "data_type": "character_data",
                     "description": "description",
                     "is_nullable": false,
-                    "length": "123",
-                    "name": "column_name",
-                    "profile": null
+                    "length": 123,
+                    "name": "column_name"
                 }
-            ],
-            "create_time": null,
-            "preview_fields": [],
-            "preview_rows": null,
-            "profile": null,
-            "update_time": null
+            ]
         },
-        "description": "",
-        "event": null,
-        "labels": {},
-        "lineage": null,
-        "name": "sql_features_info",
-        "owners": [],
-        "service": "redshift",
+        "source": "redshift",
         "type": "table",
         "update_time": null,
-        "url": "",
         "urn": "urn:redshift:some-cluster-id:table:some-cluster-id.test.sql_features_info"
     }
 ]

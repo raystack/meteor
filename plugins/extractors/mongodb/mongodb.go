@@ -7,11 +7,9 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -139,30 +137,26 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 }
 
 // Build table metadata model from a collection
-func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (table *v1beta2.Asset, err error) {
+func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collectionName string) (entity *meteorv1beta1.Entity, err error) {
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
 		err = errors.Wrap(err, "failed to fetch total no of rows")
 		return
 	}
-	data, err := anypb.New(&v1beta2.Table{
-		Profile: &v1beta2.TableProfile{
-			TotalRows: totalRows,
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to build Any struct")
+
+	props := map[string]interface{}{}
+	if totalRows > 0 {
+		props["profile"] = map[string]interface{}{
+			"total_rows": totalRows,
+		}
 	}
-	//
-	table = &v1beta2.Asset{
-		Urn:     models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
-		Name:    collectionName,
-		Service: "mongodb",
-		Type:    "table",
-		Data:    data,
-	}
+
+	entity = models.NewEntity(
+		models.NewURN("mongodb", e.UrnScope, "collection", fmt.Sprintf("%s.%s", db.Name(), collectionName)),
+		"table", collectionName, "mongodb",
+		props,
+	)
 
 	return
 }

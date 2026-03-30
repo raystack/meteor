@@ -12,12 +12,12 @@ import (
 
 	"github.com/dnaeon/go-vcr/v2/recorder"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	h "github.com/raystack/meteor/plugins/sinks/http"
 	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -197,46 +197,46 @@ func TestSink(t *testing.T) {
 }
 
 func getExpectedVal(t *testing.T) []models.Record {
-	table1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "SomeStr",
-				DataType: "text",
+	props1, err := structpb.NewStruct(map[string]interface{}{
+		"columns": []interface{}{
+			map[string]interface{}{
+				"name":      "SomeStr",
+				"data_type": "text",
 			},
 		},
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 1,
+		"profile": map[string]interface{}{
+			"total_rows": float64(1),
 		},
 	})
 	if err != nil {
-		t.Fatal("error creating Any struct for test: %w", err)
+		t.Fatal("error creating properties for test:", err)
 	}
-	table2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "SomeStr",
-				DataType: "text",
+	props2, err := structpb.NewStruct(map[string]interface{}{
+		"columns": []interface{}{
+			map[string]interface{}{
+				"name":      "SomeStr",
+				"data_type": "text",
 			},
 		},
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 1,
+		"profile": map[string]interface{}{
+			"total_rows": float64(1),
 		},
 	})
 	if err != nil {
-		t.Fatal("error creating Any struct for test: %w", err)
+		t.Fatal("error creating properties for test:", err)
 	}
 	return []models.Record{
-		models.NewRecord(&v1beta2.Asset{
-			Urn:  "elasticsearch.index1",
-			Name: "index1",
-			Type: "table",
-			Data: table1,
+		models.NewRecord(&meteorv1beta1.Entity{
+			Urn:        "elasticsearch.index1",
+			Name:       "index1",
+			Type:       "table",
+			Properties: props1,
 		}),
-		models.NewRecord(&v1beta2.Asset{
-			Urn:  "elasticsearch.index2",
-			Name: "index2",
-			Type: "table",
-			Data: table2,
+		models.NewRecord(&meteorv1beta1.Entity{
+			Urn:        "elasticsearch.index2",
+			Name:       "index2",
+			Type:       "table",
+			Properties: props2,
 		}),
 	}
 }

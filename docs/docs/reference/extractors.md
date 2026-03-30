@@ -50,7 +50,6 @@ that particular extractor can be found by visiting the link in the `type` field.
 | Type                      | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
 | :------------------------ | :---- | :------- | :------- | :---- | :------- | :----------- | :------- | :---------- | :----- | :----- |
 | [`github`][github-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✗           | ✗      | ✗      |
-| [`frontier`][frontier-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✅          | ✅     | ✗      |
 | [`gsuite`][gsuite-readme] | ✅    | ✗        | ✅       | ✗     | ✅       | ✅           | ✗        | ✗           | ✗      | ✗      |
 
 ### Bucket
@@ -65,23 +64,11 @@ that particular extractor can be found by visiting the link in the `type` field.
 | :-------------------------- | :-------- | :-------- | :---------- | :----- | --- |
 | [`optimus`][optimus-readme] | ✅        | ✅        | ✅          | ✅     | ✅  |
 
-### Machine Learning Feature Table
-
-| Type                                | Ownership | Upstreams | Downstreams | Custom |
-| :---------------------------------- | :-------- | :-------- | :---------- | :----- |
-| [`caramlstore`][caramlstore-readme] | ✗         | ✅        | ✗           | ✅     |
-
 ### Application
 
 | Type                                          | Ownership | Upstreams | Downstreams | Custom |
 | :-------------------------------------------- | :-------- | :-------- | :---------- | :----- | --- |
 | [`application_yaml`][application-yaml-readme] | ✅        | ✅        | ✅          | ✅     | ✅  |
-
-### Machine Learning Model
-
-| Type                      | Ownership | Upstreams | Downstreams | Custom |
-| :------------------------ | :-------- | :-------- | :---------- | :----- | --- |
-| [`merlin`][merlin-readme] | ✅        | ✅        | ✗           | ✅     | ✅  |
 
 ### Generic
 
@@ -117,11 +104,8 @@ of asset.
 [tableau-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/tableau/README.md
 [kafka-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/kafka/README.md
 [github-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/github/README.md
-[frontier-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/frontier/README.md
 [gsuite-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gsuite/README.md
 [gcs-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gcs/README.md
 [optimus-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/optimus/README.md
-[caramlstore-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/caramlstore/README.md
 [application-yaml-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/application_yaml/README.md
-[merlin-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/merlin/README.md
 [http-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/http/README.md

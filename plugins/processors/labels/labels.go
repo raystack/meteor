@@ -5,10 +5,10 @@ import (
 	_ "embed"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -59,30 +59,37 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) (err error)
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
-	result, err := p.process(src)
-	if err != nil {
-		return src, err
+	entity := src.Entity()
+
+	// Get current properties as map
+	var propMap map[string]interface{}
+	if entity.GetProperties() != nil {
+		propMap = entity.GetProperties().AsMap()
+	}
+	if propMap == nil {
+		propMap = make(map[string]interface{})
 	}
 
-	return models.NewRecord(result), nil
-}
-
-func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
-	asset := record.Data()
-
-	labels := asset.Labels
+	// Get existing labels or create new map
+	labels, _ := propMap["labels"].(map[string]interface{})
 	if labels == nil {
-		labels = make(map[string]string)
+		labels = make(map[string]interface{})
 	}
 
-	// update labels using value from config
+	// Merge config labels
 	for key, value := range p.config.Labels {
 		labels[key] = value
 	}
+	propMap["labels"] = labels
 
-	asset.Labels = labels
+	// Set back
+	newProps, err := structpb.NewStruct(propMap)
+	if err != nil {
+		return src, err
+	}
+	entity.Properties = newProps
 
-	return asset, nil
+	return models.NewRecord(entity, src.Edges()...), nil
 }
 
 func init() {

@@ -107,9 +107,8 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			asset := record.Data()
-			urns = append(urns, asset.Urn)
-
+			entity := record.Entity()
+			urns = append(urns, entity.Urn)
 		}
 		assert.Equal(t, 30, len(urns))
 	})

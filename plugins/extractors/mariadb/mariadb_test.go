@@ -111,9 +111,8 @@ func TestExtract(t *testing.T) {
 
 		var urns []string
 		for _, record := range emitter.Get() {
-			table := record.Data()
-			urns = append(urns, table.Urn)
-
+			entity := record.Entity()
+			urns = append(urns, entity.Urn)
 		}
 
 		assert.Equal(t, []string{

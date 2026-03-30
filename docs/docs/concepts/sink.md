@@ -61,19 +61,6 @@ sinks:
 
 Sinks metadata to a file in `json/yaml` format as per the config defined.
 
-* **Frontier**
-
-```yaml
-sinks:
-  - name: frontier
-    config:
-      host: frontier.example.com
-      headers:
-        X-Frontier-Email: meteor@raystack.io
-```
-
-Upsert users to a Frontier service. Request will be sent via GRPC.
-
 * **Google Cloud Storage**
 
 ```yaml

@@ -11,14 +11,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/grafana"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,82 +59,65 @@ func TestInit(t *testing.T) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
-		data1, err := anypb.New(&v1beta2.Dashboard{
-			Charts: []*v1beta2.Chart{
-				{
-					Urn:             "urn:grafana:test-grafana:panel:HzK8qNW7z.2",
-					Name:            "Panel Title",
-					Type:            "timeseries",
-					Source:          "grafana",
-					Description:     "",
-					Url:             fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy?viewPanel=2", testServer.URL),
-					DataSource:      "",
-					RawQuery:        "",
-					DashboardUrn:    "grafana.HzK8qNW7z",
-					DashboardSource: "grafana",
+		expected := []*meteorv1beta1.Entity{
+			models.NewEntity(
+				"urn:grafana:test-grafana:dashboard:HzK8qNW7z",
+				"dashboard",
+				"new-dashboard-copy",
+				"grafana",
+				map[string]interface{}{
+					"url": fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+					"charts": []interface{}{
+						map[string]interface{}{
+							"urn":              "urn:grafana:test-grafana:panel:HzK8qNW7z.2",
+							"name":             "Panel Title",
+							"type":             "timeseries",
+							"source":           "grafana",
+							"url":              fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy?viewPanel=2", testServer.URL),
+							"dashboard_urn":    "grafana.HzK8qNW7z",
+							"dashboard_source": "grafana",
+						},
+					},
 				},
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal("error creating Any struct for test: %w", err)
-		}
-		data2, err := anypb.New(&v1beta2.Dashboard{
-			Charts: []*v1beta2.Chart{
-				{
-					Urn:             "urn:grafana:test-grafana:panel:5WsKOvW7z.4",
-					Name:            "Panel Random",
-					Type:            "table",
-					Source:          "grafana",
-					Description:     "random description for this panel",
-					Url:             fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated?viewPanel=4", testServer.URL),
-					DataSource:      "postgres",
-					RawQuery:        "SELECT\n  urn,\n  created_at AS \"time\"\nFROM resources\nORDER BY 1",
-					DashboardUrn:    "grafana.5WsKOvW7z",
-					DashboardSource: "grafana",
+			),
+			models.NewEntity(
+				"urn:grafana:test-grafana:dashboard:5WsKOvW7z",
+				"dashboard",
+				"test-dashboard-updated",
+				"grafana",
+				map[string]interface{}{
+					"url":         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
+					"description": "this is description for testing",
+					"charts": []interface{}{
+						map[string]interface{}{
+							"urn":              "urn:grafana:test-grafana:panel:5WsKOvW7z.4",
+							"name":             "Panel Random",
+							"type":             "table",
+							"source":           "grafana",
+							"description":      "random description for this panel",
+							"url":              fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated?viewPanel=4", testServer.URL),
+							"data_source":      "postgres",
+							"raw_query":        "SELECT\n  urn,\n  created_at AS \"time\"\nFROM resources\nORDER BY 1",
+							"dashboard_urn":    "grafana.5WsKOvW7z",
+							"dashboard_source": "grafana",
+						},
+						map[string]interface{}{
+							"urn":              "urn:grafana:test-grafana:panel:5WsKOvW7z.2",
+							"name":             "Panel Title",
+							"type":             "timeseries",
+							"source":           "grafana",
+							"url":              fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated?viewPanel=2", testServer.URL),
+							"dashboard_urn":    "grafana.5WsKOvW7z",
+							"dashboard_source": "grafana",
+						},
+					},
 				},
-				{
-					Urn:             "urn:grafana:test-grafana:panel:5WsKOvW7z.2",
-					Name:            "Panel Title",
-					Type:            "timeseries",
-					Source:          "grafana",
-					Description:     "",
-					Url:             fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated?viewPanel=2", testServer.URL),
-					DataSource:      "",
-					RawQuery:        "",
-					DashboardUrn:    "grafana.5WsKOvW7z",
-					DashboardSource: "grafana",
-				},
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal("error creating Any struct for test: %w", err)
-		}
-		expected := []*v1beta2.Asset{
-			{
-				Urn:         "urn:grafana:test-grafana:dashboard:HzK8qNW7z",
-				Name:        "new-dashboard-copy",
-				Service:     "grafana",
-				Url:         fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
-				Description: "",
-				Type:        "dashboard",
-				Data:        data1,
-			},
-			{
-				Urn:         "urn:grafana:test-grafana:dashboard:5WsKOvW7z",
-				Name:        "test-dashboard-updated",
-				Service:     "grafana",
-				Url:         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
-				Description: "this is description for testing",
-				Type:        "dashboard",
-				Data:        data2,
-			},
+			),
 		}
 
 		ctx := context.TODO()
 		extractor := grafana.New(utils.Logger)
-		err = extractor.Init(ctx, plugins.Config{
+		err := extractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,
 			RawConfig: map[string]interface{}{
 				"base_url": testServer.URL,
@@ -151,7 +132,7 @@ func TestExtract(t *testing.T) {
 		err = extractor.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
+		utils.AssertEqualProtos(t, expected, emitter.GetAllEntities())
 	})
 }
 
@@ -489,7 +470,7 @@ func NewTestServer() *httptest.Server {
 					"enable": true,
 					"hide": true,
 					"iconColor": "rgba(0, 211, 255, 1)",
-					"name": "Annotations \u0026 Alerts",
+					"name": "Annotations & Alerts",
 					"type": "dashboard"
 				  }
 				]

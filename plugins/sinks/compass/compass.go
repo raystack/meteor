@@ -1,32 +1,21 @@
 package compass
 
-type RequestPayload struct {
-	Asset       Asset           `json:"asset"`
-	Upstreams   []LineageRecord `json:"upstreams"`
-	Downstreams []LineageRecord `json:"downstreams"`
+// UpsertEntityRequest is the payload for Compass v2 UpsertEntity endpoint.
+type UpsertEntityRequest struct {
+	URN         string                 `json:"urn"`
+	Type        string                 `json:"type"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description,omitempty"`
+	Source      string                 `json:"source"`
+	Properties  map[string]interface{} `json:"properties,omitempty"`
+	Upstreams   []string               `json:"upstreams,omitempty"`
+	Downstreams []string               `json:"downstreams,omitempty"`
 }
 
-type Asset struct {
-	URN         string            `json:"urn"`
-	Type        string            `json:"type"`
-	Name        string            `json:"name"`
-	Service     string            `json:"service"`
-	Description string            `json:"description"`
-	URL         string            `json:"url"`
-	Owners      []Owner           `json:"owners"`
-	Data        interface{}       `json:"data"`
-	Labels      map[string]string `json:"labels"`
-}
-
-type LineageRecord struct {
-	URN     string `json:"urn"`
-	Type    string `json:"type"`
-	Service string `json:"service"`
-}
-
-type Owner struct {
-	URN   string `json:"urn"`
-	Name  string `json:"name"`
-	Role  string `json:"role"`
-	Email string `json:"email"`
+// UpsertEdgeRequest is the payload for Compass v2 UpsertEdge endpoint.
+type UpsertEdgeRequest struct {
+	SourceURN string `json:"source_urn"`
+	TargetURN string `json:"target_urn"`
+	Type      string `json:"type"`
+	Source    string `json:"source"`
 }

@@ -13,14 +13,13 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/test/mocks"
 	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const urnScope = "test-http"
@@ -172,7 +171,7 @@ func TestExtract(t *testing.T) {
 		name        string
 		rawCfg      map[string]interface{}
 		handler     func(t *testing.T, w http.ResponseWriter, r *http.Request)
-		expected    []*v1beta2.Asset
+		expected    []*meteorv1beta1.Entity
 		expectedErr string
 	}{
 		{
@@ -381,28 +380,32 @@ func TestExtract(t *testing.T) {
 					`{"manager_name":"Gabbi Champain","terminated":"false","fullname":"Van Stump","location_name":"Morocco","work_email":"vstump0@pcworld.com","supervisory_org_id":"1863d11c-fb86-4dbd-aa17-a53cbbaf3e9c","supervisory_org_name":"Research and Development","business_title":"General Manager","company_name":"Erdman Group","cost_center_id":"d6b470d8-e1ed-43ee-ab43-a645e607cf81","cost_center_name":"Sales","employee_id":"395f8292-d48b-431b-9e2d-63b3dcd4b986","manager_id":"496a320c-3c0a-4c0d-9658-a4f1dbbae20d","location_id":"MA","termination_date":null,"company_id":"8560f69c-11ef-42d4-b57e-8b8eacf32f9f","legal_first_name":"Van","manager_email":"vgchampain1@dot.gov","legal_last_name":"Stump"}`,
 				)
 			},
-			expected: []*v1beta2.Asset{{
-				Urn:     "urn:my_usr_svc:test-http:user:395f8292-d48b-431b-9e2d-63b3dcd4b986",
-				Name:    "Van Stump",
-				Service: "my_usr_svc",
-				Type:    "user",
-				Data: testutils.BuildAny(t, &v1beta2.User{
-					FirstName:    "Van",
-					LastName:     "Stump",
-					FullName:     "Van Stump",
-					DisplayName:  "Van Stump",
-					Email:        "vstump0@pcworld.com",
-					Title:        "General Manager",
-					ManagerEmail: "vgchampain1@dot.gov",
-					Status:       "active",
-					Username:     "395f8292-d48b-431b-9e2d-63b3dcd4b986",
-					Attributes: &structpb.Struct{Fields: map[string]*structpb.Value{
-						"cost_center_id":       structpb.NewStringValue("d6b470d8-e1ed-43ee-ab43-a645e607cf81"),
-						"location_id":          structpb.NewStringValue("MA"),
-						"manager_id":           structpb.NewStringValue("496a320c-3c0a-4c0d-9658-a4f1dbbae20d"),
-						"supervisory_org_name": structpb.NewStringValue("Research and Development"),
-					}},
-				}),
+			expected: []*meteorv1beta1.Entity{{
+				Urn:    "urn:my_usr_svc:test-http:user:395f8292-d48b-431b-9e2d-63b3dcd4b986",
+				Name:   "Van Stump",
+				Source: "my_usr_svc",
+				Type:   "user",
+				Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
+					"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"first_name":    structpb.NewStringValue("Van"),
+						"last_name":     structpb.NewStringValue("Stump"),
+						"full_name":     structpb.NewStringValue("Van Stump"),
+						"display_name":  structpb.NewStringValue("Van Stump"),
+						"email":         structpb.NewStringValue("vstump0@pcworld.com"),
+						"title":         structpb.NewStringValue("General Manager"),
+						"manager_email": structpb.NewStringValue("vgchampain1@dot.gov"),
+						"status":        structpb.NewStringValue("active"),
+						"username":      structpb.NewStringValue("395f8292-d48b-431b-9e2d-63b3dcd4b986"),
+						"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+							"cost_center_id":       structpb.NewStringValue("d6b470d8-e1ed-43ee-ab43-a645e607cf81"),
+							"location_id":          structpb.NewStringValue("MA"),
+							"manager_id":           structpb.NewStringValue("496a320c-3c0a-4c0d-9658-a4f1dbbae20d"),
+							"supervisory_org_name": structpb.NewStringValue("Research and Development"),
+						}}),
+					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+				}},
 			}},
 		},
 		{
@@ -501,78 +504,86 @@ func TestExtract(t *testing.T) {
 					`{"project":"sauron","entities":[{"spec":{"name":"merchant_uuid","value_type":"STRING","description":"merchant uuid"},"meta":{"created_timestamp":"2022-08-08T03:17:51Z","last_updated_timestamp":"2022-08-08T03:17:51Z"}},{"spec":{"name":"booking_hour","value_type":"STRING","description":"Booking creation hour"},"meta":{"created_timestamp":"2022-08-08T03:17:51Z","last_updated_timestamp":"2022-08-08T03:17:51Z"}},{"spec":{"name":"day_of_week","value_type":"STRING","description":"Booking Day of Week"},"meta":{"created_timestamp":"2022-08-08T03:17:51Z","last_updated_timestamp":"2022-08-08T03:17:51Z"}},{"spec":{"name":"meal_id","value_type":"STRING","description":"Mealtime Identifier"},"meta":{"created_timestamp":"2022-08-08T03:17:51Z","last_updated_timestamp":"2022-08-08T03:17:51Z"}},{"spec":{"name":"t3_distance_bucket","value_type":"STRING","description":"T3 Distance Bucket"},"meta":{"created_timestamp":"2022-08-08T03:17:51Z","last_updated_timestamp":"2022-08-08T03:17:51Z"}},{"spec":{"name":"destination_s2id_12","value_type":"STRING","description":"Destination s2id_12"},"meta":{"created_timestamp":"2022-09-02T08:28:33Z","last_updated_timestamp":"2022-09-02T08:28:33Z"}},{"spec":{"name":"service_area_id","value_type":"STRING","description":"the id of gofood service area"},"meta":{"created_timestamp":"2022-09-14T03:10:45Z","last_updated_timestamp":"2022-09-14T03:10:45Z"}},{"spec":{"name":"item_uuid","value_type":"STRING","description":"item uuid"},"meta":{"created_timestamp":"2022-09-17T15:14:13Z","last_updated_timestamp":"2022-09-17T15:14:13Z"}}],"tables":[{"spec":{"name":"merchant_uuid_t2_discovery","entities":["merchant_uuid"],"features":[{"name":"avg_t2_merchant_3d","value_type":"DOUBLE"},{"name":"avg_t2_merchant_1d","value_type":"DOUBLE"},{"name":"avg_merchant_price","value_type":"DOUBLE"},{"name":"avg_t2_same_hour_merchant_1m","value_type":"DOUBLE"},{"name":"avg_t2_merchant_1w","value_type":"DOUBLE"},{"name":"avg_gmv_merchant_1w","value_type":"DOUBLE"},{"name":"avg_gmv_merchant_1d","value_type":"DOUBLE"},{"name":"merch_demand_same_hour_1m","value_type":"DOUBLE"},{"name":"avg_t2_merchant_3h","value_type":"DOUBLE"},{"name":"t2_discovery","value_type":"DOUBLE"},{"name":"avg_gmv_merchant_3h","value_type":"DOUBLE"},{"name":"avg_gmv_merchant_1m","value_type":"DOUBLE"},{"name":"avg_gmv_same_hour_merchant_1m","value_type":"DOUBLE"},{"name":"avg_t2_merchant_1m","value_type":"DOUBLE"}],"max_age":"7200s","batch_source":{"type":"BATCH_BIGQUERY","event_timestamp_column":"event_timestamp","bigquery_options":{"table_ref":"celestial-dragons-staging:feast.merchant_uuid_t2_discovery"}},"online_store":{"name":"bigtable","type":"BIGTABLE"}},"meta":{"created_timestamp":"2022-08-08T03:17:54Z","last_updated_timestamp":"2022-08-08T03:17:54Z","hash":"1227ba57"}},{"spec":{"name":"avg_dispatch_arrival_time_10_mins","entities":["merchant_uuid"],"features":[{"name":"ongoing_placed_and_waiting_acceptance_orders","value_type":"INT64"},{"name":"ongoing_orders","value_type":"INT64"},{"name":"merchant_avg_dispatch_arrival_time_10m","value_type":"FLOAT"},{"name":"ongoing_accepted_orders","value_type":"INT64"}],"max_age":"0s","batch_source":{"type":"BATCH_FILE","event_timestamp_column":"null","file_options":{"file_format":{"parquet_format":{}},"file_url":"/dev/null"}},"stream_source":{"type":"STREAM_KAFKA","field_mapping":{"merchant_uuid":"restaurant_uuid"},"event_timestamp_column":"event_timestamp","kafka_options":{"bootstrap_servers":"int-dagstream-kafka.yonkou.io:6668","topic":"GO_FOOD-delay-allocation-merchant-feature-10m-log","message_format":{"proto_format":{"class_path":"com.bubble.DelayAllocationMerchantFeature10mLogMessage"}}}},"online_store":{"name":"bigtable","type":"BIGTABLE"}},"meta":{"created_timestamp":"2022-09-19T22:42:04Z","last_updated_timestamp":"2022-09-21T13:23:02Z","revision":"2","hash":"730855ef"}}]}`,
 				)
 			},
-			expected: []*v1beta2.Asset{
+			expected: []*meteorv1beta1.Entity{
 				{
-					Urn:     "urn:caramlstore:staging:feature_table:sauron.merchant_uuid_t2_discovery",
-					Name:    "merchant_uuid_t2_discovery",
-					Service: "caramlstore",
-					Type:    "feature_table",
-					Data: testutils.BuildAny(t, &v1beta2.FeatureTable{
-						Namespace: "sauron",
-						Entities: []*v1beta2.FeatureTable_Entity{{
-							Name: "merchant_uuid",
-							Labels: map[string]string{
-								"description": "merchant uuid",
-								"value_type":  "STRING",
+					Urn:        "urn:caramlstore:staging:feature_table:sauron.merchant_uuid_t2_discovery",
+					Name:       "merchant_uuid_t2_discovery",
+					Source:     "caramlstore",
+					Type:       "feature_table",
+					Properties: buildProps(t, map[string]interface{}{
+						"data": map[string]interface{}{
+							"namespace": "sauron",
+							"entities": []interface{}{
+								map[string]interface{}{
+									"name":   "merchant_uuid",
+									"labels": map[string]interface{}{"description": "merchant uuid", "value_type": "STRING"},
+								},
 							},
-						}},
-						Features: []*v1beta2.Feature{
-							{Name: "avg_t2_merchant_3d", DataType: "DOUBLE"},
-							{Name: "avg_t2_merchant_1d", DataType: "DOUBLE"},
-							{Name: "avg_merchant_price", DataType: "DOUBLE"},
-							{Name: "avg_t2_same_hour_merchant_1m", DataType: "DOUBLE"},
-							{Name: "avg_t2_merchant_1w", DataType: "DOUBLE"},
-							{Name: "avg_gmv_merchant_1w", DataType: "DOUBLE"},
-							{Name: "avg_gmv_merchant_1d", DataType: "DOUBLE"},
-							{Name: "merch_demand_same_hour_1m", DataType: "DOUBLE"},
-							{Name: "avg_t2_merchant_3h", DataType: "DOUBLE"},
-							{Name: "t2_discovery", DataType: "DOUBLE"},
-							{Name: "avg_gmv_merchant_3h", DataType: "DOUBLE"},
-							{Name: "avg_gmv_merchant_1m", DataType: "DOUBLE"},
-							{Name: "avg_gmv_same_hour_merchant_1m", DataType: "DOUBLE"},
-							{Name: "avg_t2_merchant_1m", DataType: "DOUBLE"},
+							"features": []interface{}{
+								map[string]interface{}{"name": "avg_t2_merchant_3d", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_t2_merchant_1d", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_merchant_price", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_t2_same_hour_merchant_1m", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_t2_merchant_1w", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_gmv_merchant_1w", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_gmv_merchant_1d", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "merch_demand_same_hour_1m", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_t2_merchant_3h", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "t2_discovery", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_gmv_merchant_3h", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_gmv_merchant_1m", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_gmv_same_hour_merchant_1m", "data_type": "DOUBLE"},
+								map[string]interface{}{"name": "avg_t2_merchant_1m", "data_type": "DOUBLE"},
+							},
+							"create_time": "2022-08-08T03:17:54Z",
+							"update_time": "2022-08-08T03:17:54Z",
 						},
-						CreateTime: timestamppb.New(time.Date(2022, time.August, 8, 3, 17, 54, 0, time.UTC)),
-						UpdateTime: timestamppb.New(time.Date(2022, time.August, 8, 3, 17, 54, 0, time.UTC)),
+						"labels": nil,
+						"lineage": map[string]interface{}{
+							"upstreams": []interface{}{
+								map[string]interface{}{
+									"urn":     "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
+									"service": "bigquery",
+									"type":    "table",
+								},
+							},
+						},
 					}),
-					Lineage: &v1beta2.Lineage{
-						Upstreams: []*v1beta2.Resource{{
-							Urn:     "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
-							Service: "bigquery",
-							Type:    "table",
-						}},
-					},
 				},
 				{
-					Urn:     "urn:caramlstore:staging:feature_table:sauron.avg_dispatch_arrival_time_10_mins",
-					Name:    "avg_dispatch_arrival_time_10_mins",
-					Service: "caramlstore",
-					Type:    "feature_table",
-					Data: testutils.BuildAny(t, &v1beta2.FeatureTable{
-						Namespace: "sauron",
-						Entities: []*v1beta2.FeatureTable_Entity{{
-							Name: "merchant_uuid",
-							Labels: map[string]string{
-								"description": "merchant uuid",
-								"value_type":  "STRING",
+					Urn:        "urn:caramlstore:staging:feature_table:sauron.avg_dispatch_arrival_time_10_mins",
+					Name:       "avg_dispatch_arrival_time_10_mins",
+					Source:     "caramlstore",
+					Type:       "feature_table",
+					Properties: buildProps(t, map[string]interface{}{
+						"data": map[string]interface{}{
+							"namespace": "sauron",
+							"entities": []interface{}{
+								map[string]interface{}{
+									"name":   "merchant_uuid",
+									"labels": map[string]interface{}{"description": "merchant uuid", "value_type": "STRING"},
+								},
 							},
-						}},
-						Features: []*v1beta2.Feature{
-							{Name: "ongoing_placed_and_waiting_acceptance_orders", DataType: "INT64"},
-							{Name: "ongoing_orders", DataType: "INT64"},
-							{Name: "merchant_avg_dispatch_arrival_time_10m", DataType: "FLOAT"},
-							{Name: "ongoing_accepted_orders", DataType: "INT64"},
+							"features": []interface{}{
+								map[string]interface{}{"name": "ongoing_placed_and_waiting_acceptance_orders", "data_type": "INT64"},
+								map[string]interface{}{"name": "ongoing_orders", "data_type": "INT64"},
+								map[string]interface{}{"name": "merchant_avg_dispatch_arrival_time_10m", "data_type": "FLOAT"},
+								map[string]interface{}{"name": "ongoing_accepted_orders", "data_type": "INT64"},
+							},
+							"create_time": "2022-09-19T22:42:04Z",
+							"update_time": "2022-09-21T13:23:02Z",
 						},
-						CreateTime: timestamppb.New(time.Date(2022, time.September, 19, 22, 42, 04, 0, time.UTC)),
-						UpdateTime: timestamppb.New(time.Date(2022, time.September, 21, 13, 23, 02, 0, time.UTC)),
+						"labels": nil,
+						"lineage": map[string]interface{}{
+							"upstreams": []interface{}{
+								map[string]interface{}{
+									"urn":     "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
+									"service": "kafka",
+									"type":    "topic",
+								},
+							},
+						},
 					}),
-					Lineage: &v1beta2.Lineage{
-						Upstreams: []*v1beta2.Resource{{
-							Urn:     "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
-							Service: "kafka",
-							Type:    "topic",
-						}},
-					},
 				},
 			},
 		},
@@ -641,12 +652,13 @@ func TestExtract(t *testing.T) {
 					t.Error("Unexpected HTTP call on", r.URL.Path)
 				}
 			},
-			expected: []*v1beta2.Asset{
+			expected: []*meteorv1beta1.Entity{
 				{
 					Name: "data-test-external-voucher-dagger",
 					Type: "job",
-					Data: testutils.BuildAny(t, &v1beta2.Job{
-						Attributes: &structpb.Struct{Fields: map[string]*structpb.Value{
+					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
+						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 							"job_id":          structpb.NewStringValue("72b6753ab1984be6a65055b95ea9dd32"),
 							"job_parallelism": structpb.NewNumberValue(1),
 							"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -677,14 +689,18 @@ func TestExtract(t *testing.T) {
 								"SINK_TYPE":                         structpb.NewStringValue("kafka"),
 								"STREAMS":                           structpb.NewStringValue(`[{"SOURCE_KAFKA_TOPIC_NAMES":"segmentation-message","INPUT_SCHEMA_PROTO_CLASS":"com.company.esb.segmentation.UpdateLogMessage","INPUT_SCHEMA_TABLE":"table1","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-test-external-voucher-dagger-0001","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"3","SOURCE_KAFKA_NAME":"data-dagstream"}]`),
 							}}),
-						}},
-					}),
+						}}),
+					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+				}},
 				},
 				{
 					Name: "data-booking-map-matching-dagger",
 					Type: "job",
-					Data: testutils.BuildAny(t, &v1beta2.Job{
-						Attributes: &structpb.Struct{Fields: map[string]*structpb.Value{
+					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
+						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 							"job_id":          structpb.NewStringValue("3473947d1115c155513014cc6ecbd2fa"),
 							"job_parallelism": structpb.NewNumberValue(1),
 							"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -736,14 +752,18 @@ func TestExtract(t *testing.T) {
 								"SINK_TYPE":                                               structpb.NewStringValue("kafka"),
 								"STREAMS":                                                 structpb.NewStringValue(`[{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"4","INPUT_SCHEMA_PROTO_CLASS":"company.esb.cartography.erp.ERPMapMatchingLogV2Message","INPUT_SCHEMA_TABLE":"data_streams_0","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"company-mainstream.company.io:6668","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-booking-map-matching-dagger-0002","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"aggregated-busy-driver-location-ping","SOURCE_PARQUET_FILE_DATE_RANGE":null,"SOURCE_PARQUET_FILE_PATHS":null}]`),
 							}}),
-						}},
-					}),
+						}}),
+					}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+				}},
 				},
 				{
 					Name: "data-eim-driver-nearby-staging-dagger",
 					Type: "job",
-					Data: testutils.BuildAny(t, &v1beta2.Job{
-						Attributes: &structpb.Struct{Fields: map[string]*structpb.Value{
+					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
+						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 							"job_id":          structpb.NewStringValue("9b12cb10b119b957b085c08e49bde3f2"),
 							"job_parallelism": structpb.NewNumberValue(1),
 							"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -776,8 +796,11 @@ func TestExtract(t *testing.T) {
 								"SINK_TYPE":                         structpb.NewStringValue("kafka"),
 								"STREAMS":                           structpb.NewStringValue(`[{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"5","INPUT_SCHEMA_PROTO_CLASS":"company.esb.booking.GoFoodBookingLogMessage","INPUT_SCHEMA_TABLE":"gofood_booking","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0039","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-booking-log"},{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"1","INPUT_SCHEMA_PROTO_CLASS":"company.esb.gofood.NearbyEventMessage","INPUT_SCHEMA_TABLE":"gofood_nearby","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0040","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-nearby-log"}]`),
 							}}),
-						}},
-					}),
+						}}),
+				}}),
+					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+				}},
 				},
 			},
 		},
@@ -873,7 +896,16 @@ func TestExtract(t *testing.T) {
 			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				testutils.Respond(t, w, http.StatusOK, `{}`)
 			},
-			expectedErr: "Runtime Error: new asset: unexpected type: invalid",
+			expected: []*meteorv1beta1.Entity{
+				{
+					Type: "invalid",
+					Properties: buildProps(t, map[string]interface{}{
+						"data":    map[string]interface{}{},
+						"lineage": map[string]interface{}{},
+						"labels":  map[string]interface{}{},
+					}),
+				},
+			},
 		},
 		{
 			name: "EmitInvalidValue",
@@ -940,9 +972,18 @@ func TestExtract(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			testutils.AssertEqualProtos(t, tc.expected, emitter.GetAllData())
+			testutils.AssertEqualProtos(t, tc.expected, emitter.GetAllEntities())
 		})
 	}
+}
+
+func buildProps(t *testing.T, m map[string]interface{}) *structpb.Struct {
+	t.Helper()
+	s, err := structpb.NewStruct(m)
+	if err != nil {
+		t.Fatalf("buildProps: %v", err)
+	}
+	return s
 }
 
 func replaceServerURL(cfg map[string]interface{}, serverURL string) {

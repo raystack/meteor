@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/nsf/jsondiff"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -68,13 +68,13 @@ func AssertEqualProtos(t *testing.T, expected, actual interface{}) {
 	}
 }
 
-func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actual []*v1beta2.Asset) {
+func AssertProtosWithJSONFile(t *testing.T, expectedFilePath string, actual []*meteorv1beta1.Entity) {
 	t.Helper()
 
 	AssertJSONFile(t, expectedFilePath, actual, jsondiff.FullMatch)
 }
 
-func AssertJSONFile(t *testing.T, expectedFilePath string, actual []*v1beta2.Asset, expectedDiff jsondiff.Difference) {
+func AssertJSONFile(t *testing.T, expectedFilePath string, actual []*meteorv1beta1.Entity, expectedDiff jsondiff.Difference) {
 	t.Helper()
 
 	expected, err := os.ReadFile(expectedFilePath)
@@ -98,8 +98,8 @@ func AssertJSON(t *testing.T, expected, actual interface{}, expectedDiff jsondif
 			return v
 		case string:
 			return ([]byte)(v)
-		case []*v1beta2.Asset:
-			return buildJSONFromAssets(t, v)
+		case []*meteorv1beta1.Entity:
+			return buildJSONFromEntities(t, v)
 		case proto.Message:
 			data, err := protojson.MarshalOptions{
 				UseProtoNames:   true,
@@ -117,26 +117,26 @@ func AssertJSON(t *testing.T, expected, actual interface{}, expectedDiff jsondif
 	assert.Equal(t, expectedDiff, actualDiff, "expected json is %s, got %s\n %s", expectedDiff, actualDiff, report)
 }
 
-func SortedAssets(assets []*v1beta2.Asset) []*v1beta2.Asset {
-	sort.Slice(assets, func(i, j int) bool {
-		return assets[i].Name < assets[j].Name
+func SortedEntities(entities []*meteorv1beta1.Entity) []*meteorv1beta1.Entity {
+	sort.Slice(entities, func(i, j int) bool {
+		return entities[i].Name < entities[j].Name
 	})
-	return assets
+	return entities
 }
 
-func buildJSONFromAssets(t *testing.T, actuals []*v1beta2.Asset) []byte {
+func buildJSONFromEntities(t *testing.T, entities []*meteorv1beta1.Entity) []byte {
 	actualJSON := "["
 	m := protojson.MarshalOptions{
 		UseProtoNames:   true,
 		EmitUnpopulated: true,
 	}
 
-	for i, actual := range actuals {
-		jsonBytes, err := m.Marshal(actual)
+	for i, entity := range entities {
+		jsonBytes, err := m.Marshal(entity)
 		require.NoError(t, err)
 		actualJSON += string(jsonBytes)
 
-		if i < (len(actuals) - 1) {
+		if i < (len(entities) - 1) {
 			actualJSON += ","
 		}
 	}

@@ -7,11 +7,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -48,13 +45,11 @@ func AsStruct(input, output interface{}) error {
 func AsStructWithTag(tagName string, input, output interface{}) error {
 	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			checkAssetDataHookFunc(),
 			stringToTimestampHookFunc(time.RFC3339),
 			timeToTimestampHookFunc(),
 			mapstructure.StringToTimeHookFunc(time.RFC3339),
 			mapstructure.StringToTimeDurationHookFunc(),
-			mapToAttributesHookFunc(),
-			mapToAnyPBHookFunc(),
+			mapToStructPBHookFunc(),
 		),
 		WeaklyTypedInput: true,
 		ErrorUnused:      true,
@@ -71,25 +66,6 @@ func AsStructWithTag(tagName string, input, output interface{}) error {
 	}
 
 	return nil
-}
-
-func checkAssetDataHookFunc() mapstructure.DecodeHookFuncType {
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
-		if t != reflect.TypeOf(v1beta2.Asset{}) && t != reflect.TypeOf(&v1beta2.Asset{}) {
-			return data, nil
-		}
-
-		m, ok := data.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("mapstructure check asset: unexpected type: %T", data)
-		}
-
-		if _, ok := m["data"].(map[string]interface{}); !ok {
-			return nil, fmt.Errorf("mapstructure check asset data: unexpected type: %T", m["data"])
-		}
-
-		return data, nil
-	}
 }
 
 // stringToTimestampHookFunc returns a DecodeHookFunc that converts
@@ -128,7 +104,7 @@ func timeToTimestampHookFunc() mapstructure.DecodeHookFuncType {
 	}
 }
 
-func mapToAttributesHookFunc() mapstructure.DecodeHookFuncType {
+func mapToStructPBHookFunc() mapstructure.DecodeHookFuncType {
 	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
 		m, ok := data.(map[string]interface{})
 		if !ok {
@@ -140,45 +116,5 @@ func mapToAttributesHookFunc() mapstructure.DecodeHookFuncType {
 		}
 
 		return structpb.NewStruct(m)
-	}
-}
-
-func mapToAnyPBHookFunc() mapstructure.DecodeHookFuncType {
-	failure := func(step string, err error) (interface{}, error) {
-		return nil, fmt.Errorf("mapstructure map to anypb hook: %s: %w", step, err)
-	}
-
-	return func(_, t reflect.Type, data interface{}) (interface{}, error) {
-		m, ok := data.(map[string]interface{})
-		if !ok {
-			return data, nil
-		}
-
-		if t != reflect.TypeOf(anypb.Any{}) && t != reflect.TypeOf(&anypb.Any{}) {
-			return data, nil
-		}
-
-		typ, ok := m["@type"].(string)
-		if !ok {
-			return data, nil
-		}
-
-		msgtyp, err := protoregistry.GlobalTypes.FindMessageByURL(typ)
-		if err != nil {
-			return failure("resolve type", err)
-		}
-
-		msg := msgtyp.New().Interface()
-		delete(m, "@type")
-		if err := AsStruct(m, &msg); err != nil {
-			return failure("decode", err)
-		}
-
-		dataAny, err := anypb.New(msg)
-		if err != nil {
-			return failure("marshal as any", err)
-		}
-
-		return dataAny, nil
 	}
 }

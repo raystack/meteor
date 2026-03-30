@@ -11,13 +11,10 @@ import (
 	"cloud.google.com/go/bigtable"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -161,22 +158,14 @@ func (e *Extractor) getTablesInfo(ctx context.Context, emit plugins.Emit) error 
 					return
 				}
 				familyInfoBytes, _ := json.Marshal(tableInfo.FamilyInfos)
-				tableMeta, err := anypb.New(&v1beta2.Table{
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
+				entity := models.NewEntity(
+					models.NewURN(service, e.config.ProjectID, "table", fmt.Sprintf("%s.%s", instance, table)),
+					"table", table, service,
+					map[string]interface{}{
 						"column_family": string(familyInfoBytes),
-					}),
-				})
-				if err != nil {
-					e.logger.Warn("error creating Any struct", "error", err)
-				}
-				asset := v1beta2.Asset{
-					Urn:     models.NewURN(service, e.config.ProjectID, "table", fmt.Sprintf("%s.%s", instance, table)),
-					Name:    table,
-					Service: service,
-					Type:    "table",
-					Data:    tableMeta,
-				}
-				emit(models.NewRecord(&asset))
+					},
+				)
+				emit(models.NewRecord(entity))
 			}(table)
 		}
 		wg.Wait()

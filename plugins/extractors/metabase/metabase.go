@@ -5,16 +5,15 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/metabase/client"
 	m "github.com/raystack/meteor/plugins/extractors/metabase/models"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -87,59 +86,74 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		return fmt.Errorf("fetch dashboard list: %w", err)
 	}
 	for _, d := range dashboards {
-		dashboard, err := e.buildDashboard(ctx, d)
+		record, err := e.buildDashboard(ctx, d)
 		if err != nil {
 			e.logger.Error("failed to build dashboard with", "dashboard_id", d.ID, "err", err.Error())
 			continue
 		}
 
-		emit(models.NewRecord(dashboard))
+		emit(record)
 	}
 	return nil
 }
 
-func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (*v1beta2.Asset, error) {
+// chartUpstream holds a chart map and its upstream URNs
+type chartUpstream struct {
+	chart    map[string]interface{}
+	upstreams []string
+}
+
+func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (models.Record, error) {
 	// we fetch dashboard again individually to get more fields
 	dashboard, err := e.client.GetDashboard(ctx, d.ID)
 	if err != nil {
-		return nil, fmt.Errorf("fetch database: %w", err)
+		return models.Record{}, fmt.Errorf("fetch database: %w", err)
 	}
 
 	dashboardURN := models.NewURN("metabase", e.UrnScope, "collection", fmt.Sprintf("%d", dashboard.ID))
-	charts := e.buildCharts(ctx, dashboardURN, dashboard)
-	dashboardUpstreams := e.buildDashboardUpstreams(charts)
+	chartData := e.buildCharts(ctx, dashboardURN, dashboard)
 
-	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts: charts,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"id":            dashboard.ID,
-			"collection_id": dashboard.CollectionID,
-			"creator_id":    dashboard.CreatorID,
-		}),
-		CreateTime: dashboard.CreatedAt.ToPB(),
-		UpdateTime: dashboard.UpdatedAt.ToPB(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
+	// Collect unique upstream URNs from all charts for dashboard-level lineage
+	var edges []*meteorv1beta1.Edge
+	existing := map[string]bool{}
+	for _, cu := range chartData {
+		for _, upstreamURN := range cu.upstreams {
+			if !existing[upstreamURN] {
+				edges = append(edges, models.LineageEdge(upstreamURN, dashboardURN, "metabase"))
+				existing[upstreamURN] = true
+			}
+		}
 	}
 
-	return &v1beta2.Asset{
-		Urn:         dashboardURN,
-		Name:        dashboard.Name,
-		Service:     "metabase",
-		Type:        "dashboard",
-		Description: dashboard.Description,
-		Data:        data,
-		Lineage: &v1beta2.Lineage{
-			Upstreams: dashboardUpstreams,
-		},
-	}, nil
+	charts := make([]map[string]interface{}, 0, len(chartData))
+	for _, cu := range chartData {
+		charts = append(charts, cu.chart)
+	}
+
+	props := map[string]interface{}{
+		"charts":        charts,
+		"id":            dashboard.ID,
+		"collection_id": dashboard.CollectionID,
+		"creator_id":    dashboard.CreatorID,
+	}
+	if !time.Time(dashboard.CreatedAt).IsZero() {
+		props["create_time"] = time.Time(dashboard.CreatedAt).Format("2006-01-02T15:04:05Z")
+	}
+	if !time.Time(dashboard.UpdatedAt).IsZero() {
+		props["update_time"] = time.Time(dashboard.UpdatedAt).Format("2006-01-02T15:04:05Z")
+	}
+
+	entity := models.NewEntity(dashboardURN, "dashboard", dashboard.Name, "metabase", props)
+	if dashboard.Description != "" {
+		entity.Description = dashboard.Description
+	}
+	return models.NewRecord(entity, edges...), nil
 }
 
-func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashboard m.Dashboard) []*v1beta2.Chart {
-	var charts []*v1beta2.Chart
+func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashboard m.Dashboard) []chartUpstream {
+	var charts []chartUpstream
 	for _, oc := range dashboard.OrderedCards {
-		chart, err := e.buildChart(ctx, oc.Card, dashboardURN)
+		cu, err := e.buildChart(ctx, oc.Card, dashboardURN)
 		if err != nil {
 			e.logger.Error(
 				"error building chart for dashboard",
@@ -149,77 +163,64 @@ func (e *Extractor) buildCharts(ctx context.Context, dashboardURN string, dashbo
 			)
 			continue
 		}
-		charts = append(charts, chart)
-
+		charts = append(charts, cu)
 	}
 
 	return charts
 }
 
-func (e *Extractor) buildChart(ctx context.Context, card m.Card, dashboardURN string) (*v1beta2.Chart, error) {
-	upstreams, err := e.buildUpstreams(ctx, card)
+func (e *Extractor) buildChart(ctx context.Context, card m.Card, dashboardURN string) (chartUpstream, error) {
+	upstreamURNs, err := e.buildUpstreamURNs(ctx, card)
 	if err != nil {
 		e.logger.Warn("error building upstreams for a card", "card_id", card.ID, "err", err)
 	}
 
-	return &v1beta2.Chart{
-		Urn:          fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
-		DashboardUrn: dashboardURN,
-		Source:       "metabase",
-		Name:         card.Name,
-		Description:  card.Description,
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"id":                     card.ID,
-			"collection_id":          card.CollectionID,
-			"creator_id":             card.CreatorID,
-			"database_id":            card.DatabaseID,
-			"table_id":               card.TableID,
-			"query_average_duration": card.QueryAverageDuration,
-			"display":                card.Display,
-			"archived":               card.Archived,
-		}),
-		Lineage: &v1beta2.Lineage{
-			Upstreams: upstreams,
-		},
-	}, nil
+	chart := map[string]interface{}{
+		"urn":          fmt.Sprintf("metabase::%s/card/%d", e.config.InstanceLabel, card.ID),
+		"dashboard_urn": dashboardURN,
+		"source":       "metabase",
+		"name":         card.Name,
+		"id":                     card.ID,
+		"collection_id":          card.CollectionID,
+		"creator_id":             card.CreatorID,
+		"database_id":            card.DatabaseID,
+		"table_id":               card.TableID,
+		"query_average_duration": card.QueryAverageDuration,
+		"display":                card.Display,
+		"archived":               card.Archived,
+	}
+	if card.Description != "" {
+		chart["description"] = card.Description
+	}
+	if len(upstreamURNs) > 0 {
+		chart["upstreams"] = upstreamURNs
+	}
+
+	return chartUpstream{chart: chart, upstreams: upstreamURNs}, nil
 }
 
-func (e *Extractor) buildUpstreams(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreamURNs(ctx context.Context, card m.Card) ([]string, error) {
 	switch card.DatasetQuery.Type {
 	case datasetQueryTypeQuery:
-		upstreams, err := e.buildUpstreamsFromQuery(ctx, card)
-		if err != nil {
-			return nil, fmt.Errorf("build upstreams from query: %w", err)
-		}
-		return upstreams, nil
-
+		return e.buildUpstreamURNsFromQuery(ctx, card)
 	case datasetQueryTypeNative:
-		upstreams, err := e.buildUpstreamsFromNative(ctx, card)
-		if err != nil {
-			return nil, fmt.Errorf("build upstreams from native: %w", err)
-		}
-		return upstreams, nil
-
+		return e.buildUpstreamURNsFromNative(ctx, card)
 	default:
 		return nil, nil
 	}
 }
 
-func (e *Extractor) buildUpstreamsFromQuery(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreamURNsFromQuery(ctx context.Context, card m.Card) ([]string, error) {
 	table, err := e.client.GetTable(ctx, card.DatasetQuery.Query.SourceTable)
 	if err != nil {
 		return nil, fmt.Errorf("get table: %w", err)
 	}
 
 	service, cluster, dbName := e.extractDBComponent(table.Db)
-	return []*v1beta2.Resource{{
-		Urn:     e.buildURN(service, cluster, dbName, table.Name),
-		Service: service,
-		Type:    "table",
-	}}, nil
+	return []string{e.buildURN(service, cluster, dbName, table.Name)}, nil
 }
 
-func (e *Extractor) buildUpstreamsFromNative(ctx context.Context, card m.Card) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildUpstreamURNsFromNative(ctx context.Context, card m.Card) ([]string, error) {
 	database, err := e.client.GetDatabase(ctx, card.DatasetQuery.Database)
 	if err != nil {
 		return nil, fmt.Errorf("get database: %w", err)
@@ -230,38 +231,13 @@ func (e *Extractor) buildUpstreamsFromNative(ctx context.Context, card m.Card) (
 		return nil, fmt.Errorf("extract table names from SQL: %w", err)
 	}
 
-	var upstreams []*v1beta2.Resource
+	var urns []string
 	service, cluster, dbName := e.extractDBComponent(database)
 	for _, tableName := range tableNames {
-		upstreams = append(upstreams, &v1beta2.Resource{
-			Urn:     e.buildURN(service, cluster, dbName, tableName),
-			Service: service,
-			Type:    "table",
-		})
+		urns = append(urns, e.buildURN(service, cluster, dbName, tableName))
 	}
 
-	return upstreams, nil
-}
-
-func (*Extractor) buildDashboardUpstreams(charts []*v1beta2.Chart) []*v1beta2.Resource {
-	var upstreams []*v1beta2.Resource
-	existing := map[string]bool{}
-	for _, chart := range charts {
-		if chart.Lineage == nil {
-			continue
-		}
-
-		for _, upstream := range chart.Lineage.Upstreams {
-			if _, duplicate := existing[upstream.Urn]; duplicate {
-				continue
-			}
-
-			upstreams = append(upstreams, upstream)
-			existing[upstream.Urn] = true
-		}
-	}
-
-	return upstreams
+	return urns, nil
 }
 
 func (e *Extractor) extractDBComponent(database m.Database) (service, cluster, dbName string) {

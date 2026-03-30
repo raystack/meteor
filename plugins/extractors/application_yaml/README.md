@@ -33,11 +33,11 @@ description: "string"
 url: "string"
 version: "string"
 inputs: # OPTIONAL
-  # Format: "urn:{service}:{scope}:{type}:{name}"
+  # Format: "urn:{source}:{scope}:{type}:{name}"
   - urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand
   - urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand
 outputs: # OPTIONAL
-  # Format: "urn:{service}:{scope}:{type}:{name}"
+  # Format: "urn:{source}:{scope}:{type}:{name}"
   - urn:kafka:1-my-kafka.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es
 create_time: "2006-01-02T15:04:05Z"
 update_time: "2006-01-02T15:04:05Z"
@@ -62,34 +62,34 @@ following env vars are utilised for it:
 
 ## Outputs
 
-The application is mapped to an [`Asset`][proton-asset] with model specific
-metadata stored using [`Application`][proton-application]. Please refer the
-proto definitions for more information.
+The extractor emits a Record containing an Entity and Edges.
 
-| Field                       | Value                                                         | Sample Value                                                                   |
-| :-------------------------- | :------------------------------------------------------------ | :----------------------------------------------------------------------------- |
-| `resource.urn`              | `urn:application_yaml:{scope}:application:{application.name}` | `urn:application_yaml:integration:application:order-manager`                   |
-| `resource.name`             | `{application.name}`                                          | `order-manager`                                                                |
-| `resource.service`          | `application_yaml`                                            | `application_yaml`                                                             |
-| `resource.type`             | `application`                                                 | `application`                                                                  |
-| `resource.url`              | `{application.url}`                                           | `https://github.com/mycompany/order-manager`                                   |
-| `resource.description`      | `{application.description`                                    | `Order-Manager is the order management system for MyCompany`                   |
-| `application_id`            | `application.id`                                              | `0adf3214-676c-4a74-ab37-9d4a4b8ade0e`                                         |
-| `version`                   | `application.version`                                         | `d6ec883`                                                                      |
-| `create_time`               | `{application.create_time}`                                   | `2022-08-08T03:17:54Z`                                                         |
-| `update_time`               | `{application.update_time}`                                   | `2022-08-08T03:57:54Z`                                                         |
-| `ownership.owners[0].urn`   | `{application.team.id}`                                       | `9ebcc2f8-5894-47c6-83a9-160b7eaa3f6b`                                         |
-| `ownership.owners[0].name`  | `{application.team.name}`                                     | `Search`                                                                       |
-| `ownership.owners[0].email` | `{application.team.email}`                                    | `search@mycompany.com`                                                         |
-| `lineage.upstreams[].urn`   | `{application.inputs[]}`                                      | `urn:kafka:int-kafka.yonkou.io:topic:staging_30min_demand`                     |
-| `lineage.downstreams[].urn` | `{application.outputs[]}`                                     | `urn:bigquery:bq-internal:table:bq-internal:dagstream.production_30min_demand` |
-| `resource.labels`           | `map[string]string`                                           | `{"team": "Booking Experience"}`                                               |
+### Entity
+
+| Field               | Value                                                         | Sample Value                                                 |
+| :------------------ | :------------------------------------------------------------ | :----------------------------------------------------------- |
+| `urn`               | `urn:application_yaml:{scope}:application:{application.name}` | `urn:application_yaml:integration:application:order-manager` |
+| `name`              | `{application.name}`                                          | `order-manager`                                              |
+| `source`            | `application_yaml`                                            | `application_yaml`                                           |
+| `type`              | `application`                                                 | `application`                                                |
+| `description`       | `{application.description}`                                   | `Order-Manager is the order management system for MyCompany` |
+| `properties.url`    | `{application.url}`                                           | `https://github.com/mycompany/order-manager`                 |
+| `properties.id`     | `{application.id}`                                            | `0adf3214-676c-4a74-ab37-9d4a4b8ade0e`                      |
+| `properties.version`| `{application.version}`                                       | `d6ec883`                                                    |
+| `properties.create_time` | `{application.create_time}`                              | `2022-08-08T03:17:54Z`                                       |
+| `properties.update_time` | `{application.update_time}`                              | `2022-08-08T03:57:54Z`                                       |
+| `properties.labels` | `map[string]string`                                           | `{"team": "Booking Experience"}`                             |
+
+### Edges
+
+| Edge Type   | Description                             | Example                                                                            |
+|:------------|:----------------------------------------|:-----------------------------------------------------------------------------------|
+| `owned_by`  | Team ownership from `application.team`  | `source_urn: <app_urn>`, `target_urn: {team.id}`, `properties: {name, email}`      |
+| `lineage`   | Upstream from `application.inputs[]`    | `source_urn: {input_urn}`, `target_urn: <app_urn>`, `type: lineage`                |
+| `lineage`   | Downstream from `application.outputs[]` | `source_urn: <app_urn>`, `target_urn: {output_urn}`, `type: lineage`               |
 
 ## Contributing
 
 Refer to
 the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
 for information on contributing to this module.
-
-[proton-asset]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/asset.proto#L14
-[proton-application]: https://github.com/raystack/proton/blob/fabbde8/raystack/assets/v1beta2/application.proto#L11

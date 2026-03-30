@@ -7,14 +7,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/csv"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,26 +46,18 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
-		table, err := anypb.New(&v1beta2.Table{
-			Columns: []*v1beta2.Column{
-				{Name: "name"},
-				{Name: "age"},
-				{Name: "phone"},
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal("error creating Any struct for test: %w", err)
-		}
-		expected := []*v1beta2.Asset{{
-			Urn:     "urn:csv:test-csv:file:test.csv",
-			Name:    "test.csv",
-			Service: "csv",
-			Type:    "table",
-			Data:    table,
-		}}
 
-		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
+		expected := []*meteorv1beta1.Entity{
+			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]interface{}{
+				"columns": []interface{}{
+					map[string]interface{}{"name": "name"},
+					map[string]interface{}{"name": "age"},
+					map[string]interface{}{"name": "phone"},
+				},
+			}),
+		}
+
+		utils.AssertEqualProtos(t, expected, emitter.GetAllEntities())
 	})
 
 	t.Run("should extract data from all files if path is a dir", func(t *testing.T) {
@@ -86,44 +76,23 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
-		table1, err := anypb.New(&v1beta2.Table{
-			Columns: []*v1beta2.Column{
-				{Name: "order"},
-				{Name: "transaction_id"},
-				{Name: "total_price"},
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal("error creating Any struct for test: %w", err)
+
+		expected := []*meteorv1beta1.Entity{
+			models.NewEntity("urn:csv:test-csv:file:test-2.csv", "table", "test-2.csv", "csv", map[string]interface{}{
+				"columns": []interface{}{
+					map[string]interface{}{"name": "order"},
+					map[string]interface{}{"name": "transaction_id"},
+					map[string]interface{}{"name": "total_price"},
+				},
+			}),
+			models.NewEntity("urn:csv:test-csv:file:test.csv", "table", "test.csv", "csv", map[string]interface{}{
+				"columns": []interface{}{
+					map[string]interface{}{"name": "name"},
+					map[string]interface{}{"name": "age"},
+					map[string]interface{}{"name": "phone"},
+				},
+			}),
 		}
-		table2, err := anypb.New(&v1beta2.Table{
-			Columns: []*v1beta2.Column{
-				{Name: "name"},
-				{Name: "age"},
-				{Name: "phone"},
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal("error creating Any struct for test: %w", err)
-		}
-		expected := []*v1beta2.Asset{
-			{
-				Urn:     "urn:csv:test-csv:file:test-2.csv",
-				Name:    "test-2.csv",
-				Service: "csv",
-				Type:    "table",
-				Data:    table1,
-			},
-			{
-				Urn:     "urn:csv:test-csv:file:test.csv",
-				Name:    "test.csv",
-				Service: "csv",
-				Type:    "table",
-				Data:    table2,
-			},
-		}
-		utils.AssertEqualProtos(t, expected, emitter.GetAllData())
+		utils.AssertEqualProtos(t, expected, emitter.GetAllEntities())
 	})
 }

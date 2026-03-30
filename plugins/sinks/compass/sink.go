@@ -11,18 +11,13 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 //go:embed README.md
@@ -31,9 +26,6 @@ var summary string
 type Config struct {
 	Host    string            `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
 	Headers map[string]string `json:"headers" yaml:"headers" mapstructure:"headers"`
-	Labels  map[string]string `json:"labels" yaml:"labels" mapstructure:"labels"`
-	// RemoveUnsetFieldsInData if set to true do not populate fields in final sink data which are unset in initial data.
-	RemoveUnsetFieldsInData bool `mapstructure:"remove_unset_fields_in_data"`
 }
 
 var info = plugins.Info{
@@ -45,12 +37,8 @@ var info = plugins.Info{
 	host: https://compass.com
 	# Additional HTTP headers send to compass, multiple headers value are separated by a comma
 	headers:
-	  Compass-User-Email: meteor@raystack.io
+	  Compass-User-UUID: meteor@raystack.io
 	  X-Other-Header: value1, value2
-	# The labels to pass as payload label of the patch api
-	labels:
-	  myCustom: $attributes.myCustomField
-	  sampleLabel: $labels.sampleLabelField
 	`),
 }
 
@@ -72,7 +60,6 @@ func New(c httpClient, logger log.Logger) plugins.Syncer {
 	}
 
 	s := &Sink{client: c, logger: logger}
-
 	s.BasePlugin = plugins.NewBasePlugin(info, &s.config)
 	return s
 }
@@ -102,18 +89,14 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		record := record
 		errGroup.Go(func() error {
-			asset := record.Data()
-			s.logger.Info("sinking record to compass", "record", asset.GetUrn())
+			entity := record.Entity()
+			s.logger.Info("sinking record to compass", "record", entity.GetUrn())
 
-			compassPayload, err := s.buildCompassPayload(asset)
-			if err != nil {
-				return fmt.Errorf("build compass payload: %w", err)
-			}
-			if err := s.send(ctx, compassPayload); err != nil {
-				return fmt.Errorf("send data: %w", err)
+			if err := s.sinkRecord(ctx, record); err != nil {
+				return fmt.Errorf("sink asset %s: %w", entity.GetUrn(), err)
 			}
 
-			s.logger.Info("successfully sinked record to compass", "record", asset.GetUrn())
+			s.logger.Info("successfully sinked record to compass", "record", entity.GetUrn())
 			return nil
 		})
 	}
@@ -123,26 +106,91 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 
 func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(ctx context.Context, record RequestPayload) error {
-	const assetsRoute = "/v1beta1/assets"
-	targetURL := s.urlb.New().Path(assetsRoute).URL()
+func (s *Sink) sinkRecord(ctx context.Context, record models.Record) error {
+	entity := record.Entity()
 
-	payloadBytes, err := json.Marshal(record)
+	// 1. Upsert the entity.
+	entityReq := s.buildEntityRequest(record)
+	if err := s.post(ctx, upsertEntityRoute, entityReq); err != nil {
+		return fmt.Errorf("upsert entity: %w", err)
+	}
+
+	// 2. Upsert non-lineage edges (lineage is sent inline with the entity).
+	for _, edge := range record.Edges() {
+		if edge.GetType() == "lineage" {
+			continue
+		}
+		edgeReq := UpsertEdgeRequest{
+			SourceURN: edge.GetSourceUrn(),
+			TargetURN: edge.GetTargetUrn(),
+			Type:      edge.GetType(),
+			Source:    edge.GetSource(),
+		}
+		if edgeReq.Source == "" {
+			edgeReq.Source = entity.GetSource()
+		}
+		if err := s.post(ctx, upsertEdgeRoute, edgeReq); err != nil {
+			return fmt.Errorf("upsert %s edge for %s -> %s: %w", edge.GetType(), edge.GetSourceUrn(), edge.GetTargetUrn(), err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Sink) buildEntityRequest(record models.Record) UpsertEntityRequest {
+	entity := record.Entity()
+	req := UpsertEntityRequest{
+		URN:         entity.GetUrn(),
+		Type:        entity.GetType(),
+		Name:        entity.GetName(),
+		Description: entity.GetDescription(),
+		Source:      entity.GetSource(),
+	}
+
+	// Copy properties from entity
+	if entity.GetProperties() != nil {
+		req.Properties = entity.GetProperties().AsMap()
+	}
+
+	// Extract upstreams/downstreams from lineage edges
+	for _, edge := range record.Edges() {
+		if edge.GetType() != "lineage" {
+			continue
+		}
+		if edge.GetSourceUrn() == entity.GetUrn() {
+			req.Downstreams = append(req.Downstreams, edge.GetTargetUrn())
+		} else if edge.GetTargetUrn() == entity.GetUrn() {
+			req.Upstreams = append(req.Upstreams, edge.GetSourceUrn())
+		}
+	}
+
+	return req
+}
+
+const (
+	upsertEntityRoute = "/raystack.compass.v1beta1.CompassService/UpsertEntity"
+	upsertEdgeRoute   = "/raystack.compass.v1beta1.CompassService/UpsertEdge"
+)
+
+func (s *Sink) post(ctx context.Context, route string, payload interface{}) error {
+	targetURL := s.urlb.New().Path(route).URL()
+
+	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	// send request
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, targetURL.String(), bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL.String(), bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return err
 	}
-	req = otelhttpclient.AnnotateRequest(req, assetsRoute)
+	req.Header.Set("Content-Type", "application/json")
+	req = otelhttpclient.AnnotateRequest(req, route)
 
 	for hdrKey, hdrVal := range s.config.Headers {
 		hdrVals := strings.Split(hdrVal, ",")
 		for _, val := range hdrVals {
-			req.Header.Add(hdrKey, val)
+			req.Header.Add(hdrKey, strings.TrimSpace(val))
 		}
 	}
 
@@ -152,182 +200,22 @@ func (s *Sink) send(ctx context.Context, record RequestPayload) error {
 	}
 	defer plugins.DrainBody(res)
 
-	if res.StatusCode == 200 {
+	if res.StatusCode == http.StatusOK {
 		return nil
 	}
 
-	data, err := io.ReadAll(res.Body)
+	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
 
-	err = fmt.Errorf("compass returns %d: %v", res.StatusCode, string(data))
+	err = fmt.Errorf("compass returns %d: %v", res.StatusCode, string(respBody))
 	switch code := res.StatusCode; {
 	case code >= 500:
 		return plugins.NewRetryError(err)
 	default:
 		return err
 	}
-}
-
-func (s *Sink) buildCompassPayload(asset *v1beta2.Asset) (RequestPayload, error) {
-	labels, err := s.buildLabels(asset)
-	if err != nil {
-		return RequestPayload{}, fmt.Errorf("build labels: %w", err)
-	}
-
-	mapData, err := s.buildCompassData(asset.GetData())
-	if err != nil {
-		return RequestPayload{}, fmt.Errorf("build compass data: %w", err)
-	}
-
-	upstreams, downstreams := s.buildLineage(asset)
-	owners := s.buildOwners(asset)
-	record := RequestPayload{
-		Asset: Asset{
-			URN:         asset.GetUrn(),
-			Type:        asset.GetType(),
-			Name:        asset.GetName(),
-			Service:     asset.GetService(),
-			Description: asset.GetDescription(),
-			URL:         asset.GetUrl(),
-			Owners:      owners,
-			Data:        mapData,
-			Labels:      labels,
-		},
-		Upstreams:   upstreams,
-		Downstreams: downstreams,
-	}
-
-	return record, nil
-}
-
-func (s *Sink) buildCompassData(anyData *anypb.Any) (map[string]interface{}, error) {
-	var mapData map[string]interface{}
-
-	data, err := protojson.MarshalOptions{
-		UseProtoNames:   true,
-		EmitUnpopulated: !s.config.RemoveUnsetFieldsInData,
-	}.Marshal(anyData)
-	if err != nil {
-		return nil, fmt.Errorf("marshaling asset data: %w", err)
-	}
-
-	if err := json.Unmarshal(data, &mapData); err != nil {
-		return nil, fmt.Errorf("unmarshalling to mapdata: %w", err)
-	}
-
-	return mapData, nil
-}
-
-func (s *Sink) buildLineage(asset *v1beta2.Asset) (upstreams, downstreams []LineageRecord) {
-	lineage := asset.GetLineage()
-	if lineage == nil {
-		return nil, nil
-	}
-
-	if lineage.GetUpstreams() != nil {
-		for _, upstream := range lineage.GetUpstreams() {
-			upstreams = append(upstreams, LineageRecord{
-				URN:     upstream.Urn,
-				Type:    upstream.Type,
-				Service: upstream.Service,
-			})
-		}
-	}
-
-	if lineage.GetDownstreams() != nil {
-		for _, downstream := range lineage.GetDownstreams() {
-			downstreams = append(downstreams, LineageRecord{
-				URN:     downstream.Urn,
-				Type:    downstream.Type,
-				Service: downstream.Service,
-			})
-		}
-	}
-
-	s.logger.Info(fmt.Sprintf("build lineage request for %s", asset.GetUrn()), "upstreams", upstreams, "downstreams", downstreams)
-	return upstreams, downstreams
-}
-
-func (*Sink) buildOwners(asset *v1beta2.Asset) []Owner {
-	var owners []Owner
-	for _, ownerProto := range asset.GetOwners() {
-		owners = append(owners, Owner{
-			URN:   ownerProto.Urn,
-			Name:  ownerProto.Name,
-			Role:  ownerProto.Role,
-			Email: ownerProto.Email,
-		})
-	}
-	return owners
-}
-
-func (s *Sink) buildLabels(asset *v1beta2.Asset) (map[string]string, error) {
-	total := len(s.config.Labels) + len(asset.GetLabels())
-	if total == 0 {
-		return nil, nil
-	}
-
-	labels := make(map[string]string, total)
-	for k, v := range asset.GetLabels() {
-		labels[k] = v
-	}
-
-	for key, template := range s.config.Labels {
-		value, err := s.buildLabelValue(template, asset)
-		if err != nil {
-			return nil, fmt.Errorf("find %q: %w", template, err)
-		}
-
-		labels[key] = value
-	}
-
-	return labels, nil
-}
-
-func (s *Sink) buildLabelValue(template string, asset *v1beta2.Asset) (string, error) {
-	fields := strings.Split(template, ".")
-	if len(fields) < 2 {
-		return "", errors.New("label template has to be at least nested 2 levels")
-	}
-
-	value, err := s.getLabelValueFromProperties(fields[0], fields[1], asset)
-	if err != nil {
-		return "", fmt.Errorf("get label value: %w", err)
-	}
-
-	return value, nil
-}
-
-func (*Sink) getLabelValueFromProperties(field1, field2 string, asset *v1beta2.Asset) (string, error) {
-	switch field1 {
-	case "$attributes":
-		attr := utils.GetAttributes(asset)
-		v, ok := attr[field2]
-		if !ok {
-			return "", fmt.Errorf("find %q field on attributes", field2)
-		}
-		value, ok := v.(string)
-		if !ok {
-			return "", fmt.Errorf("%q field is not a string", field2)
-		}
-		return value, nil
-	case "$labels":
-		labels := asset.GetLabels()
-		if labels == nil {
-			return "", errors.New("find labels field")
-		}
-
-		value, ok := labels[field2]
-		if !ok {
-			return "", fmt.Errorf("find %q from labels", field2)
-		}
-
-		return value, nil
-	}
-
-	return "", errors.New("invalid label template format")
 }
 
 func init() {

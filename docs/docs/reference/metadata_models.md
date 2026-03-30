@@ -1,112 +1,108 @@
 # Meteor Metadata Model
 
-We have a set of defined metadata models which define the structure of metadata
-that meteor will yield. To visit the metadata models being used by different
-extractors please visit [here](extractors.md). We are currently using the
-following metadata models:
+Meteor uses an **Entity + Edge** model to represent metadata. Each extractor emits one or more **Records**, where each Record contains an **Entity** and zero or more **Edges**.
 
-- [Bucket][proton-bucket]: Used for metadata being extracted from buckets.
-  Buckets are the basic containers in Google cloud services, or Amazon S3, etc.,
-  that are used for data storage, and quite popular because of their features of
-  access management, aggregation of usage and services and ease of
-  configurations. Currently, Meteor provides a metadata extractor for the
-  buckets mentioned [here](extractors.md#bucket)
+## Entity
 
-- [Dashboard][proton-dashboard]: Dashboards are an essential part of data
-  analysis and are used to track, analyze, and visualize. These Dashboard
-  metadata model includes some basic fields like `urn` and `source`, etc., and a
-  list of `Chart`. There are multiple dashboards that are essential for Data
-  Analysis such as metabase, grafana, tableau, etc. Please refer to the list of
-  'Dashboard' extractors meteor currently
-  supports [here](extractors.md#dashboard).
+An Entity represents a metadata resource (table, dashboard, topic, job, user, etc.). All entity types share a single flat structure:
 
-  - [Chart][proton-dashboard]: Charts are included in all the Dashboard and are
-    the result of certain queries in a Dashboard. Information about them
-    includes the information of the query and few similar details.
+| Field         | Type                    | Description                                             |
+|:--------------|:------------------------|:--------------------------------------------------------|
+| `urn`         | `string`                | Unique resource name. Format: `urn:{source}:{scope}:{type}:{name}` |
+| `type`        | `string`                | Entity type: `table`, `dashboard`, `topic`, `job`, `user`, `bucket`, `application`, `model`, `feature_table`, `metric`, `experiment`, `group` |
+| `name`        | `string`                | Human-readable name                                     |
+| `description` | `string`                | Description of the entity                               |
+| `source`      | `string`                | Source system (e.g. `bigquery`, `postgres`, `kafka`)    |
+| `properties`  | `structpb.Struct`       | Flat key-value map holding all type-specific metadata (schema, columns, charts, config, labels, etc.) |
 
-- [User][proton-user]: This metadata model is used for defining the output of
-  extraction on User accounts. Some of these sources can be GitHub, Workday,
-  Google Suite, LDAP. Please refer to the list of 'User' extractors meteor
-  currently supports [here](extractors.md#user).
+There are no separate typed schemas (e.g. no `Table`, `Dashboard`, `Bucket` proto types). All metadata is stored as flat key-value pairs in `properties`.
 
-- [Table][proton-table]: This metadata model is being used by extractors based
-  around databases, typically for the ones that store data in tabular format. It
-  contains various fields that include `schema` of the table and other access
-  related information. Please refer to the list of 'Table' extractors meteor
-  currently supports [here](extractors.md#table).
+## Edge
 
-- [Job][proton-job]: A job can represent a scheduled or recurring task that
-  performs some transformation in the data engineering pipeline. Job is a
-  metadata model built for this purpose. Please refer to the list of 'Job'
-  extractors meteor currently supports [here](extractors.md#table).
+An Edge represents a relationship between two entities (ownership, lineage, etc.):
 
-- [Topic][proton-topic]: A topic represents a virtual group for logical group of
-  messages in message bus like kafka, pubsub, pulsar etc. Please refer to the
-  list of 'Topic' extractors meteor currently
-  supports [here](extractors.md#topic).
+| Field         | Type              | Description                                             |
+|:--------------|:------------------|:--------------------------------------------------------|
+| `source_urn`  | `string`          | URN of the source entity                                |
+| `target_urn`  | `string`          | URN of the target entity                                |
+| `type`        | `string`          | Relationship type: `owned_by`, `lineage`, etc.          |
+| `source`      | `string`          | Source system that reported this relationship            |
+| `properties`  | `structpb.Struct` | Additional metadata about the relationship              |
 
-- [Machine Learning Feature Table][proton-featuretable]: A Feature Table is a
-  table or view that represents a logical group of time-series feature data as
-  it is found in a data source. Please refer to the list of 'Feature Table'
-  extractors meteor currently
-  supports [here](extractors.md#machine-learning-feature-table).
+### Relationship Types
 
-- [Application][proton-application]: An application represents a service that
-  typically communicates over well-defined APIs. Please refer to the list of '
-  Application' extractors meteor currently
-  supports [here](extractors.md#application).
+- **`owned_by`**: Indicates ownership. Replaces the old `owners` field.
+- **`lineage`**: Indicates data flow (upstream/downstream). Replaces the old `lineage.upstreams` and `lineage.downstreams` fields.
 
-- [Machine Learning Model][proton-model]: A Model represents a Data Science
-  Model commonly used for Machine Learning(ML). Models are algorithms trained on
-  data to find patterns or make predictions. Models typically consume ML
-  features to generate a meaningful output. Please refer to the list of 'Model'
-  extractors meteor currently
-  supports [here](extractors.md#machine-learning-model).
+## Record
 
-`Proto` has been used to define these metadata models. To check their
-implementation please refer [here][proton-assets].
+A Record is the unit of data flowing through the Meteor pipeline. It wraps an Entity and its associated Edges:
+
+- `record.Entity()` returns the Entity.
+- `record.Edges()` returns the list of Edges.
+
+## Supported Entity Types
+
+- **bucket**: Cloud storage containers (GCS, S3, etc.)
+- **dashboard**: Data visualization dashboards (Metabase, Grafana, Tableau, etc.)
+- **table**: Database tables and views (BigQuery, Postgres, MySQL, etc.)
+- **topic**: Message bus topics (Kafka, Pub/Sub, Pulsar, etc.)
+- **job**: Scheduled/recurring data transformation tasks
+- **user**: User accounts (GitHub, LDAP, Google Suite, etc.)
+- **application**: Services communicating over APIs
+- **model**: Machine learning models
+- **feature_table**: ML feature tables
+- **metric**: Metric definitions
+- **experiment**: A/B experiments
+- **group**: User groups
+
+To see which extractors emit which entity types, visit [here](extractors.md).
 
 ## Usage
 
-[//]: # "@formatter:off"
-
 ```golang
-import(
-    assetsv1beta1 "github.com/raystack/meteor/models/raystack/assets/v1beta1"
-    "github.com/raystack/meteor/models/raystack/assets/facets/v1beta1"
+import (
+    "github.com/raystack/meteor/models"
+    meteorv1beta1 "github.com/raystack/proton/meteor/v1beta1"
+    "google.golang.org/protobuf/types/known/structpb"
 )
 
-func main(){
-    // result is a var of data type of assetsv1beta1.Table one of our metadata model
-    result := &assetsv1beta1.Table{
-        // assigining value to metadata model
-        Urn:  fmt.Sprintf("%s.%s", dbName, tableName),
-        Name: tableName,
+func main() {
+    // Build properties
+    props, _ := structpb.NewStruct(map[string]interface{}{
+        "schema": map[string]interface{}{
+            "columns": []interface{}{
+                map[string]interface{}{
+                    "name":        "column_name",
+                    "data_type":   "varchar",
+                    "is_nullable": true,
+                    "length":      256,
+                },
+            },
+        },
+    })
+
+    // Create an Entity
+    entity := &meteorv1beta1.Entity{
+        Urn:         "urn:postgres:mydb:table:mydb.my_table",
+        Type:        "table",
+        Name:        "my_table",
+        Source:      "postgres",
+        Properties:  props,
     }
 
-    // using column facet to add metadata info of schema
-
-    var columns []*facetsv1beta1.Column
-    columns = append(columns, &facetsv1beta1.Column{
-            Name:       "column_name",
-            DataType:   "varchar",
-            IsNullable: true,
-            Length:     256,
-        })
-    result.Schema = &facetsv1beta1.Columns{
-        Columns: columns,
+    // Create ownership and lineage as Edges
+    edges := []*meteorv1beta1.Edge{
+        {
+            SourceUrn: "urn:postgres:mydb:table:mydb.my_table",
+            TargetUrn: "urn:user:myorg:user:alice",
+            Type:      "owned_by",
+            Source:    "postgres",
+        },
     }
+
+    // Wrap in a Record for the pipeline
+    record := models.NewRecord(entity, edges)
+    _ = record
 }
 ```
-
-[//]: # "@formatter:on"
-[proton-bucket]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/bucket.proto
-[proton-dashboard]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/dashboard.proto
-[proton-user]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/user.proto
-[proton-table]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/table.proto
-[proton-job]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/job.proto
-[proton-topic]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/topic.proto
-[proton-featuretable]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/feature_table.proto
-[proton-application]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/application.proto
-[proton-model]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2/model.proto
-[proton-assets]: https://github.com/raystack/proton/tree/main/raystack/assets/v1beta2

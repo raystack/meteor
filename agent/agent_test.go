@@ -9,7 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/agent"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	_ "github.com/raystack/meteor/plugins/extractors" // populate extractors registry
 	_ "github.com/raystack/meteor/plugins/processors" // populate processors registry
@@ -20,9 +20,7 @@ import (
 	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -355,7 +353,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should return error when processing fails", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -403,7 +401,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should return error when processing panics", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -450,7 +448,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should not return error when sink fails", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -500,7 +498,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should return error when sink fails if StopOnSinkError is true", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -552,7 +550,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should return no error when sink fails to close", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -596,7 +594,6 @@ func TestAgentRun(t *testing.T) {
 			StopOnSinkError:  false,
 			Monitor:          monitor,
 		})
-
 		run := r.Run(ctx, validRecipe)
 		assert.True(t, run.Success)
 		assert.NoError(t, run.Error)
@@ -604,7 +601,7 @@ func TestAgentRun(t *testing.T) {
 
 	t.Run("should return run on success", func(t *testing.T) {
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -668,7 +665,7 @@ func TestAgentRun(t *testing.T) {
 	t.Run("should collect run metrics", func(t *testing.T) {
 		expectedDuration := 1000
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 		timerFn := func() func() int {
 			return func() int {
@@ -726,7 +723,7 @@ func TestAgentRun(t *testing.T) {
 	t.Run("should retry if extractor returns retry error", func(t *testing.T) {
 		err := errors.New("some-error")
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -782,7 +779,7 @@ func TestAgentRun(t *testing.T) {
 	t.Run("should retry if sink returns retry error", func(t *testing.T) {
 		err := errors.New("some-error")
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -838,7 +835,7 @@ func TestAgentRun(t *testing.T) {
 		err := errors.New("some-error")
 		ctx, cancel := context.WithCancel(ctx)
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 
 		extr := mocks.NewExtractor()
@@ -933,13 +930,7 @@ func TestAgentRun(t *testing.T) {
 						"engine": "tengo",
 						"script": heredoc.Doc(`
 							text := import("text")
-							
-							for u in asset.lineage.upstreams {
-							  u.urn = text.contains(u.urn, "kafka") ? text.replace(u.urn, ".yonkou.io", "", -1) : u.urn
-							}
-							for u in asset.lineage.downstreams {
-							  u.urn = text.contains(u.urn, "kafka") ? text.replace(u.urn, ".company.com", "", -1) : u.urn
-							}
+							asset.description = text.replace(asset.description, "incredible", "amazing", -1)
 						`),
 					},
 				},
@@ -955,37 +946,25 @@ func TestAgentRun(t *testing.T) {
 			},
 		})
 		assert.NoError(t, run.Error)
-		expected := &v1beta2.Asset{
+		expected := &meteorv1beta1.Entity{
 			Urn:         "urn:application_yaml:application-test:application:test",
 			Name:        "test",
-			Service:     "application_yaml",
+			Source:      "application_yaml",
 			Type:        "application",
-			Url:         "http://company.com/myteam/test",
-			Description: "My incredible project",
-			Data: utils.BuildAny(t, &v1beta2.Application{
-				Id:         "test-id",
-				Version:    "c23sdf6",
-				Attributes: &structpb.Struct{},
-				CreateTime: ts(t, "2006-01-02T15:04:05Z"),
-				UpdateTime: ts(t, "2006-01-02T15:04:05Z"),
-			}),
-			Owners: []*v1beta2.Owner{{
-				Urn:   "123",
-				Name:  "myteam",
-				Email: "myteam@company.com",
-			}},
-			Lineage: &v1beta2.Lineage{
-				Upstreams: []*v1beta2.Resource{
-					{Urn: "urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand"},
-					{Urn: "urn:kafka:int-dagstream-kafka:topic:staging_feast09_s2id13_30min_demand"},
-				},
-				Downstreams: []*v1beta2.Resource{
-					{Urn: "urn:kafka:1-my-kafka,2-my-kafka:topic:staging_feast09_mixed_granularity_demand_forecast_3es"},
-				},
-			},
-			Labels: map[string]string{"field_a": "1", "x": "y"},
+			Description: "My amazing project",
+			Properties: func() *structpb.Struct {
+				s, _ := structpb.NewStruct(map[string]interface{}{
+					"id":          "test-id",
+					"version":     "c23sdf6",
+					"url":         "http://company.com/myteam/test",
+					"create_time": "2006-01-02T15:04:05Z",
+					"update_time": "2006-01-02T15:04:05Z",
+					"labels":      map[string]interface{}{"field_a": "1", "x": "y"},
+				})
+				return s
+			}(),
 		}
-		utils.AssertEqualProto(t, expected, records[0].Data())
+		utils.AssertEqualProto(t, expected, records[0].Entity())
 	})
 
 	t.Run("should close stream after sink finishes writing records", func(t *testing.T) {
@@ -1026,7 +1005,7 @@ func TestAgentRunMultiple(t *testing.T) {
 		validRecipe2.Name = "sample-2"
 		recipeList := []recipe.Recipe{validRecipe, validRecipe2}
 		data := []models.Record{
-			models.NewRecord(&v1beta2.Asset{}),
+			models.NewRecord(&meteorv1beta1.Entity{}),
 		}
 		extr := mocks.NewExtractor()
 		extr.SetEmit(data)
@@ -1235,10 +1214,4 @@ func enrichInvalidConfigError(err error, pluginName string, pluginType plugins.P
 
 func buildPluginConfig(pr recipe.PluginRecipe) plugins.Config {
 	return plugins.Config{RawConfig: pr.Config, URNScope: pr.Scope}
-}
-
-func ts(t *testing.T, s string) *timestamppb.Timestamp {
-	ts, err := time.Parse(time.RFC3339, s)
-	require.NoError(t, err)
-	return timestamppb.New(ts)
 }

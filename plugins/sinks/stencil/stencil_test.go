@@ -13,13 +13,11 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/stencil"
 	testUtils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -70,13 +68,13 @@ func TestSink(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		table, err := anypb.New(&v1beta2.Table{})
-		require.NoError(t, err)
-		asset := &v1beta2.Asset{
-			Data: table,
-		}
+		entity := models.NewEntity(tableURN, "table", "test-table", "bigquery", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "id", "data_type": "INT64"},
+			},
+		})
 
-		err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(asset)})
+		err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 		require.Error(t, err)
 		assert.Equal(t, errMessage, err.Error())
 	})
@@ -99,132 +97,39 @@ func TestSink(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				table, err := anypb.New(&v1beta2.Table{})
-				require.NoError(t, err)
-				asset := &v1beta2.Asset{
-					Data: table,
-				}
-				err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(asset)})
+				entity := models.NewEntity(tableURN, "table", "test-table", "bigquery", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "data_type": "INT64"},
+					},
+				})
+				err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 				assert.ErrorAs(t, err, &plugins.RetryError{})
 			})
 		}
 	})
 
-	jsonTable1, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "INT",
-				IsNullable:  true,
-			},
-			{
-				Name:        "user_id",
-				Description: "It is the user ID",
-				DataType:    "STRING",
-				IsNullable:  false,
-			},
-			{
-				Name:        "email_id",
-				Description: "It is the email ID",
-				IsNullable:  true,
-			},
-			{
-				Name:        "description",
-				Description: "It is the description",
-				DataType:    "STRING",
-				IsNullable:  true,
-			},
-			{
-				Name:        "is_active",
-				Description: "It shows user regularity",
-				DataType:    "BOOLEAN",
-				IsNullable:  false,
-			},
-			{
-				Name:        "address",
-				Description: "It shows user address",
-				DataType:    "RECORD",
-				IsNullable:  false,
-			},
-			{
-				Name:        "range",
-				Description: "It is the range",
-				DataType:    "BYTES",
-				IsNullable:  false,
-			},
-		},
-	})
-	jsonTable2, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "integer",
-				IsNullable:  true,
-			},
-			{
-				Name:        "user_id",
-				Description: "It is the user ID",
-				DataType:    "varchar",
-				IsNullable:  false,
-			},
-			{
-				Name:        "email_id",
-				Description: "It is the email ID",
-				IsNullable:  true,
-			},
-			{
-				Name:        "description",
-				Description: "It is the description",
-				DataType:    "varchar",
-				IsNullable:  true,
-			},
-			{
-				Name:        "is_active",
-				Description: "It shows user regularity",
-				DataType:    "boolean",
-				IsNullable:  false,
-			},
-			{
-				Name:        "range",
-				Description: "It is the range",
-				DataType:    "bytea",
-				IsNullable:  false,
-			},
-		},
-	})
-	jsonTable3, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "INT",
-				IsNullable:  true,
-			},
-			{
-				Name:        "user_id",
-				Description: "It is the user ID",
-				DataType:    "STRING",
-				IsNullable:  false,
-			},
-		},
-	})
-
 	successJsonTestCases := []struct {
 		description string
-		data        *v1beta2.Asset
+		entity      *models.Record
 		config      map[string]interface{}
 		expected    stencil.JsonSchema
 	}{
 		{
 			description: "should create the right request from json schema to stencil when bigquery is the service",
-			data: &v1beta2.Asset{
-				Urn:     tableURN,
-				Name:    "table-name",
-				Service: "bigquery",
-				Data:    jsonTable1,
-			},
+			entity: func() *models.Record {
+				r := models.NewRecord(models.NewEntity(tableURN, "table", "table-name", "bigquery", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "description": "It is the ID", "data_type": "INT", "is_nullable": true},
+						map[string]interface{}{"name": "user_id", "description": "It is the user ID", "data_type": "STRING", "is_nullable": false},
+						map[string]interface{}{"name": "email_id", "description": "It is the email ID", "is_nullable": true},
+						map[string]interface{}{"name": "description", "description": "It is the description", "data_type": "STRING", "is_nullable": true},
+						map[string]interface{}{"name": "is_active", "description": "It shows user regularity", "data_type": "BOOLEAN", "is_nullable": false},
+						map[string]interface{}{"name": "address", "description": "It shows user address", "data_type": "RECORD", "is_nullable": false},
+						map[string]interface{}{"name": "range", "description": "It is the range", "data_type": "BYTES", "is_nullable": false},
+					},
+				}))
+				return &r
+			}(),
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
@@ -269,12 +174,19 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should create the right request from json schema to stencil when postgres is the service",
-			data: &v1beta2.Asset{
-				Urn:     tableURN,
-				Name:    "table-name",
-				Service: "postgres",
-				Data:    jsonTable2,
-			},
+			entity: func() *models.Record {
+				r := models.NewRecord(models.NewEntity(tableURN, "table", "table-name", "postgres", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "description": "It is the ID", "data_type": "integer", "is_nullable": true},
+						map[string]interface{}{"name": "user_id", "description": "It is the user ID", "data_type": "varchar", "is_nullable": false},
+						map[string]interface{}{"name": "email_id", "description": "It is the email ID", "is_nullable": true},
+						map[string]interface{}{"name": "description", "description": "It is the description", "data_type": "varchar", "is_nullable": true},
+						map[string]interface{}{"name": "is_active", "description": "It shows user regularity", "data_type": "boolean", "is_nullable": false},
+						map[string]interface{}{"name": "range", "description": "It is the range", "data_type": "bytea", "is_nullable": false},
+					},
+				}))
+				return &r
+			}(),
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
@@ -315,12 +227,15 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should return correct schema request with valid config",
-			data: &v1beta2.Asset{
-				Urn:     tableURN,
-				Name:    "table-name",
-				Service: "bigquery",
-				Data:    jsonTable3,
-			},
+			entity: func() *models.Record {
+				r := models.NewRecord(models.NewEntity(tableURN, "table", "table-name", "bigquery", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "description": "It is the ID", "data_type": "INT", "is_nullable": true},
+						map[string]interface{}{"name": "user_id", "description": "It is the user ID", "data_type": "STRING", "is_nullable": false},
+					},
+				}))
+				return &r
+			}(),
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
@@ -365,107 +280,35 @@ func TestSink(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
+			err = stencilSink.Sink(ctx, []models.Record{*tc.entity})
 			assert.NoError(t, err)
 
 			client.Assert(t)
 		})
 	}
 
-	avroTable1, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "INT",
-				IsNullable:  true,
-			},
-			{
-				Name:        "user_id",
-				Description: "It is the user ID",
-				DataType:    "STRING",
-				IsNullable:  false,
-			},
-			{
-				Name:        "description",
-				Description: "It is the description",
-				IsNullable:  true,
-			},
-			{
-				Name:        "distance",
-				Description: "It is the user distance from source",
-				DataType:    "FLOAT",
-				IsNullable:  true,
-			},
-			{
-				Name:        "is_active",
-				Description: "It shows user regularity",
-				DataType:    "BOOLEAN",
-				IsNullable:  false,
-			},
-			{
-				Name:        "address",
-				Description: "It shows user address",
-				DataType:    "RECORD",
-				IsNullable:  false,
-			},
-			{
-				Name:        "range",
-				Description: "It is the range",
-				DataType:    "BYTES",
-				IsNullable:  false,
-			},
-		},
-	})
-	avroTable2, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "id",
-				Description: "It is the ID",
-				DataType:    "integer",
-				IsNullable:  true,
-			},
-			{
-				Name:        "user_id",
-				Description: "It is the user ID",
-				DataType:    "varchar",
-				IsNullable:  false,
-			},
-			{
-				Name:        "description",
-				Description: "It is the description",
-				IsNullable:  true,
-			},
-			{
-				Name:        "is_active",
-				Description: "It shows user regularity",
-				DataType:    "boolean",
-				IsNullable:  false,
-			},
-			{
-				Name:        "range",
-				Description: "It is the range",
-				DataType:    "bytea",
-				IsNullable:  false,
-			},
-		},
-	})
-
 	successAvroTestCases := []struct {
 		description string
-		data        *v1beta2.Asset
+		entity      *models.Record
 		config      map[string]interface{}
 		expected    stencil.AvroSchema
 	}{
 		{
 			description: "should create the right request from avro schema to stencil when bigquery is the service",
-			data: &v1beta2.Asset{
-				Urn:     tableURN,
-				Name:    "table-name",
-				Type:    "table",
-				Service: "bigquery",
-				Data:    avroTable1,
-			},
+			entity: func() *models.Record {
+				r := models.NewRecord(models.NewEntity(tableURN, "table", "table-name", "bigquery", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "description": "It is the ID", "data_type": "INT", "is_nullable": true},
+						map[string]interface{}{"name": "user_id", "description": "It is the user ID", "data_type": "STRING", "is_nullable": false},
+						map[string]interface{}{"name": "description", "description": "It is the description", "is_nullable": true},
+						map[string]interface{}{"name": "distance", "description": "It is the user distance from source", "data_type": "FLOAT", "is_nullable": true},
+						map[string]interface{}{"name": "is_active", "description": "It shows user regularity", "data_type": "BOOLEAN", "is_nullable": false},
+						map[string]interface{}{"name": "address", "description": "It shows user address", "data_type": "RECORD", "is_nullable": false},
+						map[string]interface{}{"name": "range", "description": "It is the range", "data_type": "BYTES", "is_nullable": false},
+					},
+				}))
+				return &r
+			}(),
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
@@ -509,13 +352,18 @@ func TestSink(t *testing.T) {
 		},
 		{
 			description: "should create the right request to stencil when postgres is the service",
-			data: &v1beta2.Asset{
-				Urn:     tableURN,
-				Name:    "table-name",
-				Type:    "table",
-				Service: "postgres",
-				Data:    avroTable2,
-			},
+			entity: func() *models.Record {
+				r := models.NewRecord(models.NewEntity(tableURN, "table", "table-name", "postgres", map[string]interface{}{
+					"columns": []interface{}{
+						map[string]interface{}{"name": "id", "description": "It is the ID", "data_type": "integer", "is_nullable": true},
+						map[string]interface{}{"name": "user_id", "description": "It is the user ID", "data_type": "varchar", "is_nullable": false},
+						map[string]interface{}{"name": "description", "description": "It is the description", "is_nullable": true},
+						map[string]interface{}{"name": "is_active", "description": "It shows user regularity", "data_type": "boolean", "is_nullable": false},
+						map[string]interface{}{"name": "range", "description": "It is the range", "data_type": "bytea", "is_nullable": false},
+					},
+				}))
+				return &r
+			}(),
 			config: map[string]interface{}{
 				"host":         host,
 				"namespace_id": namespaceID,
@@ -571,7 +419,7 @@ func TestSink(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = stencilSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
+			err = stencilSink.Sink(ctx, []models.Record{*tc.entity})
 			assert.NoError(t, err)
 
 			client.Assert(t)

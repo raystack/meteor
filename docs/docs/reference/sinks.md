@@ -109,22 +109,6 @@ sinks:
     send_format_header: false
 ```
 
-## Frontier
-
-`frontier`
-
-Upsert users to frontier service running at a given 'host'. Request will be sent via GRPC.
-
-```yaml
-sinks:
-  name: frontier
-  config:
-    host: frontier.com
-    headers:
-      X-Frontier-Email: meteor@raystack.io
-      X-Other-Header: value1, value2
-```
-
 ## Kafka
 
 `kafka`

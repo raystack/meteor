@@ -4,16 +4,12 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -101,11 +97,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			err = err1
 			return
 		}
-		var columns []*v1beta2.Column
+		var columns []interface{}
 		for i := range docProperties {
-			columns = append(columns, &v1beta2.Column{
-				Name:     i,
-				DataType: docProperties[i].(map[string]interface{})["type"].(string),
+			columns = append(columns, map[string]interface{}{
+				"name":      i,
+				"data_type": docProperties[i].(map[string]interface{})["type"].(string),
 			})
 		}
 		countRes, err1 := e.client.Search(
@@ -122,24 +118,19 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			return
 		}
 		docCount := len(t["hits"].(map[string]interface{})["hits"].([]interface{}))
-		table, err := anypb.New(&v1beta2.Table{
-			Columns:    columns,
-			Attributes: &structpb.Struct{},
-			Profile: &v1beta2.TableProfile{
-				TotalRows: int64(docCount),
-			},
-		})
-		if err != nil {
-			err = fmt.Errorf("error creating Any struct for test: %w", err)
-			return err
+		props := map[string]interface{}{
+			"columns": columns,
 		}
-		emit(models.NewRecord(&v1beta2.Asset{
-			Urn:     models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
-			Name:    indexName,
-			Type:    "table",
-			Service: "elasticsearch",
-			Data:    table,
-		}))
+		if docCount > 0 {
+			props["profile"] = map[string]interface{}{
+				"total_rows": int64(docCount),
+			}
+		}
+		emit(models.NewRecord(models.NewEntity(
+			models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
+			"table", indexName, "elasticsearch",
+			props,
+		)))
 	}
 	return
 }

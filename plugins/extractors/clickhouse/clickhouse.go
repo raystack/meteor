@@ -8,14 +8,11 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -119,22 +116,12 @@ func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error 
 			return err
 		}
 
-		table, err := anypb.New(&v1beta2.Table{
-			Columns:    columns,
-			Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-		})
-		if err != nil {
-			return fmt.Errorf("create Any struct: %w", err)
-		}
-
-		asset := v1beta2.Asset{
-			Urn:     models.NewURN("clickhouse", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-			Name:    tableName,
-			Type:    "table",
-			Service: "clickhouse",
-			Data:    table,
-		}
-		emit(models.NewRecord(&asset))
+		entity := models.NewEntity(
+			models.NewURN("clickhouse", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
+			"table", tableName, "clickhouse",
+			map[string]interface{}{"columns": columns},
+		)
+		emit(models.NewRecord(entity))
 	}
 	if err := res.Err(); err != nil {
 		return fmt.Errorf("iterate over tables: %w", err)
@@ -143,7 +130,7 @@ func (e *Extractor) extractTables(ctx context.Context, emit plugins.Emit) error 
 	return nil
 }
 
-func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string) ([]interface{}, error) {
 	sqlStr := fmt.Sprintf("DESCRIBE TABLE %s.%s", dbName, tableName)
 
 	rows, err := e.db.QueryContext(ctx, sqlStr)
@@ -152,7 +139,7 @@ func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var colName, colDesc, dataType string
 		var temp1, temp2, temp3, temp4 string
@@ -160,11 +147,14 @@ func (e *Extractor) getColumnsInfo(ctx context.Context, dbName, tableName string
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, &v1beta2.Column{
-			Name:        colName,
-			DataType:    dataType,
-			Description: colDesc,
-		})
+		col := map[string]interface{}{
+			"name":      colName,
+			"data_type": dataType,
+		}
+		if colDesc != "" {
+			col["description"] = colDesc
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over columns: %w", err)

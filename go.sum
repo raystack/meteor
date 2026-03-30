@@ -692,8 +692,6 @@ github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084/go.mod h1:TjEm7z
 github.com/prometheus/procfs v0.20.1 h1:XwbrGOIplXW/AU3YhIhLODXMJYyC1isLFfYCsTEycfc=
 github.com/prometheus/procfs v0.20.1/go.mod h1:o9EMBZGRyvDrSPH1RqdxhojkuXstoe4UlK79eF5TGGo=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
-github.com/raystack/frontier v0.7.2 h1:LzAPRwmOw7/NcZdR++KNFxhHtuiyq4fHS2/ib8VTweg=
-github.com/raystack/frontier v0.7.2/go.mod h1:UefG+Xe+ksCJxoqgQGYQnqHzROlELoytbfXMZckMtWw=
 github.com/raystack/optimus v0.7.2-0.20230725205201-5874457c7bbe h1:WC8390+YjaaARvwIgxa2DYNWbvMSnXQaDRu7si4iOxo=
 github.com/raystack/optimus v0.7.2-0.20230725205201-5874457c7bbe/go.mod h1:0yWnUfKvANQryQ5bOp4QY6Rc1wOPPBohoZjG64et/60=
 github.com/raystack/salt v0.7.0 h1:5w9U0qYLwMIgz0dEecmHnv6LZRFuC/UMnthtRawHrV8=

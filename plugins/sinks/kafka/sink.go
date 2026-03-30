@@ -74,7 +74,11 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
-		if err := s.push(ctx, record.Data()); err != nil {
+		// TODO: Only the entity is serialized as a proto value; edges (lineage,
+		// ownership) are dropped because there is no proto wrapper for a full
+		// Record. To include edges, either define a Record proto message or
+		// switch to JSON serialization.
+		if err := s.push(ctx, record.Entity()); err != nil {
 			return err
 		}
 	}

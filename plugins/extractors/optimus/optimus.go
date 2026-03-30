@@ -8,14 +8,12 @@ import (
 	"strings"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/optimus/client"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	pb "github.com/raystack/optimus/protos/raystack/optimus/core/v1beta1"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
@@ -112,7 +110,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			}
 
 			for _, job := range jobResp.Jobs {
-				data, err := e.buildJob(ctx, job, project.Name, namespace.Name)
+				record, err := e.buildJob(ctx, job, project.Name, namespace.Name)
 				if err != nil {
 					e.logger.Error(
 						"error building job model",
@@ -123,7 +121,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 					continue
 				}
 
-				emit(models.NewRecord(data))
+				emit(record)
 			}
 		}
 	}
@@ -131,149 +129,142 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return nil
 }
 
-func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (*v1beta2.Asset, error) {
+func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, project, namespace string) (models.Record, error) {
 	jobResp, err := e.client.GetJobTask(ctx, &pb.GetJobTaskRequest{
 		ProjectName:   project,
 		NamespaceName: namespace,
 		JobName:       jobSpec.Name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("fetching task: %w", err)
+		return models.Record{}, fmt.Errorf("fetching task: %w", err)
 	}
 
 	task := jobResp.Task
-	upstreams, downstreams, err := e.buildLineage(task)
+	upstreamURNs, downstreamURNs, err := e.buildLineageURNs(task)
 	if err != nil {
-		return nil, fmt.Errorf("building lineage: %w", err)
+		return models.Record{}, fmt.Errorf("building lineage: %w", err)
 	}
 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
 	urn := models.NewURN(service, e.UrnScope, "job", jobID)
 
-	jobModel, err := anypb.New(&v1beta2.Job{
-		Attributes: utils.TryParseMapToProto(map[string]interface{}{
-			"version":          jobSpec.Version,
-			"project":          project,
-			"project_id":       project,
-			"namespace":        namespace,
-			"owner":            jobSpec.Owner,
-			"startDate":        strOrNil(jobSpec.StartDate),
-			"endDate":          strOrNil(jobSpec.EndDate),
-			"interval":         jobSpec.Interval,
-			"dependsOnPast":    jobSpec.DependsOnPast,
-			"taskName":         jobSpec.TaskName,
-			"windowSize":       jobSpec.WindowSize,
-			"windowOffset":     jobSpec.WindowOffset,
-			"windowTruncateTo": jobSpec.WindowTruncateTo,
-			"sql":              jobSpec.Assets["query.sql"],
-			"task": map[string]interface{}{
-				"name":        task.Name,
-				"description": task.Description,
-				"image":       task.Image,
-			},
-		}),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
+	// Build edges for lineage
+	var edges []*meteorv1beta1.Edge
+	for _, upstreamURN := range upstreamURNs {
+		edges = append(edges, models.LineageEdge(upstreamURN, urn, service))
+	}
+	for _, downstreamURN := range downstreamURNs {
+		edges = append(edges, models.LineageEdge(urn, downstreamURN, service))
 	}
 
-	return &v1beta2.Asset{
-		Urn:         urn,
-		Name:        jobSpec.Name,
-		Service:     service,
-		Description: jobSpec.Description,
-		Type:        "job",
-		Data:        jobModel,
-		Owners: []*v1beta2.Owner{
-			{
-				Urn:   jobSpec.Owner,
-				Email: jobSpec.Owner,
-			},
+	// Build owner edge
+	if jobSpec.Owner != "" {
+		edges = append(edges, models.OwnerEdge(urn, "urn:user:"+jobSpec.Owner, service))
+	}
+
+	props := map[string]interface{}{
+		"version":          jobSpec.Version,
+		"project":          project,
+		"project_id":       project,
+		"namespace":        namespace,
+		"owner":            jobSpec.Owner,
+		"interval":         jobSpec.Interval,
+		"depends_on_past":    jobSpec.DependsOnPast,
+		"task_name":          jobSpec.TaskName,
+		"window_size":        jobSpec.WindowSize,
+		"window_offset":      jobSpec.WindowOffset,
+		"window_truncate_to": jobSpec.WindowTruncateTo,
+		"task": map[string]interface{}{
+			"name":        task.Name,
+			"description": task.Description,
+			"image":       task.Image,
 		},
-		Lineage: &v1beta2.Lineage{
-			Upstreams:   upstreams,
-			Downstreams: downstreams,
-		},
-	}, nil
+	}
+	if startDate := strOrNil(jobSpec.StartDate); startDate != nil {
+		props["start_date"] = startDate
+	}
+	if endDate := strOrNil(jobSpec.EndDate); endDate != nil {
+		props["end_date"] = endDate
+	}
+	if sql, ok := jobSpec.Assets["query.sql"]; ok && sql != "" {
+		props["sql"] = sql
+	}
+
+	entity := models.NewEntity(urn, "job", jobSpec.Name, service, props)
+	if jobSpec.Description != "" {
+		entity.Description = jobSpec.Description
+	}
+
+	return models.NewRecord(entity, edges...), nil
 }
 
-func (e *Extractor) buildLineage(task *pb.JobTask) (upstreams, downstreams []*v1beta2.Resource, err error) {
-	upstreams, err = e.buildUpstreams(task)
+func (e *Extractor) buildLineageURNs(task *pb.JobTask) (upstreamURNs, downstreamURNs []string, err error) {
+	upstreamURNs, err = e.buildUpstreamURNs(task)
 	if err != nil {
 		return nil, nil, fmt.Errorf("build upstreams: %w", err)
 	}
 
-	downstreams, err = e.buildDownstreams(task)
+	downstreamURNs, err = e.buildDownstreamURNs(task)
 	if err != nil {
 		return nil, nil, fmt.Errorf("build downstreams: %w", err)
 	}
 
-	return upstreams, downstreams, nil
+	return upstreamURNs, downstreamURNs, nil
 }
 
-func (e *Extractor) buildUpstreams(task *pb.JobTask) ([]*v1beta2.Resource, error) {
-	var upstreams []*v1beta2.Resource
+func (e *Extractor) buildUpstreamURNs(task *pb.JobTask) ([]string, error) {
+	var urns []string
 	for _, dependency := range task.Dependencies {
-		resource, err := createResource(dependency.Dependency)
+		urn, err := createResourceURN(dependency.Dependency)
 		if err != nil {
 			e.logger.Warn("skipping upstream dependency", "dependency", dependency.Dependency, "err", err)
 			continue
 		}
 
-		upstreams = append(upstreams, resource)
+		urns = append(urns, urn)
 	}
 
-	return upstreams, nil
+	return urns, nil
 }
 
-func (e *Extractor) buildDownstreams(task *pb.JobTask) ([]*v1beta2.Resource, error) {
+func (e *Extractor) buildDownstreamURNs(task *pb.JobTask) ([]string, error) {
 	if task.Destination == nil || task.Destination.Destination == "" {
 		return nil, nil
 	}
 
-	resource, err := createResource(task.Destination.Destination)
+	urn, err := createResourceURN(task.Destination.Destination)
 	if err != nil {
 		return nil, err
 	}
 
-	return []*v1beta2.Resource{resource}, nil
+	return []string{urn}, nil
 }
 
-func createResource(dependency string) (*v1beta2.Resource, error) {
+func createResourceURN(dependency string) (string, error) {
 	switch {
 	case strings.HasPrefix(dependency, prefixBigQuery):
-		return createBigQueryResource(strings.TrimPrefix(dependency, prefixBigQuery))
+		return createBigQueryResourceURN(strings.TrimPrefix(dependency, prefixBigQuery))
 	case strings.HasPrefix(dependency, prefixMaxcompute):
-		return createMaxComputeResource(strings.TrimPrefix(dependency, prefixMaxcompute))
+		return createMaxComputeResourceURN(strings.TrimPrefix(dependency, prefixMaxcompute))
 	default:
-		return nil, fmt.Errorf("%w: %s", errInvalidDependency, dependency)
+		return "", fmt.Errorf("%w: %s", errInvalidDependency, dependency)
 	}
 }
 
-func createBigQueryResource(fqn string) (*v1beta2.Resource, error) {
+func createBigQueryResourceURN(fqn string) (string, error) {
 	urn, err := plugins.BigQueryTableFQNToURN(fqn)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	return &v1beta2.Resource{
-		Urn:     urn,
-		Type:    "table",
-		Service: "bigquery",
-	}, nil
+	return urn, nil
 }
 
-func createMaxComputeResource(fqn string) (*v1beta2.Resource, error) {
+func createMaxComputeResourceURN(fqn string) (string, error) {
 	urn, err := plugins.MaxComputeTableFQNToURN(fqn)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	return &v1beta2.Resource{
-		Urn:     urn,
-		Type:    "table",
-		Service: "maxcompute",
-	}, nil
+	return urn, nil
 }
 
 func strOrNil(s string) interface{} {

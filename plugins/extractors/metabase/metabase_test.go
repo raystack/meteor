@@ -11,8 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/metabase"
 	m "github.com/raystack/meteor/plugins/extractors/metabase/models"
@@ -123,7 +122,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
 
-		actuals := emitter.GetAllData()
+		actuals := emitter.GetAllEntities()
 		testutils.AssertProtosWithJSONFile(t, "./testdata/expected.json", actuals)
 	})
 
@@ -174,8 +173,8 @@ func TestExtract(t *testing.T) {
 
 		err = extr.Extract(context.TODO(), emitter.Push)
 		assert.NoError(t, err)
-		actuals := emitter.GetAllData()
-		testutils.AssertEqualProtos(t, []*v1beta2.Asset{}, actuals)
+		actuals := emitter.GetAllEntities()
+		testutils.AssertEqualProtos(t, []*meteorv1beta1.Entity{}, actuals)
 	})
 }
 
@@ -262,24 +261,4 @@ func (c *mockClient) GetDatabase(ctx context.Context, id int) (m.Database, error
 func (c *mockClient) GetTable(ctx context.Context, id int) (m.Table, error) {
 	args := c.Called(id)
 	return args.Get(0).(m.Table), args.Error(1)
-}
-
-// This function compares two slices without concerning about the order
-func assertResults(t *testing.T, expected, result []models.Record) {
-	assert.Len(t, result, len(expected))
-
-	expectedMap := make(map[string]*v1beta2.Asset)
-	for _, record := range expected {
-		expectedAsset := record.Data()
-		expectedMap[expectedAsset.Urn] = expectedAsset
-	}
-
-	for _, record := range result {
-		actualAsset := record.Data()
-		assert.Contains(t, expectedMap, actualAsset.Urn)
-		assert.Equal(t, expectedMap[actualAsset.Urn], actualAsset)
-
-		// delete entry to make sure there is no duplicate
-		delete(expectedMap, actualAsset.Urn)
-	}
 }
