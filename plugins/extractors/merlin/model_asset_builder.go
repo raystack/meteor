@@ -7,12 +7,9 @@ import (
 	"strconv"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -27,9 +24,9 @@ type modelBuilder struct {
 	versions map[int64]merlin.ModelVersion
 }
 
-func (b modelBuilder) buildAsset() (*v1beta2.Asset, error) {
-	fail := func(step string, err error) (*v1beta2.Asset, error) {
-		return nil, fmt.Errorf(
+func (b modelBuilder) buildRecord() (models.Record, error) {
+	fail := func(step string, err error) (models.Record, error) {
+		return models.Record{}, fmt.Errorf(
 			"build %s for model '%d' in project '%d': %w",
 			step, b.model.ID, b.project.ID, err,
 		)
@@ -42,50 +39,57 @@ func (b modelBuilder) buildAsset() (*v1beta2.Asset, error) {
 
 	urls := b.buildEndpointURLs()
 
-	model, err := anypb.New(&v1beta2.Model{
-		Namespace: b.project.Name,
-		Flavor:    b.model.Type,
-		Versions:  versions,
-		Attributes: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"merlin_project_id":     intToValue(b.project.ID),
-				"mlflow_experiment_id":  intToValue(b.model.MlflowExperimentID),
-				"mlflow_experiment_url": structpb.NewStringValue(b.model.MlflowURL),
-				"endpoint_urls":         stringSliceToValue(urls),
-			},
-		},
-		CreateTime: timestamppb.New(b.model.CreatedAt),
-		UpdateTime: timestamppb.New(b.model.UpdatedAt),
-	})
-	if err != nil {
-		return fail("encode model metadata", err)
-	}
+	urn := models.NewURN(service, b.scope, typ, fmt.Sprintf("%s.%s", b.project.Name, b.model.Name))
 
-	lineage, err := b.buildLineage()
+	// Build edges
+	var edges []*meteorv1beta1.Edge
+
+	// Lineage edges (upstreams)
+	upstreamURNs, err := b.buildUpstreamURNs()
 	if err != nil {
 		return fail("lineage", err)
 	}
-
-	return &v1beta2.Asset{
-		Urn:     models.NewURN(service, b.scope, typ, fmt.Sprintf("%s.%s", b.project.Name, b.model.Name)),
-		Name:    b.model.Name,
-		Service: service,
-		Type:    typ,
-		Url:     urls[0],
-		Data:    model,
-		Owners:  b.buildOwners(),
-		Lineage: lineage,
-		Labels:  b.buildLabels(),
-	}, nil
-}
-
-func (b modelBuilder) buildLineage() (*v1beta2.Lineage, error) {
-	upstreams, err := b.buildUpstreams()
-	if err != nil {
-		return nil, fmt.Errorf("build upstreams: %w", err)
+	for _, upstreamURN := range upstreamURNs {
+		edges = append(edges, models.LineageEdge(upstreamURN, urn, service))
 	}
 
-	return &v1beta2.Lineage{Upstreams: upstreams}, nil
+	// Owner edges
+	for _, ownerURN := range b.buildOwnerURNs() {
+		edges = append(edges, models.OwnerEdge(urn, ownerURN, service))
+	}
+
+	props := map[string]interface{}{
+		"namespace":            b.project.Name,
+		"flavor":               b.model.Type,
+		"merlin_project_id":    b.project.ID,
+		"mlflow_experiment_id": b.model.MlflowExperimentID,
+		"mlflow_experiment_url": b.model.MlflowURL,
+	}
+	if len(urls) > 0 {
+		props["endpoint_urls"] = urls
+	}
+	if len(versions) > 0 {
+		props["versions"] = versions
+	}
+	if !b.model.CreatedAt.IsZero() {
+		props["create_time"] = b.model.CreatedAt.Format("2006-01-02T15:04:05Z")
+	}
+	if !b.model.UpdatedAt.IsZero() {
+		props["update_time"] = b.model.UpdatedAt.Format("2006-01-02T15:04:05Z")
+	}
+
+	// Labels
+	labels := b.buildLabels()
+	if len(labels) > 0 {
+		props["labels"] = labels
+	}
+
+	if len(urls) > 0 {
+		props["url"] = urls[0]
+	}
+	entity := models.NewEntity(urn, typ, b.model.Name, service, props)
+
+	return models.NewRecord(entity, edges...), nil
 }
 
 // Based on https://github.com/gojek/merlin/blob/v0.24.0/api/pkg/transformer/spec/feast.pb.go#L350
@@ -94,7 +98,7 @@ type featureTable struct {
 	Project string `json:"project"`
 }
 
-func (b modelBuilder) buildUpstreams() ([]*v1beta2.Resource, error) {
+func (b modelBuilder) buildUpstreamURNs() ([]string, error) {
 	fts := make(map[featureTable]struct{})
 	for _, endpoint := range b.model.Endpoints {
 		for _, dest := range endpoint.Rule.Destinations {
@@ -113,23 +117,17 @@ func (b modelBuilder) buildUpstreams() ([]*v1beta2.Resource, error) {
 		}
 	}
 
-	var upstreams []*v1beta2.Resource
+	var urns []string
 	for ft := range fts {
-		upstreams = append(upstreams, &v1beta2.Resource{
-			Urn:     plugins.CaraMLStoreURN(b.scope, ft.Project, ft.Name),
-			Service: "caramlstore",
-			Type:    "feature_table",
-		})
+		urns = append(urns, plugins.CaraMLStoreURN(b.scope, ft.Project, ft.Name))
 	}
-	// For testability, we need a deterministic output. So sort the upstreams
-	sort.Slice(upstreams, func(i, j int) bool {
-		return upstreams[i].Urn < upstreams[j].Urn
-	})
-	return upstreams, nil
+	// For testability, we need a deterministic output. So sort the urns
+	sort.Strings(urns)
+	return urns, nil
 }
 
-func (b modelBuilder) buildVersions() ([]*v1beta2.ModelVersion, error) {
-	var versions []*v1beta2.ModelVersion
+func (b modelBuilder) buildVersions() ([]map[string]interface{}, error) {
+	var versions []map[string]interface{}
 	for _, endpoint := range b.model.Endpoints {
 		for _, dest := range endpoint.Rule.Destinations {
 			vEp := dest.VersionEndpoint
@@ -142,30 +140,40 @@ func (b modelBuilder) buildVersions() ([]*v1beta2.ModelVersion, error) {
 				return nil, fmt.Errorf("model version not found: %d", vEp.VersionID)
 			}
 
-			versions = append(versions, &v1beta2.ModelVersion{
-				Status:  vEp.Status,
-				Version: strconv.FormatInt(mdlv.ID, 10),
-				Attributes: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"endpoint_id":          intToValue(endpoint.ID),
-						"mlflow_run_id":        structpb.NewStringValue(mdlv.MlflowRunID),
-						"mlflow_run_url":       structpb.NewStringValue(mdlv.MlflowURL),
-						"endpoint_url":         structpb.NewStringValue(endpoint.URL),
-						"version_endpoint_url": structpb.NewStringValue(vEp.URL),
-						"monitoring_url":       structpb.NewStringValue(vEp.MonitoringURL),
-						"message":              structpb.NewStringValue(vEp.Message),
-						"environment_name":     structpb.NewStringValue(endpoint.EnvironmentName),
-						"deployment_mode":      structpb.NewStringValue(vEp.DeploymentMode),
-						"service_name":         structpb.NewStringValue(vEp.ServiceName),
-						"env_vars":             envVarsToValue(vEp.EnvVars),
-						"transformer":          transformerAttrs(vEp.Transformer),
-						"weight":               intToValue(dest.Weight),
-					},
-				},
-				Labels:     mdlv.Labels,
-				CreateTime: timestamppb.New(mdlv.CreatedAt),
-				UpdateTime: timestamppb.New(mdlv.UpdatedAt),
-			})
+			version := map[string]interface{}{
+				"status":  vEp.Status,
+				"version": strconv.FormatInt(mdlv.ID, 10),
+				"endpoint_id":          endpoint.ID,
+				"mlflow_run_id":        mdlv.MlflowRunID,
+				"mlflow_run_url":       mdlv.MlflowURL,
+				"endpoint_url":         endpoint.URL,
+				"version_endpoint_url": vEp.URL,
+				"monitoring_url":       vEp.MonitoringURL,
+				"message":              vEp.Message,
+				"environment_name":     endpoint.EnvironmentName,
+				"deployment_mode":      vEp.DeploymentMode,
+				"service_name":         vEp.ServiceName,
+				"weight":               dest.Weight,
+			}
+			if len(vEp.EnvVars) > 0 {
+				envVars := make(map[string]string, len(vEp.EnvVars))
+				for _, ev := range vEp.EnvVars {
+					envVars[ev.Name] = ev.Value
+				}
+				version["env_vars"] = envVars
+			}
+			version["transformer"] = buildTransformerMap(vEp.Transformer)
+			if len(mdlv.Labels) > 0 {
+				version["labels"] = mdlv.Labels
+			}
+			if !mdlv.CreatedAt.IsZero() {
+				version["create_time"] = mdlv.CreatedAt.Format("2006-01-02T15:04:05Z")
+			}
+			if !mdlv.UpdatedAt.IsZero() {
+				version["update_time"] = mdlv.UpdatedAt.Format("2006-01-02T15:04:05Z")
+			}
+
+			versions = append(versions, version)
 		}
 	}
 
@@ -180,21 +188,18 @@ func (b modelBuilder) buildEndpointURLs() []string {
 	return urls
 }
 
-func (b modelBuilder) buildOwners() []*v1beta2.Owner {
-	var owners []*v1beta2.Owner
+func (b modelBuilder) buildOwnerURNs() []string {
+	var urns []string
 	emails := make(map[string]struct{}, len(b.project.Administrators))
 	for _, admin := range b.project.Administrators {
 		if _, ok := emails[admin]; ok {
 			continue
 		}
 
-		owners = append(owners, &v1beta2.Owner{
-			Urn:   admin,
-			Email: admin,
-		})
+		urns = append(urns, "urn:user:"+admin)
 		emails[admin] = struct{}{}
 	}
-	return owners
+	return urns
 }
 
 func (b modelBuilder) buildLabels() map[string]string {
@@ -230,46 +235,28 @@ func decodeFeatureTableSpecs(tr merlin.Transformer) ([]featureTable, error) {
 	return nil, nil
 }
 
-func transformerAttrs(tr merlin.Transformer) *structpb.Value {
-	attrs := map[string]*structpb.Value{
-		"enabled": structpb.NewBoolValue(tr.Enabled),
+func buildTransformerMap(tr merlin.Transformer) map[string]interface{} {
+	attrs := map[string]interface{}{
+		"enabled": tr.Enabled,
 	}
 	if !tr.Enabled {
-		return structpb.NewStructValue(&structpb.Struct{Fields: attrs})
+		return attrs
 	}
 
-	attrs["type"] = structpb.NewStringValue(tr.TransformerType)
-	attrs["image"] = structpb.NewStringValue(tr.Image)
+	attrs["type"] = tr.TransformerType
+	attrs["image"] = tr.Image
 	if tr.Command != "" {
-		attrs["command"] = structpb.NewStringValue(tr.Command)
-		attrs["args"] = structpb.NewStringValue(tr.Args)
+		attrs["command"] = tr.Command
+		attrs["args"] = tr.Args
 	}
 
-	attrs["env_vars"] = envVarsToValue(tr.EnvVars)
-
-	return structpb.NewStructValue(&structpb.Struct{Fields: attrs})
-}
-
-func stringSliceToValue(urls []string) *structpb.Value {
-	var l structpb.ListValue
-	for _, u := range urls {
-		l.Values = append(l.Values, structpb.NewStringValue(u))
+	if len(tr.EnvVars) > 0 {
+		envVars := make(map[string]string, len(tr.EnvVars))
+		for _, ev := range tr.EnvVars {
+			envVars[ev.Name] = ev.Value
+		}
+		attrs["env_vars"] = envVars
 	}
 
-	return structpb.NewListValue(&l)
-}
-
-func intToValue(n int64) *structpb.Value { return structpb.NewNumberValue((float64)(n)) }
-
-func envVarsToValue(vars []merlin.EnvVar) *structpb.Value {
-	if len(vars) == 0 {
-		return structpb.NewNullValue()
-	}
-
-	attrs := make(map[string]*structpb.Value, len(vars))
-	for _, envvar := range vars {
-		attrs[envvar.Name] = structpb.NewStringValue(envvar.Value)
-	}
-
-	return structpb.NewStructValue(&structpb.Struct{Fields: attrs})
+	return attrs
 }

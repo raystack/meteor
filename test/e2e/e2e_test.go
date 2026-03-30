@@ -18,7 +18,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/cmd"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	_ "github.com/raystack/meteor/plugins/extractors"
 	_ "github.com/raystack/meteor/plugins/processors"
 	_ "github.com/raystack/meteor/plugins/sinks"
@@ -26,7 +26,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -93,7 +92,7 @@ func TestMySqlToKafka(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var sinkData []*v1beta2.Asset
+	var sinkData []*meteorv1beta1.Entity
 	ctx, cancel := context.WithCancel(context.TODO())
 	go func() {
 		err = listenToTopic(ctx, testTopic, &sinkData)
@@ -121,17 +120,16 @@ func TestMySqlToKafka(t *testing.T) {
 	cancel()                           // cancel will cancel context, hinting the consumer to end
 	time.Sleep(100 * time.Millisecond) // this is to give time for the consumer to closing all its connections
 
-	expected := getExpectedTables()
-	assert.Equal(t, len(getExpectedTables()), len(sinkData))
-	for tableNum := 0; tableNum < len(getExpectedTables()); tableNum++ {
-		assert.Equal(t, expected[tableNum].Urn, sinkData[tableNum].Urn)
-		assert.Equal(t, expected[tableNum].Name, sinkData[tableNum].Name)
-		assert.Equal(t, len(expected[tableNum].Data.Value), len(sinkData[tableNum].Data.Value))
+	expected := getExpectedEntities()
+	assert.Equal(t, len(expected), len(sinkData))
+	for i := 0; i < len(expected); i++ {
+		assert.Equal(t, expected[i].Urn, sinkData[i].Urn)
+		assert.Equal(t, expected[i].Name, sinkData[i].Name)
 	}
 }
 
 // listenToTopic listens to a topic and stores the data in sinkData
-func listenToTopic(ctx context.Context, topic string, data *[]*v1beta2.Asset) error {
+func listenToTopic(ctx context.Context, topic string, data *[]*meteorv1beta1.Entity) error {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{brokerHost},
 		Topic:   topic,
@@ -147,7 +145,7 @@ func listenToTopic(ctx context.Context, topic string, data *[]*v1beta2.Asset) er
 		if err != nil {
 			break
 		}
-		var convertMsg v1beta2.Asset
+		var convertMsg meteorv1beta1.Entity
 		if err := proto.Unmarshal(msg.Value, &convertMsg); err != nil {
 			return fmt.Errorf("parse kafka message: %w", err)
 		}
@@ -288,63 +286,16 @@ func mysqlDockerSetup() (purge func() error, err error) {
 	return purgeContainer, nil
 }
 
-// getExpectedTables returns the expected tables
-func getExpectedTables() []*v1beta2.Asset {
-	data1, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:       "applicant_id",
-				DataType:   "int",
-				IsNullable: true,
-				Length:     0,
-			},
-			{
-				Name:       "first_name",
-				DataType:   "varchar",
-				IsNullable: true,
-				Length:     255,
-			},
-			{
-				Name:       "last_name",
-				DataType:   "varchar",
-				IsNullable: true,
-				Length:     255,
-			},
-		},
-	})
-	data2, _ := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:       "department",
-				DataType:   "varchar",
-				IsNullable: true,
-				Length:     255,
-			},
-			{
-				Name:       "job",
-				DataType:   "varchar",
-				IsNullable: true,
-				Length:     255,
-			},
-			{
-				Name:       "job_id",
-				DataType:   "int",
-				IsNullable: true,
-				Length:     0,
-			},
-		},
-	})
-
-	return []*v1beta2.Asset{
+// getExpectedEntities returns the expected entities
+func getExpectedEntities() []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
 		{
 			Urn:  testDB + ".applicant",
 			Name: "applicant",
-			Data: data1,
 		},
 		{
 			Urn:  testDB + ".jobs",
 			Name: "jobs",
-			Data: data2,
 		},
 	}
 }

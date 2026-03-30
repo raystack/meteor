@@ -10,15 +10,12 @@ import (
 
 	_ "github.com/lib/pq" // register postgres driver
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -148,35 +145,33 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*v1beta2.Asset, error) {
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, error) {
 	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
 		return nil, err
+	}
+
+	props := map[string]interface{}{
+		"columns": columns,
 	}
 
 	usrPrivilegeInfo, err := e.userPrivilegesInfo(ctx, db, dbName, tableName)
 	if err != nil {
 		e.logger.Warn("unable to fetch user privileges info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
 	}
-
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: usrPrivilegeInfo,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
+	if usrPrivilegeInfo != nil {
+		props["grants"] = usrPrivilegeInfo["grants"]
 	}
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-		Name:    tableName,
-		Service: "postgres",
-		Type:    "table",
-		Data:    table,
-	}, nil
+
+	return models.NewEntity(
+		models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
+		"table", tableName, "postgres",
+		props,
+	), nil
 }
 
 // Prepares the list of columns and the attached metadata
-func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName string) ([]interface{}, error) {
 	sqlStr := `SELECT COLUMN_NAME,DATA_TYPE,
 				IS_NULLABLE,coalesce(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -187,7 +182,7 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
@@ -195,12 +190,15 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 			e.logger.Error("failed to get fields", "error", err)
 			continue
 		}
-		result = append(result, &v1beta2.Column{
-			Name:       fieldName,
-			DataType:   dataType,
-			IsNullable: isNullable(isNullableString),
-			Length:     int64(length),
-		})
+		col := map[string]interface{}{
+			"name":        fieldName,
+			"data_type":   dataType,
+			"is_nullable": isNullable(isNullableString),
+		}
+		if length != 0 {
+			col["length"] = int64(length)
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over table columns: %w", err)
@@ -209,9 +207,9 @@ func (e *Extractor) getColumnMetadata(ctx context.Context, db *sql.DB, tableName
 	return result, nil
 }
 
-func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, tableName string) (*structpb.Struct, error) {
-	query := `SELECT grantee, string_agg(privilege_type, ',') 
-	FROM information_schema.role_table_grants 
+func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, tableName string) (map[string]interface{}, error) {
+	query := `SELECT grantee, string_agg(privilege_type, ',')
+	FROM information_schema.role_table_grants
 	WHERE table_name='%s' AND table_catalog='%s'
 	GROUP BY grantee;`
 
@@ -238,10 +236,9 @@ func (e *Extractor) userPrivilegesInfo(ctx context.Context, db *sql.DB, dbName, 
 		return nil, fmt.Errorf("iterate over user privileges: %w", err)
 	}
 
-	grants := map[string]interface{}{
+	return map[string]interface{}{
 		"grants": usrs,
-	}
-	return utils.TryParseMapToProto(grants), nil
+	}, nil
 }
 
 // Convert nullable string to a boolean

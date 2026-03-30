@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewURN(t *testing.T) {
@@ -35,51 +36,55 @@ func TestNewURN(t *testing.T) {
 	}
 }
 
-func TestToJSON(t *testing.T) {
-	type args struct {
-		asset *assetsv1beta2.Asset
+func TestNewEntity(t *testing.T) {
+	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]interface{}{
+		"columns": []interface{}{"id", "name"},
+	})
+	assert.Equal(t, "urn:test:s:table:t1", entity.GetUrn())
+	assert.Equal(t, "table", entity.GetType())
+	assert.Equal(t, "t1", entity.GetName())
+	assert.Equal(t, "test", entity.GetSource())
+	assert.NotNil(t, entity.GetProperties())
+}
+
+func TestLineageEdge(t *testing.T) {
+	edge := models.LineageEdge("urn:source", "urn:target", "bigquery")
+	assert.Equal(t, "urn:source", edge.GetSourceUrn())
+	assert.Equal(t, "urn:target", edge.GetTargetUrn())
+	assert.Equal(t, "lineage", edge.GetType())
+	assert.Equal(t, "bigquery", edge.GetSource())
+}
+
+func TestOwnerEdge(t *testing.T) {
+	edge := models.OwnerEdge("urn:table", "urn:user:alice@co.com", "bigquery")
+	assert.Equal(t, "urn:table", edge.GetSourceUrn())
+	assert.Equal(t, "urn:user:alice@co.com", edge.GetTargetUrn())
+	assert.Equal(t, "owned_by", edge.GetType())
+}
+
+func TestEntityToJSON(t *testing.T) {
+	entity := &meteorv1beta1.Entity{
+		Urn:    "urn:test:s:table:t1",
+		Name:   "t1",
+		Type:   "table",
+		Source: "test",
 	}
-	tests := []struct {
-		name        string
-		args        args
-		expected    []byte
-		expectedErr string
-	}{
-		{
-			name: "should return the json representation of the asset",
-			args: args{
-				asset: &assetsv1beta2.Asset{
-					Name: "test",
-				},
-			},
-			expected: []byte(`
-				{
-					"name": "test",
-					"urn": "",
-					"service": "",
-					"type": "",
-					"url": "",
-					"description": "",
-					"data": null,
-					"owners": [],
-					"lineage": null,
-					"labels": {},
-					"event": null,
-					"create_time": null,
-					"update_time": null
-				}
-			`),
-		},
+	b, err := models.EntityToJSON(entity)
+	require.NoError(t, err)
+	assert.Contains(t, string(b), `"urn":"urn:test:s:table:t1"`)
+	assert.Contains(t, string(b), `"name":"t1"`)
+}
+
+func TestRecordToJSON(t *testing.T) {
+	entity := &meteorv1beta1.Entity{
+		Urn:  "urn:test:s:table:t1",
+		Name: "t1",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual, err := models.ToJSON(tt.args.asset)
-			if tt.expectedErr != "" {
-				assert.ErrorContains(t, err, tt.expectedErr)
-				return
-			}
-			assert.NoError(t, err)
-			assert.JSONEq(t, string(tt.expected), string(actual))
-		})
-	}
+	edge := models.LineageEdge("urn:a", "urn:b", "test")
+	record := models.NewRecord(entity, edge)
+
+	b, err := models.RecordToJSON(record)
+	require.NoError(t, err)
+	assert.Contains(t, string(b), `"entity"`)
+	assert.Contains(t, string(b), `"edges"`)
 }

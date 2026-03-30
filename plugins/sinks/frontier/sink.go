@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	sh "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/models"
-	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/frontier/client"
 	"github.com/raystack/meteor/registry"
@@ -18,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -73,12 +73,12 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
-		asset := record.Data()
-		s.logger.Info("sinking record to frontier", "record", asset.GetUrn())
+		entity := record.Entity()
+		s.logger.Info("sinking record to frontier", "record", entity.GetUrn())
 
-		userRequestBody, err := s.buildUserRequestBody(asset)
+		userRequestBody, err := s.buildUserRequestBody(record)
 		if err != nil {
-			s.logger.Error("failed to build frontier payload", "err", err, "record", asset.Name)
+			s.logger.Error("failed to build frontier payload", "err", err, "record", entity.GetName())
 			continue
 		}
 
@@ -86,7 +86,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 			return fmt.Errorf("send data: %w", err)
 		}
 
-		s.logger.Info("successfully sinked record to frontier", "record", asset.Name)
+		s.logger.Info("successfully sinked record to frontier", "record", entity.GetName())
 	}
 
 	return nil
@@ -129,29 +129,48 @@ func (s *Sink) send(ctx context.Context, userRequestBody *sh.UserRequestBody) er
 	return err
 }
 
-func (s *Sink) buildUserRequestBody(asset *assetsv1beta2.Asset) (*sh.UserRequestBody, error) {
-	data := asset.GetData()
-
-	var user assetsv1beta2.User
-	err := data.UnmarshalTo(&user)
-	if err != nil {
-		return &sh.UserRequestBody{}, fmt.Errorf("not a User struct: %w", err)
+func (s *Sink) buildUserRequestBody(record models.Record) (*sh.UserRequestBody, error) {
+	entity := record.Entity()
+	props := entity.GetProperties()
+	if props == nil {
+		return &sh.UserRequestBody{}, errors.New("empty entity properties")
 	}
 
-	if user.FullName == "" {
+	fields := props.GetFields()
+
+	fullName := ""
+	if v, ok := fields["full_name"]; ok {
+		fullName = v.GetStringValue()
+	}
+	if fullName == "" {
+		// fallback to entity name
+		fullName = entity.GetName()
+	}
+
+	email := ""
+	if v, ok := fields["email"]; ok {
+		email = v.GetStringValue()
+	}
+
+	if fullName == "" {
 		return &sh.UserRequestBody{}, errors.New("empty user name")
 	}
-	if user.Email == "" {
+	if email == "" {
 		return &sh.UserRequestBody{}, errors.New("empty user email")
 	}
-	if user.Attributes == nil {
+
+	var attributes *structpb.Struct
+	if v, ok := fields["attributes"]; ok {
+		attributes = v.GetStructValue()
+	}
+	if attributes == nil {
 		return &sh.UserRequestBody{}, errors.New("empty user attributes")
 	}
 
 	requestBody := &sh.UserRequestBody{
-		Name:     user.FullName,
-		Email:    user.Email,
-		Metadata: user.Attributes,
+		Name:     fullName,
+		Email:    email,
+		Metadata: attributes,
 	}
 
 	return requestBody, nil

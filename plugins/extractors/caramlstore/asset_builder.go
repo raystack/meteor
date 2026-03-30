@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/caramlstore/internal/core"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -22,15 +21,15 @@ type featureTableBuilder struct {
 	entities map[string]*core.Entity
 }
 
-func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, error) {
-	fail := func(step string, err error) (*v1beta2.Asset, error) {
-		return nil, fmt.Errorf(
+func (b featureTableBuilder) buildRecord(ft *core.FeatureTable) (models.Record, error) {
+	fail := func(step string, err error) (models.Record, error) {
+		return models.Record{}, fmt.Errorf(
 			"build %s for feature table '%s' in project '%s': %w",
 			step, ft.Spec.Name, b.project, err,
 		)
 	}
 
-	upstreams, downstreams, err := b.buildLineage(ft)
+	upstreamURNs, err := b.buildUpstreamURNs(ft)
 	if err != nil {
 		return fail("lineage", err)
 	}
@@ -40,78 +39,76 @@ func (b featureTableBuilder) buildAsset(ft *core.FeatureTable) (*v1beta2.Asset, 
 		return fail("entities", err)
 	}
 
-	featureTable, err := anypb.New(&v1beta2.FeatureTable{
-		Namespace:  b.project,
-		Entities:   entities,
-		Features:   b.buildFeatures(ft),
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-		CreateTime: ft.Meta.CreatedTimestamp,
-		UpdateTime: ft.Meta.LastUpdatedTimestamp,
-	})
-	if err != nil {
-		return fail("metadata", err)
+	urn := plugins.CaraMLStoreURN(b.scope, b.project, ft.Spec.Name)
+
+	// Build edges
+	var edges []*meteorv1beta1.Edge
+	for _, upstreamURN := range upstreamURNs {
+		edges = append(edges, models.LineageEdge(upstreamURN, urn, service))
 	}
 
-	return &v1beta2.Asset{
-		Urn:     plugins.CaraMLStoreURN(b.scope, b.project, ft.Spec.Name),
-		Name:    ft.Spec.Name,
-		Service: service,
-		Type:    typ,
-		Data:    featureTable,
-		Lineage: &v1beta2.Lineage{
-			Upstreams:   upstreams,
-			Downstreams: downstreams,
-		},
-		Labels: ft.Spec.Labels,
-	}, nil
-}
-
-func (b featureTableBuilder) buildLineage(ft *core.FeatureTable) (
-	upstreams []*v1beta2.Resource, downstreams []*v1beta2.Resource, err error,
-) {
-	upstreams, err = b.buildUpstreams(ft)
-	if err != nil {
-		return nil, nil, fmt.Errorf("build lineage: %w", err)
+	props := map[string]interface{}{
+		"namespace": b.project,
+	}
+	if len(entities) > 0 {
+		props["entities"] = entities
+	}
+	features := b.buildFeatures(ft)
+	if len(features) > 0 {
+		props["features"] = features
+	}
+	if ft.Meta.CreatedTimestamp != nil {
+		props["create_time"] = ft.Meta.CreatedTimestamp.AsTime().Format("2006-01-02T15:04:05Z")
+	}
+	if ft.Meta.LastUpdatedTimestamp != nil {
+		props["update_time"] = ft.Meta.LastUpdatedTimestamp.AsTime().Format("2006-01-02T15:04:05Z")
+	}
+	if len(ft.Spec.Labels) > 0 {
+		props["labels"] = ft.Spec.Labels
 	}
 
-	return upstreams, nil, nil
+	entity := models.NewEntity(urn, typ, ft.Spec.Name, service, props)
+	return models.NewRecord(entity, edges...), nil
 }
 
-func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]*v1beta2.FeatureTable_Entity, error) {
-	entities := make([]*v1beta2.FeatureTable_Entity, 0, len(ft.Spec.Entities))
+func (b featureTableBuilder) buildEntities(ft *core.FeatureTable) ([]map[string]interface{}, error) {
+	entities := make([]map[string]interface{}, 0, len(ft.Spec.Entities))
 	for _, e := range ft.Spec.Entities {
 		entity, ok := b.entities[e]
 		if !ok {
 			return nil, fmt.Errorf("entity '%s' not found in project '%s", e, b.project)
 		}
 
-		entities = append(entities, &v1beta2.FeatureTable_Entity{
-			Name:        entity.Spec.Name,
-			Description: entity.Spec.Description,
-			Type:        entity.Spec.ValueType.String(),
-			Labels:      entity.Spec.Labels,
-		})
+		m := map[string]interface{}{
+			"name":        entity.Spec.Name,
+			"description": entity.Spec.Description,
+			"type":        entity.Spec.ValueType.String(),
+		}
+		if len(entity.Spec.Labels) > 0 {
+			m["labels"] = entity.Spec.Labels
+		}
+
+		entities = append(entities, m)
 	}
 
 	return entities, nil
 }
 
-func (b featureTableBuilder) buildFeatures(ft *core.FeatureTable) []*v1beta2.Feature {
-	features := make([]*v1beta2.Feature, 0, len(ft.Spec.Features))
+func (b featureTableBuilder) buildFeatures(ft *core.FeatureTable) []map[string]interface{} {
+	features := make([]map[string]interface{}, 0, len(ft.Spec.Features))
 	for _, f := range ft.Spec.Features {
-		features = append(features, &v1beta2.Feature{
-			Name:     f.Name,
-			DataType: f.ValueType.String(),
+		features = append(features, map[string]interface{}{
+			"name":      f.Name,
+			"data_type": f.ValueType.String(),
 		})
 	}
 
 	return features
 }
 
-func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.Resource, error) {
-	var ups []*v1beta2.Resource
+func (b featureTableBuilder) buildUpstreamURNs(ft *core.FeatureTable) ([]string, error) {
+	var urns []string
 	if src := ft.Spec.BatchSource; src != nil {
-		// core.DataSource_BATCH_FILE is currently unsupported for constructing lineage
 		switch src.Type {
 		case core.DataSource_BATCH_BIGQUERY:
 			opts := src.GetBigqueryOptions()
@@ -124,15 +121,10 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 				return nil, fmt.Errorf("build upstream: table ref: %s: %w", opts.TableRef, err)
 			}
 
-			ups = append(ups, &v1beta2.Resource{
-				Urn:     urn,
-				Service: "bigquery",
-				Type:    "table",
-			})
+			urns = append(urns, urn)
 		}
 	}
 	if src := ft.Spec.StreamSource; src != nil {
-		// core.DataSource_STREAM_KINESIS is currently unsupported for constructing lineage
 		switch src.Type {
 		case core.DataSource_STREAM_KAFKA:
 			opts := src.GetKafkaOptions()
@@ -140,13 +132,9 @@ func (b featureTableBuilder) buildUpstreams(ft *core.FeatureTable) ([]*v1beta2.R
 				return nil, errors.New("build upstream: empty kafka data source options")
 			}
 
-			ups = append(ups, &v1beta2.Resource{
-				Urn:     plugins.KafkaURN(opts.BootstrapServers, opts.Topic),
-				Service: "kafka",
-				Type:    "topic",
-			})
+			urns = append(urns, plugins.KafkaURN(opts.BootstrapServers, opts.Topic))
 		}
 	}
 
-	return ups, nil
+	return urns, nil
 }

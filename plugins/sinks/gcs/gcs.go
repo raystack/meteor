@@ -11,7 +11,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
-	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/gcs/client"
 	"github.com/raystack/meteor/registry"
@@ -125,20 +125,20 @@ func (s *Sink) resolveBucketPath() (string, string) {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	data := make([]*assetsv1beta2.Asset, 0, len(batch))
+	entities := make([]*meteorv1beta1.Entity, 0, len(batch))
 
 	for _, record := range batch {
-		data = append(data, record.Data())
+		entities = append(entities, record.Entity())
 	}
-	if err = s.writeData(data); err != nil {
+	if err = s.writeData(entities); err != nil {
 		return fmt.Errorf("write data to the object: %w", err)
 	}
 	return nil
 }
 
-func (s *Sink) writeData(data []*assetsv1beta2.Asset) (err error) {
-	for _, asset := range data {
-		jsonBytes, _ := models.ToJSON(asset)
+func (s *Sink) writeData(entities []*meteorv1beta1.Entity) (err error) {
+	for _, entity := range entities {
+		jsonBytes, _ := models.EntityToJSON(entity)
 
 		if err := s.writer.WriteData(jsonBytes); err != nil {
 			return err

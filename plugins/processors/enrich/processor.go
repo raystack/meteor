@@ -5,7 +5,6 @@ import (
 	_ "embed"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/utils"
@@ -60,18 +59,9 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) (err error)
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
-	result, err := p.process(src)
-	if err != nil {
-		return src, err
-	}
-
-	return models.NewRecord(result), nil
-}
-
-func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
-	data := record.Data()
-	p.logger.Debug("enriching record", "record", data.Urn)
-	customProps := utils.GetAttributes(data)
+	entity := src.Entity()
+	p.logger.Debug("enriching record", "record", entity.GetUrn())
+	customProps := utils.GetAttributes(entity)
 
 	// update custom properties using value from config
 	for key, value := range p.config.Attributes {
@@ -82,12 +72,12 @@ func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 	}
 
 	// save custom properties
-	result, err := utils.SetAttributes(data, customProps)
+	result, err := utils.SetAttributes(entity, customProps)
 	if err != nil {
-		return data, err
+		return src, err
 	}
 
-	return result, nil
+	return models.NewRecord(result, src.Edges()...), nil
 }
 
 func init() {

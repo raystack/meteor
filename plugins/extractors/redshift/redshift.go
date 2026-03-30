@@ -10,12 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice/redshiftdataapiserviceiface"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -172,7 +170,7 @@ func (e *Extractor) GetTables(dbName string) ([]string, error) {
 }
 
 // getTableMetadata prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(dbName, tableName string) (*v1beta2.Asset, error) {
+func (e *Extractor) getTableMetadata(dbName, tableName string) (*meteorv1beta1.Entity, error) {
 	colMetadata, err := e.GetColumn(dbName, tableName)
 	if err != nil {
 		return nil, err
@@ -183,22 +181,11 @@ func (e *Extractor) getTableMetadata(dbName, tableName string) (*v1beta2.Asset, 
 		return nil, err
 	}
 
-	data, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		err = fmt.Errorf("create Any struct: %w", err)
-		return nil, err
-	}
-
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("redshift", e.config.ClusterID, "table", fmt.Sprintf("%s.%s.%s", e.config.ClusterID, dbName, tableName)),
-		Name:    tableName,
-		Type:    "table",
-		Service: "redshift",
-		Data:    data,
-	}, nil
+	return models.NewEntity(
+		models.NewURN("redshift", e.config.ClusterID, "table", fmt.Sprintf("%s.%s.%s", e.config.ClusterID, dbName, tableName)),
+		"table", tableName, "redshift",
+		map[string]interface{}{"columns": columns},
+	), nil
 }
 
 // GetColumn returns the column metadata of particular table in a database
@@ -222,16 +209,21 @@ func (e *Extractor) GetColumn(dbName, tableName string) ([]*redshiftdataapiservi
 }
 
 // getColumnMetadata prepares the list of columns and the attached metadata
-func (*Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) ([]*v1beta2.Column, error) {
-	var cols []*v1beta2.Column
+func (*Extractor) getColumnMetadata(columnMetadata []*redshiftdataapiservice.ColumnMetadata) ([]interface{}, error) {
+	var cols []interface{}
 	for _, column := range columnMetadata {
-		cols = append(cols, &v1beta2.Column{
-			Name:        aws.StringValue(column.Name),
-			Description: aws.StringValue(column.Label),
-			DataType:    aws.StringValue(column.TypeName),
-			IsNullable:  isNullable(aws.Int64Value(column.Nullable)),
-			Length:      aws.Int64Value(column.Length),
-		})
+		col := map[string]interface{}{
+			"name":        aws.StringValue(column.Name),
+			"data_type":   aws.StringValue(column.TypeName),
+			"is_nullable": isNullable(aws.Int64Value(column.Nullable)),
+		}
+		if desc := aws.StringValue(column.Label); desc != "" {
+			col["description"] = desc
+		}
+		if length := aws.Int64Value(column.Length); length != 0 {
+			col["length"] = length
+		}
+		cols = append(cols, col)
 	}
 	return cols, nil
 }

@@ -1,14 +1,8 @@
 package applicationyaml
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 )
 
 const (
@@ -16,60 +10,54 @@ const (
 	typ     = "application"
 )
 
-func buildAsset(scope string, svc Application) (*v1beta2.Asset, error) {
-	data, err := anypb.New(&v1beta2.Application{
-		Id:         svc.ID,
-		Version:    svc.Version,
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-		CreateTime: toTimestamp(svc.CreateTime),
-		UpdateTime: toTimestamp(svc.UpdateTime),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("build asset metadata: %w", err)
+func buildRecord(scope string, svc Application) models.Record {
+	urn := models.NewURN(service, scope, typ, svc.Name)
+
+	props := map[string]interface{}{}
+	if svc.ID != "" {
+		props["id"] = svc.ID
+	}
+	if svc.Version != "" {
+		props["version"] = svc.Version
+	}
+	if svc.URL != "" {
+		props["url"] = svc.URL
+	}
+	if !svc.CreateTime.IsZero() {
+		props["create_time"] = svc.CreateTime.Format("2006-01-02T15:04:05Z")
+	}
+	if !svc.UpdateTime.IsZero() {
+		props["update_time"] = svc.UpdateTime.Format("2006-01-02T15:04:05Z")
+	}
+	if len(svc.Labels) > 0 {
+		props["labels"] = svc.Labels
 	}
 
-	var owners []*v1beta2.Owner
+	// Build edges
+	var edges []*meteorv1beta1.Edge
+
+	// Owner edge
 	if svc.Team.ID != "" {
-		owners = append(owners, &v1beta2.Owner{
-			Urn:   svc.Team.ID,
-			Name:  svc.Team.Name,
-			Email: svc.Team.Email,
-		})
+		ownerURN := "urn:user:" + svc.Team.Email
+		if svc.Team.Email == "" {
+			ownerURN = "urn:user:" + svc.Team.ID
+		}
+		edges = append(edges, models.OwnerEdge(urn, ownerURN, service))
 	}
 
-	return &v1beta2.Asset{
-		Urn:         models.NewURN(service, scope, typ, svc.Name),
-		Name:        svc.Name,
-		Service:     service,
-		Type:        typ,
-		Url:         svc.URL,
-		Description: svc.Description,
-		Data:        data,
-		Owners:      owners,
-		Lineage:     buildLineage(svc),
-		Labels:      svc.Labels,
-	}, nil
-}
-
-func buildLineage(svc Application) *v1beta2.Lineage {
-	return &v1beta2.Lineage{
-		Upstreams:   buildLineageResources(svc.Inputs),
-		Downstreams: buildLineageResources(svc.Outputs),
+	// Lineage edges: upstreams (inputs -> this entity)
+	for _, inputURN := range svc.Inputs {
+		edges = append(edges, models.LineageEdge(inputURN, urn, service))
 	}
-}
-
-func buildLineageResources(urns []string) []*v1beta2.Resource {
-	var res []*v1beta2.Resource
-	for _, urn := range urns {
-		res = append(res, &v1beta2.Resource{Urn: urn})
-	}
-	return res
-}
-
-func toTimestamp(t time.Time) *timestamppb.Timestamp {
-	if t.IsZero() {
-		return nil
+	// Lineage edges: downstreams (this entity -> outputs)
+	for _, outputURN := range svc.Outputs {
+		edges = append(edges, models.LineageEdge(urn, outputURN, service))
 	}
 
-	return timestamppb.New(t)
+	entity := models.NewEntity(urn, typ, svc.Name, service, props)
+	if svc.Description != "" {
+		entity.Description = svc.Description
+	}
+
+	return models.NewRecord(entity, edges...)
 }

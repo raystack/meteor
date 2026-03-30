@@ -10,9 +10,9 @@ import (
 	"os"
 	"testing"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/test/utils"
-	ut "github.com/raystack/meteor/utils"
 
 	"database/sql"
 
@@ -106,7 +106,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		testUtils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
+		testUtils.AssertEqualProtos(t, getExpected(t), emitter.GetAllEntities())
 	})
 }
 
@@ -147,67 +147,31 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []*v1beta2.Asset {
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:postgres:test-postgres:table:test_db.article",
-			Name:    "article",
-			Service: "postgres",
-			Type:    "table",
-			Data: testUtils.BuildAny(t, &v1beta2.Table{
-				Columns: []*v1beta2.Column{
-					{
-						Name:       "id",
-						DataType:   "bigint",
-						IsNullable: false,
-						Length:     0,
-					},
-					{
-						Name:       "name",
-						DataType:   "character varying",
-						IsNullable: false,
-						Length:     20,
-					},
+func getExpected(t *testing.T) []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:postgres:test-postgres:table:test_db.article", "table", "article", "postgres", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false, "length": float64(0)},
+				map[string]interface{}{"name": "name", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
+			},
+			"grants": []interface{}{
+				map[string]interface{}{
+					"user":            "test_user",
+					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 				},
-				Attributes: ut.TryParseMapToProto(map[string]interface{}{
-					"grants": []interface{}{
-						map[string]interface{}{
-							"user":            "test_user",
-							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-						},
-					},
-				}),
-			}),
-		},
-		{
-			Urn:     "urn:postgres:test-postgres:table:test_db.post",
-			Name:    "post",
-			Service: "postgres",
-			Type:    "table",
-			Data: testUtils.BuildAny(t, &v1beta2.Table{
-				Columns: []*v1beta2.Column{
-					{
-						Name:       "id",
-						DataType:   "bigint",
-						IsNullable: false,
-						Length:     0,
-					},
-					{
-						Name:       "title",
-						DataType:   "character varying",
-						IsNullable: false,
-						Length:     20,
-					},
+			},
+		}),
+		models.NewEntity("urn:postgres:test-postgres:table:test_db.post", "table", "post", "postgres", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "id", "data_type": "bigint", "is_nullable": false, "length": float64(0)},
+				map[string]interface{}{"name": "title", "data_type": "character varying", "is_nullable": false, "length": float64(20)},
+			},
+			"grants": []interface{}{
+				map[string]interface{}{
+					"user":            "test_user",
+					"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
 				},
-				Attributes: ut.TryParseMapToProto(map[string]interface{}{
-					"grants": []interface{}{
-						map[string]interface{}{
-							"user":            "test_user",
-							"privilege_types": []interface{}{"INSERT", "SELECT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"},
-						},
-					},
-				}),
-			}),
-		},
+			},
+		}),
 	}
 }

@@ -10,27 +10,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/compass"
 	testutils "github.com/raystack/meteor/test/utils"
-	"github.com/raystack/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var host = "http://compass.com"
-
-// sample metadata
-var (
-	url = fmt.Sprintf("%s/v1beta1/assets", host)
-)
 
 func TestInit(t *testing.T) {
 	t.Run("should return InvalidConfigError on invalid config", func(t *testing.T) {
@@ -41,7 +33,8 @@ func TestInit(t *testing.T) {
 		}
 		for i, config := range invalidConfigs {
 			t.Run(fmt.Sprintf("test invalid config #%d", i+1), func(t *testing.T) {
-				compassSink := compass.New(newMockHTTPClient(config, http.MethodPatch, url, compass.RequestPayload{}), testutils.Logger)
+				client := &mockHTTPClient{}
+				compassSink := compass.New(client, testutils.Logger)
 				err := compassSink.Init(context.TODO(), plugins.Config{RawConfig: config})
 
 				assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
@@ -51,42 +44,30 @@ func TestInit(t *testing.T) {
 }
 
 func TestSink(t *testing.T) {
-	t.Run("should return error if compass host returns error", func(t *testing.T) {
-		compassError := `{"reason":"no asset found"}`
-		errMessage := "send data: compass returns 404: {\"reason\":\"no asset found\"}"
+	upsertEntityURL := fmt.Sprintf("%s/raystack.compass.v1beta1.CompassService/UpsertEntity", host)
+	upsertEdgeURL := fmt.Sprintf("%s/raystack.compass.v1beta1.CompassService/UpsertEdge", host)
 
-		// setup mock client
-		url := fmt.Sprintf("%s/v1beta1/assets", host)
-		client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, compass.RequestPayload{})
-		client.SetupResponse(404, compassError)
+	t.Run("should return error if compass host returns error", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(404, `{"reason":"not found"}`)
 		ctx := context.TODO()
 
 		compassSink := compass.New(client, testutils.Logger)
 		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 			"host": host,
 		}})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		table, err := anypb.New(&v1beta2.Table{
-			Columns: nil,
-		})
 		require.NoError(t, err)
 
-		data := &v1beta2.Asset{
-			Data: table,
-		}
-		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		entity := &meteorv1beta1.Entity{Type: "table"}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 		require.Error(t, err)
-		assert.Equal(t, errMessage, err.Error())
+		assert.Contains(t, err.Error(), "compass returns 404")
 	})
 
-	t.Run("should return RetryError if compass returns certain status code", func(t *testing.T) {
+	t.Run("should return RetryError if compass returns 5xx status code", func(t *testing.T) {
 		for _, code := range []int{500, 501, 502, 503, 504, 505} {
 			t.Run(fmt.Sprintf("%d status code", code), func(t *testing.T) {
-				url := fmt.Sprintf("%s/v1beta1/assets", host)
-				client := newMockHTTPClient(map[string]interface{}{}, http.MethodPatch, url, compass.RequestPayload{})
+				client := &mockHTTPClient{}
 				client.SetupResponse(code, `{"reason":"internal server error"}`)
 				ctx := context.TODO()
 
@@ -94,505 +75,244 @@ func TestSink(t *testing.T) {
 				err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 					"host": host,
 				}})
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				table, err := anypb.New(&v1beta2.Table{
-					Columns: nil,
-				})
 				require.NoError(t, err)
-				data := &v1beta2.Asset{
-					Data: table,
-				}
-				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+
+				entity := &meteorv1beta1.Entity{Type: "table"}
+				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 				require.Error(t, err)
 				assert.ErrorAs(t, err, &plugins.RetryError{})
 			})
 		}
 	})
 
-	t.Run("should return error for various invalid labels", func(t *testing.T) {
-		testData := &v1beta2.Asset{
-			Urn:         "my-topic-urn",
-			Name:        "my-topic",
-			Service:     "kafka",
-			Type:        "topic",
-			Description: "topic information",
-			Data: testutils.BuildAny(t, &v1beta2.Topic{
-				Attributes: utils.TryParseMapToProto(map[string]interface{}{
-					"attrA": "valueAttrA",
-					"attrB": "valueAttrB",
-				}),
-			}),
-			Labels: map[string]string{
+	t.Run("should send correct UpsertEntity request", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{"id":"uuid-1"}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		props, err := structpb.NewStruct(map[string]interface{}{
+			"url": "http://test.com",
+			"labels": map[string]interface{}{
 				"labelA": "valueLabelA",
 				"labelB": "valueLabelB",
 			},
+			"columns": []interface{}{
+				map[string]interface{}{
+					"name":        "id",
+					"description": "It is the ID",
+					"data_type":   "INT",
+					"is_nullable": true,
+				},
+			},
+		})
+		require.NoError(t, err)
+		entity := &meteorv1beta1.Entity{
+			Urn:         "my-topic-urn",
+			Name:        "my-topic",
+			Source:      "kafka",
+			Type:        "topic",
+			Description: "topic information",
+			Properties:  props,
 		}
-		testPayload := compass.RequestPayload{
-			Asset: compass.Asset{
-				URN:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-			},
-		}
-		invalidConfigs := []map[string]interface{}{
-			{
-				"host": host,
-				"labels": map[string]string{
-					"foo": "$attributes",
-				},
-			},
-			{
-				"host": host,
-				"labels": map[string]string{
-					"foo": "$attributes.12",
-				},
-			},
-			{
-				"host": host,
-				"labels": map[string]string{
-					"foo": "$attributes.attrC",
-				},
-			},
-			{
-				"host": host,
-				"labels": map[string]string{
-					"foo": "$invalid.attributes.attrC",
-				},
-			},
-			{
-				"host": host,
-				"labels": map[string]string{
-					"bar": "$labels.labelC",
-				},
-			},
-		}
-		for _, c := range invalidConfigs {
-			client := newMockHTTPClient(c, http.MethodPatch, url, testPayload)
-			client.SetupResponse(200, "")
-			ctx := context.TODO()
-			compassSink := compass.New(client, testutils.Logger)
-			err := compassSink.Init(ctx, plugins.Config{RawConfig: c})
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(testData)})
-			assert.Error(t, err)
-		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
+		assert.NoError(t, err)
+
+		// Should have exactly 1 request (UpsertEntity, no owners).
+		require.Len(t, client.requests, 1)
+		req := client.requests[0]
+		assert.Equal(t, http.MethodPost, req.Method)
+		assert.Equal(t, upsertEntityURL, reqURL(req))
+
+		var entityReq compass.UpsertEntityRequest
+		decodeBody(t, req, &entityReq)
+		assert.Equal(t, "my-topic-urn", entityReq.URN)
+		assert.Equal(t, "topic", entityReq.Type)
+		assert.Equal(t, "my-topic", entityReq.Name)
+		assert.Equal(t, "topic information", entityReq.Description)
+		assert.Equal(t, "kafka", entityReq.Source)
+		assert.Equal(t, "http://test.com", entityReq.Properties["url"])
+		assert.Equal(t, map[string]interface{}{"labelA": "valueLabelA", "labelB": "valueLabelB"}, entityReq.Properties["labels"])
+		// Data fields are flattened into properties.
+		assert.NotNil(t, entityReq.Properties["columns"])
 	})
 
-	successTestCases := []struct {
-		description string
-		data        *v1beta2.Asset
-		config      map[string]interface{}
-		expected    compass.RequestPayload
-	}{
-		{
-			description: "should create the right request to compass",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-				Url:         "http://test.com",
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Columns: []*v1beta2.Column{
-						{
-							Name:        "id",
-							Description: "It is the ID",
-							DataType:    "INT",
-							IsNullable:  true,
-						},
-					},
-					Attributes: &structpb.Struct{},
-				}),
-				Labels: map[string]string{
-					"labelA": "valueLabelA",
-					"labelB": "valueLabelB",
-				},
-			},
-			config: map[string]interface{}{
-				"host": host,
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					URL:         "http://test.com",
-					Description: "topic information",
-					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-						"columns": []map[string]interface{}{
-							{
-								"length":      "0",
-								"name":        "id",
-								"description": "It is the ID",
-								"data_type":   "INT",
-								"is_nullable": true,
-								"attributes":  nil,
-								"columns":     []interface{}{},
-								"profile":     nil,
-							},
-						},
-						"create_time":    nil,
-						"preview_fields": []interface{}{},
-						"preview_rows":   nil,
-						"profile":        nil,
-						"update_time":    nil,
-						"attributes":     map[string]interface{}{},
-					},
-					Labels: map[string]string{
-						"labelA": "valueLabelA",
-						"labelB": "valueLabelB",
-					},
-				},
-			},
-		},
-		{
-			description: "should build compass labels if labels is defined in config",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
-						"attrA": "valueAttrA",
-						"attrB": "valueAttrB",
-					}),
-				}),
-			},
-			config: map[string]interface{}{
-				"host": host,
-				"labels": map[string]string{
-					"foo": "$attributes.attrA",
-					"bar": "$attributes.attrB",
-				},
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Labels: map[string]string{
-						"foo": "valueAttrA",
-						"bar": "valueAttrB",
-					},
-					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-						"attributes": map[string]interface{}{
-							"attrA": "valueAttrA",
-							"attrB": "valueAttrB",
-						},
-						"columns":        []interface{}{},
-						"create_time":    nil,
-						"preview_fields": []interface{}{},
-						"preview_rows":   nil,
-						"profile":        nil,
-						"update_time":    nil,
-					},
-				},
-			},
-		},
-		{
-			description: "should merge labels from assets and config",
-			data: &v1beta2.Asset{
-				Urn:     "my-topic-urn",
-				Name:    "my-topic",
-				Service: "kafka",
-				Type:    "topic",
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: utils.TryParseMapToProto(map[string]interface{}{
-						"newFoo": "newBar",
-					}),
-				}),
-				Labels: map[string]string{
-					"foo1": "bar1",
-					"foo2": "bar2",
-				},
-			},
-			config: map[string]interface{}{
-				"host": host,
-				"labels": map[string]string{
-					"foo2": "$attributes.newFoo",
-				},
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:     "my-topic-urn",
-					Name:    "my-topic",
-					Service: "kafka",
-					Type:    "topic",
-					Labels: map[string]string{
-						"foo1": "bar1",
-						"foo2": "newBar",
-					},
-					Data: map[string]interface{}{
-						"@type": "type.googleapis.com/raystack.assets.v1beta2.Table",
-						"attributes": map[string]interface{}{
-							"newFoo": "newBar",
-						},
-						"columns":        []interface{}{},
-						"create_time":    nil,
-						"preview_fields": []interface{}{},
-						"preview_rows":   nil,
-						"profile":        nil,
-						"update_time":    nil,
-					},
-				},
-			},
-		},
-		{
-			description: "should send upstreams if data has upstreams",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-				Lineage: &v1beta2.Lineage{
-					Upstreams: []*v1beta2.Resource{
-						{
-							Urn:     "urn-1",
-							Type:    "type-a",
-							Service: "kafka",
-						},
-						{
-							Urn:     "urn-2",
-							Type:    "type-b",
-							Service: "bigquery",
-						},
-					},
-				},
-			},
-			config: map[string]interface{}{
-				"host": host,
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Data:        map[string]interface{}{},
-				},
-				Upstreams: []compass.LineageRecord{
-					{
-						URN:     "urn-1",
-						Type:    "type-a",
-						Service: "kafka",
-					},
-					{
-						URN:     "urn-2",
-						Type:    "type-b",
-						Service: "bigquery",
-					},
-				},
-			},
-		},
-		{
-			description: "should send downstreams if data has downstreams",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-				Lineage: &v1beta2.Lineage{
-					Downstreams: []*v1beta2.Resource{
-						{
-							Urn:     "urn-1",
-							Type:    "type-a",
-							Service: "kafka",
-						},
-						{
-							Urn:     "urn-2",
-							Type:    "type-b",
-							Service: "bigquery",
-						},
-					},
-				},
-			},
-			config: map[string]interface{}{
-				"host": host,
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Data:        map[string]interface{}{},
-				},
-				Downstreams: []compass.LineageRecord{
-					{
-						URN:     "urn-1",
-						Type:    "type-a",
-						Service: "kafka",
-					},
-					{
-						URN:     "urn-2",
-						Type:    "type-b",
-						Service: "bigquery",
-					},
-				},
-			},
-		},
-		{
-			description: "should send owners if data has ownership",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-				Owners: []*v1beta2.Owner{
-					{
-						Urn:   "urn-1",
-						Name:  "owner-a",
-						Role:  "role-a",
-						Email: "email-1",
-					},
-					{
-						Urn:   "urn-2",
-						Name:  "owner-b",
-						Role:  "role-b",
-						Email: "email-2",
-					},
-					{
-						Urn:   "urn-3",
-						Name:  "owner-c",
-						Role:  "role-c",
-						Email: "email-3",
-					},
-				},
-			},
-			config: map[string]interface{}{
-				"host": host,
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Data:        map[string]interface{}{},
-					Owners: []compass.Owner{
-						{
-							URN:   "urn-1",
-							Name:  "owner-a",
-							Role:  "role-a",
-							Email: "email-1",
-						},
-						{
-							URN:   "urn-2",
-							Name:  "owner-b",
-							Role:  "role-b",
-							Email: "email-2",
-						},
-						{
-							URN:   "urn-3",
-							Name:  "owner-c",
-							Role:  "role-c",
-							Email: "email-3",
-						},
-					},
-				},
-			},
-		},
-		{
-			description: "should send headers if get populated in config",
-			data: &v1beta2.Asset{
-				Urn:         "my-topic-urn",
-				Name:        "my-topic",
-				Service:     "kafka",
-				Type:        "topic",
-				Description: "topic information",
-			},
-			config: map[string]interface{}{
-				"host": host,
-				"headers": map[string]string{
-					"Key1": "value11, value12",
-					"Key2": "value2",
-				},
-			},
-			expected: compass.RequestPayload{
-				Asset: compass.Asset{
-					URN:         "my-topic-urn",
-					Name:        "my-topic",
-					Service:     "kafka",
-					Type:        "topic",
-					Description: "topic information",
-					Data:        map[string]interface{}{},
-				},
-			},
-		},
-	}
+	t.Run("should send upstreams and downstreams in entity request", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
 
-	for _, tc := range successTestCases {
-		t.Run(tc.description, func(t *testing.T) {
-			client := newMockHTTPClient(tc.config, http.MethodPatch, url, tc.expected)
-			client.SetupResponse(200, "")
-			ctx := context.TODO()
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+		}})
+		require.NoError(t, err)
 
-			compassSink := compass.New(client, testutils.Logger)
-			err := compassSink.Init(ctx, plugins.Config{RawConfig: tc.config})
-			require.NoError(t, err)
+		entity := &meteorv1beta1.Entity{
+			Urn:    "my-topic-urn",
+			Name:   "my-topic",
+			Source: "kafka",
+			Type:   "topic",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "urn-1", TargetUrn: "my-topic-urn", Type: "lineage"},
+			{SourceUrn: "urn-2", TargetUrn: "my-topic-urn", Type: "lineage"},
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn-3", Type: "lineage"},
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity, edges...)})
+		assert.NoError(t, err)
 
-			err = compassSink.Sink(ctx, []models.Record{models.NewRecord(tc.data)})
-			assert.NoError(t, err)
+		require.Len(t, client.requests, 1)
+		var entityReq compass.UpsertEntityRequest
+		decodeBody(t, client.requests[0], &entityReq)
+		assert.Equal(t, []string{"urn-1", "urn-2"}, entityReq.Upstreams)
+		assert.Equal(t, []string{"urn-3"}, entityReq.Downstreams)
+	})
 
-			client.Assert(t)
+	t.Run("should send ownership edges", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		entity := &meteorv1beta1.Entity{
+			Urn:    "my-topic-urn",
+			Name:   "my-topic",
+			Source: "kafka",
+			Type:   "topic",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn:user:alice@company.com", Type: "owned_by", Source: "meteor"},
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn:user:bob@company.com", Type: "owned_by", Source: "meteor"},
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity, edges...)})
+		assert.NoError(t, err)
+
+		// 1 entity + 2 edge requests.
+		require.Len(t, client.requests, 3)
+
+		// First request is entity upsert.
+		assert.Equal(t, upsertEntityURL, reqURL(client.requests[0]))
+
+		// Second and third are edge upserts.
+		var edge1 compass.UpsertEdgeRequest
+		decodeBody(t, client.requests[1], &edge1)
+		assert.Equal(t, upsertEdgeURL, reqURL(client.requests[1]))
+		assert.Equal(t, "my-topic-urn", edge1.SourceURN)
+		assert.Equal(t, "urn:user:alice@company.com", edge1.TargetURN)
+		assert.Equal(t, "owned_by", edge1.Type)
+		assert.Equal(t, "meteor", edge1.Source)
+
+		var edge2 compass.UpsertEdgeRequest
+		decodeBody(t, client.requests[2], &edge2)
+		assert.Equal(t, "urn:user:bob@company.com", edge2.TargetURN)
+	})
+
+	t.Run("should send headers from config", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+			"headers": map[string]string{
+				"Compass-User-UUID": "meteor@raystack.io",
+				"X-Custom":          "val1, val2",
+			},
+		}})
+		require.NoError(t, err)
+
+		entity := &meteorv1beta1.Entity{
+			Urn:    "my-urn",
+			Name:   "my-name",
+			Source: "kafka",
+			Type:   "topic",
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
+		assert.NoError(t, err)
+
+		require.Len(t, client.requests, 1)
+		req := client.requests[0]
+		assert.Contains(t, req.Header.Get("Compass-User-UUID"), "meteor@raystack.io")
+	})
+
+	t.Run("should flatten data into properties without @type", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		props, err := structpb.NewStruct(map[string]interface{}{
+			"attributes": map[string]interface{}{
+				"attrA": "valueA",
+			},
 		})
-	}
+		require.NoError(t, err)
+		entity := &meteorv1beta1.Entity{
+			Urn:        "my-topic-urn",
+			Name:       "my-topic",
+			Source:     "kafka",
+			Type:       "topic",
+			Properties: props,
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
+		assert.NoError(t, err)
+
+		require.Len(t, client.requests, 1)
+		var reqEntity compass.UpsertEntityRequest
+		decodeBody(t, client.requests[0], &reqEntity)
+		// @type should not be in properties (no longer relevant with Entity model).
+		_, hasType := reqEntity.Properties["@type"]
+		assert.False(t, hasType)
+		// Attributes should be present in properties.
+		assert.NotNil(t, reqEntity.Properties["attributes"])
+	})
 }
 
+// mockHTTPClient records all requests and returns a fixed response.
 type mockHTTPClient struct {
-	URL            string
-	Method         string
-	Headers        map[string]string
-	RequestPayload compass.RequestPayload
-	ResponseJSON   string
 	ResponseStatus int
-	req            *http.Request
+	ResponseJSON   string
+	requests       []*http.Request
+	bodies         [][]byte
 }
 
-func newMockHTTPClient(config map[string]interface{}, method, url string, payload compass.RequestPayload) *mockHTTPClient {
-	headersMap := map[string]string{}
-	if headersItf, ok := config["headers"]; ok {
-		headersMap = headersItf.(map[string]string)
-	}
-	return &mockHTTPClient{
-		Method:         method,
-		URL:            url,
-		Headers:        headersMap,
-		RequestPayload: payload,
-	}
-}
-
-func (m *mockHTTPClient) SetupResponse(statusCode int, json string) {
+func (m *mockHTTPClient) SetupResponse(statusCode int, jsonResp string) {
 	m.ResponseStatus = statusCode
-	m.ResponseJSON = json
+	m.ResponseJSON = jsonResp
 }
 
-func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
-	m.req = req
+func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	// Read and store the body so tests can inspect it.
+	var bodyBytes []byte
+	if req.Body != nil {
+		var err error
+		bodyBytes, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+	m.requests = append(m.requests, req)
+	m.bodies = append(m.bodies, bodyBytes)
 
-	res = &http.Response{
-		// default values
+	return &http.Response{
 		Proto:         "HTTP/1.1",
 		ProtoMajor:    1,
 		ProtoMinor:    1,
@@ -601,42 +321,17 @@ func (m *mockHTTPClient) Do(req *http.Request) (res *http.Response, err error) {
 		Header:        make(http.Header),
 		ContentLength: int64(len(m.ResponseJSON)),
 		Body:          io.NopCloser(bytes.NewBufferString(m.ResponseJSON)),
-	}
-
-	return
+	}, nil
 }
 
-func (m *mockHTTPClient) Assert(t *testing.T) {
+func reqURL(req *http.Request) string {
+	return fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
+}
+
+func decodeBody(t *testing.T, req *http.Request, v interface{}) {
 	t.Helper()
-
-	assert.Equal(t, m.Method, m.req.Method)
-	actualURL := fmt.Sprintf(
-		"%s://%s%s",
-		m.req.URL.Scheme,
-		m.req.URL.Host,
-		m.req.URL.Path,
-	)
-	assert.Equal(t, m.URL, actualURL)
-
-	headersMap := map[string]string{}
-	for hdrKey, hdrVals := range m.req.Header {
-		headersMap[hdrKey] = strings.Join(hdrVals, ",")
-	}
-	assert.Equal(t, m.Headers, headersMap)
-	bodyBytes := []byte("")
-	if m.req.Body != nil {
-		var err error
-		bodyBytes, err = io.ReadAll(m.req.Body)
-		if err != nil {
-			t.Error(err)
-		}
-	}
-
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(m.RequestPayload); err != nil {
-		t.Error(err)
-	}
-
-	testutils.AssertJSONEq(t, buf.Bytes(), bodyBytes)
+	// Find the index of this request in the mock to get the stored body.
+	bodyBytes, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(bodyBytes, v))
 }

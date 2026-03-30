@@ -2,13 +2,19 @@ package bigquery
 
 import (
 	"cloud.google.com/go/bigquery"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins/extractors/bigquery/auditlog"
 )
 
-func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats, md *bigquery.TableMetadata) *v1beta2.TableProfile {
+type tableProfile struct {
+	UsageCount  int64                    `json:"usage_count,omitempty"`
+	CommonJoins []map[string]interface{} `json:"common_joins,omitempty"`
+	Filters     []string                 `json:"filters,omitempty"`
+	TotalRows   int64                    `json:"total_rows,omitempty"`
+}
+
+func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.TableStats, md *bigquery.TableMetadata) tableProfile {
 	var tableUsage int64
-	var commonJoins []*v1beta2.TableCommonJoin
+	var commonJoins []map[string]interface{}
 	var filterConditions []string
 
 	if e.config.IsCollectTableUsage && tableStats != nil {
@@ -22,10 +28,10 @@ func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.Tabl
 				for jc := range jd.Conditions {
 					joinConditions = append(joinConditions, jc)
 				}
-				commonJoins = append(commonJoins, &v1beta2.TableCommonJoin{
-					Urn:        joinedTableURN,
-					Count:      jd.Usage,
-					Conditions: joinConditions,
+				commonJoins = append(commonJoins, map[string]interface{}{
+					"urn":        joinedTableURN,
+					"count":      jd.Usage,
+					"conditions": joinConditions,
 				})
 			}
 		}
@@ -38,7 +44,7 @@ func (e *Extractor) buildTableProfile(tableURN string, tableStats *auditlog.Tabl
 		}
 	}
 
-	return &v1beta2.TableProfile{
+	return tableProfile{
 		UsageCount:  tableUsage,
 		CommonJoins: commonJoins,
 		Filters:     filterConditions,

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/caramlstore/internal/core"
 	"github.com/raystack/meteor/registry"
@@ -117,7 +116,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 			entities: entities,
 		}
 		for _, ft := range fts {
-			asset, err := b.buildAsset(ft)
+			record, err := b.buildRecord(ft)
 			if err != nil {
 				e.logger.Error(
 					"caramlstore extractor",
@@ -128,7 +127,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 				continue
 			}
 
-			emit(models.NewRecord(asset))
+			emit(record)
 		}
 	}
 

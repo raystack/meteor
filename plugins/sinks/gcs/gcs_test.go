@@ -8,14 +8,11 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	g "github.com/raystack/meteor/plugins/sinks/gcs"
 	testUtils "github.com/raystack/meteor/test/utils"
-	"github.com/raystack/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var validConfig = map[string]interface{}{
@@ -56,19 +53,15 @@ func TestInit(t *testing.T) {
 
 func TestSink(t *testing.T) {
 	t.Run("should write data in bucket and return nil error on success", func(t *testing.T) {
-		u := &v1beta2.User{
-			FullName: "John Doe",
-			Email:    "john.doe@raystack.com",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+		entity := models.NewEntity("", "user", "", "", map[string]interface{}{
+			"full_name": "John Doe",
+			"email":     "john.doe@raystack.com",
+			"attributes": map[string]interface{}{
 				"org_unit_path": "/",
 				"aliases":       "doe.john@raystack.com,johndoe@raystack.com",
-			}),
-		}
-		user, _ := anypb.New(u)
-		data := &v1beta2.Asset{
-			Data: user,
-		}
-		jsonBytes, _ := models.ToJSON(data)
+			},
+		})
+		jsonBytes, _ := models.EntityToJSON(entity)
 
 		ctx := context.TODO()
 		writer := new(mockWriter)
@@ -88,7 +81,7 @@ func TestSink(t *testing.T) {
 		}
 
 		defer gcsSink.Close()
-		err = gcsSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		err = gcsSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 
 		assert.NoError(t, err)
 	})

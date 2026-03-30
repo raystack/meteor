@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -89,13 +88,13 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
-		metadata := record.Data()
-		s.logger.Info("sinking record to http", "record", metadata.Urn)
-		if err := s.send(ctx, metadata); err != nil {
+		entity := record.Entity()
+		s.logger.Info("sinking record to http", "record", entity.GetUrn())
+		if err := s.send(ctx, entity); err != nil {
 			return fmt.Errorf("send data: %w", err)
 		}
 
-		s.logger.Info("successfully sinked record to http", "record", metadata.Urn)
+		s.logger.Info("successfully sinked record to http", "record", entity.GetUrn())
 	}
 
 	return nil
@@ -103,17 +102,17 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 
 func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(ctx context.Context, asset *v1beta2.Asset) error {
+func (s *Sink) send(ctx context.Context, entity *meteorv1beta1.Entity) error {
 	t := template.Must(template.New("url").Parse(s.config.URL))
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, asset); err != nil {
+	if err := t.Execute(&buf, entity); err != nil {
 		return fmt.Errorf("build http url: %w", err)
 	}
 	url := buf.String()
 	if s.config.Script != nil {
-		return s.executeScript(ctx, url, asset)
+		return s.executeScript(ctx, url, entity)
 	}
-	payload, err := json.Marshal(asset)
+	payload, err := models.EntityToJSON(entity)
 	if err != nil {
 		return fmt.Errorf("build http payload: %w", err)
 	}

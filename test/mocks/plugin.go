@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/stretchr/testify/mock"
 )
@@ -98,10 +98,18 @@ func (m *Emitter) Get() []models.Record {
 	return m.data
 }
 
-func (m *Emitter) GetAllData() []*v1beta2.Asset {
-	var data []*v1beta2.Asset
+func (m *Emitter) GetAllEntities() []*meteorv1beta1.Entity {
+	var entities []*meteorv1beta1.Entity
 	for _, r := range m.Get() {
-		data = append(data, r.Data())
+		entities = append(entities, r.Entity())
 	}
-	return data
+	return entities
+}
+
+func (m *Emitter) GetAllEdges() []*meteorv1beta1.Edge {
+	var edges []*meteorv1beta1.Edge
+	for _, r := range m.Get() {
+		edges = append(edges, r.Edges()...)
+	}
+	return edges
 }

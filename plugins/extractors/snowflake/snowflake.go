@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
@@ -16,8 +15,6 @@ import (
 	"github.com/snowflakedb/gosnowflake"
 	_ "github.com/snowflakedb/gosnowflake" // used to register the snowflake driver
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -192,27 +189,18 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("extract columns from %s.%s: %w", database, tableName, err)
 	}
-	data, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return fmt.Errorf("create Any struct: %w", err)
-	}
 	// push table to channel
-	e.emit(models.NewRecord(&v1beta2.Asset{
-		Urn:     models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name:    tableName,
-		Service: "Snowflake",
-		Type:    "table",
-		Data:    data,
-	}))
+	e.emit(models.NewRecord(models.NewEntity(
+		models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
+		"table", tableName, "Snowflake",
+		map[string]interface{}{"columns": columns},
+	)))
 
 	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, database, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) extractColumns(ctx context.Context, database, tableName string) ([]interface{}, error) {
 	// extract columns
 	_, err := e.db.Exec(fmt.Sprintf("USE %s;", database))
 	if err != nil {
@@ -229,7 +217,7 @@ func (e *Extractor) extractColumns(ctx context.Context, database, tableName stri
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString sql.NullString
 		var length int
@@ -237,13 +225,18 @@ func (e *Extractor) extractColumns(ctx context.Context, database, tableName stri
 		if err = rows.Scan(&fieldName, &fieldDesc, &dataType, &isNullableString, &length); err != nil {
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
-		result = append(result, &v1beta2.Column{
-			Name:        fieldName.String,
-			DataType:    dataType.String,
-			Description: fieldDesc.String,
-			IsNullable:  e.isNullable(isNullableString.String),
-			Length:      int64(length),
-		})
+		col := map[string]interface{}{
+			"name":        fieldName.String,
+			"data_type":   dataType.String,
+			"is_nullable": e.isNullable(isNullableString.String),
+		}
+		if fieldDesc.String != "" {
+			col["description"] = fieldDesc.String
+		}
+		if length != 0 {
+			col["length"] = int64(length)
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over columns: %w", err)

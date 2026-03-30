@@ -1,64 +1,28 @@
 package utils
 
 import (
-	"errors"
-	"fmt"
-	"reflect"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// GetAttributes returns custom properties of the given asset
-func GetAttributes(asset *v1beta2.Asset) map[string]interface{} {
-	msg, err := anypb.UnmarshalNew(asset.Data, proto.UnmarshalOptions{})
-	if err != nil {
+// GetAttributes returns custom properties of the given entity.
+func GetAttributes(entity *meteorv1beta1.Entity) map[string]interface{} {
+	if entity.GetProperties() == nil {
 		return make(map[string]interface{})
 	}
 
-	attrMsg, ok := msg.(interface{ GetAttributes() *structpb.Struct })
-	if !ok {
-		return make(map[string]interface{})
-	}
-
-	return attrMsg.GetAttributes().AsMap()
+	return entity.GetProperties().AsMap()
 }
 
-// SetAttributes sets custom properties of the given asset
-func SetAttributes(asset *v1beta2.Asset, customFields map[string]interface{}) (res *v1beta2.Asset, err error) {
-	msg, err := anypb.UnmarshalNew(asset.Data, proto.UnmarshalOptions{})
+// SetAttributes sets custom properties of the given entity.
+func SetAttributes(entity *meteorv1beta1.Entity, customFields map[string]interface{}) (*meteorv1beta1.Entity, error) {
+	newProps, err := structpb.NewStruct(customFields)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal asset data: %w", err)
+		return nil, err
 	}
 
-	newAttrs, err := structpb.NewStruct(customFields)
-	if err != nil {
-		return nil, fmt.Errorf("error transforming map into structpb: %w", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("could not find matching model: %v", r)
-		}
-	}()
-
-	f := reflect.ValueOf(msg).Elem().FieldByName("Attributes")
-	if !f.IsValid() || !f.CanSet() {
-		return nil, errors.New("could not find matching model")
-	}
-
-	f.Set(reflect.ValueOf(newAttrs))
-
-	data, err := anypb.New(msg)
-	if err != nil {
-		return nil, fmt.Errorf("error transforming msg into anypb: %w", err)
-	}
-
-	asset.Data = data
-
-	return asset, nil
+	entity.Properties = newProps
+	return entity, nil
 }
 
 // TryParseMapToProto parses given map to proto struct

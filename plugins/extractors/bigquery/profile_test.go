@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"cloud.google.com/go/bigquery"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery/auditlog"
 	"github.com/stretchr/testify/assert"
@@ -83,19 +82,30 @@ func TestBuildTableProfile(t *testing.T) {
 		})
 
 		assert.EqualValues(t, 5, tp.UsageCount)
-		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   plugins.BigQueryURN("project2", "dataset1", "table1"),
-			Count: 1,
-		})
-		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:   plugins.BigQueryURN("project3", "dataset1", "table1"),
-			Count: 3,
-		})
-		assert.Contains(t, tp.CommonJoins, &v1beta2.TableCommonJoin{
-			Urn:        plugins.BigQueryURN("project4", "dataset1", "table1"),
-			Count:      1,
-			Conditions: []string{"ON t1.somefield = t2.anotherfield"},
-		})
+
+		// CommonJoins is now []map[string]interface{}
+		assert.Len(t, tp.CommonJoins, 3)
+		findJoin := func(urn string) map[string]interface{} {
+			for _, j := range tp.CommonJoins {
+				if j["urn"] == urn {
+					return j
+				}
+			}
+			return nil
+		}
+		j2 := findJoin(plugins.BigQueryURN("project2", "dataset1", "table1"))
+		assert.NotNil(t, j2)
+		assert.EqualValues(t, 1, j2["count"])
+
+		j3 := findJoin(plugins.BigQueryURN("project3", "dataset1", "table1"))
+		assert.NotNil(t, j3)
+		assert.EqualValues(t, 3, j3["count"])
+
+		j4 := findJoin(plugins.BigQueryURN("project4", "dataset1", "table1"))
+		assert.NotNil(t, j4)
+		assert.EqualValues(t, 1, j4["count"])
+		assert.Contains(t, j4["conditions"], "ON t1.somefield = t2.anotherfield")
+
 		assert.Contains(t, tp.Filters, "WHERE t1.somefield = 'somevalue'")
 		assert.Equal(t, tp.TotalRows, int64(42))
 	})

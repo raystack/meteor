@@ -3,28 +3,27 @@ package utils
 import (
 	"testing"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestGetAttributes(t *testing.T) {
 	cases := []struct {
 		name     string
-		asset    *v1beta2.Asset
+		entity   *meteorv1beta1.Entity
 		expected map[string]interface{}
 	}{
 		{
-			name: "Table",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
+			name: "EntityWithProperties",
+			entity: &meteorv1beta1.Entity{
+				Properties: TryParseMapToProto(map[string]interface{}{
+					"a": 1,
+					"b": "2",
+					"c": map[string]interface{}{
+						"d": true,
+					},
 				}),
 			},
 			expected: map[string]interface{}{
@@ -36,233 +35,21 @@ func TestGetAttributes(t *testing.T) {
 			},
 		},
 		{
-			name: "Topic",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Topic{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Dashboard",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Dashboard{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Job",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Job{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "User",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.User{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Bucket",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Bucket{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Group",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Group{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Model",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Model{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Experiment",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Experiment{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Metric",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Metric{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-			expected: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-		},
-		{
-			name: "Application",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Application{}),
-			},
+			name:     "EntityWithoutProperties",
+			entity:   &meteorv1beta1.Entity{},
 			expected: map[string]interface{}{},
 		},
 		{
-			name: "FeatureTable",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{}),
-			},
-			expected: map[string]interface{}{},
-		},
-		{
-			name: "TableWithoutAttributes",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{}),
-			},
-			expected: map[string]interface{}{},
-		},
-		{
-			name:     "AssetWithoutData",
-			asset:    &v1beta2.Asset{},
-			expected: map[string]interface{}{},
-		},
-		{
-			name: "AssetWithNilAttributes",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Metric{
-					Attributes: TryParseMapToProto(nil),
-				}),
+			name: "EntityWithNilProperties",
+			entity: &meteorv1beta1.Entity{
+				Properties: TryParseMapToProto(nil),
 			},
 			expected: map[string]interface{}{},
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, GetAttributes(tc.asset))
+			assert.Equal(t, tc.expected, GetAttributes(tc.entity))
 		})
 	}
 }
@@ -270,16 +57,14 @@ func TestGetAttributes(t *testing.T) {
 func TestSetAttributes(t *testing.T) {
 	cases := []struct {
 		name         string
-		asset        *v1beta2.Asset
+		entity       *meteorv1beta1.Entity
 		customFields map[string]interface{}
-		expected     *v1beta2.Asset
+		expected     *meteorv1beta1.Entity
 		expectedErr  string
 	}{
 		{
-			name: "Table",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{}),
-			},
+			name:   "EntityWithProperties",
+			entity: &meteorv1beta1.Entity{},
 			customFields: map[string]interface{}{
 				"a": 1,
 				"b": "2",
@@ -287,291 +72,26 @@ func TestSetAttributes(t *testing.T) {
 					"d": true,
 				},
 			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: TryParseMapToProto(map[string]interface{}{
+			expected: &meteorv1beta1.Entity{
+				Properties: func() *structpb.Struct {
+					s, _ := structpb.NewStruct(map[string]interface{}{
 						"a": 1,
 						"b": "2",
 						"c": map[string]interface{}{
 							"d": true,
 						},
-					}),
-				}),
+					})
+					return s
+				}(),
 			},
 		},
 		{
-			name: "Topic",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Topic{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Topic{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Dashboard",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Dashboard{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Dashboard{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Job",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Job{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Job{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "User",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.User{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.User{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Bucket",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Bucket{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Bucket{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Group",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Group{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Group{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Model",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Model{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Model{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Experiment",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Experiment{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Experiment{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Metric",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Metric{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Metric{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "Application",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Application{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "FeatureTable",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{}),
-			},
-			customFields: map[string]interface{}{
-				"a": (float64)(1),
-				"b": "2",
-				"c": map[string]interface{}{
-					"d": true,
-				},
-			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					}),
-				}),
-			},
-		},
-		{
-			name: "TableWithAttrs",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: TryParseMapToProto(map[string]interface{}{
-						"d": map[string]interface{}{
-							"e": true,
-						},
-					}),
+			name: "EntityWithExistingProperties",
+			entity: &meteorv1beta1.Entity{
+				Properties: TryParseMapToProto(map[string]interface{}{
+					"d": map[string]interface{}{
+						"e": true,
+					},
 				}),
 			},
 			customFields: map[string]interface{}{
@@ -581,37 +101,31 @@ func TestSetAttributes(t *testing.T) {
 					"d": true,
 				},
 			},
-			expected: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Table{
-					Attributes: TryParseMapToProto(map[string]interface{}{
+			expected: &meteorv1beta1.Entity{
+				Properties: func() *structpb.Struct {
+					s, _ := structpb.NewStruct(map[string]interface{}{
 						"a": 1,
 						"b": "2",
 						"c": map[string]interface{}{
 							"d": true,
 						},
-					}),
-				}),
+					})
+					return s
+				}(),
 			},
 		},
 		{
-			name:        "AssetWithoutData",
-			asset:       &v1beta2.Asset{},
-			expectedErr: "unmarshal asset data",
-		},
-		{
-			name: "FunkyCustomFields",
-			asset: &v1beta2.Asset{
-				Data: testutils.BuildAny(t, &v1beta2.Metric{}),
-			},
+			name:   "FunkyCustomFields",
+			entity: &meteorv1beta1.Entity{},
 			customFields: map[string]interface{}{
 				"unsupported": map[string]string{"test": "fail"},
 			},
-			expectedErr: "error transforming map into structpb",
+			expectedErr: "proto",
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := SetAttributes(tc.asset, tc.customFields)
+			actual, err := SetAttributes(tc.entity, tc.customFields)
 			if tc.expectedErr != "" {
 				assert.ErrorContains(t, err, tc.expectedErr)
 				return

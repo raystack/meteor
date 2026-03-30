@@ -12,7 +12,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/pkg/errors"
-	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/merlin/internal/merlin"
 	"github.com/raystack/meteor/registry"
@@ -215,12 +214,12 @@ func (e *Extractor) extractProject(ctx context.Context, prj merlin.Project, emit
 			}
 		}
 
-		asset, err := modelBuilder{
+		record, err := modelBuilder{
 			scope:    e.UrnScope,
 			project:  prj,
 			model:    mdl,
 			versions: versions,
-		}.buildAsset()
+		}.buildRecord()
 		if err != nil {
 			e.logger.Error(
 				"merlin extractor",
@@ -231,7 +230,7 @@ func (e *Extractor) extractProject(ctx context.Context, prj merlin.Project, emit
 			continue
 		}
 
-		emit(models.NewRecord(asset))
+		emit(record)
 	}
 
 	return nil

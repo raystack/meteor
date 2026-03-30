@@ -74,7 +74,7 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
-		if err := s.push(ctx, record.Data()); err != nil {
+		if err := s.push(ctx, record.Entity()); err != nil {
 			return err
 		}
 	}

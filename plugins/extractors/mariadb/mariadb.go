@@ -8,14 +8,11 @@ import (
 
 	_ "github.com/go-sql-driver/mysql" // used to register the mariadb driver
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -147,26 +144,17 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("extract columns: %w", err)
 	}
-	data, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return fmt.Errorf("build Any struct: %w", err)
-	}
 	// push table to channel
-	e.emit(models.NewRecord(&v1beta2.Asset{
-		Urn:     models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name:    tableName,
-		Type:    "table",
-		Service: "mariadb",
-		Data:    data,
-	}))
+	e.emit(models.NewRecord(models.NewEntity(
+		models.NewURN("mariadb", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
+		"table", tableName, "mariadb",
+		map[string]interface{}{"columns": columns},
+	)))
 	return nil
 }
 
 // extractColumns extracts columns from a given table
-func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]interface{}, error) {
 	sqlStr := `SELECT COLUMN_NAME,column_comment,DATA_TYPE,
 				IS_NULLABLE,IFNULL(CHARACTER_MAXIMUM_LENGTH,0)
 				FROM information_schema.columns
@@ -178,7 +166,7 @@ func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]*v1
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var fieldName, fieldDesc, dataType, isNullableString string
 		var length int
@@ -187,13 +175,18 @@ func (e *Extractor) extractColumns(ctx context.Context, tableName string) ([]*v1
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
-		result = append(result, &v1beta2.Column{
-			Name:        fieldName,
-			DataType:    dataType,
-			Description: fieldDesc,
-			IsNullable:  e.isNullable(isNullableString),
-			Length:      int64(length),
-		})
+		col := map[string]interface{}{
+			"name":        fieldName,
+			"data_type":   dataType,
+			"is_nullable": e.isNullable(isNullableString),
+		}
+		if fieldDesc != "" {
+			col["description"] = fieldDesc
+		}
+		if length != 0 {
+			col["length"] = int64(length)
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate column metadata results: %w", err)

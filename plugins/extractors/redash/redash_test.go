@@ -10,13 +10,13 @@ import (
 	"os"
 	"testing"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/redash"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
 	testUtils "github.com/raystack/meteor/test/utils"
-	util "github.com/raystack/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,33 +61,17 @@ func TestInit(t *testing.T) {
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
-		expectedData := []*v1beta2.Asset{
-			{
-				Urn:     "urn:redash:test-redash:dashboard:421",
-				Name:    "firstDashboard",
-				Service: "redash",
-				Type:    "dashboard",
-				Data: testUtils.BuildAny(t, &v1beta2.Dashboard{
-					Attributes: util.TryParseMapToProto(map[string]interface{}{
-						"user_id": 1,
-						"version": 1,
-						"slug":    "new-dashboard-copy",
-					}),
-				}),
-			},
-			{
-				Urn:     "urn:redash:test-redash:dashboard:634",
-				Name:    "secondDashboard",
-				Service: "redash",
-				Type:    "dashboard",
-				Data: testUtils.BuildAny(t, &v1beta2.Dashboard{
-					Attributes: util.TryParseMapToProto(map[string]interface{}{
-						"user_id": 1,
-						"version": 2,
-						"slug":    "test-dashboard-updated",
-					}),
-				}),
-			},
+		expectedData := []*meteorv1beta1.Entity{
+			models.NewEntity("urn:redash:test-redash:dashboard:421", "dashboard", "firstDashboard", "redash", map[string]interface{}{
+				"user_id": float64(1),
+				"version": float64(1),
+				"slug":    "new-dashboard-copy",
+			}),
+			models.NewEntity("urn:redash:test-redash:dashboard:634", "dashboard", "secondDashboard", "redash", map[string]interface{}{
+				"user_id": float64(1),
+				"version": float64(2),
+				"slug":    "test-dashboard-updated",
+			}),
 		}
 
 		ctx := context.TODO()
@@ -105,7 +89,7 @@ func TestExtract(t *testing.T) {
 		err = extractor.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		testUtils.AssertEqualProtos(t, expectedData, emitter.GetAllData())
+		testUtils.AssertEqualProtos(t, expectedData, emitter.GetAllEntities())
 	})
 }
 

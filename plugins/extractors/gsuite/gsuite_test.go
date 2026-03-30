@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	assetsv1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/gsuite"
 	"github.com/raystack/meteor/test/mocks"
@@ -109,69 +109,64 @@ func TestExtract(t *testing.T) {
 			},
 		}
 
-		expectedData := []*assetsv1beta2.Asset{
-			{
-				Urn:     models.NewURN("gsuite", urnScope, "user", adminUsers[0].PrimaryEmail),
-				Name:    adminUsers[0].Name.FullName,
-				Service: "gsuite",
-				Type:    "user",
-				Data: utils.BuildAny(t, &assetsv1beta2.User{
-					Email:    adminUsers[0].PrimaryEmail,
-					FullName: adminUsers[0].Name.FullName,
-					Status:   "suspended",
-					Attributes: utils.BuildStruct(t, map[string]interface{}{
-						"aliases":       "alias1,alias2",
-						"org_unit_path": "/",
-						"organizations": []interface{}{
-							map[string]interface{}{
-								"foo0": "bar0",
-								"foo1": "bar1",
-							},
+		expectedData := []*meteorv1beta1.Entity{
+			models.NewEntity(
+				models.NewURN("gsuite", urnScope, "user", adminUsers[0].PrimaryEmail),
+				"user",
+				adminUsers[0].Name.FullName,
+				"gsuite",
+				map[string]interface{}{
+					"email":     adminUsers[0].PrimaryEmail,
+					"full_name": adminUsers[0].Name.FullName,
+					"status":    "suspended",
+					"aliases":   "alias1,alias2",
+					"org_unit_path": "/",
+					"organizations": []interface{}{
+						map[string]interface{}{
+							"foo0": "bar0",
+							"foo1": "bar1",
 						},
-						"custom_schemas": map[string]interface{}{
-							"foo0_customSchema": "bar0_customSchema",
-							"foo1_customSchema": "bar1_customSchema",
+					},
+					"custom_schemas": map[string]interface{}{
+						"foo0_customSchema": "bar0_customSchema",
+						"foo1_customSchema": "bar1_customSchema",
+					},
+					"relations": []interface{}{
+						map[string]interface{}{
+							"type":  "manager1",
+							"value": "manager1@test.com",
 						},
-						"relations": []interface{}{
-							map[string]interface{}{
-								"type":  "manager1",
-								"value": "manager1@test.com",
-							},
+					},
+				},
+			),
+			models.NewEntity(
+				models.NewURN("gsuite", urnScope, "user", adminUsers[1].PrimaryEmail),
+				"user",
+				adminUsers[1].Name.FullName,
+				"gsuite",
+				map[string]interface{}{
+					"email":     adminUsers[1].PrimaryEmail,
+					"full_name": adminUsers[1].Name.FullName,
+					"aliases":   "alias3",
+					"org_unit_path": "/test2",
+					"organizations": []interface{}{
+						map[string]interface{}{
+							"foo20": "bar20",
+							"foo21": "bar21",
 						},
-					}),
-				}),
-			},
-			{
-				Urn:     models.NewURN("gsuite", urnScope, "user", adminUsers[1].PrimaryEmail),
-				Name:    adminUsers[1].Name.FullName,
-				Service: "gsuite",
-				Type:    "user",
-				Data: utils.BuildAny(t, &assetsv1beta2.User{
-					Email:    adminUsers[1].PrimaryEmail,
-					FullName: adminUsers[1].Name.FullName,
-					Status:   "",
-					Attributes: utils.BuildStruct(t, map[string]interface{}{
-						"aliases":       "alias3",
-						"org_unit_path": "/test2",
-						"organizations": []interface{}{
-							map[string]interface{}{
-								"foo20": "bar20",
-								"foo21": "bar21",
-							},
+					},
+					"custom_schemas": map[string]interface{}{
+						"foo20_customSchema": "bar20_customSchema",
+						"foo21_customSchema": "bar21_customSchema",
+					},
+					"relations": []interface{}{
+						map[string]interface{}{
+							"type":  "manager2",
+							"value": "manager2@test.com",
 						},
-						"custom_schemas": map[string]interface{}{
-							"foo20_customSchema": "bar20_customSchema",
-							"foo21_customSchema": "bar21_customSchema",
-						},
-						"relations": []interface{}{
-							map[string]interface{}{
-								"type":  "manager2",
-								"value": "manager2@test.com",
-							},
-						},
-					}),
-				}),
-			},
+					},
+				},
+			),
 		}
 
 		ctx := context.TODO()
@@ -200,7 +195,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		require.NoError(t, err)
 
-		utils.AssertEqualProtos(t, expectedData, emitter.GetAllData())
+		utils.AssertEqualProtos(t, expectedData, emitter.GetAllEntities())
 	})
 }
 

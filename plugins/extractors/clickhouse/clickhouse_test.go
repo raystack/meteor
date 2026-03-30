@@ -10,19 +10,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"database/sql"
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/clickhouse"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,74 +116,26 @@ func TestExtract(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllData())
+		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllEntities())
 	})
 }
 
-func getExpected() []*v1beta2.Asset {
-	table1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "applicant_id",
-				DataType:    "Int32",
-				Description: "",
+func getExpected() []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant", "table", "applicant", "clickhouse", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "applicant_id", "data_type": "Int32"},
+				map[string]interface{}{"name": "last_name", "data_type": "String"},
+				map[string]interface{}{"name": "first_name", "data_type": "String"},
 			},
-			{
-				Name:        "last_name",
-				DataType:    "String",
-				Description: "",
+		}),
+		models.NewEntity("urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs", "table", "jobs", "clickhouse", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "job_id", "data_type": "Int32"},
+				map[string]interface{}{"name": "job", "data_type": "String"},
+				map[string]interface{}{"name": "department", "data_type": "String"},
 			},
-			{
-				Name:        "first_name",
-				DataType:    "String",
-				Description: "",
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		log.Fatal(err)
-	}
-	table2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:        "job_id",
-				DataType:    "Int32",
-				Description: "",
-			},
-			{
-				Name:        "job",
-				DataType:    "String",
-				Description: "",
-			},
-			{
-				Name:        "department",
-				DataType:    "String",
-				Description: "",
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct for test: %w", err)
-		log.Fatal(err)
-	}
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.applicant",
-			Name:    "applicant",
-			Type:    "table",
-			Service: "clickhouse",
-			Data:    table1,
-		},
-		{
-			Urn:     "urn:clickhouse:test-clickhouse:table:mockdata_meteor_metadata_test.jobs",
-			Name:    "jobs",
-			Type:    "table",
-			Service: "clickhouse",
-			Data:    table2,
-		},
+		}),
 	}
 }
 

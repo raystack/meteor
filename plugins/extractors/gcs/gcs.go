@@ -9,16 +9,12 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //go:embed README.md
@@ -37,7 +33,7 @@ type Config struct {
 var sampleConfig = `
 project_id: google-project-id
 extract_blob: true
-# Only one of service_account_base64 / service_account_json is needed. 
+# Only one of service_account_base64 / service_account_json is needed.
 # If both are present, service_account_base64 takes precedence
 service_account_base64: ____base64_encoded_service_account____
 service_account_json: |-
@@ -121,28 +117,24 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 
-		var blobs []*v1beta2.Blob
+		var blobs []map[string]interface{}
 		if e.config.ExtractBlob {
 			blobs, err = e.extractBlobs(ctx, bucket.Name, e.config.ProjectID)
 			if err != nil {
 				return fmt.Errorf("extract blobs from %s: %w", bucket.Name, err)
 			}
 		}
-		asset, err := e.buildBucket(bucket, e.config.ProjectID, blobs)
-		if err != nil {
-			return fmt.Errorf("build bucket: %w", err)
-		}
-
-		emit(models.NewRecord(asset))
+		record := e.buildBucket(bucket, e.config.ProjectID, blobs)
+		emit(record)
 	}
 
 	return
 }
 
-func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]*v1beta2.Blob, error) {
+func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID string) ([]map[string]interface{}, error) {
 	it := e.client.Bucket(bucketName).Objects(ctx, nil)
 
-	var blobs []*v1beta2.Blob
+	var blobs []map[string]interface{}
 	for {
 		object, err := it.Next()
 		if errors.Is(err, iterator.Done) {
@@ -156,40 +148,49 @@ func (e *Extractor) extractBlobs(ctx context.Context, bucketName, projectID stri
 	}
 }
 
-func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []*v1beta2.Blob) (*v1beta2.Asset, error) {
-	bkt, err := anypb.New(&v1beta2.Bucket{
-		Location:    b.Location,
-		StorageType: b.StorageClass,
-		Attributes:  &structpb.Struct{},
-		CreateTime:  timestamppb.New(b.Created),
-		Blobs:       blobs,
-	})
-	if err != nil {
-		return nil, err
+func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs []map[string]interface{}) models.Record {
+	urn := models.NewURN("gcs", projectID, "bucket", b.Name)
+
+	props := map[string]interface{}{
+		"location":     b.Location,
+		"storage_type": b.StorageClass,
 	}
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("gcs", projectID, "bucket", b.Name),
-		Name:    b.Name,
-		Service: "gcs",
-		Type:    "bucket",
-		Labels:  b.Labels,
-		Data:    bkt,
-	}, nil
+	if !b.Created.IsZero() {
+		props["create_time"] = b.Created.Format("2006-01-02T15:04:05Z")
+	}
+	if len(blobs) > 0 {
+		props["blobs"] = blobs
+	}
+	if len(b.Labels) > 0 {
+		props["labels"] = b.Labels
+	}
+
+	entity := models.NewEntity(urn, "bucket", b.Name, "gcs", props)
+	return models.NewRecord(entity)
 }
 
-func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) *v1beta2.Blob {
-	return &v1beta2.Blob{
-		Urn:        models.NewURN("gcs", projectID, "object", fmt.Sprintf("%s/%s", blob.Bucket, blob.Name)),
-		Name:       blob.Name,
-		Size:       blob.Size,
-		DeleteTime: timestamppb.New(blob.Deleted),
-		ExpireTime: timestamppb.New(blob.RetentionExpirationTime),
-		Ownership: []*v1beta2.Owner{
-			{Name: blob.Owner},
-		},
-		CreateTime: timestamppb.New(blob.Created),
-		UpdateTime: timestamppb.New(blob.Updated),
+func (e *Extractor) buildBlob(blob *storage.ObjectAttrs, projectID string) map[string]interface{} {
+	b := map[string]interface{}{
+		"urn":  models.NewURN("gcs", projectID, "object", fmt.Sprintf("%s/%s", blob.Bucket, blob.Name)),
+		"name": blob.Name,
+		"size": blob.Size,
 	}
+	if !blob.Deleted.IsZero() {
+		b["delete_time"] = blob.Deleted.Format("2006-01-02T15:04:05Z")
+	}
+	if !blob.RetentionExpirationTime.IsZero() {
+		b["expire_time"] = blob.RetentionExpirationTime.Format("2006-01-02T15:04:05Z")
+	}
+	if blob.Owner != "" {
+		b["owner"] = blob.Owner
+	}
+	if !blob.Created.IsZero() {
+		b["create_time"] = blob.Created.Format("2006-01-02T15:04:05Z")
+	}
+	if !blob.Updated.IsZero() {
+		b["update_time"] = blob.Updated.Format("2006-01-02T15:04:05Z")
+	}
+	return b
 }
 
 func createClient(ctx context.Context, logger log.Logger, config Config) (*storage.Client, error) {

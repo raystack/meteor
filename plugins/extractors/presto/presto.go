@@ -11,14 +11,12 @@ import (
 
 	prestoClient "github.com/prestodb/presto-go-client/presto" // presto driver
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -167,30 +165,20 @@ func (e *Extractor) getCatalogs(ctx context.Context) ([]string, error) {
 }
 
 // processTable builds and push table to out channel
-func (e *Extractor) processTable(ctx context.Context, db *sql.DB, catalog, database, tableName string) (*v1beta2.Asset, error) {
+func (e *Extractor) processTable(ctx context.Context, db *sql.DB, catalog, database, tableName string) (*meteorv1beta1.Entity, error) {
 	columns, err := e.extractColumns(ctx, db, catalog)
 	if err != nil {
 		return nil, fmt.Errorf("extract columns: %w", err)
 	}
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create Any struct: %w", err)
-	}
-	// push table to channel
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("presto", e.UrnScope, "table", fmt.Sprintf("%s.%s.%s", catalog, database, tableName)),
-		Name:    tableName,
-		Service: "presto",
-		Type:    "table",
-		Data:    table,
-	}, nil
+	return models.NewEntity(
+		models.NewURN("presto", e.UrnScope, "table", fmt.Sprintf("%s.%s.%s", catalog, database, tableName)),
+		"table", tableName, "presto",
+		map[string]interface{}{"columns": columns},
+	), nil
 }
 
 // extractColumns extracts columns from a given table
-func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]*v1beta2.Column, error) {
+func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string) ([]interface{}, error) {
 	//nolint:gosec
 	sqlStr := fmt.Sprintf(`SELECT COLUMN_NAME,DATA_TYPE,IS_NULLABLE,COMMENT
 				FROM %s.information_schema.columns
@@ -201,7 +189,7 @@ func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string
 	}
 	defer rows.Close()
 
-	var result []*v1beta2.Column
+	var result []interface{}
 	for rows.Next() {
 		var fieldName, dataType, isNullableString, comment sql.NullString
 		err = rows.Scan(&fieldName, &dataType, &isNullableString, &comment)
@@ -209,12 +197,15 @@ func (*Extractor) extractColumns(ctx context.Context, db *sql.DB, catalog string
 			return nil, fmt.Errorf("scan fields from query: %w", err)
 		}
 
-		result = append(result, &v1beta2.Column{
-			Name:        fieldName.String,
-			DataType:    dataType.String,
-			IsNullable:  isNullable(isNullableString.String),
-			Description: comment.String,
-		})
+		col := map[string]interface{}{
+			"name":        fieldName.String,
+			"data_type":   dataType.String,
+			"is_nullable": isNullable(isNullableString.String),
+		}
+		if comment.String != "" {
+			col["description"] = comment.String
+		}
+		result = append(result, col)
 	}
 	if err := rows.Err(); err != nil && !isPrestoEOF(err) {
 		return nil, fmt.Errorf("iterate over columns: %w", err)

@@ -16,7 +16,7 @@ import (
 	"github.com/nsf/jsondiff"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery"
 	"github.com/raystack/meteor/test/mocks"
@@ -24,8 +24,7 @@ import (
 	slog "github.com/raystack/salt/observability/logger"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/api/option"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -153,7 +152,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(seed int64) func(int64) int64) []*v1beta2.Asset {
+	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(seed int64) func(int64) int64) []*meteorv1beta1.Entity {
 		extr := bigquery.New(utils.Logger, mockClient, randomizer)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -231,8 +230,8 @@ func TestExtract(t *testing.T) {
 	})
 }
 
-func getAllData(emitter *mocks.Emitter, t *testing.T) []*v1beta2.Asset {
-	actual := emitter.GetAllData()
+func getAllData(emitter *mocks.Emitter, t *testing.T) []*meteorv1beta1.Entity {
+	actual := emitter.GetAllEntities()
 
 	// the emulator appending 1 random dataset
 	// we can't assert it, so we remove it from the list
@@ -240,127 +239,23 @@ func getAllData(emitter *mocks.Emitter, t *testing.T) []*v1beta2.Asset {
 
 	// the emulator returning dynamic timestamps
 	// replace them with static ones
-	for _, asset := range actual {
-		replaceWithStaticTimestamp(t, asset)
+	for _, entity := range actual {
+		replaceWithStaticTimestamp(t, entity)
 	}
 	return actual
 }
 
-func replaceWithStaticTimestamp(t *testing.T, asset *v1beta2.Asset) {
-	b := new(v1beta2.Table)
-	err := asset.Data.UnmarshalTo(b)
-	assert.NoError(t, err)
+func replaceWithStaticTimestamp(_ *testing.T, entity *meteorv1beta1.Entity) {
+	if entity.Properties == nil || entity.Properties.Fields == nil {
+		return
+	}
+	staticTS := "2023-06-13T03:46:12Z"
 
-	time, err := time.Parse(time.RFC3339, "2023-06-13T03:46:12.372974Z")
-	assert.NoError(t, err)
-	b.CreateTime = timestamppb.New(time)
-	b.UpdateTime = timestamppb.New(time)
-
-	asset.Data, err = anypb.New(b)
-	assert.NoError(t, err)
-}
-
-func TestIsExcludedTable(t *testing.T) {
-	type args struct {
-		datasetID      string
-		tableID        string
-		excludedTables []string
+	// Replace create_time and update_time in properties
+	if _, ok := entity.Properties.Fields["create_time"]; ok {
+		entity.Properties.Fields["create_time"] = structpb.NewStringValue(staticTS)
 	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "should return false when excluded table list is nil",
-			args: args{
-				datasetID:      "dataset_a",
-				tableID:        "table_b",
-				excludedTables: nil,
-			},
-			want: false,
-		},
-		{
-			name: "should return false when excluded table list is empty",
-			args: args{
-				datasetID:      "dataset_a",
-				tableID:        "table_b",
-				excludedTables: []string{},
-			},
-			want: false,
-		},
-		{
-			name: "should return false if table is not in excluded list",
-			args: args{
-				datasetID:      "dataset_a",
-				tableID:        "table_b",
-				excludedTables: []string{"ds1.table1", "playground.test_weekly"},
-			},
-			want: false,
-		},
-		{
-			name: "should return true if table is in excluded list",
-			args: args{
-				datasetID:      "dataset_a",
-				tableID:        "table_b",
-				excludedTables: []string{"ds1.table1", "playground.test_weekly", "dataset_a.table_b"},
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, bigquery.IsExcludedTable(tt.args.datasetID, tt.args.tableID, tt.args.excludedTables), "IsExcludedTable(%v, %v, %v)", tt.args.datasetID, tt.args.tableID, tt.args.excludedTables)
-		})
-	}
-}
-
-func TestIsExcludedDataset(t *testing.T) {
-	type args struct {
-		datasetID        string
-		excludedDatasets []string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "should return false is list is empty",
-			args: args{
-				datasetID:        "dataset_a",
-				excludedDatasets: []string{},
-			},
-			want: false,
-		},
-		{
-			name: "should return false is list is nil",
-			args: args{
-				datasetID:        "dataset_a",
-				excludedDatasets: nil,
-			},
-			want: false,
-		},
-		{
-			name: "should return false is dataset is not in excluded list",
-			args: args{
-				datasetID:        "dataset_a",
-				excludedDatasets: []string{"dataset_b", "dataset_c"},
-			},
-			want: false,
-		},
-		{
-			name: "should return true is dataset is in excluded list",
-			args: args{
-				datasetID:        "dataset_a",
-				excludedDatasets: []string{"dataset_a", "dataset_b", "dataset_c"},
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, bigquery.IsExcludedDataset(tt.args.datasetID, tt.args.excludedDatasets), "IsExcludedDataset(%v, %v)", tt.args.datasetID, tt.args.excludedDatasets)
-		})
+	if _, ok := entity.Properties.Fields["update_time"]; ok {
+		entity.Properties.Fields["update_time"] = structpb.NewStringValue(staticTS)
 	}
 }

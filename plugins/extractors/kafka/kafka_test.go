@@ -16,14 +16,12 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/kafka"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -179,44 +177,25 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
 
-		data, err := anypb.New(&v1beta2.Topic{
-			Profile: &v1beta2.TopicProfile{
-				NumberOfPartitions: 1,
-			},
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			t.Fatal(err)
+		expected := []*meteorv1beta1.Entity{
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-1", "topic", "meteor-test-topic-1", "kafka", map[string]interface{}{
+				"profile": map[string]interface{}{
+					"number_of_partitions": float64(1),
+				},
+			}),
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-2", "topic", "meteor-test-topic-2", "kafka", map[string]interface{}{
+				"profile": map[string]interface{}{
+					"number_of_partitions": float64(1),
+				},
+			}),
+			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-3", "topic", "meteor-test-topic-3", "kafka", map[string]interface{}{
+				"profile": map[string]interface{}{
+					"number_of_partitions": float64(1),
+				},
+			}),
 		}
 
-		// assert results with expected data
-		expected := []*v1beta2.Asset{
-			{
-				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-1",
-				Name:    "meteor-test-topic-1",
-				Service: "kafka",
-				Type:    "topic",
-				Data:    data,
-			},
-			{
-				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-2",
-				Name:    "meteor-test-topic-2",
-				Service: "kafka",
-				Type:    "topic",
-				Data:    data,
-			},
-			{
-				Urn:     "urn:kafka:test-kafka:topic:meteor-test-topic-3",
-				Name:    "meteor-test-topic-3",
-				Service: "kafka",
-				Type:    "topic",
-				Data:    data,
-			},
-		}
-
-		// We need to sort because the extractor cannot guarantee order
-		// so comparing expected slice and result slice will not be consistent
-		utils.AssertEqualProtos(t, expected, utils.SortedAssets(emitter.GetAllData()))
+		utils.AssertEqualProtos(t, expected, utils.SortedEntities(emitter.GetAllEntities()))
 	})
 }
 
@@ -257,18 +236,17 @@ func newExtractor() *kafka.Extractor {
 func assertResults(t *testing.T, expected, result []models.Record) {
 	assert.Len(t, result, len(expected))
 
-	expectedMap := make(map[string]*v1beta2.Asset)
+	expectedMap := make(map[string]*meteorv1beta1.Entity)
 	for _, record := range expected {
-		expectedAsset := record.Data()
-		expectedMap[expectedAsset.Urn] = expectedAsset
+		entity := record.Entity()
+		expectedMap[entity.GetUrn()] = entity
 	}
 
 	for _, record := range result {
-		actualAsset := record.Data()
-		assert.Contains(t, expectedMap, actualAsset.Urn)
-		assert.Equal(t, expectedMap[actualAsset.Urn], actualAsset)
+		entity := record.Entity()
+		assert.Contains(t, expectedMap, entity.GetUrn())
+		assert.Equal(t, expectedMap[entity.GetUrn()], entity)
 
-		// delete entry to make sure there is no duplicate
-		delete(expectedMap, actualAsset.Urn)
+		delete(expectedMap, entity.GetUrn())
 	}
 }

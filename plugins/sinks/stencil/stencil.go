@@ -13,7 +13,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
@@ -88,20 +88,69 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 	return nil
 }
 
+// column represents a column extracted from entity properties.
+type column struct {
+	Name        string
+	DataType    string
+	IsNullable  bool
+	Description string
+}
+
+// extractColumns extracts column information from entity properties.
+func extractColumns(entity *meteorv1beta1.Entity) []column {
+	props := entity.GetProperties()
+	if props == nil {
+		return nil
+	}
+
+	columnsVal, ok := props.GetFields()["columns"]
+	if !ok {
+		return nil
+	}
+
+	columnsList := columnsVal.GetListValue()
+	if columnsList == nil {
+		return nil
+	}
+
+	var columns []column
+	for _, item := range columnsList.GetValues() {
+		colMap := item.GetStructValue()
+		if colMap == nil {
+			continue
+		}
+
+		fields := colMap.GetFields()
+		c := column{}
+		if v, ok := fields["name"]; ok {
+			c.Name = v.GetStringValue()
+		}
+		if v, ok := fields["data_type"]; ok {
+			c.DataType = v.GetStringValue()
+		}
+		if v, ok := fields["is_nullable"]; ok {
+			c.IsNullable = v.GetBoolValue()
+		}
+		if v, ok := fields["description"]; ok {
+			c.Description = v.GetStringValue()
+		}
+
+		columns = append(columns, c)
+	}
+
+	return columns
+}
+
 // Sink helps to sink record to stencil
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
-		asset := record.Data()
-		if asset.Data == nil {
+		entity := record.Entity()
+		columns := extractColumns(entity)
+		if len(columns) == 0 {
 			continue
 		}
 
-		var table v1beta2.Table
-		if err := asset.Data.UnmarshalTo(&table); err != nil {
-			continue
-		}
-
-		s.logger.Info("sinking record to stencil", "record", asset.GetUrn())
+		s.logger.Info("sinking record to stencil", "record", entity.GetUrn())
 
 		var (
 			payload interface{}
@@ -109,19 +158,19 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 		)
 		switch s.config.Format {
 		case "avro":
-			payload, err = s.buildAvroStencilPayload(asset, &table)
+			payload, err = s.buildAvroStencilPayload(entity, columns)
 		case "json":
-			payload, err = s.buildJsonStencilPayload(asset, &table)
+			payload, err = s.buildJsonStencilPayload(entity, columns)
 		}
 
 		if err != nil {
 			return fmt.Errorf("build stencil payload: %w", err)
 		}
-		if err := s.send(ctx, asset.GetUrn(), payload); err != nil {
+		if err := s.send(ctx, entity.GetUrn(), payload); err != nil {
 			return fmt.Errorf("send stencil payload: %w", err)
 		}
 
-		s.logger.Info("successfully sunk record to stencil", "record", asset.GetUrn())
+		s.logger.Info("successfully sunk record to stencil", "record", entity.GetUrn())
 	}
 
 	return nil
@@ -131,13 +180,13 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 func (*Sink) Close() error { return nil }
 
 // buildJsonStencilPayload build json stencil payload
-func (s *Sink) buildJsonStencilPayload(asset *v1beta2.Asset, table *v1beta2.Table) (JsonSchema, error) {
-	jsonProperties := buildJsonProperties(asset, table)
+func (s *Sink) buildJsonStencilPayload(entity *meteorv1beta1.Entity, columns []column) (JsonSchema, error) {
+	jsonProperties := buildJsonProperties(entity, columns)
 
 	record := JsonSchema{
-		Id:         asset.GetUrn() + ".json",
+		Id:         entity.GetUrn() + ".json",
 		Schema:     "https://json-schema.org/draft/2020-12/schema",
-		Title:      asset.GetName(),
+		Title:      entity.GetName(),
 		Type:       JSONTypeObject,
 		Properties: jsonProperties,
 	}
@@ -146,13 +195,13 @@ func (s *Sink) buildJsonStencilPayload(asset *v1beta2.Asset, table *v1beta2.Tabl
 }
 
 // buildAvroStencilPayload build Json stencil payload
-func (s *Sink) buildAvroStencilPayload(asset *v1beta2.Asset, table *v1beta2.Table) (AvroSchema, error) {
-	avroFields := buildAvroFields(asset, table)
+func (s *Sink) buildAvroStencilPayload(entity *meteorv1beta1.Entity, columns []column) (AvroSchema, error) {
+	avroFields := buildAvroFields(entity, columns)
 
 	record := AvroSchema{
 		Type:      "record",
 		Namespace: s.config.NamespaceID,
-		Name:      asset.GetName(),
+		Name:      entity.GetName(),
 		Fields:    avroFields,
 	}
 
@@ -210,26 +259,31 @@ func (s *Sink) send(ctx context.Context, tableURN string, record interface{}) er
 	}
 }
 
+// getSource returns the source from entity properties or falls back to entity source.
+func getSource(entity *meteorv1beta1.Entity) string {
+	return entity.GetSource()
+}
+
 // buildJsonProperties builds the json schema properties
-func buildJsonProperties(asset *v1beta2.Asset, table *v1beta2.Table) map[string]JsonProperty {
-	columnRecord := make(map[string]JsonProperty)
-	service := asset.GetService()
-	columns := table.GetColumns()
+func buildJsonProperties(entity *meteorv1beta1.Entity, columns []column) map[string]JsonProperty {
 	if len(columns) == 0 {
 		return nil
 	}
 
-	for _, column := range columns {
-		dataType := typeToJSONSchemaType(service, column.DataType)
+	columnRecord := make(map[string]JsonProperty)
+	source := getSource(entity)
+
+	for _, col := range columns {
+		dataType := typeToJSONSchemaType(source, col.DataType)
 		columnType := []JSONType{dataType}
 
-		if column.IsNullable {
+		if col.IsNullable {
 			columnType = append(columnType, JSONTypeNull)
 		}
 
-		columnRecord[column.Name] = JsonProperty{
+		columnRecord[col.Name] = JsonProperty{
 			Type:        columnType,
-			Description: column.GetDescription(),
+			Description: col.Description,
 		}
 	}
 
@@ -273,24 +327,24 @@ func typeToJSONSchemaType(service, columnType string) JSONType {
 }
 
 // buildAvroFields builds the avro schema fields
-func buildAvroFields(asset *v1beta2.Asset, table *v1beta2.Table) []AvroFields {
-	service := asset.GetService()
-	columns := table.GetColumns()
+func buildAvroFields(entity *meteorv1beta1.Entity, columns []column) []AvroFields {
 	if len(columns) == 0 {
 		return nil
 	}
 
+	source := getSource(entity)
+
 	var fields []AvroFields
-	for _, column := range columns {
-		dataType := typeToAvroSchemaType(service, column.DataType)
+	for _, col := range columns {
+		dataType := typeToAvroSchemaType(source, col.DataType)
 		columnType := []AvroType{dataType}
 
-		if column.IsNullable {
+		if col.IsNullable {
 			columnType = []AvroType{dataType, AvroTypeNull}
 		}
 
 		fields = append(fields, AvroFields{
-			Name: column.Name,
+			Name: col.Name,
 			Type: columnType,
 		})
 	}

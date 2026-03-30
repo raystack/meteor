@@ -8,7 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/d5/tengo/v2"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/tengoutil"
 	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
@@ -45,7 +45,7 @@ type Processor struct {
 var sampleConfig = heredoc.Doc(`
 	engine: tengo
 	script: |
-	  asset.owners = append(asset.owners || [], { name: "Big Mom", email: "big.mom@wholecakeisland.com" })
+	  asset.name = asset.name + " (modified)"
 `)
 
 var info = plugins.Info{
@@ -89,13 +89,18 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (models.Record, error) {
-	m, err := structmap.AsMap(src.Data())
+	m, err := structmap.AsMap(src.Entity())
 	if err != nil {
 		return models.Record{}, fmt.Errorf("script processor: %w", err)
 	}
 
+	assetMap, ok := m.(map[string]interface{})
+	if !ok {
+		return models.Record{}, fmt.Errorf("script processor: expected map[string]interface{}, got %T", m)
+	}
+
 	c := p.compiled.Clone()
-	if err := c.Set("asset", m); err != nil {
+	if err := c.Set("asset", assetMap); err != nil {
 		return models.Record{}, fmt.Errorf("script processor: set asset into vm: %w", err)
 	}
 
@@ -103,10 +108,18 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 		return models.Record{}, fmt.Errorf("script processor: run script: %w", err)
 	}
 
-	var transformed *v1beta2.Asset
-	if err := structmap.AsStruct(c.Get("asset").Map(), &transformed); err != nil {
+	// Merge the result back into the original map.
+	// Tengo returns only modified fields from an ImmutableMap, so we merge
+	// the script output on top of the original to preserve unmodified fields.
+	resultMap := c.Get("asset").Map()
+	for k, v := range resultMap {
+		assetMap[k] = v
+	}
+
+	var transformed *meteorv1beta1.Entity
+	if err := structmap.AsStruct(assetMap, &transformed); err != nil {
 		return models.Record{}, fmt.Errorf("script processor: overwrite asset: %w", err)
 	}
 
-	return models.NewRecord(transformed), nil
+	return models.NewRecord(transformed, src.Edges()...), nil
 }

@@ -10,18 +10,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/cassandra"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -140,7 +138,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllData())
+		utils.AssertEqualProtos(t, getExpected(), emitter.GetAllEntities())
 	})
 }
 
@@ -182,63 +180,21 @@ func execute(queries []string) (err error) {
 }
 
 // getExpected returns the expected result
-func getExpected() []*v1beta2.Asset {
-	table1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "applicantid",
-				DataType: "int",
+func getExpected() []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".applicant", "table", "applicant", "cassandra", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "applicantid", "data_type": "int"},
+				map[string]interface{}{"name": "first_name", "data_type": "text"},
+				map[string]interface{}{"name": "last_name", "data_type": "text"},
 			},
-			{
-				Name:     "first_name",
-				DataType: "text",
+		}),
+		models.NewEntity("urn:cassandra:test-cassandra:table:"+keyspace+".jobs", "table", "jobs", "cassandra", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "department", "data_type": "text"},
+				map[string]interface{}{"name": "job", "data_type": "text"},
+				map[string]interface{}{"name": "jobid", "data_type": "int"},
 			},
-			{
-				Name:     "last_name",
-				DataType: "text",
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-	}
-
-	table2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "department",
-				DataType: "text",
-			},
-			{
-				Name:     "job",
-				DataType: "text",
-			},
-			{
-				Name:     "jobid",
-				DataType: "int",
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		err = fmt.Errorf("error creating Any struct: %w", err)
-	}
-
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".applicant",
-			Name:    "applicant",
-			Type:    "table",
-			Service: "cassandra",
-			Data:    table1,
-		},
-		{
-			Urn:     "urn:cassandra:test-cassandra:table:" + keyspace + ".jobs",
-			Name:    "jobs",
-			Type:    "table",
-			Data:    table2,
-			Service: "cassandra",
-		},
+		}),
 	}
 }

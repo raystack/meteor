@@ -13,15 +13,14 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/oracle"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/raystack/meteor/test/utils"
 	_ "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var db *sql.DB
@@ -106,7 +105,7 @@ func TestExtract(t *testing.T) {
 		err = extr.Extract(ctx, emitter.Push)
 
 		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllData())
+		utils.AssertEqualProtos(t, getExpected(t), emitter.GetAllEntities())
 	})
 }
 
@@ -160,76 +159,27 @@ func execute(db *sql.DB, queries []string) (err error) {
 	return
 }
 
-func getExpected(t *testing.T) []*v1beta2.Asset {
-	data1, err := anypb.New(&v1beta2.Table{
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 3,
-		},
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "EMPID",
-				DataType: "NUMBER",
-				Length:   22,
+func getExpected(t *testing.T) []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:oracle:test-oracle:table:XE.EMPLOYEE", "table", "EMPLOYEE", "Oracle", map[string]interface{}{
+			"profile": map[string]interface{}{
+				"total_rows": float64(3),
 			},
-			{
-				Name:     "NAME",
-				DataType: "VARCHAR2",
-				Length:   30,
+			"columns": []interface{}{
+				map[string]interface{}{"name": "EMPID", "data_type": "NUMBER", "length": float64(22)},
+				map[string]interface{}{"name": "NAME", "data_type": "VARCHAR2", "length": float64(30)},
+				map[string]interface{}{"name": "SALARY", "data_type": "NUMBER", "is_nullable": true, "length": float64(22)},
 			},
-			{
-				Name:       "SALARY",
-				DataType:   "NUMBER",
-				IsNullable: true,
-				Length:     22,
+		}),
+		models.NewEntity("urn:oracle:test-oracle:table:XE.DEPARTMENT", "table", "DEPARTMENT", "Oracle", map[string]interface{}{
+			"profile": map[string]interface{}{
+				"total_rows": float64(4),
 			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal(err, "failed to build Any struct")
-	}
-	data2, err := anypb.New(&v1beta2.Table{
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 4,
-		},
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "ID",
-				DataType: "NUMBER",
-				Length:   22,
+			"columns": []interface{}{
+				map[string]interface{}{"name": "ID", "data_type": "NUMBER", "length": float64(22)},
+				map[string]interface{}{"name": "TITLE", "description": "Department Name", "data_type": "VARCHAR2", "length": float64(20)},
+				map[string]interface{}{"name": "BUDGET", "data_type": "FLOAT", "is_nullable": true, "length": float64(22)},
 			},
-			{
-				Name:        "TITLE",
-				Description: "Department Name",
-				DataType:    "VARCHAR2",
-				Length:      20,
-			},
-			{
-				Name:       "BUDGET",
-				DataType:   "FLOAT",
-				IsNullable: true,
-				Length:     22,
-			},
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal(err, "failed to build Any struct")
-	}
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:oracle:test-oracle:table:XE.EMPLOYEE",
-			Name:    "EMPLOYEE",
-			Service: "Oracle",
-			Type:    "table",
-			Data:    data1,
-		},
-		{
-			Urn:     "urn:oracle:test-oracle:table:XE.DEPARTMENT",
-			Name:    "DEPARTMENT",
-			Service: "Oracle",
-			Type:    "table",
-			Data:    data2,
-		},
+		}),
 	}
 }

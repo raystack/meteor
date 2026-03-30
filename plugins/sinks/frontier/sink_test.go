@@ -11,18 +11,15 @@ import (
 	"github.com/pkg/errors"
 	frontierProto "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sinks/frontier"
 	testUtils "github.com/raystack/meteor/test/utils"
-	"github.com/raystack/meteor/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -71,18 +68,13 @@ func TestSink(t *testing.T) {
 	})
 
 	t.Run("should return RetryError if frontier returns certain status code", func(t *testing.T) {
-		user, err := anypb.New(&v1beta2.User{
-			Email:    "user@raystack.com",
-			FullName: "john",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+		entity := models.NewEntity("", "user", "", "", map[string]interface{}{
+			"email":     "user@raystack.com",
+			"full_name": "john",
+			"attributes": map[string]interface{}{
 				"org_unit_path": "/",
-			}),
+			},
 		})
-		assert.NoError(t, err)
-
-		data := &v1beta2.Asset{
-			Data: user,
-		}
 
 		ctx := context.TODO()
 
@@ -91,12 +83,12 @@ func TestSink(t *testing.T) {
 			client.On("Connect", ctx, "frontier:80").Return(nil)
 			client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&frontierProto.UpdateUserResponse{}, status.Errorf(codes.Unavailable, ""))
 			frontierSink := frontier.New(client, testUtils.Logger)
-			err = frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			err := frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 				"host": validConfig["host"],
 			}})
 			assert.NoError(t, err)
 
-			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 			require.Error(t, err)
 			assert.ErrorAs(t, err, &plugins.RetryError{})
 		})
@@ -106,13 +98,13 @@ func TestSink(t *testing.T) {
 			client.On("Connect", ctx, "frontier:80").Return(nil)
 			client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&frontierProto.UpdateUserResponse{}, status.Errorf(codes.Internal, ""))
 			frontierSink := frontier.New(client, testUtils.Logger)
-			err = frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			err := frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 				"host": validConfig["host"],
 			}})
 
 			assert.NoError(t, err)
 
-			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 			assert.ErrorContains(t, err, fmt.Sprintf("frontier returns code %d", codes.Internal))
 		})
 
@@ -121,30 +113,26 @@ func TestSink(t *testing.T) {
 			client.On("Connect", ctx, "frontier:80").Return(nil)
 			client.On("UpdateUser", ctx, mock.Anything, mock.Anything).Return(&frontierProto.UpdateUserResponse{}, fmt.Errorf("Some error"))
 			frontierSink := frontier.New(client, testUtils.Logger)
-			err = frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
+			err := frontierSink.Init(ctx, plugins.Config{RawConfig: map[string]interface{}{
 				"host": validConfig["host"],
 			}})
 
 			assert.NoError(t, err)
 
-			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+			err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 			assert.ErrorContains(t, err, "unable to parse error returned")
 		})
 	})
 
 	t.Run("should not return when valid payload is sent", func(t *testing.T) {
-		u := &v1beta2.User{
-			FullName: "John Doe",
-			Email:    "john.doe@raystack.com",
-			Attributes: utils.TryParseMapToProto(map[string]interface{}{
+		entity := models.NewEntity("", "user", "", "", map[string]interface{}{
+			"full_name": "John Doe",
+			"email":     "john.doe@raystack.com",
+			"attributes": map[string]interface{}{
 				"org_unit_path": "/",
 				"aliases":       "doe.john@raystack.com,johndoe@raystack.com",
-			}),
-		}
-		user, _ := anypb.New(u)
-		data := &v1beta2.Asset{
-			Data: user,
-		}
+			},
+		})
 
 		ctx := context.TODO()
 
@@ -163,16 +151,27 @@ func TestSink(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(data)})
+		err = frontierSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 		assert.Equal(t, nil, err)
 	})
 
 	t.Run("should skip sink when error build user body", func(t *testing.T) {
-		buildData := func(u v1beta2.User) *v1beta2.Asset {
-			user, _ := anypb.New(&u)
-			return &v1beta2.Asset{
-				Data: user,
+		buildEntity := func(fullName, email string) *models.Record {
+			props := map[string]interface{}{
+				"full_name": fullName,
+				"email":     email,
 			}
+			r := models.NewRecord(models.NewEntity("", "user", "", "", props))
+			return &r
+		}
+
+		buildEntityWithAttrs := func(fullName, email string) *models.Record {
+			props := map[string]interface{}{
+				"full_name": fullName,
+				"email":     email,
+			}
+			r := models.NewRecord(models.NewEntity("", "user", "", "", props))
+			return &r
 		}
 
 		ctx := context.TODO()
@@ -188,9 +187,9 @@ func TestSink(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = frontierSink.Sink(ctx, []models.Record{
-			models.NewRecord(buildData(v1beta2.User{FullName: ""})),
-			models.NewRecord(buildData(v1beta2.User{FullName: "John Doe", Email: ""})),
-			models.NewRecord(buildData(v1beta2.User{FullName: "John Doe", Email: "john.doe@example.com", Attributes: nil})),
+			*buildEntity("", ""),
+			*buildEntity("John Doe", ""),
+			*buildEntityWithAttrs("John Doe", "john.doe@example.com"),
 		})
 		assert.Equal(t, nil, err)
 	})

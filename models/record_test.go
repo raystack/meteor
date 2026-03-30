@@ -4,61 +4,33 @@ import (
 	"testing"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRecord(t *testing.T) {
-	type args struct {
-		data *v1beta2.Asset
+	entity := &meteorv1beta1.Entity{
+		Urn:  "urn:test:scope:table:t1",
+		Name: "t1",
 	}
-	tests := []struct {
-		name     string
-		args     args
-		expected models.Record
-	}{
-		{
-			name: "should return a new record",
-			args: args{
-				data: &v1beta2.Asset{},
-			},
-			expected: models.NewRecord(&v1beta2.Asset{}),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := models.NewRecord(tt.args.data)
-			assert.Equal(t, tt.expected, actual)
-		})
-	}
+	record := models.NewRecord(entity)
+	assert.Equal(t, entity, record.Entity())
+	assert.Empty(t, record.Edges())
 }
 
-func TestRecord_Data(t *testing.T) {
-	type fields struct {
-		data *v1beta2.Asset
+func TestNewRecordWithEdges(t *testing.T) {
+	entity := &meteorv1beta1.Entity{
+		Urn:  "urn:test:scope:table:t1",
+		Name: "t1",
 	}
-	tests := []struct {
-		name     string
-		fields   fields
-		expected *v1beta2.Asset
-	}{
-		{
-			name: "should return the record data",
-			fields: fields{
-				data: &v1beta2.Asset{
-					Name: "test",
-				},
-			},
-			expected: &v1beta2.Asset{
-				Name: "test",
-			},
-		},
+	edge := &meteorv1beta1.Edge{
+		SourceUrn: "urn:test:scope:table:t1",
+		TargetUrn: "urn:user:alice@co.com",
+		Type:      "owned_by",
+		Source:    "test",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := models.NewRecord(tt.fields.data)
-			actual := r.Data()
-			assert.Equal(t, tt.expected, actual)
-		})
-	}
+	record := models.NewRecord(entity, edge)
+	assert.Equal(t, entity, record.Entity())
+	assert.Len(t, record.Edges(), 1)
+	assert.Equal(t, edge, record.Edges()[0])
 }

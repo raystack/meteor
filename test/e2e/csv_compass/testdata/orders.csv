@@ -1,0 +1,3 @@
+order_id,customer_id,amount,status
+1001,C001,250.00,completed
+1002,C002,125.50,pending

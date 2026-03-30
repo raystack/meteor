@@ -13,18 +13,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/raystack/meteor/test/utils"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/elastic"
 	"github.com/raystack/meteor/test/mocks"
+	"github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -133,7 +131,7 @@ func TestExtract(t *testing.T) {
 		emitter := mocks.NewEmitter()
 		err = extr.Extract(ctx, emitter.Push)
 		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, getExpectedVal(t), utils.SortedAssets(emitter.GetAllData()))
+		utils.AssertEqualProtos(t, getExpectedVal(t), utils.SortedEntities(emitter.GetAllEntities()))
 	})
 }
 
@@ -191,51 +189,23 @@ func newExtractor() *elastic.Extractor {
 	return elastic.New(utils.Logger)
 }
 
-func getExpectedVal(t *testing.T) []*v1beta2.Asset {
-	table1, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "SomeStr",
-				DataType: "text",
+func getExpectedVal(t *testing.T) []*meteorv1beta1.Entity {
+	return []*meteorv1beta1.Entity{
+		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index1", "table", "index1", "elasticsearch", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "SomeStr", "data_type": "text"},
 			},
-		},
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 1,
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal("error creating Any struct for test: %w", err)
-	}
-	table2, err := anypb.New(&v1beta2.Table{
-		Columns: []*v1beta2.Column{
-			{
-				Name:     "SomeStr",
-				DataType: "text",
+			"profile": map[string]interface{}{
+				"total_rows": float64(1),
 			},
-		},
-		Profile: &v1beta2.TableProfile{
-			TotalRows: 1,
-		},
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		t.Fatal("error creating Any struct for test: %w", err)
-	}
-	return []*v1beta2.Asset{
-		{
-			Urn:     "urn:elasticsearch:test-elasticsearch:index:index1",
-			Name:    "index1",
-			Type:    "table",
-			Data:    table1,
-			Service: "elasticsearch",
-		},
-		{
-			Urn:     "urn:elasticsearch:test-elasticsearch:index:index2",
-			Name:    "index2",
-			Type:    "table",
-			Data:    table2,
-			Service: "elasticsearch",
-		},
+		}),
+		models.NewEntity("urn:elasticsearch:test-elasticsearch:index:index2", "table", "index2", "elasticsearch", map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "SomeStr", "data_type": "text"},
+			},
+			"profile": map[string]interface{}{
+				"total_rows": float64(1),
+			},
+		}),
 	}
 }

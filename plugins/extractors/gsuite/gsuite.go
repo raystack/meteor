@@ -10,13 +10,9 @@ import (
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
-	"github.com/raystack/meteor/utils"
 	log "github.com/raystack/salt/observability/logger"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/googleapi"
-	"google.golang.org/protobuf/types/known/anypb"
-
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 )
 
 //go:embed README.md
@@ -99,49 +95,55 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	}
 
 	for _, u := range adminUsers.Users {
-		asset, err := e.buildAsset(u)
-		if err != nil {
-			e.logger.Warn("error when building asset", "err", err)
-			continue
-		}
-		e.emit(models.NewRecord(asset))
+		record := e.buildRecord(u)
+		e.emit(record)
 	}
 
 	return nil
 }
 
-func (e *Extractor) buildAsset(gsuiteUser *admin.User) (*v1beta2.Asset, error) {
+func (e *Extractor) buildRecord(gsuiteUser *admin.User) models.Record {
 	var status string
 	if gsuiteUser.Suspended {
 		status = "suspended"
 	}
 
-	var userAttributes = make(map[string]interface{})
-	userAttributes["organizations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Organizations)
-	userAttributes["relations"] = e.buildMapFromGsuiteSlice(gsuiteUser.Relations)
-	userAttributes["custom_schemas"] = e.buildMapFromGsuiteMapRawMessage(gsuiteUser.CustomSchemas)
-	userAttributes["aliases"] = strings.Join(gsuiteUser.Aliases, ",")
-	userAttributes["org_unit_path"] = gsuiteUser.OrgUnitPath
-
-	assetUser, err := anypb.New(&v1beta2.User{
-		Email:      gsuiteUser.PrimaryEmail,
-		FullName:   gsuiteUser.Name.FullName,
-		Status:     status,
-		Attributes: utils.TryParseMapToProto(userAttributes),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error when creating anypb.Any: %w", err)
+	props := map[string]interface{}{
+		"email":     gsuiteUser.PrimaryEmail,
+		"full_name": gsuiteUser.Name.FullName,
+	}
+	if status != "" {
+		props["status"] = status
 	}
 
-	asset := &v1beta2.Asset{
-		Urn:     models.NewURN("gsuite", e.UrnScope, "user", gsuiteUser.PrimaryEmail),
-		Name:    gsuiteUser.Name.FullName,
-		Service: "gsuite",
-		Type:    "user",
-		Data:    assetUser,
+	organizations := e.buildMapFromGsuiteSlice(gsuiteUser.Organizations)
+	if len(organizations) > 0 {
+		props["organizations"] = organizations
+	}
+	relations := e.buildMapFromGsuiteSlice(gsuiteUser.Relations)
+	if len(relations) > 0 {
+		props["relations"] = relations
+	}
+	customSchemas := e.buildMapFromGsuiteMapRawMessage(gsuiteUser.CustomSchemas)
+	if len(customSchemas) > 0 {
+		props["custom_schemas"] = customSchemas
+	}
+	if len(gsuiteUser.Aliases) > 0 {
+		props["aliases"] = strings.Join(gsuiteUser.Aliases, ",")
+	}
+	if gsuiteUser.OrgUnitPath != "" {
+		props["org_unit_path"] = gsuiteUser.OrgUnitPath
 	}
 
-	return asset, nil
+	entity := models.NewEntity(
+		models.NewURN("gsuite", e.UrnScope, "user", gsuiteUser.PrimaryEmail),
+		"user",
+		gsuiteUser.Name.FullName,
+		"gsuite",
+		props,
+	)
+
+	return models.NewRecord(entity)
 }
 
 func (e *Extractor) fetchUsers(ctx context.Context) (*admin.Users, error) {

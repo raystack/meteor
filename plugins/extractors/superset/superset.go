@@ -13,13 +13,10 @@ import (
 
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -107,39 +104,33 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		return fmt.Errorf("get dashboards: %w", err)
 	}
 	for _, dashboard := range dashboards {
-		data, err := e.buildDashboard(ctx, dashboard.ID)
+		record, err := e.buildDashboard(ctx, dashboard.ID)
 		if err != nil {
 			return fmt.Errorf("build dashboard: %w", err)
 		}
-		emit(models.NewRecord(data))
+		emit(record)
 	}
 	return nil
 }
 
 // buildDashboard builds a dashboard from superset server
-func (e *Extractor) buildDashboard(ctx context.Context, id int) (*v1beta2.Asset, error) {
+func (e *Extractor) buildDashboard(ctx context.Context, id int) (models.Record, error) {
 	var dashboard Dashboard
-	chart, err := e.getChartsList(ctx, id)
+	charts, err := e.getChartsList(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("fetch charts: %w", err)
+		return models.Record{}, fmt.Errorf("fetch charts: %w", err)
 	}
 
-	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts:     chart,
-		Attributes: &structpb.Struct{}, // ensure attributes don't get overwritten if present
-	})
-	if err != nil {
-		return nil, err
+	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.ID))
+	props := map[string]interface{}{
+		"charts": charts,
+	}
+	if dashboard.URL != "" {
+		props["url"] = dashboard.URL
 	}
 
-	return &v1beta2.Asset{
-		Urn:     models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.ID)),
-		Name:    dashboard.DashboardTitle,
-		Service: "superset",
-		Url:     dashboard.URL,
-		Type:    "dashboard",
-		Data:    data,
-	}, nil
+	entity := models.NewEntity(urn, "dashboard", dashboard.DashboardTitle, "superset", props)
+	return models.NewRecord(entity), nil
 }
 
 // getDashboardsList gets a list of dashboards from superset server
@@ -157,7 +148,7 @@ func (e *Extractor) getDashboardsList(ctx context.Context) ([]Dashboard, error) 
 }
 
 // getChartsList gets a list of charts from superset server
-func (e *Extractor) getChartsList(ctx context.Context, id int) ([]*v1beta2.Chart, error) {
+func (e *Extractor) getChartsList(ctx context.Context, id int) ([]map[string]interface{}, error) {
 	const listChartsRoute = "/api/v1/dashboard/{id}/charts"
 	targetURL := e.urlb.New().Path(listChartsRoute).PathParamInt("id", int64(id)).URL()
 
@@ -168,17 +159,20 @@ func (e *Extractor) getChartsList(ctx context.Context, id int) ([]*v1beta2.Chart
 		return nil, fmt.Errorf("fetch chart details: %w", err)
 	}
 
-	var charts []*v1beta2.Chart
+	var charts []map[string]interface{}
 	for _, res := range data.Result {
-		charts = append(charts, &v1beta2.Chart{
-			Urn:          models.NewURN("superset", e.UrnScope, "chart", fmt.Sprintf("%d", res.SliceId)),
-			Name:         res.SliceName,
-			Source:       "superset",
-			Description:  res.Description,
-			Url:          res.SliceUrl,
-			DataSource:   res.Datasource,
-			DashboardUrn: "dashboard:" + strconv.Itoa(id),
-		})
+		chart := map[string]interface{}{
+			"urn":           models.NewURN("superset", e.UrnScope, "chart", fmt.Sprintf("%d", res.SliceId)),
+			"name":          res.SliceName,
+			"source":        "superset",
+			"url":           res.SliceUrl,
+			"data_source":   res.Datasource,
+			"dashboard_urn": "dashboard:" + strconv.Itoa(id),
+		}
+		if res.Description != "" {
+			chart["description"] = res.Description
+		}
+		charts = append(charts, chart)
 	}
 	return charts, nil
 }

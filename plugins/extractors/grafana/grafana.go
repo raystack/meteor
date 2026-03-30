@@ -7,13 +7,10 @@ import (
 	"net/http"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -99,64 +96,66 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		if e.excludedDashboards[dashboardDetail.Dashboard.UID] {
 			continue
 		}
-		dashboard, err := e.grafanaDashboardToMeteorDashboard(dashboardDetail)
-		if err != nil {
-			return fmt.Errorf("build Any struct: %w", err)
-		}
-		emit(models.NewRecord(dashboard))
+		record := e.grafanaDashboardToRecord(dashboardDetail)
+		emit(record)
 	}
 
 	return nil
 }
 
-// grafanaDashboardToMeteorDashboard converts a grafana dashboard to a meteor dashboard
-func (e *Extractor) grafanaDashboardToMeteorDashboard(dashboard DashboardDetail) (*v1beta2.Asset, error) {
-	charts := make([]*v1beta2.Chart, len(dashboard.Dashboard.Panels))
-	for i, panel := range dashboard.Dashboard.Panels {
+// grafanaDashboardToRecord converts a grafana dashboard to a meteor Record
+func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.Record {
+	var charts []map[string]interface{}
+	for _, panel := range dashboard.Dashboard.Panels {
 		// skip excluded panel ids
 		panelUID := fmt.Sprintf("%s.%d", dashboard.Dashboard.UID, panel.ID)
 		if e.excludedPanels[panelUID] {
 			continue
 		}
-		c := e.grafanaPanelToMeteorChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
-		charts[i] = &c
+		c := e.grafanaPanelToChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
+		charts = append(charts, c)
 	}
-	data, err := anypb.New(&v1beta2.Dashboard{
-		Charts:     charts,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return nil, err
+
+	urn := models.NewURN("grafana", e.UrnScope, "dashboard", dashboard.Dashboard.UID)
+	props := map[string]interface{}{
+		"charts": charts,
 	}
-	return &v1beta2.Asset{
-		Urn:         models.NewURN("grafana", e.UrnScope, "dashboard", dashboard.Dashboard.UID),
-		Name:        dashboard.Meta.Slug,
-		Type:        "dashboard",
-		Service:     "grafana",
-		Url:         dashboard.Meta.URL,
-		Description: dashboard.Dashboard.Description,
-		Data:        data,
-	}, nil
+	if dashboard.Meta.URL != "" {
+		props["url"] = dashboard.Meta.URL
+	}
+	if dashboard.Dashboard.Description != "" {
+		props["description"] = dashboard.Dashboard.Description
+	}
+
+	entity := models.NewEntity(urn, "dashboard", dashboard.Meta.Slug, "grafana", props)
+	return models.NewRecord(entity)
 }
 
-// grafanaPanelToMeteorChart converts a grafana panel to a meteor chart
-func (e *Extractor) grafanaPanelToMeteorChart(panel Panel, dashboardUID, metaURL string) v1beta2.Chart {
+// grafanaPanelToChart converts a grafana panel to a chart map
+func (e *Extractor) grafanaPanelToChart(panel Panel, dashboardUID, metaURL string) map[string]interface{} {
 	var rawQuery string
 	if len(panel.Targets) > 0 {
 		rawQuery = panel.Targets[0].RawSQL
 	}
-	return v1beta2.Chart{
-		Urn:             models.NewURN("grafana", e.UrnScope, "panel", fmt.Sprintf("%s.%d", dashboardUID, panel.ID)),
-		Name:            panel.Title,
-		Type:            panel.Type,
-		Source:          "grafana",
-		Description:     panel.Description,
-		DataSource:      panel.DataSource,
-		RawQuery:        rawQuery,
-		Url:             fmt.Sprintf("%s?viewPanel=%d", metaURL, panel.ID),
-		DashboardUrn:    fmt.Sprintf("grafana.%s", dashboardUID),
-		DashboardSource: "grafana",
+	chart := map[string]interface{}{
+		"urn":              models.NewURN("grafana", e.UrnScope, "panel", fmt.Sprintf("%s.%d", dashboardUID, panel.ID)),
+		"name":             panel.Title,
+		"type":             panel.Type,
+		"source":           "grafana",
+		"url":              fmt.Sprintf("%s?viewPanel=%d", metaURL, panel.ID),
+		"dashboard_urn":    fmt.Sprintf("grafana.%s", dashboardUID),
+		"dashboard_source": "grafana",
 	}
+	if panel.Description != "" {
+		chart["description"] = panel.Description
+	}
+	if panel.DataSource != "" {
+		chart["data_source"] = panel.DataSource
+	}
+	if rawQuery != "" {
+		chart["raw_query"] = rawQuery
+	}
+	return chart
 }
 
 // init registers the extractor to catalog

@@ -12,7 +12,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/go-playground/validator/v10"
-	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -97,13 +96,9 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 		return fmt.Errorf("application_yaml extract: validate: %w", err)
 	}
 
-	// Build an asset from the Application with lineage and emit
-	asset, err := buildAsset(e.UrnScope, svc)
-	if err != nil {
-		return fmt.Errorf("application_yaml extract: build asset: %w", err)
-	}
-
-	emit(models.NewRecord(asset))
+	// Build a record from the Application with lineage and emit
+	record := buildRecord(e.UrnScope, svc)
+	emit(record)
 
 	return nil
 }

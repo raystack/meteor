@@ -7,113 +7,42 @@ import (
 	"testing"
 
 	"github.com/d5/tengo/v2"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
-	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
-	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewAsset(t *testing.T) {
 	cases := []struct {
-		typ      string
-		expected *v1beta2.Asset
+		typ string
 	}{
-		{
-			typ: "bucket",
-			expected: &v1beta2.Asset{
-				Type: "bucket",
-				Data: testutils.BuildAny(t, &v1beta2.Bucket{}),
-			},
-		},
-		{
-			typ: "dashboard",
-			expected: &v1beta2.Asset{
-				Type: "dashboard",
-				Data: testutils.BuildAny(t, &v1beta2.Dashboard{}),
-			},
-		},
-		{
-			typ: "experiment",
-			expected: &v1beta2.Asset{
-				Type: "experiment",
-				Data: testutils.BuildAny(t, &v1beta2.Experiment{}),
-			},
-		},
-		{
-			typ: "feature_table",
-			expected: &v1beta2.Asset{
-				Type: "feature_table",
-				Data: testutils.BuildAny(t, &v1beta2.FeatureTable{}),
-			},
-		},
-		{
-			typ: "group",
-			expected: &v1beta2.Asset{
-				Type: "group",
-				Data: testutils.BuildAny(t, &v1beta2.Group{}),
-			},
-		},
-		{
-			typ: "job",
-			expected: &v1beta2.Asset{
-				Type: "job",
-				Data: testutils.BuildAny(t, &v1beta2.Job{}),
-			},
-		},
-		{
-			typ: "metric",
-			expected: &v1beta2.Asset{
-				Type: "metric",
-				Data: testutils.BuildAny(t, &v1beta2.Metric{}),
-			},
-		},
-		{
-			typ: "model",
-			expected: &v1beta2.Asset{
-				Type: "model",
-				Data: testutils.BuildAny(t, &v1beta2.Model{}),
-			},
-		},
-		{
-			typ: "application",
-			expected: &v1beta2.Asset{
-				Type: "application",
-				Data: testutils.BuildAny(t, &v1beta2.Application{}),
-			},
-		},
-		{
-			typ: "table",
-			expected: &v1beta2.Asset{
-				Type: "table",
-				Data: testutils.BuildAny(t, &v1beta2.Table{}),
-			},
-		},
-		{
-			typ: "topic",
-			expected: &v1beta2.Asset{
-				Type: "topic",
-				Data: testutils.BuildAny(t, &v1beta2.Topic{}),
-			},
-		},
-		{
-			typ: "user",
-			expected: &v1beta2.Asset{
-				Type: "user",
-				Data: testutils.BuildAny(t, &v1beta2.User{}),
-			},
-		},
+		{typ: "bucket"},
+		{typ: "dashboard"},
+		{typ: "experiment"},
+		{typ: "feature_table"},
+		{typ: "group"},
+		{typ: "job"},
+		{typ: "metric"},
+		{typ: "model"},
+		{typ: "application"},
+		{typ: "table"},
+		{typ: "topic"},
+		{typ: "user"},
 	}
 	for _, tc := range cases {
-		typeURLs := knownTypeURLs()
+		knownTypes := knownEntityTypes()
 		t.Run(tc.typ, func(t *testing.T) {
-			obj, err := newAsset(typeURLs, tc.typ)
-			assert.NoError(t, err)
+			obj, err := newAsset(knownTypes, tc.typ)
+			require.NoError(t, err)
 
-			var ast *v1beta2.Asset
-			err = structmap.AsStruct(tengo.ToInterface(obj), &ast)
-			assert.NoError(t, err)
+			m, ok := obj.(*tengo.Map)
+			require.True(t, ok, "expected *tengo.Map")
 
-			testutils.AssertEqualProto(t, tc.expected, ast)
+			typObj, ok := m.Value["type"]
+			require.True(t, ok, "expected 'type' key in map")
+
+			typStr, ok := typObj.(*tengo.String)
+			require.True(t, ok, "expected type to be *tengo.String")
+			assert.Equal(t, tc.typ, typStr.Value)
 		})
 	}
 }

@@ -5,10 +5,10 @@ import (
 	_ "embed"
 
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -59,20 +59,23 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) (err error)
 
 // Process processes the data
 func (p *Processor) Process(ctx context.Context, src models.Record) (dst models.Record, err error) {
-	result, err := p.process(src)
-	if err != nil {
-		return src, err
+	entity := src.Entity()
+
+	// Get existing labels from properties, or create new map
+	props := entity.GetProperties()
+	if props == nil {
+		props = &structpb.Struct{Fields: make(map[string]*structpb.Value)}
+		entity.Properties = props
 	}
 
-	return models.NewRecord(result), nil
-}
-
-func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
-	asset := record.Data()
-
-	labels := asset.Labels
-	if labels == nil {
-		labels = make(map[string]string)
+	// Get existing labels map from properties
+	labels := make(map[string]interface{})
+	if labelsVal, ok := props.GetFields()["labels"]; ok {
+		if labelsStruct := labelsVal.GetStructValue(); labelsStruct != nil {
+			for k, v := range labelsStruct.GetFields() {
+				labels[k] = v.GetStringValue()
+			}
+		}
 	}
 
 	// update labels using value from config
@@ -80,9 +83,14 @@ func (p *Processor) process(record models.Record) (*v1beta2.Asset, error) {
 		labels[key] = value
 	}
 
-	asset.Labels = labels
+	// Set labels back into properties
+	labelsStruct, err := structpb.NewStruct(labels)
+	if err != nil {
+		return src, err
+	}
+	props.Fields["labels"] = structpb.NewStructValue(labelsStruct)
 
-	return asset, nil
+	return models.NewRecord(entity, src.Edges()...), nil
 }
 
 func init() {

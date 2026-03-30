@@ -8,14 +8,11 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -131,32 +128,23 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("get columns: %w", err)
 	}
-	table, err := anypb.New(&v1beta2.Table{
-		Columns:    columns,
-		Attributes: &structpb.Struct{},
-	})
-	if err != nil {
-		return fmt.Errorf("create Any struct: %w", err)
-	}
 	// push table to channel
-	e.emit(models.NewRecord(&v1beta2.Asset{
-		Urn:     models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		Name:    tableName,
-		Type:    "table",
-		Service: "mssql",
-		Data:    table,
-	}))
+	e.emit(models.NewRecord(models.NewEntity(
+		models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
+		"table", tableName, "mssql",
+		map[string]interface{}{"columns": columns},
+	)))
 
 	return nil
 }
 
 // getColumns extract columns from the given table
-func (e *Extractor) getColumns(ctx context.Context, database, tableName string) ([]*v1beta2.Column, error) {
+func (e *Extractor) getColumns(ctx context.Context, database, tableName string) ([]interface{}, error) {
 	//nolint:gosec
 	query := fmt.Sprintf(
-		`SELECT COLUMN_NAME, DATA_TYPE, 
-		IS_NULLABLE, coalesce(CHARACTER_MAXIMUM_LENGTH,0) 
-		FROM %s.information_schema.columns 
+		`SELECT COLUMN_NAME, DATA_TYPE,
+		IS_NULLABLE, coalesce(CHARACTER_MAXIMUM_LENGTH,0)
+		FROM %s.information_schema.columns
 		WHERE TABLE_NAME = ?
 		ORDER BY COLUMN_NAME ASC`, database)
 	rows, err := e.db.QueryContext(ctx, query, tableName)
@@ -165,7 +153,7 @@ func (e *Extractor) getColumns(ctx context.Context, database, tableName string) 
 	}
 	defer rows.Close()
 
-	var columns []*v1beta2.Column
+	var columns []interface{}
 	for rows.Next() {
 		var fieldName, dataType, isNullableString string
 		var length int
@@ -173,12 +161,15 @@ func (e *Extractor) getColumns(ctx context.Context, database, tableName string) 
 			e.logger.Error("failed to scan fields", "error", err)
 			continue
 		}
-		columns = append(columns, &v1beta2.Column{
-			Name:       fieldName,
-			DataType:   dataType,
-			IsNullable: e.isNullable(isNullableString),
-			Length:     int64(length),
-		})
+		col := map[string]interface{}{
+			"name":        fieldName,
+			"data_type":   dataType,
+			"is_nullable": e.isNullable(isNullableString),
+		}
+		if length != 0 {
+			col["length"] = int64(length)
+		}
+		columns = append(columns, col)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate result rows: %w", err)

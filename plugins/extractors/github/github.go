@@ -5,12 +5,9 @@ import (
 	_ "embed" // used to print the embedded assets
 
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/google/go-github/v37/github"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -84,23 +81,20 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to fetch user", "error", err)
 			continue
 		}
-		u, err := anypb.New(&v1beta2.User{
-			Email:      usr.GetEmail(),
-			Username:   usr.GetLogin(),
-			FullName:   usr.GetName(),
-			Status:     "active",
-			Attributes: &structpb.Struct{},
-		})
-		if err != nil {
-			e.logger.Error("error creating Any struct: %w", err)
-			continue
+		props := map[string]interface{}{
+			"email":    usr.GetEmail(),
+			"username": usr.GetLogin(),
+			"full_name": usr.GetName(),
+			"status":   "active",
 		}
-		emit(models.NewRecord(&v1beta2.Asset{
-			Urn:     models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),
-			Service: "github",
-			Type:    "user",
-			Data:    u,
-		}))
+		entity := models.NewEntity(
+			models.NewURN("github", e.UrnScope, "user", usr.GetNodeID()),
+			"user",
+			"",
+			"github",
+			props,
+		)
+		emit(models.NewRecord(entity))
 	}
 
 	return nil

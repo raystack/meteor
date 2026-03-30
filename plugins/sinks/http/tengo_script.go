@@ -7,14 +7,14 @@ import (
 	"fmt"
 
 	"github.com/d5/tengo/v2"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins/internal/tengoutil"
 	"github.com/raystack/meteor/plugins/internal/tengoutil/structmap"
 )
 
 var errUserExit = errors.New("user exit")
 
-func (s *Sink) executeScript(ctx context.Context, url string, asset *v1beta2.Asset) error {
+func (s *Sink) executeScript(ctx context.Context, url string, entity *meteorv1beta1.Entity) error {
 	scriptCfg := s.config.Script
 	script, err := tengoutil.NewSecureScript(
 		([]byte)(scriptCfg.Source), s.scriptGlobals(ctx, url),
@@ -26,9 +26,9 @@ func (s *Sink) executeScript(ctx context.Context, url string, asset *v1beta2.Ass
 	if err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
-	assetMap, err := structmap.AsMap(asset)
+	assetMap, err := structmap.AsMap(entity)
 	if err != nil {
-		return fmt.Errorf("convert asset to map: %w", err)
+		return fmt.Errorf("convert entity to map: %w", err)
 	}
 	if err := c.Set("asset", assetMap); err != nil {
 		return fmt.Errorf("set asset into vm: %w", err)

@@ -7,13 +7,10 @@ import (
 
 	sh "github.com/raystack/frontier/proto/v1beta1"
 	"github.com/raystack/meteor/models"
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/frontier/client"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -82,31 +79,33 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		if grpErr != nil {
 			return fmt.Errorf("error fetching user groups: %w", err)
 		}
-		data, err := anypb.New(&v1beta2.User{
-			Email:    user.GetEmail(),
-			Username: user.GetId(),
-			FullName: user.GetName(),
-			Status:   "active",
-			Memberships: []*v1beta2.Membership{
+
+		props := map[string]interface{}{
+			"email":    user.GetEmail(),
+			"username": user.GetId(),
+			"full_name": user.GetName(),
+			"status":   "active",
+			"memberships": []map[string]interface{}{
 				{
-					GroupUrn: fmt.Sprintf("%s:%s", grp.Group.GetName(), grp.Group.GetId()),
+					"group_urn": fmt.Sprintf("%s:%s", grp.Group.GetName(), grp.Group.GetId()),
 				},
 			},
-			Attributes: &structpb.Struct{},
-			CreateTime: user.GetCreatedAt(),
-			UpdateTime: user.GetUpdatedAt(),
-		})
-		if err != nil {
-			err = fmt.Errorf("error creating Any struct: %w", err)
-			return err
 		}
-		emit(models.NewRecord(&v1beta2.Asset{
-			Urn:     models.NewURN(service, e.UrnScope, "user", user.GetId()),
-			Name:    user.GetName(),
-			Service: service,
-			Type:    "user",
-			Data:    data,
-		}))
+		if user.GetCreatedAt() != nil {
+			props["create_time"] = user.GetCreatedAt().AsTime().Format("2006-01-02T15:04:05Z")
+		}
+		if user.GetUpdatedAt() != nil {
+			props["update_time"] = user.GetUpdatedAt().AsTime().Format("2006-01-02T15:04:05Z")
+		}
+
+		entity := models.NewEntity(
+			models.NewURN(service, e.UrnScope, "user", user.GetId()),
+			"user",
+			user.GetName(),
+			service,
+			props,
+		)
+		emit(models.NewRecord(entity))
 	}
 
 	return nil

@@ -7,16 +7,14 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
-	v1beta2 "github.com/raystack/meteor/models/raystack/assets/v1beta2"
+	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/test/mocks"
 	testutils "github.com/raystack/meteor/test/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -55,19 +53,14 @@ func TestInit(t *testing.T) {
 func TestExtract(t *testing.T) {
 	extr := New(testutils.Logger)
 
-	ts := func(s string) *timestamppb.Timestamp {
-		ts, err := time.Parse(time.RFC3339, s)
-		require.NoError(t, err)
-		return timestamppb.New(ts)
-	}
-
 	os.Clearenv()
 	cases := []struct {
-		name     string
-		env      map[string]string
-		cfg      plugins.Config
-		expected []*v1beta2.Asset
-		errStr   string
+		name           string
+		env            map[string]string
+		cfg            plugins.Config
+		expectedEnts   []*meteorv1beta1.Entity
+		expectedEdges  []*meteorv1beta1.Edge
+		errStr         string
 	}{
 		{
 			name: "InvalidTemplate",
@@ -137,14 +130,17 @@ func TestExtract(t *testing.T) {
 					"file": "testdata/application.onlyrequired.yaml",
 				},
 			},
-			expected: []*v1beta2.Asset{{
-				Urn:     "urn:application_yaml:test-application:application:test",
-				Name:    "test",
-				Type:    "application",
-				Service: "application_yaml",
-				Data:    testutils.BuildAny(t, &v1beta2.Application{Id: "test-id", Attributes: &structpb.Struct{}}),
-				Lineage: &v1beta2.Lineage{},
-			}},
+			expectedEnts: []*meteorv1beta1.Entity{
+				models.NewEntity(
+					"urn:application_yaml:test-application:application:test",
+					"application",
+					"test",
+					"application_yaml",
+					map[string]interface{}{
+						"id": "test-id",
+					},
+				),
+			},
 		},
 		{
 			name: "Detailed",
@@ -154,36 +150,46 @@ func TestExtract(t *testing.T) {
 					"file": "testdata/application.detailed.yaml",
 				},
 			},
-			expected: []*v1beta2.Asset{{
-				Urn:         "urn:application_yaml:test-application:application:test",
-				Name:        "test",
-				Service:     "application_yaml",
-				Type:        "application",
-				Url:         "http://company.com/myteam/test",
-				Description: "My incredible project",
-				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Id:         "test-id",
-					Version:    "c23sdf6",
-					Attributes: &structpb.Struct{},
-					CreateTime: ts("2006-01-02T15:04:05Z"),
-					UpdateTime: ts("2006-01-02T15:04:05Z"),
-				}),
-				Owners: []*v1beta2.Owner{{
-					Urn:   "123",
-					Name:  "myteam",
-					Email: "myteam@company.com",
-				}},
-				Lineage: &v1beta2.Lineage{
-					Upstreams: []*v1beta2.Resource{
-						{Urn: "urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand"},
-						{Urn: "urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand"},
+			expectedEnts: func() []*meteorv1beta1.Entity {
+				e := models.NewEntity(
+					"urn:application_yaml:test-application:application:test",
+					"application",
+					"test",
+					"application_yaml",
+					map[string]interface{}{
+						"id":          "test-id",
+						"version":     "c23sdf6",
+						"url":         "http://company.com/myteam/test",
+						"create_time": "2006-01-02T15:04:05Z",
+						"update_time": "2006-01-02T15:04:05Z",
+						"labels":      map[string]interface{}{"x": "y"},
 					},
-					Downstreams: []*v1beta2.Resource{
-						{Urn: "urn:kafka:1-my-kafka.company.com,2-my-kafka.company.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es"},
-					},
-				},
-				Labels: map[string]string{"x": "y"},
-			}},
+				)
+				e.Description = "My incredible project"
+				return []*meteorv1beta1.Entity{e}
+			}(),
+			expectedEdges: []*meteorv1beta1.Edge{
+				models.OwnerEdge(
+					"urn:application_yaml:test-application:application:test",
+					"urn:user:myteam@company.com",
+					"application_yaml",
+				),
+				models.LineageEdge(
+					"urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand",
+					"urn:application_yaml:test-application:application:test",
+					"application_yaml",
+				),
+				models.LineageEdge(
+					"urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand",
+					"urn:application_yaml:test-application:application:test",
+					"application_yaml",
+				),
+				models.LineageEdge(
+					"urn:application_yaml:test-application:application:test",
+					"urn:kafka:1-my-kafka.company.com,2-my-kafka.company.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es",
+					"application_yaml",
+				),
+			},
 		},
 		{
 			name: "WithEnvVars",
@@ -199,25 +205,28 @@ func TestExtract(t *testing.T) {
 					"file": "testdata/application.envvars.yaml",
 				},
 			},
-			expected: []*v1beta2.Asset{{
-				Urn:         "urn:application_yaml:test-application:application:test",
-				Name:        "test",
-				Service:     "application_yaml",
-				Type:        "application",
-				Url:         "http://company.com/myteam/test",
-				Description: "My incredible project",
-				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Id:         "test-id",
-					Attributes: &structpb.Struct{},
-					Version:    "c23sdf6",
-				}),
-				Owners: []*v1beta2.Owner{{
-					Urn:   "123",
-					Name:  "myteam",
-					Email: "myteam@company.com",
-				}},
-				Lineage: &v1beta2.Lineage{},
-			}},
+			expectedEnts: func() []*meteorv1beta1.Entity {
+				e := models.NewEntity(
+					"urn:application_yaml:test-application:application:test",
+					"application",
+					"test",
+					"application_yaml",
+					map[string]interface{}{
+						"id":      "test-id",
+						"version": "c23sdf6",
+						"url":     "http://company.com/myteam/test",
+					},
+				)
+				e.Description = "My incredible project"
+				return []*meteorv1beta1.Entity{e}
+			}(),
+			expectedEdges: []*meteorv1beta1.Edge{
+				models.OwnerEdge(
+					"urn:application_yaml:test-application:application:test",
+					"urn:user:myteam@company.com",
+					"application_yaml",
+				),
+			},
 		},
 		{
 			name: "WithEnvVarsPrefix",
@@ -234,25 +243,28 @@ func TestExtract(t *testing.T) {
 					"env_prefix": "GCI",
 				},
 			},
-			expected: []*v1beta2.Asset{{
-				Urn:         "urn:application_yaml:test-application:application:test",
-				Name:        "test",
-				Service:     "application_yaml",
-				Type:        "application",
-				Url:         "http://company.com/myteam/test",
-				Description: "My incredible project",
-				Data: testutils.BuildAny(t, &v1beta2.Application{
-					Id:         "test-id",
-					Attributes: &structpb.Struct{},
-					Version:    "c23sdf6",
-				}),
-				Owners: []*v1beta2.Owner{{
-					Urn:   "123",
-					Name:  "myteam",
-					Email: "myteam@company.com",
-				}},
-				Lineage: &v1beta2.Lineage{},
-			}},
+			expectedEnts: func() []*meteorv1beta1.Entity {
+				e := models.NewEntity(
+					"urn:application_yaml:test-application:application:test",
+					"application",
+					"test",
+					"application_yaml",
+					map[string]interface{}{
+						"id":      "test-id",
+						"version": "c23sdf6",
+						"url":     "http://company.com/myteam/test",
+					},
+				)
+				e.Description = "My incredible project"
+				return []*meteorv1beta1.Entity{e}
+			}(),
+			expectedEdges: []*meteorv1beta1.Edge{
+				models.OwnerEdge(
+					"urn:application_yaml:test-application:application:test",
+					"urn:user:myteam@company.com",
+					"application_yaml",
+				),
+			},
 		},
 	}
 	for _, tc := range cases {
@@ -272,7 +284,10 @@ func TestExtract(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			testutils.AssertEqualProtos(t, tc.expected, emitter.GetAllData())
+			testutils.AssertEqualProtos(t, tc.expectedEnts, emitter.GetAllEntities())
+			if tc.expectedEdges != nil {
+				testutils.AssertEqualProtos(t, tc.expectedEdges, emitter.GetAllEdges())
+			}
 		})
 	}
 }
