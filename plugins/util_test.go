@@ -153,11 +153,3 @@ func TestKafkaServersToScope(t *testing.T) {
 		})
 	}
 }
-
-func TestCaraMLStoreURN(t *testing.T) {
-	assert.Equal(
-		t,
-		"urn:caramlstore:my_scope:feature_table:my_project.my_ft",
-		plugins.CaraMLStoreURN("my_scope", "my_project", "my_ft"),
-	)
-}

@@ -138,10 +138,6 @@ func KafkaServersToScope(servers string) string {
 	return host
 }
 
-func CaraMLStoreURN(scope, project, featureTable string) string {
-	return models.NewURN("caramlstore", scope, "feature_table", project+"."+featureTable)
-}
-
 // DrainBody drains and closes the response body to avoid the following
 // gotcha:
 // http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/index.html#close_http_resp_body

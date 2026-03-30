@@ -36,7 +36,6 @@ require (
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pkg/errors v0.9.1
 	github.com/prestodb/presto-go-client v1.0.0
-	github.com/raystack/frontier v0.7.2
 	github.com/raystack/optimus v0.7.2-0.20230725205201-5874457c7bbe
 	github.com/raystack/salt v0.7.0
 	github.com/rs/zerolog v1.34.0

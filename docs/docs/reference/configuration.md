@@ -102,7 +102,6 @@ Each sink has its own configuration. Common patterns:
 | `gcs` | `project_id`, `url`, `object_prefix`, `service_account_base64` |
 | `file` | `path`, `format` |
 | `stencil` | `host`, `namespace_id`, `schema_id`, `format` |
-| `frontier` | `host`, `headers` |
 
 For complete configuration details, refer to the [sinks reference](sinks.md).
 
