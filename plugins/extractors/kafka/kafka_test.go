@@ -179,19 +179,13 @@ func TestExtract(t *testing.T) {
 
 		expected := []*meteorv1beta1.Entity{
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-1", "topic", "meteor-test-topic-1", "kafka", map[string]interface{}{
-				"profile": map[string]interface{}{
-					"number_of_partitions": float64(1),
-				},
+				"number_of_partitions": float64(1),
 			}),
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-2", "topic", "meteor-test-topic-2", "kafka", map[string]interface{}{
-				"profile": map[string]interface{}{
-					"number_of_partitions": float64(1),
-				},
+				"number_of_partitions": float64(1),
 			}),
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-3", "topic", "meteor-test-topic-3", "kafka", map[string]interface{}{
-				"profile": map[string]interface{}{
-					"number_of_partitions": float64(1),
-				},
+				"number_of_partitions": float64(1),
 			}),
 		}
 
