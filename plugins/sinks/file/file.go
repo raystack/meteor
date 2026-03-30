@@ -11,7 +11,6 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/models"
-	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -82,28 +81,23 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) error {
 }
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
-	entities := make([]*meteorv1beta1.Entity, 0, len(batch))
-	for _, record := range batch {
-		entities = append(entities, record.Entity())
-	}
-
 	if s.format == "ndjson" {
-		return s.ndjsonOut(entities)
+		return s.ndjsonOut(batch)
 	}
 
-	return s.yamlOut(entities)
+	return s.yamlOut(batch)
 }
 
 func (s *Sink) Close() (err error) {
 	return s.File.Close()
 }
 
-func (s *Sink) ndjsonOut(entities []*meteorv1beta1.Entity) error {
+func (s *Sink) ndjsonOut(batch []models.Record) error {
 	var result bytes.Buffer
-	for _, entity := range entities {
-		jsonBytes, err := models.EntityToJSON(entity)
+	for _, record := range batch {
+		jsonBytes, err := models.RecordToJSON(record)
 		if err != nil {
-			return fmt.Errorf("error marshaling entity (%s): %w", entity.GetUrn(), err)
+			return fmt.Errorf("error marshaling record (%s): %w", record.Entity().GetUrn(), err)
 		}
 
 		result.Write(jsonBytes)
@@ -117,11 +111,11 @@ func (s *Sink) ndjsonOut(entities []*meteorv1beta1.Entity) error {
 	return nil
 }
 
-func (s *Sink) yamlOut(entities []*meteorv1beta1.Entity) error {
-	// Convert entities to JSON-friendly maps for yaml serialization
+func (s *Sink) yamlOut(batch []models.Record) error {
+	// Convert records to JSON-friendly maps for yaml serialization
 	var data []map[string]interface{}
-	for _, entity := range entities {
-		jsonBytes, err := models.EntityToJSON(entity)
+	for _, record := range batch {
+		jsonBytes, err := models.RecordToJSON(record)
 		if err != nil {
 			return err
 		}

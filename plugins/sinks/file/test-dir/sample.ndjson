@@ -1,2 +1,2 @@
-{"urn":"elasticsearch.index1", "type":"table", "name":"index1", "properties":{"columns":[{"data_type":"text", "name":"SomeStr"}], "profile":{"total_rows":1}}}
-{"urn":"elasticsearch.index2", "type":"table", "name":"index2", "properties":{"columns":[{"data_type":"text", "name":"SomeStr"}], "profile":{"total_rows":1}}}
+{"entity":{"urn":"elasticsearch.index1","type":"table","name":"index1","properties":{"columns":[{"data_type":"text","name":"SomeStr"}],"profile":{"total_rows":1}}}}
+{"entity":{"urn":"elasticsearch.index2","type":"table","name":"index2","properties":{"columns":[{"data_type":"text","name":"SomeStr"}],"profile":{"total_rows":1}}}}

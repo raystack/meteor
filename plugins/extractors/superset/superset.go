@@ -121,7 +121,7 @@ func (e *Extractor) buildDashboard(ctx context.Context, id int) (models.Record, 
 		return models.Record{}, fmt.Errorf("fetch charts: %w", err)
 	}
 
-	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.ID))
+	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", id))
 	props := map[string]interface{}{
 		"charts": charts,
 	}

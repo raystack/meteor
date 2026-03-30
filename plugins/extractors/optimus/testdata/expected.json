@@ -4,24 +4,24 @@
         "description": "sample description for job-A",
         "name": "job-A",
         "properties": {
-            "dependsOnPast": false,
+            "depends_on_past": false,
             "interval": "0 19 * * *",
             "namespace": "namespace-A",
             "owner": "john_doe@example.com",
             "project": "project-A",
             "project_id": "project-A",
             "sql": "SELECT * FROM projectA.datasetB.tableC",
-            "startDate": "2019-09-16",
+            "start_date": "2019-09-16",
             "task": {
                 "description": "task's description",
                 "image": "task's image",
                 "name": "task-A"
             },
-            "taskName": "bq2bq",
+            "task_name": "bq2bq",
             "version": 1,
-            "windowOffset": "24h",
-            "windowSize": "48h",
-            "windowTruncateTo": "d"
+            "window_offset": "24h",
+            "window_size": "48h",
+            "window_truncate_to": "d"
         },
         "source": "optimus",
         "type": "job",
@@ -33,24 +33,24 @@
         "description": "sample description for job-B",
         "name": "job-B",
         "properties": {
-            "dependsOnPast": false,
+            "depends_on_past": false,
             "interval": "0 19 1 * *",
             "namespace": "namespace-A",
             "owner": "jane_doe@example.com",
             "project": "project-A",
             "project_id": "project-A",
             "sql": "SELECT * FROM projectZ.datasetY.tableX",
-            "startDate": "2021-01-01",
+            "start_date": "2021-01-01",
             "task": {
                 "description": "task's description B",
                 "image": "task's image B",
                 "name": "task-B"
             },
-            "taskName": "bq2bq",
+            "task_name": "bq2bq",
             "version": 1,
-            "windowOffset": "-720h",
-            "windowSize": "720h",
-            "windowTruncateTo": "M"
+            "window_offset": "-720h",
+            "window_size": "720h",
+            "window_truncate_to": "M"
         },
         "source": "optimus",
         "type": "job",
@@ -62,24 +62,24 @@
         "description": "sample description for job-C",
         "name": "job-C",
         "properties": {
-            "dependsOnPast": false,
+            "depends_on_past": false,
             "interval": "0 19 1 * *",
             "namespace": "namespace-A",
             "owner": "jane_doe@example.com",
             "project": "project-A",
             "project_id": "project-A",
             "sql": "SELECT * FROM projectZ.datasetY.tableX",
-            "startDate": "2021-01-01",
+            "start_date": "2021-01-01",
             "task": {
                 "description": "task's description C",
                 "image": "task's image C",
                 "name": "task-C"
             },
-            "taskName": "gcs2bq",
+            "task_name": "gcs2bq",
             "version": 1,
-            "windowOffset": "-720h",
-            "windowSize": "720h",
-            "windowTruncateTo": "M"
+            "window_offset": "-720h",
+            "window_size": "720h",
+            "window_truncate_to": "M"
         },
         "source": "optimus",
         "type": "job",
@@ -91,24 +91,24 @@
         "description": "sample description for jobMaxCompute-B",
         "name": "jobMaxCompute-B",
         "properties": {
-            "dependsOnPast": false,
+            "depends_on_past": false,
             "interval": "0 19 1 * *",
             "namespace": "namespaceMaxCompute-A",
             "owner": "jane_doe@example.com",
             "project": "projectMaxCompute-A",
             "project_id": "projectMaxCompute-A",
             "sql": "SELECT * FROM projectZ.schemaY.tableX",
-            "startDate": "2021-01-01",
+            "start_date": "2021-01-01",
             "task": {
                 "description": "task's description MC-B",
                 "image": "task's image MC-B",
                 "name": "task-MC-B"
             },
-            "taskName": "mc2mc",
+            "task_name": "mc2mc",
             "version": 1,
-            "windowOffset": "-720h",
-            "windowSize": "720h",
-            "windowTruncateTo": "M"
+            "window_offset": "-720h",
+            "window_size": "720h",
+            "window_truncate_to": "M"
         },
         "source": "optimus",
         "type": "job",
@@ -120,23 +120,23 @@
         "description": "sample description for jobMaxCompute-C",
         "name": "jobMaxCompute-C",
         "properties": {
-            "dependsOnPast": false,
+            "depends_on_past": false,
             "interval": "0 19 1 * *",
             "namespace": "namespaceMaxCompute-A",
             "owner": "jane_doe@example.com",
             "project": "projectMaxCompute-A",
             "project_id": "projectMaxCompute-A",
-            "startDate": "2021-01-01",
+            "start_date": "2021-01-01",
             "task": {
                 "description": "task's description MC-C",
                 "image": "task's image MC-C",
                 "name": "task-MC-C"
             },
-            "taskName": "gcs2mc",
+            "task_name": "gcs2mc",
             "version": 1,
-            "windowOffset": "-720h",
-            "windowSize": "720h",
-            "windowTruncateTo": "M"
+            "window_offset": "-720h",
+            "window_size": "720h",
+            "window_truncate_to": "M"
         },
         "source": "optimus",
         "type": "job",

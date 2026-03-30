@@ -1,18 +1,20 @@
-- name: index1
-  properties:
-    columns:
-        - data_type: text
-          name: SomeStr
-    profile:
-        total_rows: 1
-  type: table
-  urn: elasticsearch.index1
-- name: index2
-  properties:
-    columns:
-        - data_type: text
-          name: SomeStr
-    profile:
-        total_rows: 1
-  type: table
-  urn: elasticsearch.index2
+- entity:
+    name: index1
+    properties:
+        columns:
+            - data_type: text
+              name: SomeStr
+        profile:
+            total_rows: 1
+    type: table
+    urn: elasticsearch.index1
+- entity:
+    name: index2
+    properties:
+        columns:
+            - data_type: text
+              name: SomeStr
+        profile:
+            total_rows: 1
+    type: table
+    urn: elasticsearch.index2

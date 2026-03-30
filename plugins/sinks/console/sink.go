@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/raystack/meteor/models"
-	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -45,25 +44,16 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
-		if err := s.process(record.Entity()); err != nil {
+		jsonBytes, err := models.RecordToJSON(record)
+		if err != nil {
 			return err
 		}
+		fmt.Println(string(jsonBytes))
 	}
 	return nil
 }
 
 func (s *Sink) Close() (err error) { return }
-
-func (s *Sink) process(entity *meteorv1beta1.Entity) error {
-	jsonBytes, err := models.EntityToJSON(entity)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(string(jsonBytes))
-
-	return nil
-}
 
 func init() {
 	if err := registry.Sinks.Register("console", func() plugins.Syncer {

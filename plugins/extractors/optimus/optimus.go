@@ -169,11 +169,11 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 		"namespace":        namespace,
 		"owner":            jobSpec.Owner,
 		"interval":         jobSpec.Interval,
-		"dependsOnPast":    jobSpec.DependsOnPast,
-		"taskName":         jobSpec.TaskName,
-		"windowSize":       jobSpec.WindowSize,
-		"windowOffset":     jobSpec.WindowOffset,
-		"windowTruncateTo": jobSpec.WindowTruncateTo,
+		"depends_on_past":    jobSpec.DependsOnPast,
+		"task_name":          jobSpec.TaskName,
+		"window_size":        jobSpec.WindowSize,
+		"window_offset":      jobSpec.WindowOffset,
+		"window_truncate_to": jobSpec.WindowTruncateTo,
 		"task": map[string]interface{}{
 			"name":        task.Name,
 			"description": task.Description,
@@ -181,10 +181,10 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 		},
 	}
 	if startDate := strOrNil(jobSpec.StartDate); startDate != nil {
-		props["startDate"] = startDate
+		props["start_date"] = startDate
 	}
 	if endDate := strOrNil(jobSpec.EndDate); endDate != nil {
-		props["endDate"] = endDate
+		props["end_date"] = endDate
 	}
 	if sql, ok := jobSpec.Assets["query.sql"]; ok && sql != "" {
 		props["sql"] = sql
