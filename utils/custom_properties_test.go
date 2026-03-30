@@ -9,6 +9,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+func newStruct(m map[string]interface{}) *structpb.Struct {
+	if m == nil {
+		return nil
+	}
+	s, _ := structpb.NewStruct(m)
+	return s
+}
+
 func TestGetAttributes(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -18,7 +26,7 @@ func TestGetAttributes(t *testing.T) {
 		{
 			name: "EntityWithProperties",
 			entity: &meteorv1beta1.Entity{
-				Properties: TryParseMapToProto(map[string]interface{}{
+				Properties: newStruct(map[string]interface{}{
 					"a": 1,
 					"b": "2",
 					"c": map[string]interface{}{
@@ -42,7 +50,7 @@ func TestGetAttributes(t *testing.T) {
 		{
 			name: "EntityWithNilProperties",
 			entity: &meteorv1beta1.Entity{
-				Properties: TryParseMapToProto(nil),
+				Properties: newStruct(nil),
 			},
 			expected: map[string]interface{}{},
 		},
@@ -73,22 +81,19 @@ func TestSetAttributes(t *testing.T) {
 				},
 			},
 			expected: &meteorv1beta1.Entity{
-				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					})
-					return s
-				}(),
+				Properties: newStruct(map[string]interface{}{
+					"a": 1,
+					"b": "2",
+					"c": map[string]interface{}{
+						"d": true,
+					},
+				}),
 			},
 		},
 		{
 			name: "EntityWithExistingProperties",
 			entity: &meteorv1beta1.Entity{
-				Properties: TryParseMapToProto(map[string]interface{}{
+				Properties: newStruct(map[string]interface{}{
 					"d": map[string]interface{}{
 						"e": true,
 					},
@@ -102,16 +107,13 @@ func TestSetAttributes(t *testing.T) {
 				},
 			},
 			expected: &meteorv1beta1.Entity{
-				Properties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]interface{}{
-						"a": 1,
-						"b": "2",
-						"c": map[string]interface{}{
-							"d": true,
-						},
-					})
-					return s
-				}(),
+				Properties: newStruct(map[string]interface{}{
+					"a": 1,
+					"b": "2",
+					"c": map[string]interface{}{
+						"d": true,
+					},
+				}),
 			},
 		},
 		{

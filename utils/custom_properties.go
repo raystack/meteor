@@ -25,20 +25,3 @@ func SetAttributes(entity *meteorv1beta1.Entity, customFields map[string]interfa
 	return entity, nil
 }
 
-// TryParseMapToProto parses given map to proto struct
-func TryParseMapToProto(src map[string]interface{}) *structpb.Struct {
-	res, err := parseMapToProto(src)
-	if err != nil {
-		panic(err)
-	}
-
-	return res
-}
-
-func parseMapToProto(src map[string]interface{}) (*structpb.Struct, error) {
-	if src == nil {
-		return nil, nil
-	}
-
-	return structpb.NewStruct(src)
-}
