@@ -80,6 +80,64 @@ func TestSink(t *testing.T) {
 		}
 		assert.Error(t, sinkInvalidPath(t, config))
 	})
+
+	t.Run("should sink empty batch without error", func(t *testing.T) {
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: validConfig})
+		assert.NoError(t, err)
+		err = fileSink.Sink(context.TODO(), []models.Record{})
+		assert.NoError(t, err)
+		assert.NoError(t, fileSink.Close())
+	})
+
+	t.Run("should sink records with edges in ndjson format", func(t *testing.T) {
+		config := map[string]any{
+			"path":   "./test-dir/edges.ndjson",
+			"format": "ndjson",
+		}
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
+		assert.NoError(t, err)
+
+		entity := &meteorv1beta1.Entity{
+			Urn:    "urn:bigquery:p:table:d.t1",
+			Name:   "t1",
+			Source: "bigquery",
+			Type:   "table",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "lineage", Source: "bigquery"},
+			{SourceUrn: "urn:bigquery:p:table:d.t1", TargetUrn: "urn:user:alice@co.com", Type: "owned_by", Source: "bigquery"},
+		}
+		record := models.NewRecord(entity, edges...)
+		err = fileSink.Sink(context.TODO(), []models.Record{record})
+		assert.NoError(t, err)
+		assert.NoError(t, fileSink.Close())
+	})
+
+	t.Run("should sink records with edges in yaml format", func(t *testing.T) {
+		config := map[string]any{
+			"path":   "./test-dir/edges.yaml",
+			"format": "yaml",
+		}
+		fileSink := f.New(testUtils.Logger)
+		err := fileSink.Init(context.TODO(), plugins.Config{RawConfig: config})
+		assert.NoError(t, err)
+
+		entity := &meteorv1beta1.Entity{
+			Urn:    "urn:bigquery:p:table:d.t1",
+			Name:   "t1",
+			Source: "bigquery",
+			Type:   "table",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "lineage", Source: "bigquery"},
+		}
+		record := models.NewRecord(entity, edges...)
+		err = fileSink.Sink(context.TODO(), []models.Record{record})
+		assert.NoError(t, err)
+		assert.NoError(t, fileSink.Close())
+	})
 }
 
 func sinkInvalidPath(t *testing.T, config map[string]any) error {

@@ -1,0 +1,10 @@
+- edges:
+    - source: bigquery
+      source_urn: urn:upstream
+      target_urn: urn:bigquery:p:table:d.t1
+      type: lineage
+  entity:
+    name: t1
+    source: bigquery
+    type: table
+    urn: urn:bigquery:p:table:d.t1
