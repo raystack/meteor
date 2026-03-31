@@ -88,3 +88,66 @@ func TestRecordToJSON(t *testing.T) {
 	assert.Contains(t, string(b), `"entity"`)
 	assert.Contains(t, string(b), `"edges"`)
 }
+
+func TestNewEntityWithNilProps(t *testing.T) {
+	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", nil)
+	assert.Equal(t, "urn:test:s:table:t1", entity.GetUrn())
+	assert.Equal(t, "table", entity.GetType())
+	assert.Nil(t, entity.GetProperties())
+}
+
+func TestNewEntityWithEmptyProps(t *testing.T) {
+	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{})
+	assert.Equal(t, "urn:test:s:table:t1", entity.GetUrn())
+	assert.Nil(t, entity.GetProperties())
+}
+
+func TestNewEntityWithNestedProps(t *testing.T) {
+	entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+		"labels": map[string]string{"env": "production", "team": "data"},
+		"tags":   []string{"important", "verified"},
+	})
+	assert.Equal(t, "urn:test:s:table:t1", entity.GetUrn())
+	props := entity.GetProperties()
+	require.NotNil(t, props)
+	labelsVal := props.GetFields()["labels"].GetStructValue()
+	require.NotNil(t, labelsVal)
+	assert.Equal(t, "production", labelsVal.GetFields()["env"].GetStringValue())
+	assert.Equal(t, "data", labelsVal.GetFields()["team"].GetStringValue())
+	tagsVal := props.GetFields()["tags"].GetListValue()
+	require.NotNil(t, tagsVal)
+	assert.Len(t, tagsVal.GetValues(), 2)
+	assert.Equal(t, "important", tagsVal.GetValues()[0].GetStringValue())
+}
+
+func TestRecordToJSONWithoutEdges(t *testing.T) {
+	entity := &meteorv1beta1.Entity{
+		Urn:  "urn:test:s:table:t1",
+		Name: "t1",
+	}
+	record := models.NewRecord(entity)
+
+	b, err := models.RecordToJSON(record)
+	require.NoError(t, err)
+	assert.Contains(t, string(b), `"entity"`)
+	assert.NotContains(t, string(b), `"edges"`)
+}
+
+func TestRecordToJSONWithMultipleEdges(t *testing.T) {
+	entity := &meteorv1beta1.Entity{
+		Urn:  "urn:test:s:table:t1",
+		Name: "t1",
+	}
+	lineage := models.LineageEdge("urn:a", "urn:b", "test")
+	owner := models.OwnerEdge("urn:test:s:table:t1", "urn:user:bob@co.com", "test")
+	record := models.NewRecord(entity, lineage, owner)
+
+	b, err := models.RecordToJSON(record)
+	require.NoError(t, err)
+	s := string(b)
+	assert.Contains(t, s, `"entity"`)
+	assert.Contains(t, s, `"edges"`)
+	assert.Contains(t, s, `"lineage"`)
+	assert.Contains(t, s, `"owned_by"`)
+	assert.Contains(t, s, `"urn:user:bob@co.com"`)
+}

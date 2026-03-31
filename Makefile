@@ -1,7 +1,7 @@
 NAME="github.com/raystack/meteor"
 VERSION=$(shell git describe --always --tags 2>/dev/null)
 COVERFILE="/tmp/app.coverprofile"
-PROTON_COMMIT := "ae895e033f71df187c62d7cf9431a2e259ddd423"
+PROTON_COMMIT := "f5514e23005e7480319a18ba905dfecaa17379f8"
 .PHONY: all build clean test
 
 all: build
@@ -36,7 +36,7 @@ test-coverage:
 generate-proto:
 	@echo " > cloning protobuf from raystack/proton"
 	@echo " > generating protobuf"
-	@buf generate --template buf.gen.yaml https://github.com/raystack/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --path raystack/assets/v1beta2
+	@buf generate --template buf.gen.yaml https://github.com/raystack/proton/archive/${PROTON_COMMIT}.zip#strip_components=1 --path raystack/meteor/v1beta1
 	@echo " > protobuf compilation finished"
 
 lint:

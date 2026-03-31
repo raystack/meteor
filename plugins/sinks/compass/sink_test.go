@@ -47,6 +47,21 @@ func TestSink(t *testing.T) {
 	upsertEntityURL := fmt.Sprintf("%s/raystack.compass.v1beta1.CompassService/UpsertEntity", host)
 	upsertEdgeURL := fmt.Sprintf("%s/raystack.compass.v1beta1.CompassService/UpsertEdge", host)
 
+	t.Run("should handle empty batch without error", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		err = compassSink.Sink(ctx, []models.Record{})
+		assert.NoError(t, err)
+		assert.Empty(t, client.requests)
+	})
+
 	t.Run("should return error if compass host returns error", func(t *testing.T) {
 		client := &mockHTTPClient{}
 		client.SetupResponse(404, `{"reason":"not found"}`)

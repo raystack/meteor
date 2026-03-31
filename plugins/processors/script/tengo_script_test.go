@@ -126,6 +126,46 @@ func TestProcess(t *testing.T) {
 			errStr:   "invalid keys: does_not_exist",
 		},
 		{
+			name:   "ModifyEntityName",
+			script: `asset.name = "new-name"`,
+			input: &meteorv1beta1.Entity{
+				Urn:    "urn:test:test:table:test",
+				Name:   "old-name",
+				Source: "test",
+				Type:   "table",
+			},
+			expected: &meteorv1beta1.Entity{
+				Urn:    "urn:test:test:table:test",
+				Name:   "new-name",
+				Source: "test",
+				Type:   "table",
+			},
+		},
+		{
+			name: "EntityWithNilProperties",
+			script: heredoc.Doc(`
+				asset.properties = {new_key: "new_value"}
+			`),
+			input: &meteorv1beta1.Entity{
+				Urn:    "urn:test:test:table:test",
+				Name:   "test",
+				Source: "test",
+				Type:   "table",
+			},
+			expected: &meteorv1beta1.Entity{
+				Urn:    "urn:test:test:table:test",
+				Name:   "test",
+				Source: "test",
+				Type:   "table",
+				Properties: func() *structpb.Struct {
+					s, _ := structpb.NewStruct(map[string]any{
+						"new_key": "new_value",
+					})
+					return s
+				}(),
+			},
+		},
+		{
 			name:   "ErrRunContext",
 			script: heredoc.Doc(`a := 5 / 0`),
 			input: &meteorv1beta1.Entity{
@@ -166,4 +206,58 @@ func TestProcess(t *testing.T) {
 			testutils.AssertEqualProto(t, tc.expected, res.Entity())
 		})
 	}
+
+	t.Run("PreservesEdges", func(t *testing.T) {
+		p := New(testutils.Logger)
+		err := p.Init(ctx, plugins.Config{
+			RawConfig: map[string]any{
+				"script": `asset.name = "modified"`,
+				"engine": "tengo",
+			},
+		})
+		if !assert.NoError(t, err) {
+			return
+		}
+
+		edges := []*meteorv1beta1.Edge{
+			{
+				SourceUrn: "urn:test:test:table:src",
+				TargetUrn: "urn:test:test:user:owner1",
+				Type:      "owned_by",
+				Source:     "test",
+			},
+			{
+				SourceUrn: "urn:test:test:table:src",
+				TargetUrn: "urn:test:test:table:upstream",
+				Type:      "lineage",
+				Source:     "test",
+			},
+		}
+
+		input := models.NewRecord(
+			&meteorv1beta1.Entity{
+				Urn:    "urn:test:test:table:src",
+				Name:   "original",
+				Source: "test",
+				Type:   "table",
+			},
+			edges...,
+		)
+
+		res, err := p.Process(ctx, input)
+		assert.NoError(t, err)
+
+		testutils.AssertEqualProto(t, &meteorv1beta1.Entity{
+			Urn:    "urn:test:test:table:src",
+			Name:   "modified",
+			Source: "test",
+			Type:   "table",
+		}, res.Entity())
+
+		gotEdges := res.Edges()
+		assert.Len(t, gotEdges, 2)
+		for i, e := range edges {
+			testutils.AssertEqualProto(t, e, gotEdges[i])
+		}
+	})
 }
