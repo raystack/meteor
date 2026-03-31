@@ -19,11 +19,11 @@ Meteor operates as a metadata supply chain with three stages:
 
 ### Extract
 
-Meteor's extractors connect to 30+ data sources — databases (BigQuery, Postgres, Snowflake), BI tools (Tableau, Metabase, Superset), streaming platforms (Kafka), cloud storage (GCS), orchestrators (Optimus), and more. Each extractor produces standardized **Asset** records containing:
+Meteor's extractors connect to 30+ data sources — databases (BigQuery, Postgres, Snowflake), BI tools (Tableau, Metabase, Superset), streaming platforms (Kafka), cloud storage (GCS), orchestrators (Optimus), and more. Each extractor produces **Record**s — an **Entity** with flat properties plus **Edge**s representing relationships:
 
-- **Schema metadata** — column names, types, descriptions, constraints
-- **Lineage** — upstream and downstream asset references
-- **Ownership** — who owns and maintains the asset
+- **Schema metadata** — column names, types, descriptions, constraints (stored as entity properties)
+- **Lineage** — upstream and downstream relationships (represented as edges)
+- **Ownership** — who owns and maintains the entity (represented as edges)
 - **Service context** — source system, URLs, timestamps
 
 ### Process
