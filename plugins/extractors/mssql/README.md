@@ -1,12 +1,14 @@
 # mssql
 
+Extract table metadata from Microsoft SQL Server databases.
+
 ## Usage
 
 ```yaml
 source:
   name: mssql
   config:
-    connection_url: sqlserver://admin:pass123@localhost:3306/
+    connection_url: sqlserver://admin:pass123@localhost:1433/
     exclude:
       databases:
         - database_a
@@ -15,34 +17,35 @@ source:
         - database_c.table_a
 ```
 
-## Inputs
+## Configuration
 
-| Key                 | Value      | Example                                        | Description                      |            |
-| :------------------ | :--------- | :--------------------------------------------- | :------------------------------- | :--------- |
-| `connection_url`    | `string`   | `sqlserver://admin:pass123@localhost:3306/`    | URL to access the mssql server   | _required_ |
-| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]`                 | List of databases to be excluded | _optional_ |
-| `exclude.tables`    | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded    | _optional_ |
+| Key                 | Type       | Required | Description                                          |
+| :------------------ | :--------- | :------- | :--------------------------------------------------- |
+| `connection_url`    | `string`   | Yes      | URL to access the MSSQL server                       |
+| `exclude.databases` | `[]string` | No       | List of databases to exclude from extraction          |
+| `exclude.tables`    | `[]string` | No       | List of tables to exclude (format: `database.table`)  |
 
-## Outputs
+System databases `master`, `msdb`, `model`, and `tempdb` are excluded by default.
 
-| Field                | Sample Value                           |
-| :------------------- | :------------------------------------- |
-| `resource.urn`       | `mssql::my-mssql/my_database/my_table` |
-| `resource.name`      | `my_table`                             |
-| `resource.service`   | `mssql`                                |
-| `description`        | `table description`                    |
-| `profile.total_rows` | `2100`                                 |
-| `schema`             | [][column](#column)                    |
+## Entities
 
-### Column
+- Entity type: `table`
+- Source: `mssql`
+- URN format: `urn:mssql:{scope}:table:{database}.{table}`
 
-| Field         | Sample Value         |
-| :------------ | :------------------- |
-| `name`        | `total_price`        |
-| `description` | `item's total price` |
-| `data_type`   | `decimal`            |
-| `is_nullable` | `true`               |
-| `length`      | `12,2`               |
+### Properties
+
+| Property                        | Type     | Description              |
+| :------------------------------ | :------- | :----------------------- |
+| `properties.columns`            | `array`  | List of column metadata  |
+| `properties.columns[].name`     | `string` | Column name              |
+| `properties.columns[].data_type`| `string` | Data type of the column  |
+| `properties.columns[].is_nullable` | `bool` | Whether the column is nullable |
+| `properties.columns[].length`   | `int`    | Character maximum length (omitted if 0) |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

@@ -1,48 +1,61 @@
 # optimus
 
+Extract job metadata from Optimus, including lineage and ownership.
+
 ## Usage
 
 ```yaml
 source:
-  type: optimus
+  name: optimus
+  scope: my-optimus
   config:
     host: optimus.com:80
+    max_size_in_mb: 45
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `optimus.com:80` | Optimus' GRPC host | *required* |
-| `max_size_in_mb` | `int` | `45` | Max megabytes for GRPC client to receive message. Default to 45. |  |
+| Key | Type | Required | Default | Description |
+|:----|:-----|:---------|:--------|:------------|
+| `host` | `string` | Yes | | Optimus gRPC host address. |
+| `max_size_in_mb` | `int` | No | `45` | Maximum message size in MB for the gRPC client. |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `optimus::https://optimus-host.com/project.namespace.job` |
-| `resource.name` | `job-name` |
-| `resource.service` | `optimus` |
-| `resource.description` | `Sample job description` |
-| `ownership.owners[0].urn` | `john_doe@example.com` |
-| `ownership.owners[0].name` | `john_doe@example.com` |
-| `lineage.upstreams[].urn` | `bigquery::project/dataset/table` |
-| `lineage.upstreams[].type` | `table` |
-| `lineage.upstreams[].service` | `bigquery` |
-| `lineage.downstreams[0].urn` | `bigquery::project/dataset/table` |
-| `lineage.downstreams[0].type` | `table` |
-| `lineage.downstreams[0].service` | `bigquery` |
-| `properties.attributes` | `{}` |
+- **Type:** `job`
+- **URN format:** `urn:optimus:{scope}:job:{project}.{namespace}.{job_name}`
 
-### MaxCompute Support
+### Properties
 
-The Optimus extractor supports MaxCompute as a dependency source. When a job references MaxCompute resources (with the `maxcompute://` prefix), the extractor will:
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `properties.version` | `int32` | Job specification version. |
+| `properties.project` | `string` | Optimus project name. |
+| `properties.project_id` | `string` | Optimus project name (alias). |
+| `properties.namespace` | `string` | Optimus namespace name. |
+| `properties.owner` | `string` | Job owner email. |
+| `properties.interval` | `string` | Job schedule interval. |
+| `properties.depends_on_past` | `bool` | Whether the job depends on past runs. |
+| `properties.task_name` | `string` | Task plugin name. |
+| `properties.window_size` | `string` | Window size. |
+| `properties.window_offset` | `string` | Window offset. |
+| `properties.window_truncate_to` | `string` | Window truncation setting. |
+| `properties.start_date` | `string` | Job start date. |
+| `properties.end_date` | `string` | Job end date. |
+| `properties.sql` | `string` | SQL query from `query.sql` asset (if present). |
+| `properties.task` | `map[string]any` | Task details (`name`, `description`, `image`). |
 
-- Parse MaxCompute fully-qualified names in the format `maxcompute://project.schema.table`
-- Generate URNs using `maxcompute://{project}.{schema}.{table}`
-- Include MaxCompute resources as upstream or downstream lineage entries with service `maxcompute`
+## Edges
 
-You can also specify a `project_id` in the extractor config to scope lineage extraction to a specific project.
+| Edge Type | Source URN | Target URN | Description |
+|:----------|:-----------|:-----------|:------------|
+| `lineage` | Upstream resource URN | Job URN | Upstream dependency (BigQuery or MaxCompute table). |
+| `lineage` | Job URN | Downstream resource URN | Downstream destination (BigQuery or MaxCompute table). |
+| `owned_by` | Job URN | `urn:user:{owner_email}` | Job owner. |
+
+### MaxCompute support
+
+When a job references MaxCompute resources (prefix `maxcompute://`), the extractor parses fully-qualified names in the format `maxcompute://project.schema.table` and generates URNs accordingly.
 
 ## Contributing
 

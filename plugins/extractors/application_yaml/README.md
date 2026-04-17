@@ -1,6 +1,6 @@
 # application_yaml
 
-Extractor for Application from YAML file.
+Extract application metadata from a YAML file, including lineage and ownership.
 
 ## Usage
 
@@ -13,83 +13,62 @@ source:
     env_prefix: CI
 ```
 
-## Inputs
+## Configuration
 
-| Key          | Value    | Example           | Description                                                                                                            | Required? |
-| :----------- | :------- | :---------------- | :--------------------------------------------------------------------------------------------------------------------- | :-------- |
-| `file`       | `string` | `meteor.app.yaml` | File path of `application.yaml`                                                                                        | ✅        |
-| `env_prefix` | `string` | `CI`              | Prefix for environment variables. These are made available as variables in `application.yaml` with the prefix trimmed. | ✘         |
+| Key | Type | Required | Default | Description |
+|:----|:-----|:---------|:--------|:------------|
+| `file` | `string` | Yes | | Path to the application YAML file. |
+| `env_prefix` | `string` | No | `CI` | Prefix for environment variables injected as template variables (prefix is trimmed). |
 
-### `application.yaml` format
+### Application YAML format
 
 ```yaml
-name: "string" # REQUIRED
-id: "string" # REQUIRED
+name: "order-manager"             # required
+id: "0adf3214-676c-..."           # required
 team:
-  id: "string"
-  name: "string"
-  email: "string"
-description: "string"
-url: "string"
-version: "string"
-inputs: # OPTIONAL
-  # Format: "urn:{source}:{scope}:{type}:{name}"
-  - urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand
-  - urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand
-outputs: # OPTIONAL
-  # Format: "urn:{source}:{scope}:{type}:{name}"
-  - urn:kafka:1-my-kafka.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es
+  id: "team-123"
+  name: "Order Team"
+  email: "order-team@example.com"
+description: "Order management service"
+url: "https://github.com/mycompany/order-manager"
+version: "d6ec883"
+inputs:                            # upstream lineage URNs
+  - urn:bigquery:bq-raw:table:project.dataset.table
+  - urn:kafka:my-kafka:topic:my-topic
+outputs:                           # downstream lineage URNs
+  - urn:kafka:my-kafka:topic:output-topic
 create_time: "2006-01-02T15:04:05Z"
 update_time: "2006-01-02T15:04:05Z"
 labels:
-  x: "y"
+  team: "Booking Experience"
 ```
 
-For an example,
-see [`application.detailed.yaml`](./testdata/application.detailed.yaml)
+Environment variables with the configured prefix (default `CI`) are available as Go template variables with the prefix stripped. For example, `CI_PROJECT_NAME` becomes `{{.project_name}}`.
 
-Environment variables that are commonly available in CI can be used for
-populating the fields. The default prefix for environment variables is `CI` but
-this can be overridden using `env_prefix` config.
+## Entities
 
-For an example,
-see [`application.envvars.yaml`](./testdata/application.envvars.yaml). The
-following env vars are utilised for it:
+- **Type:** `application`
+- **URN format:** `urn:application_yaml:{scope}:application:{name}`
 
-- `CI_PROJECT_NAME`
-- `CI_PROJECT_URL`
-- `CI_COMMIT_SHORT_SHA`
+### Properties
 
-## Outputs
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `properties.id` | `string` | Application ID. |
+| `properties.version` | `string` | Application version. |
+| `properties.url` | `string` | Application URL. |
+| `properties.create_time` | `string` | Creation timestamp (RFC 3339). |
+| `properties.update_time` | `string` | Last update timestamp (RFC 3339). |
+| `properties.labels` | `map[string]string` | Key-value labels. |
 
-The extractor emits a Record containing an Entity and Edges.
+## Edges
 
-### Entity
-
-| Field               | Value                                                         | Sample Value                                                 |
-| :------------------ | :------------------------------------------------------------ | :----------------------------------------------------------- |
-| `urn`               | `urn:application_yaml:{scope}:application:{application.name}` | `urn:application_yaml:integration:application:order-manager` |
-| `name`              | `{application.name}`                                          | `order-manager`                                              |
-| `source`            | `application_yaml`                                            | `application_yaml`                                           |
-| `type`              | `application`                                                 | `application`                                                |
-| `description`       | `{application.description}`                                   | `Order-Manager is the order management system for MyCompany` |
-| `properties.url`    | `{application.url}`                                           | `https://github.com/mycompany/order-manager`                 |
-| `properties.id`     | `{application.id}`                                            | `0adf3214-676c-4a74-ab37-9d4a4b8ade0e`                      |
-| `properties.version`| `{application.version}`                                       | `d6ec883`                                                    |
-| `properties.create_time` | `{application.create_time}`                              | `2022-08-08T03:17:54Z`                                       |
-| `properties.update_time` | `{application.update_time}`                              | `2022-08-08T03:57:54Z`                                       |
-| `properties.labels` | `map[string]string`                                           | `{"team": "Booking Experience"}`                             |
-
-### Edges
-
-| Edge Type   | Description                             | Example                                                                            |
-|:------------|:----------------------------------------|:-----------------------------------------------------------------------------------|
-| `owned_by`  | Team ownership from `application.team`  | `source_urn: <app_urn>`, `target_urn: {team.id}`, `properties: {name, email}`      |
-| `lineage`   | Upstream from `application.inputs[]`    | `source_urn: {input_urn}`, `target_urn: <app_urn>`, `type: lineage`                |
-| `lineage`   | Downstream from `application.outputs[]` | `source_urn: <app_urn>`, `target_urn: {output_urn}`, `type: lineage`               |
+| Edge Type | Source URN | Target URN | Description |
+|:----------|:-----------|:-----------|:------------|
+| `owned_by` | Application URN | `urn:user:{team.email}` (or `urn:user:{team.id}`) | Team ownership. Emitted when `team.id` is set. |
+| `lineage` | Input URN | Application URN | Upstream dependency from `inputs[]`. |
+| `lineage` | Application URN | Output URN | Downstream dependency from `outputs[]`. |
 
 ## Contributing
 
-Refer to
-the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
-for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

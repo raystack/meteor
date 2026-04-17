@@ -1,39 +1,40 @@
 # couchdb
 
+Extract document metadata from a CouchDB server.
+
 ## Usage
 
 ```yaml
 source:
   name: couchdb
   config:
-    connection_url: http://admin:pass123@localhost:3306/
+    connection_url: http://admin:pass123@localhost:5984/
     exclude: database_a,database_b
 ```
 
-## Inputs
+## Configuration
 
-| Key              | Value    | Example                                | Description                                                |            |
-| :--------------- | :------- | :------------------------------------- | :--------------------------------------------------------- | :--------- |
-| `connection_url` | `string` | `http://admin:pass123@localhost:3306/` | URL to access the couchdb server                           | _required_ |
-| `exclude`        | `string` | `primaryDB,secondaryDB`                | Comma separated database list to be excluded from crawling | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | URL to access the CouchDB server. |
+| `exclude` | `string` | No | Comma-separated list of database names to exclude. Internal databases (`_global_changes`, `_replicator`, `_users`) are excluded by default. |
 
-## Outputs
+## Entities
 
-| Field              | Sample Value          |
-| :----------------- | :-------------------- |
-| `resource.urn`     | `database_name.docID` |
-| `resource.name`    | `docID`               |
-| `resource.service` | `couchdb`             |
-| `schema`           | [][column](#column)   |
+- Entity type: `table`
+- URN format: `urn:couchdb:{scope}:table:{database}.{docID}`
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects derived from document fields. |
+| `properties.columns[].name` | `string` | Field name. |
+| `properties.columns[].data_type` | `string` | Inferred Go type of the field value (e.g. `float64`, `string`). |
+| `properties.columns[].description` | `string` | Document revision string (if available). |
+| `properties.columns[].length` | `int` | Document size in bytes (if non-zero). |
 
-| Field         | Sample Value               |
-| :------------ | :------------------------- |
-| `name`        | `field1`                   |
-| `description` | `rev for revision history` |
-| `data_type`   | `float64`                  |
-| `length`      | ``                         |
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

@@ -1,37 +1,41 @@
-# elastic search
+# elasticsearch
+
+Extract index metadata from an Elasticsearch cluster.
 
 ## Usage
 
 ```yaml
 source:
-  name: elasticsearch
+  name: elastic
   config:
-    host: elastic_server
+    host: http://localhost:9200
+    user: elastic
+    password: changeme
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `http://localhost:9200` | Host of the Elastic server | *required* |
-| `user` | `string` | `admin` | User ID to access the server| *optional* |
-| `password` | `string` | `1234` | Password for the Server | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `host` | `string` | Yes | Host address of the Elasticsearch server (include scheme). |
+| `user` | `string` | No | Username for authentication. |
+| `password` | `string` | No | Password for authentication. |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `elasticsearch.index1` |
-| `resource.name` | `index1` |
-| `profile.total_rows` | `1` |
-| `schema` | [][Column](#column) |
+- Entity type: `table`
+- URN format: `urn:elasticsearch:{scope}:index:{index_name}`
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects from the index mapping. |
+| `properties.columns[].name` | `string` | Field name. |
+| `properties.columns[].data_type` | `string` | Elasticsearch field type (e.g. `text`, `keyword`). |
+| `properties.profile.total_rows` | `int` | Number of documents in the index (omitted if zero). |
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `SomeStr` |
-| `data_type` | `text` |
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

@@ -1,5 +1,7 @@
 # presto
 
+Extract table metadata from a Presto server.
+
 ## Usage
 
 ```yaml
@@ -7,33 +9,32 @@ source:
   name: presto
   config:
     connection_url: http://user:pass@localhost:8080
-    exclude_catalog: memory,system
+    exclude_catalog: memory,system,tpcds,tpch
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `http://user:pass@localhost:8080` | URL to access the presto server | *required* |
-| `exclude_catalog` | `string` | `memory,system` | This is a comma separated catalog list to exclude from querying data | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | HTTP URL to access the Presto server. |
+| `exclude_catalog` | `string` | No | Comma-separated list of catalog names to exclude. |
 
-## Outputs
+## Entities
 
-| Field                | Sample Value                      |
-|:---------------------|:----------------------------------|
-| `resource.urn`       | `my_catalog.my_database.my_table` |
-| `resource.name`      | `my_table`                        |
-| `resource.service`   | `presto`                          |
-| `schema`             | [][Column](#column)               |
+- Entity type: `table`
+- URN format: `urn:presto:{scope}:table:{catalog}.{schema}.{table}`
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects. |
+| `properties.columns[].name` | `string` | Column name. |
+| `properties.columns[].data_type` | `string` | Column data type. |
+| `properties.columns[].is_nullable` | `bool` | Whether the column is nullable. |
+| `properties.columns[].description` | `string` | Column comment (if available). |
 
-| Field         | Sample Value         |
-|:--------------|:---------------------|
-| `name`        | `total_price`        |
-| `data_type`   | `decimal`            |
-| `is_nullable` | `true`               |
-| `description` | `item's total price` |
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

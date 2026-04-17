@@ -1,4 +1,6 @@
-# postgres
+# Postgres
+
+Extract table metadata from a PostgreSQL server.
 
 ## Usage
 
@@ -6,37 +8,48 @@
 source:
   name: postgres
   config:
-    connection_url: postgres://admin:pass123@localhost:3306/testDB?sslmode=disable
-    exclude: primaryDB,secondaryDB
+    connection_url: postgres://admin:pass123@localhost:5432/postgres?sslmode=disable
+    exclude: testDB,secondaryDB
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `postgres://admin:pass123@localhost:3306/testDB?sslmode=disable` | URL to access the postgres server | *required* |
-| `exclude` | `string` | `primaryDB,secondaryDB` | This is a comma separated db list | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | PostgreSQL connection URL. |
+| `exclude` | `string` | No | Comma-separated list of databases to exclude. |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `postgres::my-postgres/my_database/my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `postgres` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+- **Type:** `table`
+- **URN format:** `urn:postgres:{scope}:table:{database}.{table}`
 
-### Column
+### Properties
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column metadata objects. |
+| `properties.grants` | `[]object` | List of user privilege grants (when available). |
+
+#### Column object
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `name` | `string` | Column name. |
+| `data_type` | `string` | Data type of the column. |
+| `is_nullable` | `bool` | Whether the column is nullable. |
+| `length` | `int` | Maximum character length (omitted when 0). |
+
+#### Grant object
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `user` | `string` | Grantee name. |
+| `privilege_types` | `[]string` | List of granted privileges (e.g. `SELECT`, `INSERT`). |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

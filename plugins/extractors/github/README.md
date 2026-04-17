@@ -23,18 +23,18 @@ source:
       pattern: "*.md"
 ```
 
-## Inputs
+## Configuration
 
-| Key            | Value      | Example      | Description                                                                    |            |
-| :------------- | :--------- | :----------- | :----------------------------------------------------------------------------- | :--------- |
-| `org`          | `string`   | `raystack`   | Name of the GitHub organisation                                                | _required_ |
-| `token`        | `string`   | `ghp_xxx`    | GitHub API access token                                                        | _required_ |
-| `extract`      | `[]string` | `["users"]`  | Entity types to extract. Defaults to all: users, repositories, teams, documents | _optional_ |
-| `docs.repos`   | `[]string` | `["meteor"]` | Repositories to scan for documents. Defaults to all org repos                  | _optional_ |
-| `docs.paths`   | `[]string` | `["docs"]`   | Directory paths to scan within each repo. Defaults to `["docs"]`               | _optional_ |
-| `docs.pattern` | `string`   | `"*.md"`     | Glob pattern to match files. Defaults to `"*.md"`                              | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `org` | `string` | Yes | Name of the GitHub organisation. |
+| `token` | `string` | Yes | GitHub API access token. |
+| `extract` | `[]string` | No | Entity types to extract. Defaults to all: `users`, `repositories`, `teams`, `documents`. |
+| `docs.repos` | `[]string` | No | Repositories to scan for documents. Defaults to all org repos. |
+| `docs.paths` | `[]string` | No | Directory paths to scan within each repo. Defaults to `["docs"]`. |
+| `docs.pattern` | `string` | No | Glob pattern to match files. Defaults to `"*.md"`. |
 
-## Outputs
+## Entities
 
 The extractor emits four entity types and their relationships as edges.
 

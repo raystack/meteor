@@ -1,40 +1,51 @@
-# G-Suite
+# gsuite
+
+Extract user metadata from Google Workspace (G Suite).
 
 ## Usage
 
 ```yaml
 source:
-  scope: my-scope
-  type: gsuite
+  name: gsuite
+  scope: my-org
   config:
-    service_account_json: "XXX"
-    user_email: meteor@raystack.com
+    service_account_json: '{"type":"service_account","project_id":"...","private_key":"..."}'
+    user_email: admin@example.com
 ```
 
-## Inputs
+## Configuration
 
-| Key                    | Value    | Example                                                                                                                                                                                                                                                                                                                                                                        | Description                              |            |
-| :--------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- | :--------- |
-| `user_email`           | `string` | `meteor@raystack.com`                                                                                                                                                                                                                                                                                                                                                          | User email authorized to access the APIs | _required_ |
-| `service_account_json` | `string` | `{"type": "service_account","project_id": "XXXXXX","private_key_id": "XXXXXX","private_key": "XXXXXX","client_email": "XXXXXX","client_id": "XXXXXX","auth_uri": "https://accounts.google.com/o/oauth2/auth","token_uri": "https://oauth2.googleapis.com/token","auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url": "XXXXXX"}` | Service Account JSON object              | _required_ |
-
-## Outputs
-
-| Field        | Sample Value                                              |
-| :----------- | :-------------------------------------------------------- |
-| `email`      | `doe.john@gmail.com`                                      |
-| `full_name`  | `Jon Doe`                                                 |
-| `status`     | `suspended`                                               |
-| `attributes` | `{"aliases":"john.doe@raystack.com","custom_schemas":{},` |
-|              | `"org_unit_path":"/","organizations":`                    |
-|              | `[{"costCenter": "raystack"}],`                           |
-|              | `"relations":[{"type":"manager",`                         |
-|              | `"value":"john.lee@raystack.com"}]}`                      |
+| Key | Type | Required | Description |
+|:----|:-----|:---------|:------------|
+| `service_account_json` | `string` | Yes | Service Account JSON credential object. |
+| `user_email` | `string` | Yes | Email of a user with Admin SDK Directory API access to impersonate. |
 
 ### Notes
 
-- The service account must have a [delegated domain wide authority](https://developers.google.com/admin-sdk/directory/v1/guides/delegation#delegate_domain-wide_authority_to_your_service_account)
-- User Email : Only users with access to the Admin APIs can access the Admin SDK Directory API, therefore your service account needs to impersonate one of those users to access the Admin SDK Directory API.
+- The service account must have [domain-wide delegation](https://developers.google.com/admin-sdk/directory/v1/guides/delegation#delegate_domain-wide_authority_to_your_service_account) enabled.
+- The `user_email` must belong to a user with access to the Admin APIs.
+
+## Entities
+
+- **Type:** `user`
+- **URN format:** `urn:gsuite:{scope}:user:{primary_email}`
+
+### Properties
+
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `properties.email` | `string` | Primary email address. |
+| `properties.full_name` | `string` | Full name of the user. |
+| `properties.status` | `string` | `"suspended"` if the user is suspended; omitted otherwise. |
+| `properties.aliases` | `string` | Comma-separated list of email aliases. |
+| `properties.org_unit_path` | `string` | Organizational unit path. |
+| `properties.organizations` | `[]any` | List of organization records from Google Workspace. |
+| `properties.relations` | `[]any` | List of relation records (e.g. manager). |
+| `properties.custom_schemas` | `map[string]any` | Custom schema data from Google Workspace. |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

@@ -11,4 +11,4 @@ sinks:
     config:
       brokers: localhost:9092
       topic: metadata-stream
-      key_path: ".resource.urn"
+      key_path: ".Urn"

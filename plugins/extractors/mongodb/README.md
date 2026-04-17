@@ -1,12 +1,14 @@
 # mongodb
 
+Extract collection metadata from a MongoDB server.
+
 ## Usage
 
 ```yaml
 source:
   name: mongodb
   config:
-    connection_url: mongodb://admin:pass123@localhost:3306
+    connection_url: mongodb://admin:pass123@localhost:27017
     exclude:
       databases:
         - database_a
@@ -15,23 +17,26 @@ source:
         - database_c.collection_a
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `mongodb://admin:pass123@localhost:3306` | URL to access the mongodb server | *required* |
-| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]` | List of databases to be excluded | *optional* |
-| `exclude.collections` | `[]string` | `[`database_c.collection_a`, `database_c.collection_b`]` | List of collections to be excluded | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | MongoDB connection URI. |
+| `exclude.databases` | `[]string` | No | List of database names to exclude. |
+| `exclude.collections` | `[]string` | No | List of collections to exclude, in `database.collection` format. Default system collections are always excluded. |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_database.my_collection` |
-| `resource.name` | `my_collection` |
-| `resource.service` | `mongodb` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
+- Entity type: `table`
+- URN format: `urn:mongodb:{scope}:collection:{database}.{collection}`
+
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.profile.total_rows` | `int` | Estimated document count (omitted if zero). |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

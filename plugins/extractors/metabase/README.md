@@ -1,5 +1,7 @@
 # metabase
 
+Extract dashboard metadata from a Metabase server.
+
 ## Usage
 
 ```yaml
@@ -12,35 +14,57 @@ source:
     password: meteor_pass_1234
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `host` | `string` | `http://localhost:4002` | The host at which metabase is running | *required* |
-| `instance_label` | `string` | `my-metabase` | Instance alias, the value will be used as part of the urn component | *required* |
-| `username` | `string` | `meteor_tester` | Username/email to access the metabase| *optional* |
-| `password` | `string` | `meteor_pass_1234` | Password for the metabase | *optional* |
-| `session_id` | `string` | `meteor_pass_1234` | Use existing session ID from metabase to create requests. (this will ignore username and password) | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `host` | `string` | Yes | URL of the Metabase server. |
+| `instance_label` | `string` | Yes | Instance alias used as part of the URN. |
+| `username` | `string` | Yes (unless `session_id` is set) | Username or email for authentication. |
+| `password` | `string` | No | Password for authentication. |
+| `session_id` | `string` | No | Existing Metabase session ID. When set, `username` and `password` are ignored. |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `metabase::my-metabase/dashboard/5123` |
-| `resource.name` | `dashboard_name` |
-| `resource.service` | `metabase` |
-| `description` | `table description` |
-| `charts` | [][Chart](#chart) |
+- **Entity type:** `dashboard`
+- **URN format:** `urn:metabase:{scope}:collection:{dashboard_id}`
 
-### Chart
+### Properties
 
-| Field | Sample Value |
-| :---- | :---- |
-| `urn` | `metabase::my-metabase/card/9123` |
-| `source` | `metabase` |
-| `dashboard_urn` | `metabase::my-metabase/dashboard/5123` |
-| `dashboard_source` | `metabase` |
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.id` | `int` | Dashboard ID. |
+| `properties.collection_id` | `int` | Collection ID the dashboard belongs to. |
+| `properties.creator_id` | `int` | ID of the dashboard creator. |
+| `properties.create_time` | `string` | Creation timestamp (RFC 3339). |
+| `properties.update_time` | `string` | Last update timestamp (RFC 3339). |
+| `properties.charts` | `[]object` | List of card/chart objects (see below). |
+
+### Chart sub-fields
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `urn` | `string` | Card URN (`metabase::{instance_label}/card/{card_id}`). |
+| `name` | `string` | Card name. |
+| `source` | `string` | Always `metabase`. |
+| `description` | `string` | Card description (if set). |
+| `dashboard_urn` | `string` | Parent dashboard URN. |
+| `id` | `int` | Card ID. |
+| `collection_id` | `int` | Collection ID. |
+| `creator_id` | `int` | Creator ID. |
+| `database_id` | `int` | Database ID backing the card. |
+| `table_id` | `int` | Table ID backing the card. |
+| `query_average_duration` | `int` | Average query duration in ms. |
+| `display` | `string` | Card display type. |
+| `archived` | `bool` | Whether the card is archived. |
+| `upstreams` | `[]string` | Upstream table URNs (if resolved). |
+
+## Edges
+
+| Type | Source URN | Target URN | Description |
+| :--- | :--------- | :--------- | :---------- |
+| `lineage` | Upstream table URN | Dashboard URN | One edge per unique upstream table resolved from cards. Supports postgres, mysql, bigquery, and h2 databases. |
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guide](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

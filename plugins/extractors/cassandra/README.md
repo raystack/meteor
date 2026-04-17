@@ -1,5 +1,7 @@
 # cassandra
 
+Extract table metadata from a Cassandra server.
+
 ## Usage
 
 ```yaml
@@ -7,7 +9,7 @@ source:
   name: cassandra
   config:
     user_id: admin
-    password: 1234
+    password: "1234"
     host: localhost
     port: 9042
     exclude:
@@ -15,34 +17,31 @@ source:
       tables: [mykeyspace_2.tableName_1]
 ```
 
-## Inputs
+## Configuration
 
-| Key                 | Value      | Example                 | Description                                    |            |
-| :------------------ | :--------- | :---------------------- | :--------------------------------------------- | :--------- |
-| `user_id`           | `string`   | `admin`                 | User ID to access the cassandra server         | _required_ |
-| `password`          | `string`   | `1234`                  | Password for the cassandra Server              | _required_ |
-| `host`              | `string`   | `127.0.0.1`             | The Host address at which server is running    | _required_ |
-| `port`              | `int`      | `9042`                  | The Port number at which server is running     | _required_ |
-| `exclude.keyspcaes` | `[]string` | `[keyspace1,keyspace2]` | List of keyspaces to be excluded from crawling | _optional_ |
-| `exclude.tables`    | `[]string` | `[keyspace3.table1]`    | List of tables to be excluded from crawling    | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `user_id` | `string` | Yes | User ID to access the Cassandra server. |
+| `password` | `string` | Yes | Password for the Cassandra server. |
+| `host` | `string` | Yes | Host address of the Cassandra server. |
+| `port` | `int` | Yes | Port number of the Cassandra server. |
+| `exclude.keyspaces` | `[]string` | No | List of keyspaces to exclude. System keyspaces are excluded by default. |
+| `exclude.tables` | `[]string` | No | List of tables to exclude, in `keyspace.table` format. |
 
-## Outputs
+## Entities
 
-| Field                | Sample Value           |
-| :------------------- | :--------------------- |
-| `resource.urn`       | `my_keyspace.my_table` |
-| `resource.name`      | `my_table`             |
-| `resource.service`   | `cassandra`            |
-| `description`        | `table description`    |
-| `profile.total_rows` | `2100`                 |
-| `schema`             | [][column](#column)    |
+- Entity type: `table`
+- URN format: `urn:cassandra:{scope}:table:{keyspace}.{table}`
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects. |
+| `properties.columns[].name` | `string` | Column name. |
+| `properties.columns[].data_type` | `string` | Column data type. |
 
-| Field  | Sample Value  |
-| :----- | :------------ |
-| `name` | `total_price` |
-| `type` | `text`        |
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

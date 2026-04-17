@@ -2,6 +2,17 @@
 
 `sinks` are used to define the medium of consuming the metadata being extracted. You need to specify **at least one** sink or can specify multiple sinks in a recipe, this will prevent you from having to create duplicate recipes for the same job. The given examples show you its correct usage if your sink is `http` and `kafka`.
 
+## How Sinks Work
+
+Each record flowing through the pipeline contains an **Entity** and its **Edges**. When a sink receives a record, it is responsible for handling both:
+
+- **Entity**: The core metadata (urn, type, name, description, source, properties).
+- **Edges**: Relationships such as ownership (`owned_by`) and lineage (`lineage`), each linking a source URN to a target URN.
+
+How sinks handle edges depends on the destination. For example, the Compass sink sends entities and edges together so that Compass can build its relationship graph. The Kafka and HTTP sinks serialize the entire record (entity + edges) as JSON and send it to the configured endpoint.
+
+For details on the data model, see [Source](source.md).
+
 ## Writing `sinks` part of your recipe
 
 ```yaml
@@ -40,14 +51,9 @@ sinks:
   - name: compass
     config:
       host: https://compass.example.com
-      type: sample-compass-type
-      mapping:
-        new_fieldname: "json_field_name"
-        id: "resource.urn"
-        displayName: "resource.name"
 ```
 
-Upload metadata to [Compass](https://github.com/raystack/compass), Raystack's metadata catalog service. Supports lineage and ownership.
+Upload metadata to [Compass](https://github.com/raystack/compass), Raystack's metadata catalog service. The Compass sink sends each entity along with its edges. Ownership edges become owner associations and lineage edges become upstream/downstream relationships in Compass.
 
 * **File**
 
@@ -88,7 +94,7 @@ sinks:
         Header-1: value11,value12
 ```
 
-Sinks metadata to an HTTP destination as per the config defined.
+Sinks metadata to an HTTP destination as per the config defined. The full record (entity + edges) is serialized as JSON.
 
 * **Kafka**
 
@@ -98,7 +104,7 @@ sinks:
     config:
       brokers: "localhost:9092"
       topic: metadata-topic
-      key_path: ".resource.urn"
+      key_path: ".urn"
 ```
 
 Publish metadata as JSON messages to a Kafka topic. Supports message keying for partition control.

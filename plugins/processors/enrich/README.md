@@ -1,6 +1,6 @@
 # Enrich
 
-`enrich` processor appends custom attributes to each asset emitted by the extractor. Use it to add metadata that is not available in the source system, such as team ownership tags, environment labels, or domain identifiers.
+Append custom key-value pairs to each entity's `properties` map.
 
 ## Usage
 
@@ -9,49 +9,22 @@ processors:
   - name: enrich
     config:
       attributes:
-        fieldA: valueA
-        fieldB: valueB
+        team: data-platform
+        environment: production
 ```
 
-## Config
+## Configuration
 
-| Key | Value | Example | Description | |
-| :-- | :---- | :------ | :---------- | :- |
-| `attributes` | `map[string]interface{}` | `{team: platform}` | Key-value pairs to append to each asset's attributes | *required* |
+| Key          | Type                  | Required | Description                                              |
+| :----------- | :-------------------- | :------- | :------------------------------------------------------- |
+| `attributes` | `map[string]string`   | Yes      | Key-value pairs to merge into `entity.properties`.       |
 
 ## Behavior
 
-- The `attributes` map is merged into the asset's `data.attributes` field.
-- If a key already exists in the asset's attributes, the value from the enrich config will overwrite it.
-- Values can be strings, numbers, booleans, or nested objects.
-
-## Examples
-
-### Adding team and environment tags
-
-```yaml
-processors:
-  - name: enrich
-    config:
-      attributes:
-        team: data-platform
-        environment: production
-        tier: "1"
-```
-
-### Combining with other processors
-
-```yaml
-processors:
-  - name: enrich
-    config:
-      attributes:
-        domain: payments
-  - name: labels
-    config:
-      labels:
-        source: meteor
-```
+- Each key in `attributes` is set directly in the entity's `properties` map. For example, `team: data-platform` results in `entity.properties.team = "data-platform"`.
+- If a key already exists in `properties`, the value from the config overwrites it.
+- Only string values are written; non-string values in the config are ignored.
+- Edges attached to the record are passed through unchanged.
 
 ## Contributing
 

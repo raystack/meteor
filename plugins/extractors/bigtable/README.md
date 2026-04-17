@@ -1,5 +1,7 @@
 # bigtable
 
+Extract table metadata from Google Cloud Bigtable instances.
+
 ## Usage
 
 ```yaml
@@ -7,36 +9,29 @@ source:
   name: bigtable
   config:
     project_id: google-project-id
-    service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
+    service_account_base64: _base64_encoded_service_account_
 ```
 
-## Inputs
+## Configuration
 
-| Key        | Value  | Example    | Description         | required |
-|------------|--------|------------|---------------------|----------|
-| project_id | string | my-project | BigTable Project ID | true     |
-| service_account_base64 | string | ____BASE64_ENCODED_SERVICE_ACCOUNT____ | Service Account in base64 encoded string. | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `project_id` | `string` | Yes | GCP project ID containing Bigtable instances. |
+| `service_account_base64` | `string` | No | Base64-encoded service account JSON. If omitted, the `GOOGLE_APPLICATION_CREDENTIALS` environment variable must point to a valid service account file. |
 
-### *Notes* 
+## Entities
 
-You will have to set the env var `GOOGLE_APPLICATION_CREDENTIALS` with value as path of the service account json file. if `service_account_base64` is not specified.
+- Entity type: `table`
+- URN format: `urn:bigtable:{project_id}:table:{instance}.{table}`
 
-## Outputs
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.column_family` | `string` | JSON-encoded list of column family info objects (name and GC policy). |
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `project_id.instance_name.table_name` |
-| `resource.name` | `table_name` |
-| `resource.service` | `bigtable` |
-| `attributes.fields` | [Fields](#Fields) |
+## Edges
 
-### Fields
-
-| Field | Sample Value |
-| :---- | :---- |
-| `column_family` | `[{\"Name\":\"ts\",\"GCPolicy\":\"(age() \\u003e 90d)\"}]` |
+This extractor does not emit edges.
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on
-contributing to this module.
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

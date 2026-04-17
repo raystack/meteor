@@ -1,41 +1,33 @@
 # GCS
 
-Sinks json data to a file as ndjson format in Google Cloud Storage bucket
+Write metadata records as NDJSON to a Google Cloud Storage bucket.
 
 ## Usage
+
 ```yaml
 sinks:
   - name: gcs
     config:
-     project_id: google-project-id
-     url: gcs://bucket_name/target_folder
-     object_prefix : github-users
-     service_account_base64: <base64 encoded service account key>
-     service_account_json:
-      {
-        "type": "service_account",
-        "private_key_id": "xxxxxxx",
-        "private_key": "xxxxxxx",
-        "client_email": "xxxxxxx",
-        "client_id": "xxxxxxx",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "xxxxxxx",
-        "client_x509_cert_url": "xxxxxxx",
-      }
+      project_id: google-project-id
+      url: gcs://bucket_name/target_folder
+      object_prefix: github-users
+      service_account_base64: <base64 encoded service account key>
 ```
 
-## Config Definition
+## Configuration
 
-| Key | Value | Example | Description |  |
-| :-- | :---- | :------ | :---------- | :-- |
-|`project_id` | `string` | `google-project-id` | Google Cloud Storage Project ID  | *required*|
-| `url` | `string` | `gcs://bucket_name/target_folder` | the URL with bucket name and path of the folder with format `gcs://<bucket_name>/<optional_folder_path>` | *required* |
-| `object_prefix` | `string` | `github-users` | the .ndjson file name prefix where json data will be inserted with timestamp </b></b> Note: If prefix is not provided, the output data will be put in a `timestamp.ndjson` file in the provided path. Otherwise in the given example the output file will be `github-users-timestamp.ndjson`| *optional* |
-| `service_account_base64` | `string` | `ewog....fQo=` |  Service Account Key in base64 encoded string. Takes precedence over `service_account_json` value | *optional* |
-| `service_account_json` | `string` | `{"private_key": .., "private_id": ...}` |   Service Account Key in JSON string | *optional* |
+| Key | Type | Example | Description | |
+| :-- | :--- | :------ | :---------- | :- |
+| `project_id` | `string` | `google-project-id` | Google Cloud project ID | *required* |
+| `url` | `string` | `gcs://bucket_name/target_folder` | GCS URL in the format `gcs://<bucket>/<optional_path>` | *required* |
+| `object_prefix` | `string` | `github-users` | Prefix for the output object name. The final object is named `{prefix}-{timestamp}.ndjson`. If omitted, the name is `{timestamp}.ndjson`. | *optional* |
+| `service_account_base64` | `string` | `ewog....fQo=` | Service account key as a base64-encoded string. Takes precedence over `service_account_json`. | *optional* |
+| `service_account_json` | `string` | `{"private_key": ...}` | Service account key as a JSON string. Either this or `service_account_base64` must be provided. | *optional* |
 
+## Behavior
+
+Each Record (Entity + Edges) is serialized as JSON and written as one line in an NDJSON object in the configured GCS bucket. A new object with a timestamped name is created on each run.
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.

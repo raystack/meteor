@@ -354,7 +354,7 @@ func TestExtract(t *testing.T) {
 						// URN format: "urn:{service}:{scope}:{type}:{id}"
 						asset.urn = format("urn:%s:%s:user:%s", "my_usr_svc", recipe_scope, body.employee_id)
 						asset.name = body.fullname
-						asset.service = "my_usr_svc"
+						asset.source = "my_usr_svc"
 						// asset.type = "user" // not required, new_asset("user") sets the field.
 						asset.data.email = body.work_email
 						asset.data.username = body.employee_id
@@ -465,7 +465,7 @@ func TestExtract(t *testing.T) {
 								body.project, ft.spec.name
 							)
 							ast.name = ft.spec.name
-							ast.service = "caramlstore"
+							ast.source = "caramlstore"
 							ast.type = "feature_table"
 							ast.data = merge(ast.data, {
 								namespace: body.project,

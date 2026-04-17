@@ -1,5 +1,7 @@
 # redshift
 
+Extract table metadata from Amazon Redshift clusters.
+
 ## Usage
 
 ```yaml
@@ -13,34 +15,38 @@ source:
     exclude: secondaryDB
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `cluster_id` | `string` | `cluster_test` | cluster ID to access the redshift cluster | *required* |
-| `db_name` | `string` | `testDB` | Default database name to access the redshift cluster | *required* |
-| `db_user` | `string` | `testUser` | Database username to access the redshift cluster | *required* |
-| `aws_region` | `string` | `us-east-1` | Aws region to access the redshift cluster | *required* |
-| `exclude` | `string` | `secondaryDB` | This is a comma separated db list | *optional* |
+| Key          | Type     | Required | Description                                      |
+| :----------- | :------- | :------- | :----------------------------------------------- |
+| `cluster_id` | `string` | Yes      | Cluster ID to access the Redshift cluster         |
+| `db_name`    | `string` | Yes      | Default database name for the Redshift cluster    |
+| `db_user`    | `string` | Yes      | Database username for the Redshift cluster         |
+| `aws_region` | `string` | Yes      | AWS region of the Redshift cluster                |
+| `exclude`    | `string` | No       | Comma-separated list of databases to exclude      |
 
-## Outputs
+Authentication uses the default AWS credential chain (environment variables, shared credentials file, or IAM role).
 
-| Field                | Sample Value                               |
-|:---------------------|:-------------------------------------------|
-| `resource.urn`       | `redshift::us-east-1/my_database/my_table` |
-| `resource.name`      | `my_table`                                 |
-| `resource.service`   | `redshift`                                 |
-| `schema`             | [][Column](#column)                        |
+## Entities
 
-### Column
+- Entity type: `table`
+- Source: `redshift`
+- URN format: `urn:redshift:{cluster_id}:table:{cluster_id}.{database}.{table}`
 
-| Field         | Sample Value         |
-|:--------------|:---------------------|
-| `name`        | `total_price`        |
-| `description` | `item's total price` |
-| `data_type`   | `decimal`            |
-| `is_nullable` | `true`               |
-| `length`      | `1243`               |
+### Properties
+
+| Property                             | Type     | Description                           |
+| :----------------------------------- | :------- | :------------------------------------ |
+| `properties.columns`                 | `array`  | List of column metadata               |
+| `properties.columns[].name`          | `string` | Column name                           |
+| `properties.columns[].data_type`     | `string` | Data type of the column               |
+| `properties.columns[].is_nullable`   | `bool`   | Whether the column is nullable        |
+| `properties.columns[].description`   | `string` | Column label (omitted if empty)       |
+| `properties.columns[].length`        | `int`    | Column length (omitted if 0)          |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

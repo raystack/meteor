@@ -1,43 +1,42 @@
 # clickhouse
 
+Extract table metadata from a ClickHouse server.
+
 ## Usage
 
 ```yaml
 source:
   name: clickhouse
   config:
-    connection_url: clickhouse://username:password@clickhouse-server:9000
+    connection_url: tcp://localhost:9000?username=admin&password=pass123&debug=true
     exclude:
       databases: [database_a, database_b]
       tables: [database_c.table_a]
 ```
 
-## Inputs
+## Configuration
 
-| Key                 | Value      | Example                                                           | Description                         |            |
-| :------------------ | :--------- | :---------------------------------------------------------------- | :---------------------------------- | :--------- |
-| `connection_url`    | `string`   | `tcp://localhost:3306?username=admin&password=pass123&debug=true` | URL to access the clickhouse server | _required_ |
-| `exclude.databases` | `[]string` | `[database_a`, `database_b]`                                      | List of databases to be excluded    | _optional_ |
-| `exclude.tables`    | `[]string` | `[database_c.table_a, database_c.table_b]`                        | List of tables to be excluded       | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | ClickHouse connection URL. |
+| `exclude.databases` | `[]string` | No | List of databases to exclude. |
+| `exclude.tables` | `[]string` | No | List of tables to exclude, in `database.table` format. |
 
-## Outputs
+## Entities
 
-| Field                | Sample Value           |
-| :------------------- | :--------------------- |
-| `resource.urn`       | `my_database.my_table` |
-| `resource.name`      | `my_table`             |
-| `resource.service`   | `clickhouse`           |
-| `description`        | `table description`    |
-| `profile.total_rows` | `2100`                 |
-| `schema`             | [][column](#column)    |
+- Entity type: `table`
+- URN format: `urn:clickhouse:{scope}:table:{database}.{table}`
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects. |
+| `properties.columns[].name` | `string` | Column name. |
+| `properties.columns[].data_type` | `string` | Column data type. |
+| `properties.columns[].description` | `string` | Column description (if available). |
 
-| Field         | Sample Value         |
-| :------------ | :------------------- |
-| `name`        | `total_price`        |
-| `description` | `item's total price` |
-| `data_type`   | `String`             |
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

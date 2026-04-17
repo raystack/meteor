@@ -414,6 +414,7 @@ func (e *Extractor) emitDocument(ctx context.Context, emit plugins.Emit, repo *g
 	}
 
 	entity := models.NewEntity(urn, "document", name, "github", props)
+
 	edges := []*meteorv1beta1.Edge{
 		{
 			SourceUrn: urn,

@@ -21,12 +21,8 @@ sinks:
   - name: compass
     config:
       host: "{{ .compass_host }}"
-      type: table
-      mapping:
-        id: "resource.urn"
-        displayName: "resource.name"
   - name: kafka
     config:
       brokers: "{{ .kafka_brokers }}"
       topic: metadata-events
-      key_path: ".resource.urn"
+      key_path: ".Urn"

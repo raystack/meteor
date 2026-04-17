@@ -15,7 +15,3 @@ sinks:
   - name: compass
     config:
       host: "{{ .compass_host }}"
-      type: table
-      mapping:
-        id: "resource.urn"
-        displayName: "resource.name"

@@ -1,25 +1,29 @@
-# file
+# File
 
-Sinks metadata to a file in `ndjson/yaml` format as per the config defined.
+Write metadata records to a local file in NDJSON or YAML format.
 
 ## Usage
 
 ```yaml
 sinks:
-    name: file
+  - name: file
     config:
-        path: "./dir/sample.yaml"
-        format: "yaml"
-        overwrite: false
+      path: "./output/metadata.ndjson"
+      format: "ndjson"
+      overwrite: false
 ```
 
-## Config Defination
+## Configuration
 
-| Key | Value | Example | Description |  |
-| :-- | :---- | :------ | :---------- | :-- |
-|`path` | `string` | `./dir/sample.yaml` | absolute or relative path from binary to output file, directory should exist| *required*|
-| `format` | `string` | `yaml` | data format for the output file | *required* |
-| `overwrite` | `bool` | `false` | to choose whether data should be overwritten or appended in case file exists, default is `true` | *optional* |
+| Key | Type | Example | Description | |
+| :-- | :--- | :------ | :---------- | :- |
+| `path` | `string` | `./dir/sample.ndjson` | Absolute or relative path to the output file. The parent directory must exist. | *required* |
+| `format` | `string` | `ndjson` | Output format: `ndjson` or `yaml` | *required* |
+| `overwrite` | `bool` | `true` | When `true` (default), the file is truncated on init. When `false`, data is appended to an existing file. | *optional* |
+
+## Behavior
+
+Each Record (Entity + Edges) is serialized as JSON. In `ndjson` mode, one JSON object per line is written. In `yaml` mode, all records in a batch are written as a YAML list.
 
 ## Contributing
 

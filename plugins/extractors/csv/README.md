@@ -1,5 +1,7 @@
 # csv
 
+Extract column metadata from CSV files.
+
 ## Usage
 
 ```yaml
@@ -9,30 +11,25 @@ source:
     path: ./path-to-a-file-or-a-directory
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `path` | `string` | `./folder/filename.csv` | Path to a file or a directory | *required* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `path` | `string` | Yes | Path to a `.csv` file or a directory. When a directory is given, all `.csv` files directly inside it are extracted. |
 
-### *Notes*
+## Entities
 
-Passing directory in `path` will collect and extract metadata from all `.csv` files directly inside the directory path.
+- Entity type: `table`
+- URN format: `urn:csv:{scope}:file:{filename.csv}`
 
-## Outputs
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column objects derived from the CSV header row. |
+| `properties.columns[].name` | `string` | Column header name. |
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `filename.csv` |
-| `resource.name` | `filename.csv` |
-| `resource.service` | `csv` |
-| `schema.columns` | [][Column](#column) |
+## Edges
 
-### Column
-
-| Field | Sample Value | Description |
-| :---- | :----------- | :---------- |
-| `name` | `order_id` | csv header e.g. first row |
+This extractor does not emit edges.
 
 ## Contributing
 

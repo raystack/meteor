@@ -139,13 +139,13 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 		urn, _ := m["urn"].(string)
 		typ, _ := m["type"].(string)
 		name, _ := m["name"].(string)
-		source, _ := m["service"].(string)
+		source, _ := m["source"].(string)
 
 		// Everything else goes into properties
 		props := make(map[string]any)
 		for k, v := range m {
 			switch k {
-			case "urn", "type", "name", "service":
+			case "urn", "type", "name", "source", "description":
 				// already handled
 			default:
 				props[k] = v
@@ -286,7 +286,8 @@ func newAsset(typ string) (tengo.Object, error) {
 
 	return &tengo.Map{
 		Value: map[string]tengo.Object{
-			"type":    &tengo.String{Value: typ},
+			"type": &tengo.String{Value: typ},
+			// Kept for backward compatibility with existing scripts.
 			"data":    &tengo.Map{Value: map[string]tengo.Object{}},
 			"lineage": &tengo.Map{Value: map[string]tengo.Object{}},
 			"labels":  &tengo.Map{Value: map[string]tengo.Object{}},

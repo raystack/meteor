@@ -1,31 +1,31 @@
 # Stencil
 
-Stencil is a schema registry that provides schema management and validation dynamically, efficiently, and reliably to ensure data compatibility across applications.
+Register entity column schemas with a Stencil schema registry in JSON Schema or Avro format.
 
 ## Usage
 
 ```yaml
 sinks:
-  name: stencil
-  config:
-    host: https://stencil.com
-    namespace_id: test-namespace
-    schema_id: example
-    format: json
-    send_format_header: false
+  - name: stencil
+    config:
+      host: https://stencil.com
+      namespace_id: my-namespace
+      format: json
 ```
 
-## Config Definition
+## Configuration
 
-| Key | Value | Example | Description |  |
-| :-- | :---- | :------ | :---------- | :-- |
-|`host` | `string` | `https://stencil.com` | The hostname of the stencil service | *required*|
-| `namespace_id` | `string` | `myNamespace` | The namespace ID of the stencil service | *required* |
-|`schema_id` | `string` | `mySchmea` | The schema ID which will be created in the above-mentioned namespace | *required*|
-|`format` | `string` | `json` | The schema format in which data will sink to stencil | *optional*|
-|`send_format_header` | `bool` | `false` | If schema format needs to be changed. Suppose changing format from json to avro,
-provide below config value as true and schema format in format config. | *optional*|
+| Key | Type | Example | Description | |
+| :-- | :--- | :------ | :---------- | :- |
+| `host` | `string` | `https://stencil.com` | Hostname of the Stencil service | *required* |
+| `namespace_id` | `string` | `my-namespace` | Namespace in which schemas are created | *required* |
+| `format` | `string` | `json` | Schema format: `json` or `avro`. Default: `json`. | *optional* |
 
+## Behavior
+
+For each Record whose Entity properties contain a `columns` list, the sink builds a schema (JSON Schema or Avro) from the column metadata (name, data type, nullability, description). The schema is posted to `POST /v1beta1/namespaces/{namespace_id}/schemas/{schema_id}`, where `schema_id` is derived from the Entity URN.
+
+Entities without columns are skipped. Type mapping from source-specific column types (BigQuery, Postgres) to JSON Schema / Avro types is handled automatically. Server errors (5xx) are returned as retryable errors.
 
 ## Contributing
 

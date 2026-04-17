@@ -1,4 +1,6 @@
-# Oracle
+# oracle
+
+Extract table metadata from Oracle databases.
 
 ## Usage
 
@@ -9,30 +11,33 @@ source:
     connection_url: oracle://admin:1234@localhost:1521/xe
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `oracle://admin:1234@localhost:1521/xe` | Connection String to access Oracle Database | *required* |
+| Key              | Type     | Required | Description                              |
+| :--------------- | :------- | :------- | :--------------------------------------- |
+| `connection_url` | `string` | Yes      | Connection string to access Oracle Database |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `my_database.my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `Oracle` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+- Entity type: `table`
+- Source: `Oracle`
+- URN format: `urn:oracle:{scope}:table:{database}.{table}`
 
-### Column
+### Properties
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `NAME` |
-| `data_type` | `VARCHAR2` |
-| `is_nullable` | `true` |
-| `length` | `255` |
+| Property                             | Type     | Description                          |
+| :----------------------------------- | :------- | :----------------------------------- |
+| `properties.columns`                 | `array`  | List of column metadata              |
+| `properties.columns[].name`          | `string` | Column name                          |
+| `properties.columns[].data_type`     | `string` | Data type of the column              |
+| `properties.columns[].is_nullable`   | `bool`   | Whether the column is nullable       |
+| `properties.columns[].description`   | `string` | Column comment (omitted if empty)    |
+| `properties.columns[].length`        | `int`    | Data length (omitted if 0)           |
+| `properties.profile.total_rows`      | `int`    | Total number of rows in the table (omitted if 0) |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

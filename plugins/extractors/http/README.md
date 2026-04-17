@@ -1,282 +1,8 @@
 # http
 
-Generic Extractor capable of using the HTTP response from an external API for
-constructing entities of any supported type:
-
-`bucket`, `dashboard`, `experiment`, `feature_table`, `group`, `job`, `metric`,
-`model`, `application`, `table`, `topic`, `user`.
-
-The user specified script has access to the response, if the API call was
-successful, and can use it for constructing and emitting entities using a custom
-script. Currently, [Tengo][tengo] is the only supported script engine.
-
-Refer Tengo documentation for script language syntax and supported
-functionality - https://github.com/d5/tengo/tree/v2.13.0#references.
-[Tengo standard library modules][tengo-stdlib] can also be imported and used if
-required (except the `os` module).
+Extract metadata from any external HTTP API using a user-defined [Tengo](https://github.com/d5/tengo) script.
 
 ## Usage
-
-```yaml
-source:
-  scope: raystack
-  type: http
-  config:
-    request:
-      route_pattern: "/api/v1/endpoint"
-      url: "https://example.com/api/v1/endpoint"
-      query_params:
-        - key: param_key
-          value: param_value
-      method: "POST"
-      headers:
-        "User-Id": "1a4336bc-bc6a-4972-83c1-d6426b4d79c3"
-      content_type: application/json
-      accept: application/json
-      body:
-        key: value
-      timeout: 5s
-    success_codes: [ 200 ]
-    concurrency: 3
-    script:
-      engine: tengo
-      source: |
-        asset := new_asset("user")
-        // modify the asset using 'response'...
-        emit(asset)
-```
-
-## Inputs
-
-| Key                        | Value    | Example                                | Description                                                                                     | Required? |
-|:---------------------------|:---------|:---------------------------------------|:------------------------------------------------------------------------------------------------|:----------|
-| `request`                  | `Object` | see [Request](#request)                | The configuration for constructing and sending HTTP request.                                    | ✅         |
-| `success_codes`            | `[]int`  | `[200]`                                | The list of status codes that would be considered as a successful response. Default is `[200]`. | ✘         |
-| `concurrency`              | `int`    | `5`                                    | Number of concurrent child requests to execute. Default is `5`                                  | ✘         |
-| `script.engine`            | `string` | `tengo`                                | Script engine. Only `"tengo"` is supported currently                                            | ✅         |
-| `script.source`            | `string` | see [Worked Example](#worked-example). | [Tengo][tengo] script used to map the response into 0 or more entities.                         | ✅         |
-| `script.max_allocs`        | `int`    | 10000                                  | The max number of object allocations allowed during the script run time. Default is `5000`.     | ✘         |
-| `script.max_const_objects` | `int`    | 1000                                   | The maximum number of constant objects in the compiled script. Default is `500`.                | ✘         |
-
-### Request
-
-| Key             | Value               | Example                              | Description                                                                 | Required? |
-|:----------------|:--------------------|:-------------------------------------|:----------------------------------------------------------------------------|:----------|
-| `route_pattern` | `string`            | `/api/v1/endpoint`                   | A route pattern to use in metrics as `http.route` tag.                      | ✅         |
-| `url`           | `string`            | `http://example.com/api/v1/endpoint` | The HTTP endpoint to send request to                                        | ✅         |
-| `query_params`  | `[]{key, value}`    | `[{"key":"s","value":"One Piece"}]`  | The query parameters to be added to the request URL.                        | ✘         |
-| `method`        | `string`            | `GET`/`POST`                         | The HTTP verb/method to use with request. Default is `GET`.                 | ✘         |
-| `headers`       | `map[string]string` | `{"Api-Token": "..."}`               | Headers to send in the HTTP request.                                        | ✘         |
-| `content_type`  | `string`            | `application/json`                   | Content type for encoding request body. Also sent as a header.              | ✅         |
-| `accept`        | `string`            | `application/json`                   | Sent as the `Accept` header. Also indicates the format to use for decoding. | ✅         |
-| `body`          | `Object`            | `{"key": "value"}`                   | The request body to be sent.                                                | ✘         |
-| `timeout`       | `string`            | `1s`                                 | Timeout for the HTTP request. Default is 5s.                                | ✘         |
-
-### Notes
-
-- In case of conflicts between query parameters present in `request.url`
-  and `request.query_params`, `request.query_params` takes precedence.
-- Currently, only `application/json` is supported for encoding the request body
-  and for decoding the response body. If `Content-Type` and `Accept` headers are
-  added under `request.headers`, they will be ignored and overridden.
-- Script is only executed if the response status code matches
-  the `success_codes` provided.
-- Tengo is the only supported script engine.
-- Tengo's `os` stdlib module cannot be imported and used in the script.
-
-### Script Globals
-
-- [`recipe_scope`](#recipe_scope)
-- [`response`](#response)
-- [`new_asset(string): Entity`](#new_assetstring-entity)
-- [`emit(Entity)`](#emitentity)
-- [`execute_request(...requests): []Response`](#executerequestrequests-response)
-- [`exit`](#exit)
-
-#### `recipe_scope`
-
-The value of the scope specified in the recipe (string).
-
-With the following example recipe:
-
-```yaml
-source:
-  scope: integration
-  type: http
-  config:
-  #...
-```
-
-The value of `recipe_scope` will be `integration`.
-
-#### `response`
-
-HTTP response received with the `status_code`, `header` and `body`. Ex:
-
-```json
-{
-  "status_code": "200",
-  "header": {
-    "link": "</products?page=5&perPage=20>;rel=self,</products?page=0&perPage=20>;rel=first,</products?page=4&perPage=20>;rel=previous,</products?page=6&perPage=20>;rel=next,</products?page=26&perPage=20>;rel=last"
-  },
-  "body": [
-    {
-      "id": 1,
-      "name": "Widget #1"
-    },
-    {
-      "id": 2,
-      "name": "Widget #2"
-    },
-    {
-      "id": 3,
-      "name": "Widget #3"
-    }
-  ]
-}
-```
-
-The header names are always in lower case. See
-[Worked Example](#worked-example) for detailed usage.
-
-#### `new_asset(string): Entity`
-
-Takes a single string parameter and returns an entity instance. The `type`
-parameter can be one of the following:
-
-`"bucket"`, `"dashboard"`, `"experiment"`, `"feature_table"`, `"group"`,
-`"job"`, `"metric"`, `"model"`, `"application"`, `"table"`, `"topic"`,
-`"user"`.
-
-The entity can then be modified in the script. All type-specific data is set
-under `asset.properties` as flat key-value pairs. Note: the variable is still
-called `asset` in tengo scripts for backward compatibility.
-
-**WARNING:** Do not overwrite the `properties` map, set fields on it instead.
-
-```go
-// Bad
-asset.properties = {full_name: "Daiyamondo Jozu"}
-
-// Good
-asset.properties.full_name = "Daiyamondo Jozu"
-```
-
-#### `emit(Entity)`
-
-Takes an entity and emits it as a record that can then be consumed by the
-processor/sink.
-
-#### `execute_request(...requests): []Response`
-
-Takes 1 or more requests and executes the requests with the concurrency defined
-in the recipe. The results are returned as an array. Each item in the array can
-be an error or the HTTP response. The request object supports the properties
-defined in the [Request](#request) input section.
-
-When a request is executed, it can fail due to temporary errors such as network
-errors. These instances need to be handled in the script.
-
-[//]: # (@formatter:off)
-
-```go
-if !response.body.success {
-	exit()
-}
-
-reqs := []
-for j in response.body.jobs {
-	reqs = append(reqs, {
-		url: format("http://my.server.com/jobs/%s/config", j.id),
-		method: "GET",
-		content_type: "application/json",
-		accept: "application/json",
-		timeout: "5s"
-	})
-}
-
-responses := execute_request(reqs...)
-for r in responses {
-	if is_error(r) {
-		// TODO: Handle it appropriately. The error value has the request and
-		//  error string:
-		//  r.value.{request, error}
-		continue
-	}
-
-	asset := new_asset("job")
-	asset.name = r.body.name
-	asset.properties.attributes = {
-	  "job_id": r.body.jid,
-	  "job_parallelism": r.body["execution-config"]["job-parallelism"],
-	  "config": r.body["execution-config"]["user-config"]
-	}
-	emit(asset)
-}
-```
-
-[//]: # (@formatter:on)
-
-If the request passed to the function fails validation, a runtime error is
-thrown.
-
-#### `exit()`
-
-Terminates the script execution.
-
-## Output
-
-The output of the extractor depends on the user specified script. It can emit 0
-or more entities (as Records).
-
-### Worked Example
-
-Lets consider a service that returns a list of users on making a `GET` call on
-the endpoint `http://my_user_service.company.com/api/v1/users` in the following
-format:
-
-```json
-{
-  "success": "<bool>"
-  "message": "<string>",
-  "data": [
-    {
-      "manager_name": "<string>",
-      "terminated": "<string: true/false>",
-      "fullname": "<string>",
-      "location_name": "<string>",
-      "work_email": "<string: email>",
-      "supervisory_org_id": "<string>",
-      "supervisory_org_name": "<string>",
-      "preferred_last_name": "<string>",
-      "business_title": "<string>",
-      "company_name": "<string>",
-      "cost_center_id": "<string>",
-      "preferred_first_name": "<string>",
-      "product_name": "<string>",
-      "cost_center_name": "<string>",
-      "employee_id": "<string>",
-      "manager_id": "<string>",
-      "location_id": "<string: ID/IN>",
-      "manager_id_2": "<string>",
-      "termination_date": "<string: YYYY-MM-DD>",
-      "company_hierarchy": "<string>",
-      "company_id": "<string>",
-      "preferred_middle_name": "<string>",
-      "preferred_social_suffix": "<string>",
-      "legal_middle_name": "<string>",
-      "manager_email_2": "<string: email>",
-      "legal_first_name": "<string>",
-      "manager_name_2": "<string>",
-      "manager_email": "<string: email>",
-      "legal_last_name": "<string>"
-    }
-  ]
-}
-```
-
-Assuming the authentication can be done using an `Api-Token` header, we can use
-the following recipe:
 
 ```yaml
 source:
@@ -284,70 +10,134 @@ source:
   type: http
   config:
     request:
-      url: "http://my_user_service.company.com/api/v1/users"
+      route_pattern: "/api/v1/users"
+      url: "https://example.com/api/v1/users"
       method: "GET"
       headers:
-        "Api-Token": "1a4336bc-bc6a-4972-83c1-d6426b4d79c3"
+        "Api-Token": "my-secret-token"
       content_type: application/json
       accept: application/json
       timeout: 5s
     success_codes: [200]
+    concurrency: 5
     script:
       engine: tengo
       source: |
-        if !response.body.success {
-          exit()
-        }
-
-        users := response.body.data
-        for u in users {
-          if u.email == "" {
-            continue
-          }
-
+        for u in response.body.users {
           asset := new_asset("user")
-          // URN format: "urn:{source}:{scope}:{type}:{id}"
-          asset.urn = format("urn:%s:staging:user:%s", "my_usr_svc", u.employee_id)
-          asset.name = u.fullname
-          asset.source = "my_usr_svc"
-          // asset.type = "user" // not required, new_asset("user") sets the field.
-          asset.properties.email = u.work_email
-          asset.properties.username = u.employee_id
-          asset.properties.first_name = u.legal_first_name
-          asset.properties.last_name = u.legal_last_name
-          asset.properties.full_name = u.fullname
-          asset.properties.display_name = u.fullname
-          asset.properties.title = u.business_title
-          asset.properties.status = u.terminated == "true" ? "suspended" : "active"
-          asset.properties.manager_email = u.manager_email
-          asset.properties.attributes = {
-            manager_id:           u.manager_id,
-            cost_center_id:       u.cost_center_id,
-            supervisory_org_name: u.supervisory_org_name,
-            location_id:          u.location_id,
-            service_job_id:       response.header["x-job-id"]
-          }
+          asset.urn = format("urn:my_svc:%s:user:%s", recipe_scope, u.id)
+          asset.name = u.full_name
+          asset.source = "my_svc"
+          asset.properties.email = u.email
+          asset.properties.status = u.active ? "active" : "suspended"
           emit(asset)
         }
 ```
 
-This would emit a `user` entity for each user object in `response.data`. Note
-that the response headers can be accessed under `response.header` and can be
-used as needed.
+## Configuration
 
-## Caveats
+| Key | Type | Required | Default | Description |
+|:----|:-----|:---------|:--------|:------------|
+| `request.route_pattern` | `string` | Yes | | Route pattern used as `http.route` metric tag. |
+| `request.url` | `string` | Yes | | HTTP endpoint URL. |
+| `request.method` | `string` | No | `GET` | HTTP method (`GET` or `POST`). |
+| `request.headers` | `map[string]string` | No | | HTTP request headers. |
+| `request.content_type` | `string` | Yes | | Content type for the request body (only `application/json`). |
+| `request.accept` | `string` | Yes | | Accept header / response decode format (only `application/json`). |
+| `request.body` | `object` | No | | Request body. |
+| `request.query_params` | `[]{key, value}` | No | | Query parameters appended to the URL. |
+| `request.timeout` | `string` | No | `5s` | Request timeout. |
+| `success_codes` | `[]int` | No | `[200]` | HTTP status codes considered successful. |
+| `concurrency` | `int` | No | `5` | Concurrency for child requests via `execute_request`. |
+| `script.engine` | `string` | Yes | | Script engine (only `tengo`). |
+| `script.source` | `string` | Yes | | Tengo script source code. |
+| `script.max_allocs` | `int` | No | `5000` | Max object allocations during script execution. |
+| `script.max_const_objects` | `int` | No | `500` | Max constant objects in compiled script. |
+| `before_script.engine` | `string` | No | | Script engine for a pre-request script. |
+| `before_script.source` | `string` | No | | Tengo script executed before the main request. |
 
-The following features are currently not supported:
+### Notes
 
-- Explicit authentication support, ex: Basic auth/OAuth/OAuth2/JWT etc.
-- Retries with configurable backoff.
-- Content type for request/response body other than `application/json`.
+- Only `application/json` is supported for request/response encoding.
+- Query params in `request.query_params` take precedence over those in `request.url`.
+- The script runs only if the response status code matches `success_codes`.
+- The Tengo `os` stdlib module is not available.
+
+## Script interface
+
+The following globals are available in the Tengo script:
+
+### `recipe_scope`
+
+The `scope` value from the recipe (string).
+
+### `response`
+
+HTTP response object with `status_code`, `header`, and `body`. Header names are lower-cased.
+
+```json
+{
+  "status_code": "200",
+  "header": { "content-type": "application/json" },
+  "body": { "users": [...] }
+}
+```
+
+### `new_asset(type) -> entity`
+
+Creates a new entity map of the given type (e.g. `"user"`, `"table"`, `"topic"`, `"job"`, `"dashboard"`, `"bucket"`, `"model"`, `"application"`, etc.).
+
+Set fields on the returned map:
+- `asset.urn` - Entity URN (string)
+- `asset.name` - Entity name (string)
+- `asset.source` - Source system name (string)
+- `asset.description` - Description (string)
+- `asset.properties.*` - Type-specific metadata as flat key-value pairs
+
+**Important:** Do not overwrite `asset.properties` as a whole; set individual keys instead.
+
+### `emit(entity)`
+
+Emits the entity as a Record to the pipeline.
+
+### `execute_request(...requests) -> []response`
+
+Executes one or more HTTP requests concurrently (up to `concurrency`). Each request object supports the same fields as `request` in the configuration. Returns an array where each item is either a response or an error.
+
+```go
+reqs := []
+for item in response.body.items {
+  reqs = append(reqs, {
+    url: format("https://api.example.com/items/%s", item.id),
+    method: "GET",
+    content_type: "application/json",
+    accept: "application/json",
+    timeout: "5s"
+  })
+}
+results := execute_request(reqs...)
+for r in results {
+  if is_error(r) { continue }
+  asset := new_asset("job")
+  asset.urn = format("urn:my_svc:%s:job:%s", recipe_scope, r.body.id)
+  asset.name = r.body.name
+  asset.source = "my_svc"
+  emit(asset)
+}
+```
+
+### `exit()`
+
+Terminates script execution.
+
+## Entities
+
+The output depends entirely on the user-defined script. The script can emit zero or more entities of any supported type via `new_asset` and `emit`.
+
+## Edges
+
+This extractor does not emit edges directly. Edges can be constructed within the script if needed.
 
 ## Contributing
 
-Refer to
-the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor)
-for information on contributing to this module.
-
-[tengo]: https://github.com/d5/tengo
-[tengo-stdlib]: https://github.com/d5/tengo/blob/v2.13.0/docs/stdlib.md
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

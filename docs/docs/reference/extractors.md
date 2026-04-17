@@ -1,123 +1,103 @@
 # Extractors
 
-Meteor currently supports metadata extraction on these data sources. To perform
-extraction on any of these you need to create a recipe file with instructions as
-mentioned [here](../concepts/recipe.md). In the `sample-recipe.yaml`
-add `source` information such as `type` from the table below and `config` for
-that particular extractor can be found by visiting the link in the `type` field.
+Extractors are plugins that pull metadata from data sources. Each extractor connects to a source system, discovers resources, and emits [Records](metadata_models.md) containing entities and edges.
 
-## Extractors Feature Matrix
+To use an extractor, add a `source` block to your [recipe](../concepts/recipe.md):
 
-### Table
+```yaml
+source:
+  name: bigquery
+  scope: my-project
+  config:
+    project_id: my-gcp-project
+```
 
-| Type                              | Attributes | Profile | Schema | Lineage | Ownership | Custom |
-| :-------------------------------- | :--------- | :------ | :----- | :------ | :-------- | :----- |
-| [`bigquery`][bigquery-readme]     | ✅         | ✅      | ✅     | ✅      | ✗         | ✗      |
-| [`bigtable`][bigtable-readme]     | ✅         | ✗       | ✅     | ✗       | ✗         | ✗      |
-| [`cassandra`][cassandra-readme]   | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`clickhouse`][clickhouse-readme] | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`couchdb`][couchdb-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`csv`][csv-readme]               | ✅         | ✗       | ✅     | ✗       | ✗         | ✗      |
-| [`elastic`][elastic-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`mariadb`][mariadb-readme]       | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`mongodb`][mongodb-readme]       | ✅         | ✅      | ✗      | ✗       | ✗         | ✗      |
-| [`mssql`][mssql-readme]           | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`mysql`][mysql-readme]           | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`oracle`][oracle-readme]         | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`postgres`][postgres-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`presto`][presto-readme]         | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`redshift`][redshift-readme]     | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
-| [`snowflake`][snowflake-readme]   | ✅         | ✅      | ✅     | ✗       | ✗         | ✗      |
+## Supported Extractors
 
-### Dashboard
+| Extractor | Entity Types | Edges | Source |
+| :--- | :--- | :--- | :--- |
+| [`bigquery`][bigquery] | `table` | `lineage` | BigQuery API |
+| [`bigtable`][bigtable] | `table` | — | Bigtable Admin API |
+| [`cassandra`][cassandra] | `table` | — | CQL |
+| [`clickhouse`][clickhouse] | `table` | — | ClickHouse SQL |
+| [`couchdb`][couchdb] | `table` | — | CouchDB HTTP API |
+| [`csv`][csv] | `table` | — | Local filesystem |
+| [`elastic`][elastic] | `table` | — | Elasticsearch API |
+| [`mariadb`][mariadb] | `table` | — | MariaDB SQL |
+| [`mongodb`][mongodb] | `table` | — | MongoDB driver |
+| [`mssql`][mssql] | `table` | — | MS SQL Server |
+| [`mysql`][mysql] | `table` | — | MySQL SQL |
+| [`oracle`][oracle] | `table` | — | Oracle SQL |
+| [`postgres`][postgres] | `table` | — | PostgreSQL SQL |
+| [`presto`][presto] | `table` | — | Presto SQL |
+| [`redshift`][redshift] | `table` | — | Redshift SQL |
+| [`snowflake`][snowflake] | `table` | — | Snowflake SQL |
+| [`grafana`][grafana] | `dashboard` | — | Grafana HTTP API |
+| [`metabase`][metabase] | `dashboard` | `lineage` | Metabase HTTP API |
+| [`redash`][redash] | `dashboard` | — | Redash HTTP API |
+| [`superset`][superset] | `dashboard` | — | Superset HTTP API |
+| [`tableau`][tableau] | `dashboard` | `lineage`, `owned_by` | Tableau GraphQL API |
+| [`kafka`][kafka] | `topic` | — | Kafka admin client |
+| [`github`][github] | `user`, `repository`, `team`, `document` | `member_of`, `owned_by`, `belongs_to` | GitHub REST API |
+| [`gsuite`][gsuite] | `user` | — | Google Admin SDK |
+| [`gcs`][gcs] | `bucket` | — | GCS API |
+| [`optimus`][optimus] | `job` | `lineage`, `owned_by` | Optimus gRPC API |
+| [`application_yaml`][application_yaml] | `application` | `lineage`, `owned_by` | Local YAML file |
+| [`http`][http] | _(script-defined)_ | _(script-defined)_ | Any HTTP API |
 
-| Type                          | Url | Chart | Lineage | Tags | Custom |
-| :---------------------------- | :-- | :---- | :------ | :--- | :----- |
-| [`grafana`][grafana-readme]   | ✅  | ✅    | ✗       | ✗    | ✗      |
-| [`metabase`][metabase-readme] | ✅  | ✅    | ✗       | ✗    | ✗      |
-| [`redash`][redash-readme]     | ✅  | ✗     | ✗       | ✗    | ✗      |
-| [`superset`][superset-readme] | ✅  | ✅    | ✅      | ✗    | ✗      |
-| [`tableau`][tableau-readme]   | ✅  | ✅    | ✅      | ✗    | ✗      |
+## Entity Types
 
-### Topic
+Each extractor emits one or more entity types. All entities share the same flat structure — the `type` field distinguishes them. See [Metadata Models](metadata_models.md) for the full schema.
 
-| Type                    | Profile | Schema | Ownership | Lineage | Tags | Custom |
-| :---------------------- | :------ | :----- | :-------- | :------ | :--- | :----- |
-| [`kafka`][kafka-readme] | ✗       | ✗      | ✗         | ✗       | ✗    | ✗      |
+| Entity Type | Description | Extractors |
+| :--- | :--- | :--- |
+| `table` | Database tables, views, indices, collections | bigquery, bigtable, cassandra, clickhouse, couchdb, csv, elastic, mariadb, mongodb, mssql, mysql, oracle, postgres, presto, redshift, snowflake |
+| `dashboard` | Visualisation dashboards and their charts | grafana, metabase, redash, superset, tableau |
+| `topic` | Message bus topics | kafka |
+| `user` | User accounts | github, gsuite |
+| `repository` | Source code repositories | github |
+| `team` | Teams within an organisation | github |
+| `document` | Documentation files from repositories | github |
+| `bucket` | Cloud storage containers | gcs |
+| `job` | Scheduled data transformation tasks | optimus |
+| `application` | Services and applications | application_yaml |
 
-### User
+## Edge Types
 
-| Type                      | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
-| :------------------------ | :---- | :------- | :------- | :---- | :------- | :----------- | :------- | :---------- | :----- | :----- |
-| [`github`][github-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✅          | ✗      | ✗      |
-| [`gsuite`][gsuite-readme] | ✅    | ✗        | ✅       | ✗     | ✅       | ✅           | ✗        | ✗           | ✗      | ✗      |
+Edges represent relationships between entities. Not all extractors emit edges — see the table above.
 
-### Repository
+| Edge Type | Meaning | Extractors |
+| :--- | :--- | :--- |
+| `lineage` | Data flows from source to target | bigquery, metabase, tableau, optimus, application_yaml |
+| `owned_by` | Entity is owned by a user or team | tableau, optimus, application_yaml, github |
+| `member_of` | User belongs to an org or team | github |
+| `belongs_to` | Entity belongs to a parent entity | github |
 
-| Type                      | Description | Language | Visibility | Topics | Ownership | Custom |
-| :------------------------ | :---------- | :------- | :--------- | :----- | :-------- | :----- |
-| [`github`][github-readme] | ✅          | ✅       | ✅         | ✅     | ✅        | ✗      |
-
-### Team
-
-| Type                      | Description | Privacy | Permission | Membership | Custom |
-| :------------------------ | :---------- | :------ | :--------- | :--------- | :----- |
-| [`github`][github-readme] | ✅          | ✅      | ✅         | ✅         | ✗      |
-
-### Bucket
-
-| Type                | Location | StorageType | Blobs | Ownership | Tags | Custom | Timestamps |
-| :------------------ | :------- | :---------- | :---- | :-------- | :--- | :----- | :--------- |
-| [`gcs`][gcs-readme] | ✅       | ✅          | ✗     | ✅        | ✅   | ✗      | ✅         |
-
-### Job
-
-| Type                        | Ownership | Upstreams | Downstreams | Custom |
-| :-------------------------- | :-------- | :-------- | :---------- | :----- | --- |
-| [`optimus`][optimus-readme] | ✅        | ✅        | ✅          | ✅     | ✅  |
-
-### Application
-
-| Type                                          | Ownership | Upstreams | Downstreams | Custom |
-| :-------------------------------------------- | :-------- | :-------- | :---------- | :----- | --- |
-| [`application_yaml`][application-yaml-readme] | ✅        | ✅        | ✅          | ✅     | ✅  |
-
-### Generic
-
-These are special type of extractors that are capable of extracting _any_ type
-of asset.
-
-| Type                  | Ownership | Upstreams | Downstreams | Custom |
-| :-------------------- | :-------- | :-------- | :---------- | :----- | --- |
-| [`http`][http-readme] | ✅        | ✅        | ✅          | ✅     | ✅  |
-
-<!--- Not using relative links because that breaks the docs build -->
-
-[bigquery-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigquery/README.md
-[bigtable-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigtable/README.md
-[cassandra-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/cassandra/README.md
-[clickhouse-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/clickhouse/README.md
-[couchdb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/couchdb/README.md
-[csv-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/csv/README.md
-[elastic-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/elastic/README.md
-[mariadb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mariadb/README.md
-[mongodb-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mongodb/README.md
-[mssql-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mssql/README.md
-[mysql-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mysql/README.md
-[oracle-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/oracle/README.md
-[postgres-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/postgres/README.md
-[presto-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/presto/README.md
-[redshift-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redshift/README.md
-[snowflake-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/snowflake/README.md
-[grafana-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/grafana/README.md
-[metabase-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/metabase/README.md
-[redash-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redash/README.md
-[superset-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/superset/README.md
-[tableau-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/tableau/README.md
-[kafka-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/kafka/README.md
-[github-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/github/README.md
-[gsuite-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gsuite/README.md
-[gcs-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gcs/README.md
-[optimus-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/optimus/README.md
-[application-yaml-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/application_yaml/README.md
-[http-readme]: https://github.com/raystack/meteor/tree/main/plugins/extractors/http/README.md
+[bigquery]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigquery/README.md
+[bigtable]: https://github.com/raystack/meteor/tree/main/plugins/extractors/bigtable/README.md
+[cassandra]: https://github.com/raystack/meteor/tree/main/plugins/extractors/cassandra/README.md
+[clickhouse]: https://github.com/raystack/meteor/tree/main/plugins/extractors/clickhouse/README.md
+[couchdb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/couchdb/README.md
+[csv]: https://github.com/raystack/meteor/tree/main/plugins/extractors/csv/README.md
+[elastic]: https://github.com/raystack/meteor/tree/main/plugins/extractors/elastic/README.md
+[mariadb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mariadb/README.md
+[mongodb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mongodb/README.md
+[mssql]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mssql/README.md
+[mysql]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mysql/README.md
+[oracle]: https://github.com/raystack/meteor/tree/main/plugins/extractors/oracle/README.md
+[postgres]: https://github.com/raystack/meteor/tree/main/plugins/extractors/postgres/README.md
+[presto]: https://github.com/raystack/meteor/tree/main/plugins/extractors/presto/README.md
+[redshift]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redshift/README.md
+[snowflake]: https://github.com/raystack/meteor/tree/main/plugins/extractors/snowflake/README.md
+[grafana]: https://github.com/raystack/meteor/tree/main/plugins/extractors/grafana/README.md
+[metabase]: https://github.com/raystack/meteor/tree/main/plugins/extractors/metabase/README.md
+[redash]: https://github.com/raystack/meteor/tree/main/plugins/extractors/redash/README.md
+[superset]: https://github.com/raystack/meteor/tree/main/plugins/extractors/superset/README.md
+[tableau]: https://github.com/raystack/meteor/tree/main/plugins/extractors/tableau/README.md
+[kafka]: https://github.com/raystack/meteor/tree/main/plugins/extractors/kafka/README.md
+[github]: https://github.com/raystack/meteor/tree/main/plugins/extractors/github/README.md
+[gsuite]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gsuite/README.md
+[gcs]: https://github.com/raystack/meteor/tree/main/plugins/extractors/gcs/README.md
+[optimus]: https://github.com/raystack/meteor/tree/main/plugins/extractors/optimus/README.md
+[application_yaml]: https://github.com/raystack/meteor/tree/main/plugins/extractors/application_yaml/README.md
+[http]: https://github.com/raystack/meteor/tree/main/plugins/extractors/http/README.md

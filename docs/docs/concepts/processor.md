@@ -1,6 +1,6 @@
 # Processor
 
-A recipe can have none or many processors registered, depending upon how the user wants metadata to be processed. A processor is a function that takes each asset record, transforms it, and passes it to the next stage.
+A recipe can have none or many processors registered, depending upon how the user wants metadata to be processed. A processor is a function that takes each record, transforms it, and passes it to the next stage.
 
 ## How Processors Work
 
@@ -12,15 +12,17 @@ Extractor → Processor 1 → Processor 2 → Processor 3 → Sink
 
 If no processors are defined, records flow directly from the extractor to the sink unchanged.
 
+Processors modify **entity properties** (name, description, labels, attributes, etc.). Edges (ownership, lineage) pass through processors unchanged -- they are handled by sinks at the end of the pipeline.
+
 ## Error Handling
 
-If a processor encounters an error during execution, the entire recipe run fails. There is no skip-on-error behavior — you must fix the processor configuration to resolve the issue.
+If a processor encounters an error during execution, the entire recipe run fails. There is no skip-on-error behavior -- you must fix the processor configuration to resolve the issue.
 
 ## Built-in Processors
 
 ### Enrich
 
-Append custom key-value attributes to each asset's data. Useful for adding metadata that is not present in the source system.
+Append custom key-value attributes to each entity's data. Useful for adding metadata that is not present in the source system.
 
 ```yaml
 processors:
@@ -33,7 +35,7 @@ processors:
 
 ### Labels
 
-Append key-value labels to each asset. Labels are useful for categorization and filtering in downstream catalog services.
+Append key-value labels to each entity. Labels are useful for categorization and filtering in downstream catalog services.
 
 ```yaml
 processors:
@@ -46,7 +48,7 @@ processors:
 
 ### Script
 
-Transform assets using a [Tengo](https://github.com/d5/tengo) script. The script processor gives you full control — including the ability to make HTTP calls to external services for enrichment.
+Transform entities using a [Tengo](https://github.com/d5/tengo) script. The script processor gives you full control -- including the ability to make HTTP calls to external services for enrichment.
 
 ```yaml
 processors:
@@ -54,7 +56,7 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.labels["processed"] = "true"
+        asset.name = asset.name + " (processed)"
 ```
 
 ## Writing a Recipe with Processors
@@ -80,9 +82,9 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.name = asset.name + " [" + asset.service + "]"
+        asset.name = asset.name + " [" + asset.source + "]"
 ```
 
-In this example, each asset first gets enriched with a `domain` attribute, then gets labeled with `source: meteor`, and finally has its name modified by the script processor.
+In this example, each entity first gets enriched with a `domain` attribute, then gets labeled with `source: meteor`, and finally has its name modified by the script processor.
 
 More info about available processors can be found [here](../reference/processors.md).

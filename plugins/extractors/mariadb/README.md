@@ -1,10 +1,12 @@
-# mariadb
+# MariaDB
+
+Extract table metadata from a MariaDB server.
 
 ## Usage
 
 ```yaml
 source:
-  type: mariadb
+  name: mariadb
   config:
     connection_url: admin:pass123@tcp(localhost:3306)/
     exclude:
@@ -15,34 +17,38 @@ source:
         - database_c.table_a
 ```
 
-## Inputs
+## Configuration
 
-| Key                 | Value      | Example                                        | Description                      |            |
-| :------------------ | :--------- | :--------------------------------------------- | :------------------------------- | :--------- |
-| `connection_url`    | `string`   | `admin:pass123@tcp(localhost:3306)/`           | URL to access the mariadb server | _required_ |
-| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]`                 | List of databases to be excluded | _optional_ |
-| `exclude.tables`    | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded    | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | MariaDB connection URL. |
+| `exclude.databases` | `[]string` | No | List of databases to exclude. |
+| `exclude.tables` | `[]string` | No | List of tables to exclude (`database.table` format). |
 
-## Outputs
+## Entities
 
-| Field                | Sample Value           |
-| :------------------- | :--------------------- |
-| `resource.urn`       | `my_database.my_table` |
-| `resource.name`      | `my_table`             |
-| `resource.service`   | `mariadb`              |
-| `description`        | `table description`    |
-| `profile.total_rows` | `1100`                 |
-| `schema`             | [][column](#column)    |
+- **Type:** `table`
+- **URN format:** `urn:mariadb:{scope}:table:{database}.{table}`
 
-### Column
+### Properties
 
-| Field         | Sample Value         |
-| :------------ | :------------------- |
-| `name`        | `total_price`        |
-| `description` | `item's total price` |
-| `data_type`   | `decimal`            |
-| `is_nullable` | `true`               |
-| `length`      | `11`                 |
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column metadata objects. |
+
+#### Column object
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `name` | `string` | Column name. |
+| `description` | `string` | Column comment (omitted when empty). |
+| `data_type` | `string` | Data type of the column. |
+| `is_nullable` | `bool` | Whether the column is nullable. |
+| `length` | `int` | Maximum character length (omitted when 0). |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

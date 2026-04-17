@@ -1,55 +1,64 @@
 # grafana
 
+Extract dashboard metadata from a Grafana server.
+
 ## Usage
 
 ```yaml
 source:
   name: grafana
   config:
-    base_url: grafana_server
-    api_key: your_api_key
+    base_url: http://localhost:3000
+    api_key: Bearer qweruqwryqwLKJ
     exclude:
       dashboards:
-        - dashboard_ud_1
-        - dashboard_ud_2
+        - dashboard_uid_1
+        - dashboard_uid_2
       panels:
         - dashboard_uid_3.panel_id_1
 ```
 
-## Inputs
+## Configuration
 
-| Key                  | Value      | Example                            | Description                                    |            |
-| :------------------- | :--------- | :--------------------------------- | :--------------------------------------------- | :--------- |
-| `base_url`           | `string`   | `http://localhost:3000`            | URL of the Grafana server                      | _required_ |
-| `api_key`            | `string`   | `Bearer qweruqwryqwLKJ`            | API key to access Grafana API                  | _required_ |
-| `exclude.dashboards` | `[]string` | `[dashboard_ud_1, dashboard_ud_2]` | List of dasboards to be excluded from crawling | _optional_ |
-| `exclude.panels`     | `[]string` | `[dashboard_uid_3.panel_id_1]`     | List of panels to be excluded from crawling    | _optional_ |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `base_url` | `string` | Yes | URL of the Grafana server. |
+| `api_key` | `string` | Yes | API key to access the Grafana API. |
+| `exclude.dashboards` | `[]string` | No | Dashboard UIDs to exclude from extraction. |
+| `exclude.panels` | `[]string` | No | Panel IDs to exclude, in the format `{dashboard_uid}.{panel_id}`. |
 
-## Outputs
+## Entities
 
-| Field              | Sample Value                                           |
-| :----------------- | :----------------------------------------------------- |
-| `resource.urn`     | `grafana.HzK8qNW7z`                                    |
-| `resource.name`    | `new-dashboard-copy`                                   |
-| `resource.service` | `grafana`                                              |
-| `resource.url`     | `http://localhost:3000/d/HzK8qNW7z/new-dashboard-copy` |
-| `charts`           | [][chart](#chart)                                      |
+- **Entity type:** `dashboard`
+- **URN format:** `urn:grafana:{scope}:dashboard:{uid}`
 
-### Chart
+### Properties
 
-| Field              | Sample Value                                                           |
-| :----------------- | :--------------------------------------------------------------------- |
-| `urn`              | `5WsKOvW7z.4`                                                          |
-| `name`             | `Panel Random`                                                         |
-| `type`             | `table`                                                                |
-| `source`           | `grafana`                                                              |
-| `description`      | `random description for this panel`                                    |
-| `url`              | `http://localhost:3000/d/5WsKOvW7z/test-dashboard-updated?viewPanel=4` |
-| `data_source`      | `postgres`                                                             |
-| `raw_query`        | `SELECT\n  urn,\n  created_at AS \"time\"\nFROM resources\nORDER BY 1` |
-| `dashboard_urn`    | `grafana.5WsKOvW7z`                                                    |
-| `dashboard_source` | `grafana`                                                              |
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.url` | `string` | Full URL to the dashboard. |
+| `properties.description` | `string` | Dashboard description (if set). |
+| `properties.charts` | `[]object` | List of panel/chart objects (see below). |
+
+### Chart sub-fields
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `urn` | `string` | Panel URN (`urn:grafana:{scope}:panel:{dashboard_uid}.{panel_id}`). |
+| `name` | `string` | Panel title. |
+| `type` | `string` | Panel visualization type (e.g. `table`, `graph`). |
+| `source` | `string` | Always `grafana`. |
+| `description` | `string` | Panel description (if set). |
+| `url` | `string` | Direct URL to the panel. |
+| `data_source` | `string` | Data source type (if set). |
+| `raw_query` | `string` | Raw SQL query from the first target (if set). |
+| `dashboard_urn` | `string` | Parent dashboard URN. |
+| `dashboard_source` | `string` | Always `grafana`. |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guide](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

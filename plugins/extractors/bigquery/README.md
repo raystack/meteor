@@ -1,4 +1,6 @@
-# bigquery
+# BigQuery
+
+Extract table metadata, schema, statistics, and lineage from Google BigQuery.
 
 ## Usage
 
@@ -16,12 +18,12 @@ source:
       tables:
         - dataset_c.table_a
     max_page_size: 100
-    profile_column: true
+    include_column_profile: true
     build_view_lineage: true
     # Only one of service_account_base64 / service_account_json is needed.
-    # If both are present, service_account_base64 takes precedence
-    service_account_base64: _________BASE64_ENCODED_SERVICE_ACCOUNT_________________
-    service_account_json:
+    # If both are present, service_account_base64 takes precedence.
+    service_account_base64: ____base64_encoded_service_account____
+    service_account_json: |-
       {
         "type": "service_account",
         "private_key_id": "xxxxxxx",
@@ -31,90 +33,111 @@ source:
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "xxxxxxx",
-        "client_x509_cert_url": "xxxxxxx",
+        "client_x509_cert_url": "xxxxxxx"
       }
     collect_table_usage: false
     usage_period_in_day: 7
     usage_project_ids:
       - google-project-id
       - other-google-project-id
+    concurrency: 10
 ```
 
-## Inputs
+## Configuration
 
-| Key                      | Value      | Example                                        | Description                                                                                                                                      |            |
-| :----------------------- | :--------- | :--------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
-| `project_id`             | `string`   | `my-project`                                   | BigQuery Project ID                                                                                                                              | _required_ |
-| `service_account_base64` | `string`   | `____BASE64_ENCODED_SERVICE_ACCOUNT____`       | Service Account in base64 encoded string. Takes precedence over `service_account_json` value                                                     | _optional_ |
-| `service_account_json`   | `string`   | `{"private_key": .., "private_id": ...}`       | Service Account in JSON string                                                                                                                   | _optional_ |
-| `table_pattern`          | `string`   | `gofood.fact_`                                 | Regex pattern to filter which bigquery table to scan (whitelist)                                                                                 | _optional_ |
-| `max_page_size`          | `int`      | `100`                                          | max page size hint used for fetching datasets/tables/rows from bigquery                                                                          | _optional_ |
-| `include_column_profile` | `bool`     | `true`                                         | true if you want to profile the column value such min, max, med, avg, top, and freq                                                              | _optional_ |
-| `max_preview_rows`       | `int`      | `30`                                           | max number of preview rows to fetch, `0` will skip preview fetching, `-1` will restrict adding preview_rows key in asset data . Default to `30`. | _optional_ |
-| `mix_values`             | `bool`     | `false`                                        | true if you want to mix the column values with the preview rows. Default to `false`.                                                             | _optional_ |
-| `collect_table_usage`    | `boolean`  | `false`                                        | toggle feature to collect table usage, `true` will enable collecting table usage. Default to `false`.                                            | _optional_ |
-| `usage_period_in_day`    | `int`      | `7`                                            | collecting log from `(now - usage_period_in_day)` until `now`. only matter if `collect_table_usage` is true. Default to `7`.                     | _optional_ |
-| `usage_project_ids`      | `[]string` | `[google-project-id, other-google-project-id]` | collecting log from defined GCP Project IDs. Default to BigQuery Project ID.                                                                     | _optional_ |
+| Key | Value | Example | Description | |
+| :-- | :---- | :------ | :---------- | :-- |
+| `project_id` | `string` | `my-project` | BigQuery Project ID | _required_ |
+| `service_account_base64` | `string` | `____BASE64____` | Base64-encoded service account JSON. Takes precedence over `service_account_json` | _optional_ |
+| `service_account_json` | `string` | `{"private_key": ...}` | Service account credentials as a JSON string | _optional_ |
+| `table_pattern` | `string` | `gofood.fact_` | Regex pattern to whitelist tables to extract | _optional_ |
+| `exclude.datasets` | `[]string` | `[dataset_a]` | Dataset IDs to exclude | _optional_ |
+| `exclude.tables` | `[]string` | `[dataset_c.table_a]` | Table names in `datasetID.tableID` format to exclude | _optional_ |
+| `max_page_size` | `int` | `100` | Page size hint for BigQuery API list calls | _optional_ |
+| `dataset_page_size` | `int` | `10` | Page size for listing datasets. Falls back to `max_page_size` | _optional_ |
+| `table_page_size` | `int` | `50` | Page size for listing tables. Falls back to `max_page_size` | _optional_ |
+| `include_column_profile` | `bool` | `true` | Profile each column (min, max, avg, med, unique, count, top) | _optional_ |
+| `max_preview_rows` | `int` | `30` | Number of preview rows to fetch. `0` skips preview, `-1` omits the key entirely. Default `30` | _optional_ |
+| `mix_values` | `bool` | `false` | Shuffle column values across preview rows for privacy. Default `false` | _optional_ |
+| `build_view_lineage` | `bool` | `true` | Parse view SQL to extract upstream lineage edges. Default `false` | _optional_ |
+| `collect_table_usage` | `bool` | `false` | Collect table usage statistics from BigQuery audit logs. Default `false` | _optional_ |
+| `usage_period_in_day` | `int` | `7` | Number of days of audit logs to scan. Default `7` | _optional_ |
+| `usage_project_ids` | `[]string` | `[my-project]` | GCP project IDs to scan for audit logs. Defaults to `project_id` | _optional_ |
+| `concurrency` | `int` | `10` | Number of tables to process concurrently. Default `10` | _optional_ |
 
-### _Notes_
+### Notes
 
-- Leaving `service_account_json` and `service_account_base64` blank will default
-  to [Google's default authentication][google-default-auth]. It is
-  recommended if Meteor instance runs inside the same Google Cloud environment as the BigQuery project.
-- Service account needs to have `bigquery.privateLogsViewer` role to be able to collect bigquery audit logs.
-- Setting `max_preview_rows` to `-1` will restrict adding preview_rows key in asset data
+- Leaving `service_account_json` and `service_account_base64` blank defaults to [Google Application Default Credentials](https://cloud.google.com/docs/authentication/production#automatically). Recommended when Meteor runs inside the same GCP environment.
+- The service account needs the `bigquery.privateLogsViewer` role to collect audit logs.
 
-## Outputs
+## Entities
 
-| Field                          | Sample Value                                                                                                                                                                                                       | Description                                             |
-| :----------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------ |
-| `resource.urn`                 | `project_id.dataset_name.table_name`                                                                                                                                                                               |                                                         |
-| `resource.name`                | `table_name`                                                                                                                                                                                                       |                                                         |
-| `resource.service`             | `bigquery`                                                                                                                                                                                                         |                                                         |
-| `description`                  | `table description`                                                                                                                                                                                                |                                                         |
-| `profile.total_rows`           | `2100`                                                                                                                                                                                                             |                                                         |
-| `profile.usage_count`          | `15`                                                                                                                                                                                                               |                                                         |
-| `profile.joins`                | [][Join](#Join)                                                                                                                                                                                                    |                                                         |
-| `profile.filters`              | [`"WHERE t.param_3 = 'the_param' AND t.column_1 = \"xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx\""`,`"WHERE event_timestamp >= TIMESTAMP(\"2021-10-29\", \"UTC\") AND event_timestamp < TIMESTAMP(\"2021-11-22T02:01:06Z\")"`] |                                                         |
-| `schema`                       | [][Column](#column)                                                                                                                                                                                                |                                                         |
-| `properties.partition_data`    | `"partition_data": {"partition_field": "data_date", "require_partition_filter": false, "time_partition": {"partition_by": "DAY","partition_expire": 0 } }`                                                         | partition related data for time and range partitioning. |
-| `properties.clustering_fields` | `['created_at', 'updated_at']`                                                                                                                                                                                     | list of fields on which the table is clustered          |
-| `properties.partition_field`   | `created_at`                                                                                                                                                                                                       | returns the field on which table is time partitioned    |
+### Entity: `table`
 
-### Partition Data
+**URN format:** `urn:bigquery:{project_id}:table:{project_id}:{dataset_id}.{table_id}`
 
-| Field                                     | Sample Value | Description                                                                                                                                                                        |
-| :---------------------------------------- | :----------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `partition_field`                         | `created_at` | field on which the table is partitioned either by TimePartitioning or RangePartitioning. In case field is empty for TimePartitioning \_PARTITIONTIME is returned instead of empty. |
-| `require_partition_filter`                | `true`       | boolean value which denotes if every query on the bigquery table must include at least one predicate that only references the partitioning column                                  |
-| `time_partition.partition_by`             | `HOUR`       | returns partition type HOUR/DAY/MONTH/YEAR                                                                                                                                         |
-| `time_partition.partition_expire_seconds` | `0`          | time in which data will expire from this partition. If 0 it will not expire.                                                                                                       |
-| `range_partition.interval`                | `10`         | width of a interval range                                                                                                                                                          |
-| `range_partition.start`                   | `0`          | start value for partition inclusive of this value                                                                                                                                  |
-| `range_partition.end`                     | `100`        | end value for partition exclusive of this value                                                                                                                                    |
+Produced by `plugins.BigQueryURN(projectID, datasetID, tableID)`.
 
-### Column
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `entity.description` | `string` | Table description from BigQuery metadata |
+| `entity.properties.full_qualified_name` | `string` | Fully qualified table name (`project.dataset.table`) |
+| `entity.properties.dataset` | `string` | Dataset ID |
+| `entity.properties.project` | `string` | Project ID |
+| `entity.properties.type` | `string` | BigQuery table type (`TABLE`, `VIEW`, `MATERIALIZED_VIEW`, etc.) |
+| `entity.properties.partition_data` | `object` | Partition configuration (see below) |
+| `entity.properties.clustering_fields` | `[]string` | Fields the table is clustered on |
+| `entity.properties.sql` | `string` | View SQL query (views and materialized views only) |
+| `entity.properties.columns` | `[]object` | Column schema (see below) |
+| `entity.properties.profile` | `object` | Table-level usage profile (see below) |
+| `entity.properties.create_time` | `string` | Table creation timestamp (RFC 3339) |
+| `entity.properties.update_time` | `string` | Last modification timestamp (RFC 3339) |
+| `entity.properties.preview_fields` | `[]string` | Column names for preview rows |
+| `entity.properties.preview_rows` | `[]array` | Sample data rows |
+| `entity.properties.labels` | `map[string]string` | BigQuery table labels |
 
-| Field         | Sample Value                           |
-| :------------ | :------------------------------------- |
-| `name`        | `total_price`                          |
-| `description` | `item's total price`                   |
-| `data_type`   | `decimal`                              |
-| `is_nullable` | `true`                                 |
-| `length`      | `12,2`                                 |
-| `profile`     | `{"min":...,"max": ...,"unique": ...}` |
+#### Partition Data (`entity.properties.partition_data`)
 
-### Join
+| Key | Type | Description |
+| :-- | :--- | :---------- |
+| `partition_field` | `string` | Partition column. Defaults to `_PARTITIONTIME` for time partitioning with no explicit field |
+| `require_partition_filter` | `bool` | Whether queries must filter on the partition column |
+| `time_partition.partition_by` | `string` | Time partition granularity: `HOUR`, `DAY`, `MONTH`, `YEAR` |
+| `time_partition.partition_expire_seconds` | `float` | Seconds until partition data expires. `0` means no expiry |
+| `range_partition.start` | `int` | Range partition start (inclusive) |
+| `range_partition.end` | `int` | Range partition end (exclusive) |
+| `range_partition.interval` | `int` | Range partition interval width |
 
-| Field        | Sample Value                                                                                                                                            |
-| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `urn`        | `project_id.dataset_name.table_name`                                                                                                                    |
-| `count`      | `3`                                                                                                                                                     |
-| `conditions` | [`"ON target.column_1 = source.column_1 and target.param_name = source.param_name"`,`"ON DATE(target.event_timestamp) = DATE(source.event_timestamp)"`] |
+#### Column (`entity.properties.columns[]`)
+
+| Key | Type | Description |
+| :-- | :--- | :---------- |
+| `name` | `string` | Column name |
+| `data_type` | `string` | BigQuery data type (`STRING`, `INTEGER`, `RECORD`, etc.) |
+| `description` | `string` | Column description |
+| `is_nullable` | `bool` | Whether the column is nullable |
+| `mode` | `string` | Column mode: `NULLABLE`, `REQUIRED`, or `REPEATED` |
+| `policy_tags` | `[]string` | Data Catalog policy tags in `taxonomy:tag:resource` format |
+| `columns` | `[]object` | Nested columns (for `RECORD` type) |
+| `profile` | `object` | Column profile with `min`, `max`, `avg`, `med`, `unique`, `count`, `top` (when `include_column_profile` is enabled) |
+
+#### Profile (`entity.properties.profile`)
+
+Populated when `collect_table_usage` is enabled.
+
+| Key | Type | Description |
+| :-- | :--- | :---------- |
+| `total_rows` | `int` | Number of rows in the table |
+| `usage_count` | `int` | Number of times the table was queried in the audit log window |
+| `common_joins` | `[]object` | Tables commonly joined with this one. Each entry has `urn`, `count`, and `conditions` |
+| `filters` | `[]string` | WHERE clause expressions found in queries against this table |
+
+## Edges
+
+| Type | Source | Target | Description |
+| :--- | :----- | :----- | :---------- |
+| `lineage` | upstream table URN | this table URN | Upstream dependency parsed from view SQL. Emitted when `build_view_lineage` is enabled and the table is a view or materialized view |
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on
-contributing to this module.
-
-[google-default-auth]: https://cloud.google.com/docs/authentication/production#automatically
+Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.

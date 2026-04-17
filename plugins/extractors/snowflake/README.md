@@ -1,10 +1,12 @@
 # snowflake
 
+Extract table metadata from Snowflake databases.
+
 ## Usage
 
 ```yaml
 source:
-  type: snowflake
+  name: snowflake
   config:
     connection_url: user:password@my_organization-my_account/mydb
     exclude:
@@ -15,33 +17,34 @@ source:
         - database_c.table_a
 ```
 
-## Inputs
+## Configuration
 
-| Key                 | Value      | Example                                        | Description                        |            |
-| :------------------ | :--------- | :--------------------------------------------- | :--------------------------------- | :--------- |
-| `connection_url`    | `string`   | `user:password@org22-acc123/mydb`              | URL to access the snowflake server | _required_ |
-| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]`                 | List of databases to be excluded   | _optional_ |
-| `exclude.tables`    | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded      | _optional_ |
+| Key                 | Type       | Required | Description                                           |
+| :------------------ | :--------- | :------- | :---------------------------------------------------- |
+| `connection_url`    | `string`   | Yes      | Snowflake connection URL                               |
+| `exclude.databases` | `[]string` | No       | List of databases to exclude from extraction           |
+| `exclude.tables`    | `[]string` | No       | List of tables to exclude (format: `database.table`)   |
 
-## Outputs
+## Entities
 
-| Field              | Sample Value           |
-| :----------------- | :--------------------- |
-| `resource.urn`     | `my_database.my_table` |
-| `resource.name`    | `my_table`             |
-| `resource.service` | `snowflake`            |
-| `description`      | `table description`    |
-| `schema`           | [][column](#column)    |
+- Entity type: `table`
+- Source: `Snowflake`
+- URN format: `urn:snowflake:{scope}:table:{database}.{table}`
 
-### Column
+### Properties
 
-| Field         | Sample Value         |
-| :------------ | :------------------- |
-| `name`        | `total_price`        |
-| `description` | `item's total price` |
-| `data_type`   | `decimal`            |
-| `is_nullable` | `true`               |
-| `length`      | `11`                 |
+| Property                             | Type     | Description                            |
+| :----------------------------------- | :------- | :------------------------------------- |
+| `properties.columns`                 | `array`  | List of column metadata                |
+| `properties.columns[].name`          | `string` | Column name                            |
+| `properties.columns[].data_type`     | `string` | Data type of the column                |
+| `properties.columns[].is_nullable`   | `bool`   | Whether the column is nullable         |
+| `properties.columns[].description`   | `string` | Column comment (omitted if empty)      |
+| `properties.columns[].length`        | `int`    | Character maximum length (omitted if 0)|
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

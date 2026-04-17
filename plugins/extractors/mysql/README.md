@@ -1,4 +1,6 @@
-# mysql
+# MySQL
+
+Extract table metadata from a MySQL server.
 
 ## Usage
 
@@ -15,34 +17,38 @@ source:
         - database_c.table_a
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `connection_url` | `string` | `admin:pass123@tcp(localhost:3306)/` | URL to access the mysql server | *required* |
-| `exclude.databases` | `[]string` | `[`database_a`, `database_b`]` | List of databases to be excluded | *optional* |
-| `exclude.tables` | `[]string` | `[`database_c.table_a`, `database_c.table_b`]` | List of tables to be excluded | *optional* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `connection_url` | `string` | Yes | MySQL connection URL. |
+| `exclude.databases` | `[]string` | No | List of databases to exclude. |
+| `exclude.tables` | `[]string` | No | List of tables to exclude (`database.table` format). |
 
-## Outputs
+## Entities
 
-| Field | Sample Value |
-| :---- | :---- |
-| `resource.urn` | `mysql::my-mysql/my_database/my_table` |
-| `resource.name` | `my_table` |
-| `resource.service` | `mysql` |
-| `description` | `table description` |
-| `profile.total_rows` | `2100` |
-| `schema` | [][Column](#column) |
+- **Type:** `table`
+- **URN format:** `urn:mysql:{scope}:table:{database}.{table}`
 
-### Column
+### Properties
 
-| Field | Sample Value |
-| :---- | :---- |
-| `name` | `total_price` |
-| `description` | `item's total price` |
-| `data_type` | `decimal` |
-| `is_nullable` | `true` |
-| `length` | `12,2` |
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.columns` | `[]object` | List of column metadata objects. |
+
+#### Column object
+
+| Field | Type | Description |
+| :---- | :--- | :---------- |
+| `name` | `string` | Column name. |
+| `description` | `string` | Column comment (omitted when empty). |
+| `data_type` | `string` | Data type of the column. |
+| `is_nullable` | `bool` | Whether the column is nullable. |
+| `length` | `int` | Maximum character length (omitted when 0). |
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 

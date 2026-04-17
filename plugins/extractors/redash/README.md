@@ -1,5 +1,7 @@
 # redash
 
+Extract dashboard metadata from a Redash server.
+
 ## Usage
 
 ```yaml
@@ -8,30 +10,34 @@ source:
   config:
     base_url: https://redash.example.com
     api_key: t33I8i8OFnVt3t9Bjj2RXr8nCBz0xyzVZ318Zwbj
-
 ```
 
-## Inputs
+## Configuration
 
-| Key | Value | Example | Description |    |
-| :-- | :---- | :------ | :---------- | :- |
-| `base_url` | `string` | `https://redash.example.com` | Each endpoint is appended to your Redash base URL | *required* |
-| `api_key` | `string` | `t33I8i8OFnVt3t9Bjj2RXr8nCBz0xyzVZ318Zwbj` | Redash API calls support authentication with an API key | *required* |
+| Key | Type | Required | Description |
+| :-- | :--- | :------- | :---------- |
+| `base_url` | `string` | Yes | Base URL of the Redash server. |
+| `api_key` | `string` | Yes | API key for Redash authentication. |
 
-## Outputs
+## Entities
 
-| Field                  | Sample Value                                   |
-|:-----------------------|:-----------------------------------------------|
-| `resource.urn`         | `redash.dashboard_name`                        |
-| `resource.name`        | `dashboard_slug`                               |
-| `resource.service`     | `redash`                                       |
-| `resource.type`        | `dashboard`                                    |
-| `resource.url`         | `https://redash.example.com/dashboard_slug`    |
-| `resource.description` | `ID: dashboard_id, version: dashboard_version` |
+- **Entity type:** `dashboard`
+- **URN format:** `urn:redash:{scope}:dashboard:{dashboard_id}`
 
-### Chart
-Currently, no Redash public API is exposed to fetch charts detail in a particular dashboard.
+### Properties
+
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `properties.user_id` | `int` | ID of the dashboard owner. |
+| `properties.version` | `int` | Dashboard version number. |
+| `properties.slug` | `string` | Dashboard URL slug. |
+
+> **Note:** The Redash public API does not expose chart/widget details for dashboards, so `properties.charts` is not emitted.
+
+## Edges
+
+This extractor does not emit edges.
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guide](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
