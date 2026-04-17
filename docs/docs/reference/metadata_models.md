@@ -33,6 +33,7 @@ An Edge represents a relationship between two entities (ownership, lineage, etc.
 
 - **`owned_by`**: Indicates ownership. Replaces the old `owners` field.
 - **`lineage`**: Indicates data flow (upstream/downstream). Replaces the old `lineage.upstreams` and `lineage.downstreams` fields.
+- **`member_of`**: Indicates membership in a group, team, or organisation.
 
 ## Record
 
@@ -49,6 +50,8 @@ A Record is the unit of data flowing through the Meteor pipeline. It wraps an En
 - **topic**: Message bus topics (Kafka, Pub/Sub, Pulsar, etc.)
 - **job**: Scheduled/recurring data transformation tasks
 - **user**: User accounts (GitHub, LDAP, Google Suite, etc.)
+- **repository**: Source code repositories (GitHub, etc.)
+- **team**: Teams within an organisation (GitHub, etc.)
 - **application**: Services communicating over APIs
 - **model**: Machine learning models
 - **feature_table**: ML feature tables

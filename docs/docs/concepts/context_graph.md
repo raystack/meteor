@@ -8,8 +8,8 @@ Meteor closes this gap. By continuously extracting metadata — schemas, lineage
 
 A context graph is a connected, queryable representation of your data ecosystem. It captures not just what assets exist, but how they relate to each other:
 
-- **Nodes** represent assets: tables, dashboards, jobs, topics, models, buckets, users, groups.
-- **Edges** represent relationships: lineage (which table feeds which dashboard), ownership (who is responsible), and dependency (which job produces which dataset).
+- **Nodes** represent assets: tables, dashboards, jobs, topics, models, buckets, users, repositories, teams, groups.
+- **Edges** represent relationships: lineage (which table feeds which dashboard), ownership (who is responsible), membership (who belongs to which team), and dependency (which job produces which dataset).
 
 Unlike a flat catalog or a search index, a context graph preserves **structure**. It knows that a revenue dashboard depends on a sales table, which is produced by an ETL job, which reads from a Kafka topic. This structure is what makes AI useful over enterprise data.
 

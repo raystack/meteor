@@ -26,7 +26,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gocql/gocql v1.7.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-github/v37 v37.0.0
+	github.com/google/go-github/v68 v68.0.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/lib/pq v1.12.0

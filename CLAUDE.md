@@ -36,7 +36,7 @@ cmd/             CLI commands (run, lint, list, info, gen)
 
 **Entity** (`meteorv1beta1.Entity`):
 - `urn` - Unique resource name
-- `type` - Entity type (table, dashboard, topic, job, user, bucket, application, model, etc.)
+- `type` - Entity type (table, dashboard, topic, job, user, repository, team, bucket, application, model, etc.)
 - `name` - Human-readable name
 - `description` - Description
 - `source` - Source system (e.g. bigquery, postgres, kafka)
@@ -45,7 +45,7 @@ cmd/             CLI commands (run, lint, list, info, gen)
 **Edge** (`meteorv1beta1.Edge`):
 - `source_urn` - URN of the source entity
 - `target_urn` - URN of the target entity
-- `type` - Relationship type (`owned_by`, `lineage`, etc.)
+- `type` - Relationship type (`owned_by`, `lineage`, `member_of`, etc.)
 - `source` - Source system
 - `properties` - Additional metadata
 

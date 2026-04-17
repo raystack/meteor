@@ -49,8 +49,20 @@ that particular extractor can be found by visiting the link in the `type` field.
 
 | Type                      | Email | Username | FullName | Title | IsActive | ManagerEmail | Profiles | Memberships | facets | common |
 | :------------------------ | :---- | :------- | :------- | :---- | :------- | :----------- | :------- | :---------- | :----- | :----- |
-| [`github`][github-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✗           | ✗      | ✗      |
+| [`github`][github-readme] | ✅    | ✅       | ✅       | ✗     | ✅       | ✗            | ✗        | ✅          | ✗      | ✗      |
 | [`gsuite`][gsuite-readme] | ✅    | ✗        | ✅       | ✗     | ✅       | ✅           | ✗        | ✗           | ✗      | ✗      |
+
+### Repository
+
+| Type                      | Description | Language | Visibility | Topics | Ownership | Custom |
+| :------------------------ | :---------- | :------- | :--------- | :----- | :-------- | :----- |
+| [`github`][github-readme] | ✅          | ✅       | ✅         | ✅     | ✅        | ✗      |
+
+### Team
+
+| Type                      | Description | Privacy | Permission | Membership | Custom |
+| :------------------------ | :---------- | :------ | :--------- | :--------- | :----- |
+| [`github`][github-readme] | ✅          | ✅      | ✅         | ✅         | ✗      |
 
 ### Bucket
 
