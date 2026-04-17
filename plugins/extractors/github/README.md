@@ -1,6 +1,6 @@
 # GitHub
 
-Extract metadata from a GitHub organisation including users, repositories, and teams.
+Extract metadata from a GitHub organisation including users, repositories, teams, and documents.
 
 ## Usage
 
@@ -15,19 +15,28 @@ source:
       - users
       - repositories
       - teams
+      - documents
+    # docs configures document extraction (only used when "documents" is in extract).
+    docs:
+      repos: ["meteor"]
+      paths: ["docs"]
+      pattern: "*.md"
 ```
 
 ## Inputs
 
-| Key       | Value      | Example      | Description                                                        |            |
-| :-------- | :--------- | :----------- | :----------------------------------------------------------------- | :--------- |
-| `org`     | `string`   | `raystack`   | Name of the GitHub organisation                                    | _required_ |
-| `token`   | `string`   | `ghp_xxx`    | GitHub API access token                                            | _required_ |
-| `extract` | `[]string` | `["users"]`  | Entity types to extract. Defaults to all: users, repositories, teams | _optional_ |
+| Key            | Value      | Example      | Description                                                                    |            |
+| :------------- | :--------- | :----------- | :----------------------------------------------------------------------------- | :--------- |
+| `org`          | `string`   | `raystack`   | Name of the GitHub organisation                                                | _required_ |
+| `token`        | `string`   | `ghp_xxx`    | GitHub API access token                                                        | _required_ |
+| `extract`      | `[]string` | `["users"]`  | Entity types to extract. Defaults to all: users, repositories, teams, documents | _optional_ |
+| `docs.repos`   | `[]string` | `["meteor"]` | Repositories to scan for documents. Defaults to all org repos                  | _optional_ |
+| `docs.paths`   | `[]string` | `["docs"]`   | Directory paths to scan within each repo. Defaults to `["docs"]`               | _optional_ |
+| `docs.pattern` | `string`   | `"*.md"`     | Glob pattern to match files. Defaults to `"*.md"`                              | _optional_ |
 
 ## Outputs
 
-The extractor emits three entity types and their relationships as edges.
+The extractor emits four entity types and their relationships as edges.
 
 ### Entity: `user`
 
@@ -69,13 +78,28 @@ The extractor emits three entity types and their relationships as edges.
 | `properties.privacy`     | `closed`                                  |
 | `properties.permission`  | `push`                                    |
 
+### Entity: `document`
+
+| Field                    | Sample Value                                          |
+| :----------------------- | :---------------------------------------------------- |
+| `urn`                    | `urn:github:my-org:document:abc123...`                |
+| `name`                   | `getting-started`                                     |
+| `properties.path`        | `docs/getting-started.md`                             |
+| `properties.file_name`   | `getting-started.md`                                  |
+| `properties.content`     | `# Getting Started\n...`                              |
+| `properties.html_url`    | `https://github.com/raystack/meteor/blob/main/docs/...` |
+| `properties.repo`        | `raystack/meteor`                                     |
+| `properties.size`        | `2048`                                                |
+| `properties.sha`         | `abc123def456...`                                     |
+
 ### Edges
 
-| Type        | Source       | Target     | Description                          |
-| :---------- | :----------- | :--------- | :----------------------------------- |
-| `member_of` | `user`       | `org`      | User is a member of the organisation |
-| `owned_by`  | `repository` | `user`     | Repository is owned by a user        |
-| `member_of` | `user`       | `team`     | User is a member of a team           |
+| Type         | Source       | Target       | Description                            |
+| :----------- | :----------- | :----------- | :------------------------------------- |
+| `member_of`  | `user`       | `org`        | User is a member of the organisation   |
+| `owned_by`   | `repository` | `user`       | Repository is owned by a user          |
+| `member_of`  | `user`       | `team`       | User is a member of a team             |
+| `belongs_to` | `document`   | `repository` | Document belongs to a repository       |
 
 ## Contributing
 

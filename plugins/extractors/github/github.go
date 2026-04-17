@@ -4,6 +4,8 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	gh "github.com/google/go-github/v68/github"
 	"github.com/raystack/meteor/models"
@@ -18,9 +20,16 @@ import (
 var summary string
 
 type Config struct {
-	Org     string   `json:"org" yaml:"org" mapstructure:"org" validate:"required"`
-	Token   string   `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
-	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Org     string     `json:"org" yaml:"org" mapstructure:"org" validate:"required"`
+	Token   string     `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
+	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Docs    DocsConfig `json:"docs" yaml:"docs" mapstructure:"docs"`
+}
+
+type DocsConfig struct {
+	Repos   []string `json:"repos" yaml:"repos" mapstructure:"repos"`
+	Paths   []string `json:"paths" yaml:"paths" mapstructure:"paths"`
+	Pattern string   `json:"pattern" yaml:"pattern" mapstructure:"pattern"`
 }
 
 var sampleConfig = `
@@ -31,10 +40,20 @@ token: github_token
 extract:
   - users
   - repositories
-  - teams`
+  - teams
+  - documents
+# docs configures document extraction (only used when "documents" is in extract).
+docs:
+  # repos limits which repositories to scan. If empty, scans all org repos.
+  repos: []
+  # paths specifies directory paths to scan for documents. Defaults to ["docs"].
+  paths:
+    - docs
+  # pattern is a glob pattern to match files. Defaults to "*.md".
+  pattern: "*.md"`
 
 var info = plugins.Info{
-	Description:  "Extract metadata from a GitHub organisation including users, repositories, and teams.",
+	Description:  "Extract metadata from a GitHub organisation including users, repositories, teams, and documents.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"platform", "extractor"},
@@ -67,6 +86,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		"users":        true,
 		"repositories": true,
 		"teams":        true,
+		"documents":    true,
 	}
 	if len(e.config.Extract) > 0 {
 		e.extract = make(map[string]bool, len(e.config.Extract))
@@ -97,6 +117,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	if e.extract["teams"] {
 		if err := e.extractTeams(ctx, emit); err != nil {
 			return fmt.Errorf("extract teams: %w", err)
+		}
+	}
+	if e.extract["documents"] {
+		if err := e.extractDocuments(ctx, emit); err != nil {
+			return fmt.Errorf("extract documents: %w", err)
 		}
 	}
 	return nil
@@ -274,6 +299,132 @@ func (e *Extractor) buildTeamRecord(ctx context.Context, team *gh.Team) (models.
 	}
 
 	return models.NewRecord(entity, edges...), nil
+}
+
+func (e *Extractor) extractDocuments(ctx context.Context, emit plugins.Emit) error {
+	paths := e.config.Docs.Paths
+	if len(paths) == 0 {
+		paths = []string{"docs"}
+	}
+	pattern := e.config.Docs.Pattern
+	if pattern == "" {
+		pattern = "*.md"
+	}
+
+	repos, err := e.listDocRepos(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, repo := range repos {
+		repoURN := models.NewURN("github", e.UrnScope, "repository", repo.GetNodeID())
+		for _, dir := range paths {
+			if err := e.extractDocsFromPath(ctx, emit, repo, repoURN, dir, pattern); err != nil {
+				e.logger.Warn("failed to extract docs from path, skipping",
+					"repo", repo.GetFullName(), "path", dir, "error", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Extractor) listDocRepos(ctx context.Context) ([]*gh.Repository, error) {
+	if len(e.config.Docs.Repos) > 0 {
+		var repos []*gh.Repository
+		for _, name := range e.config.Docs.Repos {
+			repo, _, err := e.client.Repositories.Get(ctx, e.config.Org, name)
+			if err != nil {
+				e.logger.Warn("failed to get repo for docs, skipping", "repo", name, "error", err)
+				continue
+			}
+			repos = append(repos, repo)
+		}
+		return repos, nil
+	}
+
+	// Fall back to all org repos.
+	var all []*gh.Repository
+	opts := &gh.RepositoryListByOrgOptions{
+		ListOptions: gh.ListOptions{PerPage: 100},
+	}
+	for {
+		repos, resp, err := e.client.Repositories.ListByOrg(ctx, e.config.Org, opts)
+		if err != nil {
+			return nil, fmt.Errorf("list repositories for docs: %w", err)
+		}
+		all = append(all, repos...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+	return all, nil
+}
+
+func (e *Extractor) extractDocsFromPath(ctx context.Context, emit plugins.Emit, repo *gh.Repository, repoURN, dir, pattern string) error {
+	_, dirContents, _, err := e.client.Repositories.GetContents(ctx, e.config.Org, repo.GetName(), dir, nil)
+	if err != nil {
+		return fmt.Errorf("get contents of %s: %w", dir, err)
+	}
+
+	for _, entry := range dirContents {
+		switch entry.GetType() {
+		case "file":
+			matched, _ := filepath.Match(pattern, entry.GetName())
+			if !matched {
+				continue
+			}
+			if err := e.emitDocument(ctx, emit, repo, repoURN, entry); err != nil {
+				e.logger.Warn("failed to emit document, skipping",
+					"repo", repo.GetFullName(), "path", entry.GetPath(), "error", err)
+			}
+		case "dir":
+			if err := e.extractDocsFromPath(ctx, emit, repo, repoURN, entry.GetPath(), pattern); err != nil {
+				e.logger.Warn("failed to recurse into directory, skipping",
+					"repo", repo.GetFullName(), "path", entry.GetPath(), "error", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Extractor) emitDocument(ctx context.Context, emit plugins.Emit, repo *gh.Repository, repoURN string, entry *gh.RepositoryContent) error {
+	// Fetch full file content (the directory listing doesn't include content).
+	file, _, _, err := e.client.Repositories.GetContents(ctx, e.config.Org, repo.GetName(), entry.GetPath(), nil)
+	if err != nil {
+		return fmt.Errorf("get file %s: %w", entry.GetPath(), err)
+	}
+
+	content, err := file.GetContent()
+	if err != nil {
+		return fmt.Errorf("decode content of %s: %w", entry.GetPath(), err)
+	}
+
+	name := strings.TrimSuffix(entry.GetName(), filepath.Ext(entry.GetName()))
+	urn := models.NewURN("github", e.UrnScope, "document", file.GetSHA())
+
+	props := map[string]any{
+		"path":      file.GetPath(),
+		"file_name": file.GetName(),
+		"content":   content,
+		"html_url":  file.GetHTMLURL(),
+		"repo":      repo.GetFullName(),
+		"size":      file.GetSize(),
+		"sha":       file.GetSHA(),
+	}
+
+	entity := models.NewEntity(urn, "document", name, "github", props)
+	edges := []*meteorv1beta1.Edge{
+		{
+			SourceUrn: urn,
+			TargetUrn: repoURN,
+			Type:      "belongs_to",
+			Source:    "github",
+		},
+	}
+
+	emit(models.NewRecord(entity, edges...))
+	return nil
 }
 
 func init() {

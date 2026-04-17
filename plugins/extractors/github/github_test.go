@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	gh "github.com/google/go-github/v68/github"
@@ -214,6 +215,185 @@ func TestExtract(t *testing.T) {
 		}
 	})
 
+	t.Run("should extract documents with belongs_to edges", func(t *testing.T) {
+		server := setupServer(t, serverConfig{
+			repos: []*gh.Repository{
+				{
+					NodeID:   strPtr("R_repo1"),
+					Name:     strPtr("meteor"),
+					FullName: strPtr("my-org/meteor"),
+				},
+			},
+			repoContents: map[string]map[string]any{
+				"meteor/docs": {
+					"type": "dir",
+					"entries": []*gh.RepositoryContent{
+						{
+							Type: strPtr("file"),
+							Name: strPtr("getting-started.md"),
+							Path: strPtr("docs/getting-started.md"),
+							SHA:  strPtr("abc123"),
+							Size: intPtr(1024),
+						},
+						{
+							Type: strPtr("file"),
+							Name: strPtr("image.png"),
+							Path: strPtr("docs/image.png"),
+							SHA:  strPtr("img456"),
+							Size: intPtr(4096),
+						},
+					},
+				},
+				"meteor/docs/getting-started.md": {
+					"type": "file",
+					"file": &gh.RepositoryContent{
+						Type:     strPtr("file"),
+						Name:     strPtr("getting-started.md"),
+						Path:     strPtr("docs/getting-started.md"),
+						SHA:      strPtr("abc123"),
+						Size:     intPtr(1024),
+						Encoding: strPtr("base64"),
+						Content:  strPtr("IyBHZXR0aW5nIFN0YXJ0ZWQKClRoaXMgaXMgYSBndWlkZS4="),
+						HTMLURL:  strPtr("https://github.com/my-org/meteor/blob/main/docs/getting-started.md"),
+					},
+				},
+			},
+		})
+		defer server.Close()
+
+		extr := initExtractor(t, server.URL, map[string]any{
+			"extract": []string{"documents"},
+			"docs": map[string]any{
+				"repos":   []string{"meteor"},
+				"paths":   []string{"docs"},
+				"pattern": "*.md",
+			},
+		})
+
+		emitter := mocks.NewEmitter()
+		err := extr.Extract(context.Background(), emitter.Push)
+		require.NoError(t, err)
+
+		records := emitter.Get()
+		require.Len(t, records, 1)
+
+		entity := records[0].Entity()
+		assert.Equal(t, models.NewURN("github", urnScope, "document", "abc123"), entity.GetUrn())
+		assert.Equal(t, "document", entity.GetType())
+		assert.Equal(t, "getting-started", entity.GetName())
+		assert.Equal(t, "github", entity.GetSource())
+
+		props := entity.GetProperties().AsMap()
+		assert.Equal(t, "docs/getting-started.md", props["path"])
+		assert.Equal(t, "getting-started.md", props["file_name"])
+		assert.Equal(t, "# Getting Started\n\nThis is a guide.", props["content"])
+		assert.Equal(t, "https://github.com/my-org/meteor/blob/main/docs/getting-started.md", props["html_url"])
+		assert.Equal(t, "my-org/meteor", props["repo"])
+		assert.Equal(t, "abc123", props["sha"])
+
+		edges := records[0].Edges()
+		require.Len(t, edges, 1)
+		assert.Equal(t, "belongs_to", edges[0].GetType())
+		assert.Equal(t, models.NewURN("github", urnScope, "document", "abc123"), edges[0].GetSourceUrn())
+		assert.Equal(t, models.NewURN("github", urnScope, "repository", "R_repo1"), edges[0].GetTargetUrn())
+	})
+
+	t.Run("should recurse into subdirectories for documents", func(t *testing.T) {
+		server := setupServer(t, serverConfig{
+			repos: []*gh.Repository{
+				{
+					NodeID:   strPtr("R_repo1"),
+					Name:     strPtr("meteor"),
+					FullName: strPtr("my-org/meteor"),
+				},
+			},
+			repoContents: map[string]map[string]any{
+				"meteor/docs": {
+					"type": "dir",
+					"entries": []*gh.RepositoryContent{
+						{
+							Type: strPtr("dir"),
+							Name: strPtr("guides"),
+							Path: strPtr("docs/guides"),
+						},
+					},
+				},
+				"meteor/docs/guides": {
+					"type": "dir",
+					"entries": []*gh.RepositoryContent{
+						{
+							Type: strPtr("file"),
+							Name: strPtr("setup.md"),
+							Path: strPtr("docs/guides/setup.md"),
+							SHA:  strPtr("def456"),
+							Size: intPtr(512),
+						},
+					},
+				},
+				"meteor/docs/guides/setup.md": {
+					"type": "file",
+					"file": &gh.RepositoryContent{
+						Type:     strPtr("file"),
+						Name:     strPtr("setup.md"),
+						Path:     strPtr("docs/guides/setup.md"),
+						SHA:      strPtr("def456"),
+						Size:     intPtr(512),
+						Encoding: strPtr("base64"),
+						Content:  strPtr("IyBTZXR1cA=="),
+						HTMLURL:  strPtr("https://github.com/my-org/meteor/blob/main/docs/guides/setup.md"),
+					},
+				},
+			},
+		})
+		defer server.Close()
+
+		extr := initExtractor(t, server.URL, map[string]any{
+			"extract": []string{"documents"},
+			"docs": map[string]any{
+				"repos": []string{"meteor"},
+				"paths": []string{"docs"},
+			},
+		})
+
+		emitter := mocks.NewEmitter()
+		err := extr.Extract(context.Background(), emitter.Push)
+		require.NoError(t, err)
+
+		records := emitter.Get()
+		require.Len(t, records, 1)
+
+		entity := records[0].Entity()
+		assert.Equal(t, "setup", entity.GetName())
+		assert.Equal(t, "# Setup", entity.GetProperties().AsMap()["content"])
+	})
+
+	t.Run("should skip docs path that does not exist", func(t *testing.T) {
+		server := setupServer(t, serverConfig{
+			repos: []*gh.Repository{
+				{
+					NodeID:   strPtr("R_repo1"),
+					Name:     strPtr("meteor"),
+					FullName: strPtr("my-org/meteor"),
+				},
+			},
+			repoContents: map[string]map[string]any{},
+		})
+		defer server.Close()
+
+		extr := initExtractor(t, server.URL, map[string]any{
+			"extract": []string{"documents"},
+			"docs": map[string]any{
+				"repos": []string{"meteor"},
+				"paths": []string{"nonexistent"},
+			},
+		})
+
+		emitter := mocks.NewEmitter()
+		err := extr.Extract(context.Background(), emitter.Push)
+		require.NoError(t, err)
+		assert.Empty(t, emitter.Get())
+	})
+
 	t.Run("should extract all entity types by default", func(t *testing.T) {
 		server := setupServer(t, serverConfig{
 			members: []*gh.User{
@@ -357,11 +537,12 @@ func initExtractor(t *testing.T, serverURL string, extraConfig map[string]any) *
 }
 
 type serverConfig struct {
-	members     []*gh.User
-	userDetails map[string]*gh.User
-	repos       []*gh.Repository
-	teams       []*gh.Team
-	teamMembers map[string][]*gh.User
+	members      []*gh.User
+	userDetails  map[string]*gh.User
+	repos        []*gh.Repository
+	teams        []*gh.Team
+	teamMembers  map[string][]*gh.User
+	repoContents map[string]map[string]any // key: "repo/path" -> {"type":"dir","entries":[]} or {"type":"file","file":*RepositoryContent}
 }
 
 func setupServer(t *testing.T, cfg serverConfig) *httptest.Server {
@@ -398,6 +579,39 @@ func setupServer(t *testing.T, cfg serverConfig) *httptest.Server {
 		} else {
 			writeJSON(w, []*gh.User{})
 		}
+	})
+	// Individual repo endpoint for docs.repos config.
+	mux.HandleFunc("/api/v3/repos/my-org/", func(w http.ResponseWriter, r *http.Request) {
+		urlPath := r.URL.Path
+		const prefix = "/api/v3/repos/my-org/"
+		rest := urlPath[len(prefix):]
+
+		// Check if this is a contents request: "{repo}/contents/{path}"
+		if idx := indexOf(rest, "/contents/"); idx >= 0 {
+			repoName := rest[:idx]
+			contentPath := rest[idx+len("/contents/"):]
+			key := repoName + "/" + contentPath
+			if entry, ok := cfg.repoContents[key]; ok {
+				if entry["type"] == "dir" {
+					writeJSON(w, entry["entries"])
+				} else {
+					writeJSON(w, entry["file"])
+				}
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+			return
+		}
+
+		// Otherwise it's a repo get: "{repo}"
+		repoName := rest
+		for _, repo := range cfg.repos {
+			if repo.GetName() == repoName {
+				writeJSON(w, repo)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
 	})
 
 	return httptest.NewServer(mux)
@@ -448,7 +662,9 @@ func writeJSON(w http.ResponseWriter, v any) {
 	json.NewEncoder(w).Encode(v) //nolint:errcheck
 }
 
-func strPtr(s string) *string    { return &s }
-func boolPtr(b bool) *bool       { return &b }
-func intPtr(i int) *int          { return &i }
+func strPtr(s string) *string { return &s }
+func boolPtr(b bool) *bool    { return &b }
+func intPtr(i int) *int       { return &i }
+
+func indexOf(s, substr string) int { return strings.Index(s, substr) }
 
