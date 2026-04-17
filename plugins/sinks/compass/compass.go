@@ -14,8 +14,9 @@ type UpsertEntityRequest struct {
 
 // UpsertEdgeRequest is the payload for Compass v2 UpsertEdge endpoint.
 type UpsertEdgeRequest struct {
-	SourceURN string `json:"source_urn"`
-	TargetURN string `json:"target_urn"`
-	Type      string `json:"type"`
-	Source    string `json:"source"`
+	SourceURN  string         `json:"source_urn"`
+	TargetURN  string         `json:"target_urn"`
+	Type       string         `json:"type"`
+	Source     string         `json:"source"`
+	Properties map[string]any `json:"properties,omitempty"`
 }

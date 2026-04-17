@@ -126,6 +126,9 @@ func (s *Sink) sinkRecord(ctx context.Context, record models.Record) error {
 			Type:      edge.GetType(),
 			Source:    edge.GetSource(),
 		}
+		if edge.GetProperties() != nil {
+			edgeReq.Properties = edge.GetProperties().AsMap()
+		}
 		if edgeReq.Source == "" {
 			edgeReq.Source = entity.GetSource()
 		}

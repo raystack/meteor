@@ -233,6 +233,39 @@ func TestSink(t *testing.T) {
 		assert.Equal(t, "urn:user:bob@company.com", edge2.TargetURN)
 	})
 
+	t.Run("should forward edge properties", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		edgeProps, _ := structpb.NewStruct(map[string]any{"role": "admin"})
+		entity := &meteorv1beta1.Entity{
+			Urn:    "my-topic-urn",
+			Name:   "my-topic",
+			Source: "kafka",
+			Type:   "topic",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn:user:alice@company.com", Type: "owned_by", Source: "meteor", Properties: edgeProps},
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity, edges...)})
+		assert.NoError(t, err)
+
+		require.Len(t, client.requests, 2)
+
+		var edgeReq compass.UpsertEdgeRequest
+		decodeBody(t, client.requests[1], &edgeReq)
+		assert.Equal(t, upsertEdgeURL, reqURL(client.requests[1]))
+		assert.Equal(t, "owned_by", edgeReq.Type)
+		assert.Equal(t, map[string]any{"role": "admin"}, edgeReq.Properties)
+	})
+
 	t.Run("should send headers from config", func(t *testing.T) {
 		client := &mockHTTPClient{}
 		client.SetupResponse(200, `{}`)
