@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewAsset(t *testing.T) {
+func TestNewEntity(t *testing.T) {
 	cases := []struct {
 		typ string
 	}{
@@ -31,7 +31,7 @@ func TestNewAsset(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.typ, func(t *testing.T) {
-			obj, err := newAsset(tc.typ)
+			obj, err := newEntity(tc.typ)
 			require.NoError(t, err)
 
 			m, ok := obj.(*tengo.Map)
@@ -47,8 +47,8 @@ func TestNewAsset(t *testing.T) {
 	}
 }
 
-func TestNewAssetEmptyType(t *testing.T) {
-	_, err := newAsset("")
+func TestNewEntityEmptyType(t *testing.T) {
+	_, err := newEntity("")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "type must not be empty")
 }

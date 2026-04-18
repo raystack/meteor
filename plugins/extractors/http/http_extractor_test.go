@@ -530,6 +530,7 @@ func TestExtract(t *testing.T) {
 						},
 						"create_time": "2022-08-08T03:17:54Z",
 						"update_time": "2022-08-08T03:17:54Z",
+						"labels":      nil,
 						"upstreams": []any{
 							map[string]any{
 								"urn":     "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
@@ -560,6 +561,7 @@ func TestExtract(t *testing.T) {
 						},
 						"create_time": "2022-09-19T22:42:04Z",
 						"update_time": "2022-09-21T13:23:02Z",
+						"labels":      nil,
 						"upstreams": []any{
 							map[string]any{
 								"urn":     "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
@@ -673,7 +675,6 @@ func TestExtract(t *testing.T) {
 									"STREAMS":                           structpb.NewStringValue(`[{"SOURCE_KAFKA_TOPIC_NAMES":"segmentation-message","INPUT_SCHEMA_PROTO_CLASS":"com.company.esb.segmentation.UpdateLogMessage","INPUT_SCHEMA_TABLE":"table1","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-test-external-voucher-dagger-0001","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"3","SOURCE_KAFKA_NAME":"data-dagstream"}]`),
 								}}),
 							}}),
-					}}),
 					}},
 				},
 				{
@@ -733,7 +734,6 @@ func TestExtract(t *testing.T) {
 									"STREAMS":                                                 structpb.NewStringValue(`[{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"4","INPUT_SCHEMA_PROTO_CLASS":"company.esb.cartography.erp.ERPMapMatchingLogV2Message","INPUT_SCHEMA_TABLE":"data_streams_0","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"company-mainstream.company.io:6668","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-booking-map-matching-dagger-0002","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"aggregated-busy-driver-location-ping","SOURCE_PARQUET_FILE_DATE_RANGE":null,"SOURCE_PARQUET_FILE_PATHS":null}]`),
 								}}),
 							}}),
-						}}),
 					}},
 				},
 				{
@@ -774,7 +774,6 @@ func TestExtract(t *testing.T) {
 									"STREAMS":                           structpb.NewStringValue(`[{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"5","INPUT_SCHEMA_PROTO_CLASS":"company.esb.booking.GoFoodBookingLogMessage","INPUT_SCHEMA_TABLE":"gofood_booking","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0039","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-booking-log"},{"INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"1","INPUT_SCHEMA_PROTO_CLASS":"company.esb.gofood.NearbyEventMessage","INPUT_SCHEMA_TABLE":"gofood_nearby","SOURCE_DETAILS":[{"SOURCE_NAME":"KAFKA_CONSUMER","SOURCE_TYPE":"UNBOUNDED"}],"SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-eim-driver-nearby-staging-dagger-0040","SOURCE_KAFKA_NAME":"company-mainstream","SOURCE_KAFKA_TOPIC_NAMES":"gofood-nearby-log"}]`),
 								}}),
 							}}),
-						}}),
 					}},
 				},
 			},
