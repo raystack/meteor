@@ -88,9 +88,9 @@ func TestProcess(t *testing.T) {
 				asset.properties = merge(asset.properties || {}, {script_engine: "tengo"})
 				`),
 			input: &meteorv1beta1.Entity{
-				Urn:    "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
+				Urn:    "urn:testservice:test-testservice:feature_table:avg_dispatch_arrival_time_10_mins",
 				Name:   "avg_dispatch_arrival_time_10_mins",
-				Source: "caramlstore",
+				Source: "testservice",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
 					s, _ := structpb.NewStruct(map[string]any{
@@ -100,9 +100,9 @@ func TestProcess(t *testing.T) {
 				}(),
 			},
 			expected: &meteorv1beta1.Entity{
-				Urn:    "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
+				Urn:    "urn:testservice:test-testservice:feature_table:avg_dispatch_arrival_time_10_mins",
 				Name:   "avg_dispatch_arrival_time_10_mins",
-				Source: "caramlstore",
+				Source: "testservice",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
 					s, _ := structpb.NewStruct(map[string]any{
@@ -170,7 +170,7 @@ func TestProcess(t *testing.T) {
 			script: heredoc.Doc(`a := 5 / 0`),
 			input: &meteorv1beta1.Entity{
 				Urn:    "urn:test:test:feature_table:test",
-				Source: "caramlstore",
+				Source: "testservice",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
 					s, _ := structpb.NewStruct(map[string]any{

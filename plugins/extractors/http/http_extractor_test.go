@@ -461,11 +461,11 @@ func TestExtract(t *testing.T) {
 						for ft in body.tables {
 							ast := new_asset("feature_table")
 							ast.urn = format(
-								"urn:caramlstore:staging:feature_table:%s.%s",
+								"urn:featurestore:staging:feature_table:%s.%s",
 								body.project, ft.spec.name
 							)
 							ast.name = ft.spec.name
-							ast.source = "caramlstore"
+							ast.source = "featurestore"
 							ast.type = "feature_table"
 							ast.data = merge(ast.data, {
 								namespace: body.project,
@@ -506,9 +506,9 @@ func TestExtract(t *testing.T) {
 			},
 			expected: []*meteorv1beta1.Entity{
 				{
-					Urn:    "urn:caramlstore:staging:feature_table:sauron.merchant_uuid_t2_discovery",
+					Urn:    "urn:featurestore:staging:feature_table:sauron.merchant_uuid_t2_discovery",
 					Name:   "merchant_uuid_t2_discovery",
-					Source: "caramlstore",
+					Source: "featurestore",
 					Type:   "feature_table",
 					Properties: buildProps(t, map[string]any{
 						"data": map[string]any{
@@ -551,9 +551,9 @@ func TestExtract(t *testing.T) {
 					}),
 				},
 				{
-					Urn:    "urn:caramlstore:staging:feature_table:sauron.avg_dispatch_arrival_time_10_mins",
+					Urn:    "urn:featurestore:staging:feature_table:sauron.avg_dispatch_arrival_time_10_mins",
 					Name:   "avg_dispatch_arrival_time_10_mins",
-					Source: "caramlstore",
+					Source: "featurestore",
 					Type:   "feature_table",
 					Properties: buildProps(t, map[string]any{
 						"data": map[string]any{

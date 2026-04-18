@@ -40,9 +40,9 @@ func TestAsMap(t *testing.T) {
 		{
 			name: "Entity",
 			input: &meteorv1beta1.Entity{
-				Urn:    "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
+				Urn:    "urn:testservice:test-testservice:feature_table:avg_dispatch_arrival_time_10_mins",
 				Name:   "avg_dispatch_arrival_time_10_mins",
-				Source: "caramlstore",
+				Source: "testservice",
 				Type:   "feature_table",
 				Properties: func() *structpb.Struct {
 					s, _ := structpb.NewStruct(map[string]any{
@@ -58,9 +58,9 @@ func TestAsMap(t *testing.T) {
 					"namespace": "sauron",
 				},
 				"name":        "avg_dispatch_arrival_time_10_mins",
-				"source":      "caramlstore",
+				"source":      "testservice",
 				"type":        "feature_table",
-				"urn":         "urn:caramlstore:test-caramlstore:feature_table:avg_dispatch_arrival_time_10_mins",
+				"urn":         "urn:testservice:test-testservice:feature_table:avg_dispatch_arrival_time_10_mins",
 				"create_time": "2022-09-19T22:42:04Z",
 				"update_time": "2022-09-21T13:23:02Z",
 			},

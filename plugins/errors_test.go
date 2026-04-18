@@ -22,7 +22,7 @@ func TestInvalidConfigError(t *testing.T) {
 			name: "WithType",
 			err: InvalidConfigError{
 				Type:       "extractor",
-				PluginName: "caramlstore",
+				PluginName: "testplugin",
 				Errors: []ConfigError{
 					{Key: "engine", Message: "validation for field 'engine' failed on the 'oneof' tag"},
 					{Key: "script", Message: "validation for field 'script' failed on the 'required' tag"},
@@ -37,7 +37,7 @@ func TestInvalidConfigError(t *testing.T) {
 		{
 			name: "WithoutType",
 			err: InvalidConfigError{
-				PluginName: "caramlstore",
+				PluginName: "testplugin",
 				Errors: []ConfigError{
 					{Key: "engine", Message: "validation for field 'engine' failed on the 'oneof' tag"},
 				},
@@ -51,7 +51,7 @@ func TestInvalidConfigError(t *testing.T) {
 			name: "WithoutErrors",
 			err: InvalidConfigError{
 				Type:       "extractor",
-				PluginName: "caramlstore",
+				PluginName: "testplugin",
 			},
 			expected: "invalid extractor config",
 			hasError: false,
@@ -79,9 +79,9 @@ func TestNotFoundError(t *testing.T) {
 			name: "WithType",
 			fields: fields{
 				Type: "extractor",
-				Name: "caramlstore",
+				Name: "testplugin",
 			},
-			expected: "could not find extractor \"caramlstore\"",
+			expected: "could not find extractor \"testplugin\"",
 		},
 	}
 	for _, tt := range tests {

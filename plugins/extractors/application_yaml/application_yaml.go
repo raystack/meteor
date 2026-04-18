@@ -40,7 +40,7 @@ func init() {
 //go:embed README.md
 var summary string
 
-// Config holds the set of configuration for the CaraML Store extractor
+// Config holds the set of configuration for the application_yaml extractor
 type Config struct {
 	File      string `mapstructure:"file" validate:"required,file"`
 	EnvPrefix string `mapstructure:"env_prefix" default:"CI" validate:"required"`
