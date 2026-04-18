@@ -152,8 +152,10 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	urn := models.NewURN("gcs", projectID, "bucket", b.Name)
 
 	props := map[string]any{
-		"location":     b.Location,
-		"storage_type": b.StorageClass,
+		"location":           b.Location,
+		"storage_type":       b.StorageClass,
+		"versioning_enabled": b.VersioningEnabled,
+		"requester_pays":     b.RequesterPays,
 	}
 	if !b.Created.IsZero() {
 		props["create_time"] = b.Created.Format("2006-01-02T15:04:05Z")
@@ -163,6 +165,18 @@ func (e *Extractor) buildBucket(b *storage.BucketAttrs, projectID string, blobs 
 	}
 	if len(b.Labels) > 0 {
 		props["labels"] = b.Labels
+	}
+	if b.RetentionPolicy != nil {
+		props["retention_period_seconds"] = int64(b.RetentionPolicy.RetentionPeriod.Seconds())
+	}
+	if b.Encryption != nil && b.Encryption.DefaultKMSKeyName != "" {
+		props["default_kms_key"] = b.Encryption.DefaultKMSKeyName
+	}
+	if b.Logging != nil && b.Logging.LogBucket != "" {
+		props["log_bucket"] = b.Logging.LogBucket
+	}
+	if b.LocationType != "" {
+		props["location_type"] = b.LocationType
 	}
 
 	entity := models.NewEntity(urn, "bucket", b.Name, "gcs", props)

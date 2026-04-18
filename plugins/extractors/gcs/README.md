@@ -52,7 +52,13 @@ Leaving `service_account_base64` and `service_account_json` blank defaults to [G
 | Property | Type | Description |
 |:---------|:-----|:------------|
 | `properties.location` | `string` | Bucket location (e.g. `ASIA`, `US`). |
+| `properties.location_type` | `string` | Location type (e.g. `region`, `multi-region`). |
 | `properties.storage_type` | `string` | Storage class (e.g. `STANDARD`, `NEARLINE`). |
+| `properties.versioning_enabled` | `bool` | Whether object versioning is enabled. |
+| `properties.requester_pays` | `bool` | Whether requester pays is enabled. |
+| `properties.retention_period_seconds` | `int64` | Retention policy period in seconds. |
+| `properties.default_kms_key` | `string` | Default Cloud KMS key name for encryption. |
+| `properties.log_bucket` | `string` | Bucket where access logs are written. |
 | `properties.create_time` | `string` | Bucket creation timestamp (RFC 3339). |
 | `properties.labels` | `map[string]string` | Bucket labels. |
 | `properties.blobs` | `[]map[string]any` | List of blob metadata (when `extract_blob` is `true`). |
