@@ -12,7 +12,7 @@ Each extractor emits **Records**. A Record contains:
 - **Entity**: urn, type, name, description, source, properties (flat structpb.Struct)
 - **Edges**: list of relationships, each with source_urn, target_urn, type, source, properties
 
-Ownership is represented as edges with type `owned_by`. Lineage (upstreams/downstreams) is represented as edges with type `lineage`.
+Ownership is represented as edges with type `owned_by`. Lineage is represented as edges with type `derived_from` (entity depends on target) and `generates` (entity produces target).
 
 - **Extractors**: 34+ plugins (bigquery, postgres, kafka, github, etc.)
 - **Processors**: Transform/enrich records in-flight
@@ -45,7 +45,7 @@ cmd/             CLI commands (run, lint, list, info, gen)
 **Edge** (`meteorv1beta1.Edge`):
 - `source_urn` - URN of the source entity
 - `target_urn` - URN of the target entity
-- `type` - Relationship type (`owned_by`, `lineage`, `member_of`, etc.)
+- `type` - Relationship type (`owned_by`, `derived_from`, `generates`, `references`, `member_of`, etc.)
 - `source` - Source system
 - `properties` - Additional metadata
 
@@ -60,7 +60,3 @@ go build ./...
 go test ./...
 make lint
 ```
-
-## Plan: Align Meteor with Compass v2
-
-See `.claude/plans/compass-v2-alignment.md` for the implementation plan.
