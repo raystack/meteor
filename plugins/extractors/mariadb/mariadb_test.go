@@ -13,7 +13,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/mariadb"
 	"github.com/raystack/meteor/test/mocks"
@@ -25,16 +24,21 @@ const (
 	testDB   = "test_db"
 	user     = "test_user"
 	pass     = "pass"
-	port     = "3306"
 	urnScope = "test-mariadb"
 )
 
 var (
-	host = "127.0.0.1:" + port
-	db   *sql.DB
+	host            string
+	db              *sql.DB
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mariadb",
@@ -43,15 +47,11 @@ func TestMain(m *testing.M) {
 			"MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true",
 		},
 		ExposedPorts: []string{"3306"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"3306": {
-				{HostIP: "0.0.0.0", HostPort: "3306"},
-			},
-		},
 	}
 
 	// Exponential backoff-retry for container to accept connections
 	retryFn := func(r *dockertest.Resource) (err error) {
+		host = r.GetHostPort("3306/tcp")
 		db, err = sql.Open("mysql", fmt.Sprintf("root:@tcp(%s)/", host))
 		if err != nil {
 			return err
@@ -79,6 +79,7 @@ func TestMain(m *testing.M) {
 
 // TestInit tests the configs
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := mariadb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -91,6 +92,7 @@ func TestInit(t *testing.T) {
 
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return mockdata we generated with mariadb", func(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := mariadb.New(utils.Logger)

@@ -12,7 +12,6 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
@@ -26,15 +25,23 @@ import (
 const (
 	user     = "cassandra"
 	pass     = "cassandra"
-	port     = 9042
-	host     = "127.0.0.1"
 	keyspace = "cassandra_meteor_test"
 	urnScope = "test-cassandra"
 )
 
-var session *gocql.Session
+var (
+	session         *gocql.Session
+	host            string
+	port            int
+	dockerAvailable bool
+)
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -47,14 +54,12 @@ func TestMain(m *testing.M) {
 			fmt.Sprintf("%s/localConfig/cassandra.yaml:/etc/cassandra/cassandra.yaml", pwd),
 		},
 		ExposedPorts: []string{"9042"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9042": {
-				{HostIP: "0.0.0.0", HostPort: "9042"},
-			},
-		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		hostPort := resource.GetHostPort("9042/tcp")
+		host = "127.0.0.1"
+		fmt.Sscanf(hostPort, "%*[^:]:%d", &port)
 		//create a new session
 		cluster := gocql.NewCluster(host)
 		cluster.Authenticator = gocql.PasswordAuthenticator{
@@ -90,6 +95,7 @@ func TestMain(m *testing.M) {
 
 // TestEmptyHosts tests that the extractor returns an error if no hosts are provided
 func TestEmptyHosts(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	//connect to cassandra
 	cluster := gocql.NewCluster("")
 	cluster.Keyspace = ""
@@ -102,6 +108,7 @@ func TestEmptyHosts(t *testing.T) {
 
 // TestInit tests the configs
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := cassandra.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -117,6 +124,7 @@ func TestInit(t *testing.T) {
 
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := cassandra.New(utils.Logger)

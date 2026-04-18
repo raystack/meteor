@@ -17,7 +17,6 @@ import (
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/couchdb"
 	"github.com/raystack/meteor/test/mocks"
@@ -27,19 +26,24 @@ import (
 const (
 	user     = "meteor_test_user"
 	pass     = "couchdb"
-	port     = "5984"
 	testDB   = "mockdata_meteor_metadata_test"
 	urnScope = "test-couchdb"
 )
 
 var (
-	host     = "localhost:" + port
-	client   *kivik.Client
-	dbs      = []string{"applicant", "jobs"}
-	docCount = 3
+	host            string
+	client          *kivik.Client
+	dbs             = []string{"applicant", "jobs"}
+	docCount        = 3
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -55,15 +59,11 @@ func TestMain(m *testing.M) {
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig:/opt/couchdb/etc/local.d:rw", pwd),
 		},
-		ExposedPorts: []string{port},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"5984": {
-				{HostIP: "0.0.0.0", HostPort: "5984"},
-			},
-		},
+		ExposedPorts: []string{"5984"},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = resource.GetHostPort("5984/tcp")
 		client, err = kivik.New("couch", fmt.Sprintf("http://%s:%s@%s/", user, pass, host))
 		if err != nil {
 			return
@@ -88,6 +88,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := couchdb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -101,6 +102,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := couchdb.New(utils.Logger)

@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	_ "github.com/prestodb/presto-go-client/presto"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/presto"
@@ -23,27 +22,32 @@ import (
 
 const (
 	user     = "presto"
-	port     = "8888"
 	urnScope = "test-presto"
 )
 
 var (
-	host = "localhost:" + port
-	db   *sql.DB
+	host            string
+	db              *sql.DB
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository:   "prestodb/presto",
 		Tag:          "latest",
 		ExposedPorts: []string{"8080"},
-		PortBindings: map[docker.Port][]docker.PortBinding{"8080": {{HostIP: "0.0.0.0", HostPort: port}}},
 	}
 
 	// dsn format - http[s]://user[:pass]@host[:port][?parameters]
 	retryFn := func(r *dockertest.Resource) (err error) {
-		dsn := fmt.Sprintf("http://presto@localhost:%s", port)
+		host = r.GetHostPort("8080/tcp")
+		dsn := fmt.Sprintf("http://presto@%s", host)
 		db, err = sql.Open("presto", dsn)
 		if err != nil {
 			return err
@@ -76,6 +80,7 @@ func TestMain(m *testing.M) {
 
 // TestInit tests the configs
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := presto.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -88,6 +93,7 @@ func TestInit(t *testing.T) {
 
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return mock data we generated with presto", func(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := presto.New(utils.Logger)

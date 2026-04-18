@@ -10,11 +10,9 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	kafkaLib "github.com/IBM/sarama"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -25,11 +23,17 @@ import (
 )
 
 var (
-	brokerHost = "0.0.0.0:9093"
-	urnScope   = "test-kafka"
+	brokerHost      string
+	urnScope        = "test-kafka"
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	var broker *kafkaLib.Broker
 	// setup test
 	opts := dockertest.RunOptions{
@@ -39,15 +43,10 @@ func TestMain(m *testing.M) {
 			"KRAFT_CONTAINER_HOST_NAME=1",
 		},
 		ExposedPorts: []string{"9093"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9093": {
-				{HostIP: "0.0.0.0", HostPort: "9093"},
-			},
-		},
 	}
 
 	retryFn := func(resource *dockertest.Resource) (err error) {
-		time.Sleep(30 * time.Second)
+		brokerHost = resource.GetHostPort("9093/tcp")
 		conn, err := kafkaLib.NewClient([]string{brokerHost}, nil)
 		if err != nil {
 			fmt.Printf("error creating client ")
@@ -90,6 +89,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -161,6 +161,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should emit list of topic metadata", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()

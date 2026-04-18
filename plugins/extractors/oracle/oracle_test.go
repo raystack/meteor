@@ -1,5 +1,5 @@
-//go:build !plugins
-// +build !plugins
+//go:build plugins
+// +build plugins
 
 package oracle_test
 
@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -23,30 +22,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var db *sql.DB
+var (
+	db              *sql.DB
+	host            string
+	dockerAvailable bool
+)
 
 const (
 	user      = "test_user"
 	password  = "oracle"
-	port      = "1521"
 	defaultDB = "xe"
 	sysUser   = "system"
 	urnScope  = "test-oracle"
 )
 
-var host = "localhost:" + port
-
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	opts := dockertest.RunOptions{
 		Repository:   "wnameless/oracle-xe-11g-r2",
 		Tag:          "latest",
 		Env:          []string{},
-		ExposedPorts: []string{port, "1521"},
-		PortBindings: map[docker.Port][]docker.PortBinding{"1521": {{HostIP: "0.0.0.0", HostPort: port}}},
+		ExposedPorts: []string{"1521"},
 	}
 
-	// Exponential backoff-retry for container to be resy to accept connections
+	// Exponential backoff-retry for container to be ready to accept connections
 	retryFn := func(r *dockertest.Resource) (err error) {
+		host = r.GetHostPort("1521/tcp")
 		db, err = sql.Open("oracle", fmt.Sprintf("oracle://%s:%s@%s/%s", sysUser, password, host, defaultDB))
 		if err != nil {
 			return err
@@ -73,6 +78,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := oracle.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -87,6 +93,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return mockdata we generated with oracle", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := oracle.New(utils.Logger)

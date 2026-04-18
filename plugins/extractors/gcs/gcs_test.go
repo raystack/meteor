@@ -13,7 +13,6 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -26,9 +25,17 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var client *storage.Client
+var (
+	client          *storage.Client
+	dockerAvailable bool
+)
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -45,18 +52,14 @@ func TestMain(m *testing.M) {
 			"-scheme", "http",
 		},
 		ExposedPorts: []string{"4443"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"4443": {
-				{HostIP: "0.0.0.0", HostPort: "4443"},
-			},
-		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) error {
+		hostPort := resource.GetHostPort("4443/tcp")
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
 		client, err = storage.NewClient(ctx,
-			option.WithEndpoint("http://localhost:4443/storage/v1/"),
+			option.WithEndpoint("http://"+hostPort+"/storage/v1/"),
 			option.WithoutAuthentication(),
 		)
 		if err != nil {
@@ -90,6 +93,7 @@ func mockClient(context.Context, slog.Logger, Config) (*storage.Client, error) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error if no project_id in config", func(t *testing.T) {
 		err := New(utils.Logger, createClient).Init(context.TODO(), plugins.Config{
 			URNScope: "test",
@@ -131,6 +135,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return no error", func(t *testing.T) {
 		extr := New(utils.Logger, mockClient)
 		ctx := context.Background()

@@ -16,7 +16,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -27,29 +26,22 @@ import (
 )
 
 const (
-	host     = "http://localhost:9200"
 	pass     = "secret_pass"
 	user     = "elastic_meteor"
 	urnScope = "test-elasticsearch"
 )
 
 var (
-	client *elasticsearch.Client
-	ctx    = context.TODO()
+	host            string
+	client          *elasticsearch.Client
+	ctx             = context.TODO()
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
-	cfg := elasticsearch.Config{
-		Addresses: []string{
-			host,
-		},
-		Username: user,
-		Password: pass,
-	}
-	var err error
-	client, err = elasticsearch.NewClient(cfg)
-	if err != nil {
-		log.Fatal(err)
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
 	}
 
 	// setup test
@@ -64,14 +56,19 @@ func TestMain(m *testing.M) {
 			"xpack.security.enabled=false",
 		},
 		ExposedPorts: []string{"9200"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9200": {
-				{HostIP: "0.0.0.0", HostPort: "9200"},
-			},
-		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = "http://" + resource.GetHostPort("9200/tcp")
+		cfg := elasticsearch.Config{
+			Addresses: []string{host},
+			Username:  user,
+			Password:  pass,
+		}
+		client, err = elasticsearch.NewClient(cfg)
+		if err != nil {
+			return
+		}
 		res, err := client.Cluster.Health(
 			client.Cluster.Health.WithLevel("indices"),
 		)
@@ -102,6 +99,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error if no host in config", func(t *testing.T) {
 		err := newExtractor().Init(ctx, plugins.Config{
 			URNScope: urnScope,
@@ -114,6 +112,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return mockdata we generated with service running on localhost", func(t *testing.T) {
 		extr := newExtractor()
 		err := extr.Init(ctx, plugins.Config{

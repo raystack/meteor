@@ -15,7 +15,6 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/nsf/jsondiff"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery"
@@ -31,9 +30,18 @@ const (
 	projectID = "test-project-id"
 )
 
-var client *bq.Client
+var (
+	client          *bq.Client
+	bqEndpoint      string
+	dockerAvailable bool
+)
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -51,16 +59,12 @@ func TestMain(m *testing.M) {
 			"--data-from-yaml=/work/testdata/data.yaml",
 		},
 		ExposedPorts: []string{"9050"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9050": {
-				{HostIP: "0.0.0.0", HostPort: "9050"},
-			},
-		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) error {
+		bqEndpoint = "http://" + resource.GetHostPort("9050/tcp")
 		if client, err = bq.NewClient(context.Background(), projectID,
-			option.WithEndpoint("http://localhost:9050"),
+			option.WithEndpoint(bqEndpoint),
 			option.WithoutAuthentication(),
 		); err != nil {
 			return err
@@ -94,6 +98,7 @@ func mockClient(ctx context.Context, logger slog.Logger, config *bigquery.Config
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error if config is invalid", func(t *testing.T) {
 		extr := bigquery.New(utils.Logger, bigquery.CreateClient, nil)
 		ctx, cancel := context.WithCancel(context.Background())
@@ -152,6 +157,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	runTest := func(t *testing.T, cfg plugins.Config, randomizer func(seed int64) func(int64) int64) []*meteorv1beta1.Entity {
 		extr := bigquery.New(utils.Logger, mockClient, randomizer)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

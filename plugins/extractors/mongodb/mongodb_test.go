@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -28,16 +27,21 @@ const (
 	testDB   = "MeteorMongoExtractorTest"
 	user     = "user"
 	pass     = "abcd"
-	port     = "27017"
 	urnScope = "test-mongodb"
 )
 
 var (
-	host   = "127.0.0.1:" + port
-	client *mongo.Client
+	host            string
+	client          *mongo.Client
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	ctx := context.TODO()
 
 	// setup test
@@ -48,14 +52,10 @@ func TestMain(m *testing.M) {
 			"MONGO_INITDB_ROOT_USERNAME=" + user,
 			"MONGO_INITDB_ROOT_PASSWORD=" + pass,
 		},
-		ExposedPorts: []string{port},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			port: {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
-		},
+		ExposedPorts: []string{"27017"},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = resource.GetHostPort("27017/tcp")
 		uri := fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host)
 		clientOptions := options.Client().ApplyURI(uri)
 		client, err = mongo.NewClient(clientOptions)
@@ -92,6 +92,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid", func(t *testing.T) {
 		err := mongodb.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -104,6 +105,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := mongodb.New(utils.Logger)

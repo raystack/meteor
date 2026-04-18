@@ -13,7 +13,6 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -27,15 +26,21 @@ const (
 	testDB   = "mockdata_meteor_metadata_test"
 	user     = "sa"
 	pass     = "P@ssword1234"
-	port     = "1433"
 	urnScope = "test-mssql"
 )
 
-var host = "localhost:" + port
-
-var db *sql.DB
+var (
+	host            string
+	db              *sql.DB
+	dockerAvailable bool
+)
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mcr.microsoft.com/mssql/server",
@@ -45,14 +50,10 @@ func TestMain(m *testing.M) {
 			"SA_PASSWORD=" + pass,
 			"ACCEPT_EULA=Y",
 		},
-		ExposedPorts: []string{port},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			port: {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
-		},
+		ExposedPorts: []string{"1433"},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = resource.GetHostPort("1433/tcp")
 		db, err = sql.Open("mssql", fmt.Sprintf("sqlserver://%s:%s@%s/", user, pass, host))
 		if err != nil {
 			return err
@@ -79,6 +80,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should error for invalid configurations", func(t *testing.T) {
 		err := mssql.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -92,6 +94,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := mssql.New(utils.Logger)

@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -29,16 +28,21 @@ const (
 	user       = "meteor_test_user"
 	pass       = "pass"
 	globalhost = "%"
-	port       = "9000"
 	urnScope   = "test-clickhouse"
 )
 
 var (
-	db   *sql.DB
-	host = "127.0.0.1:" + port
+	db              *sql.DB
+	host            string
+	dockerAvailable bool
 )
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -47,18 +51,14 @@ func TestMain(m *testing.M) {
 	opts := dockertest.RunOptions{
 		Repository:   "yandex/clickhouse-server",
 		Tag:          "21.7.4-alpine",
-		ExposedPorts: []string{"9000", port},
+		ExposedPorts: []string{"9000"},
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.d/user.xml:rw", pwd),
-		},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9000": {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
 		},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = resource.GetHostPort("9000/tcp")
 		db, err = sql.Open("clickhouse", fmt.Sprintf("tcp://%s?username=default&password=pass&debug=true", host))
 		if err != nil {
 			return err
@@ -85,6 +85,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid configuration", func(t *testing.T) {
 		err := newExtractor().Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -97,6 +98,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return mockdata we generated with clickhouse running on localhost", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := newExtractor()

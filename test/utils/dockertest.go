@@ -2,10 +2,28 @@ package utils
 
 import (
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/ory/dockertest/v3"
 )
+
+// CheckDockerAvailability returns true if the Docker daemon is reachable.
+func CheckDockerAvailability() bool {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return false
+	}
+	return pool.Client.Ping() == nil
+}
+
+// SkipIfNoDocker skips the test if Docker is not available.
+func SkipIfNoDocker(t *testing.T, available bool) {
+	t.Helper()
+	if !available {
+		t.Skip("Docker daemon is not available, skipping integration test")
+	}
+}
 
 // CreateContainer will create a docker container using the RunOptions given
 //

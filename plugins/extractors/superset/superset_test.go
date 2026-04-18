@@ -18,7 +18,6 @@ import (
 	"github.com/raystack/meteor/test/utils"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/superset"
 	"github.com/raystack/meteor/test/mocks"
@@ -28,7 +27,6 @@ import (
 const (
 	user           = "admin"
 	pass           = "admin"
-	port           = "9999"
 	provider       = "db"
 	dashboardTitle = "random dashboard"
 	mockChart      = "random chart"
@@ -39,11 +37,12 @@ var (
 	client = &http.Client{
 		Timeout: 4 * time.Second,
 	}
-	accessToken = ""
-	csrfToken   = ""
-	chartID     = 0
-	dashboardID = 0
-	host        = "http://localhost:" + port
+	accessToken     = ""
+	csrfToken       = ""
+	chartID         = 0
+	dashboardID     = 0
+	host            string
+	dockerAvailable bool
 )
 
 type responseToken struct {
@@ -55,6 +54,11 @@ type securityToken struct {
 }
 
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -67,14 +71,10 @@ func TestMain(m *testing.M) {
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig:/app/pythonpath:rw", pwd),
 		},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"8088": {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
-		},
 	}
 
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = "http://" + resource.GetHostPort("8088/tcp")
 		res, err := http.Get(host + "/health")
 		if err != nil {
 			return
@@ -142,6 +142,7 @@ func TestMain(m *testing.M) {
 
 // TestInit tests the configs
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		err := superset.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -155,6 +156,7 @@ func TestInit(t *testing.T) {
 
 // TestExtract tests that the extractor returns the expected result
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return dashboard model", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := superset.New(utils.Logger)

@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -24,18 +23,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var db *sql.DB
+var (
+	db              *sql.DB
+	host            string
+	dockerAvailable bool
+)
 
 const (
 	user     = "meteor_test_user"
 	pass     = "pass"
-	port     = "3310"
 	urnScope = "test-mysql"
 )
 
-var host = "localhost:" + port
-
 func TestMain(m *testing.M) {
+	dockerAvailable = utils.CheckDockerAvailability()
+	if !dockerAvailable {
+		os.Exit(m.Run())
+	}
+
 	// setup test
 	opts := dockertest.RunOptions{
 		Repository: "mysql",
@@ -43,15 +48,11 @@ func TestMain(m *testing.M) {
 		Env: []string{
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
 		},
-		ExposedPorts: []string{"3306", port},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"3306": {
-				{HostIP: "0.0.0.0", HostPort: port},
-			},
-		},
+		ExposedPorts: []string{"3306"},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
+		host = resource.GetHostPort("3306/tcp")
 		db, err = sql.Open("mysql", "root@tcp("+host+")/")
 		if err != nil {
 			return err
@@ -78,6 +79,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInit(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should return error for invalid configs", func(t *testing.T) {
 		err := mysql.New(utils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope: urnScope,
@@ -90,6 +92,7 @@ func TestInit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
+	utils.SkipIfNoDocker(t, dockerAvailable)
 	t.Run("should extract and output tables metadata along with its columns", func(t *testing.T) {
 		ctx := context.TODO()
 		extr := mysql.New(utils.Logger)
