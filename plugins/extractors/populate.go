@@ -6,6 +6,7 @@ import (
 	_ "github.com/raystack/meteor/plugins/extractors/bigtable"
 	_ "github.com/raystack/meteor/plugins/extractors/cassandra"
 	_ "github.com/raystack/meteor/plugins/extractors/clickhouse"
+	_ "github.com/raystack/meteor/plugins/extractors/confluence"
 	_ "github.com/raystack/meteor/plugins/extractors/couchdb"
 	_ "github.com/raystack/meteor/plugins/extractors/csv"
 	_ "github.com/raystack/meteor/plugins/extractors/dbt"
