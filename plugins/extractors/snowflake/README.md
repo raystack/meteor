@@ -44,7 +44,9 @@ source:
 
 ## Edges
 
-This extractor does not emit edges.
+| Source | Target | Type | Description |
+| :----- | :----- | :--- | :---------- |
+| `table` | `table` | `lineage` | Foreign key relationship to the referenced table. |
 
 ## Contributing
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
@@ -189,14 +190,50 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("extract columns from %s.%s: %w", database, tableName, err)
 	}
-	// push table to channel
-	e.emit(models.NewRecord(models.NewEntity(
-		models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		"table", tableName, "Snowflake",
-		map[string]any{"columns": columns},
-	)))
 
+	tableURN := models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName))
+	entity := models.NewEntity(tableURN, "table", tableName, "Snowflake", map[string]any{"columns": columns})
+
+	edges, err := e.getForeignKeyEdges(ctx, database, tableName, tableURN)
+	if err != nil {
+		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", database, tableName))
+	}
+
+	e.emit(models.NewRecord(entity, edges...))
 	return nil
+}
+
+// getForeignKeyEdges queries foreign key constraints and returns lineage edges.
+func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
+	query := `SELECT DISTINCT fk.pk_table_name AS referenced_table
+		FROM information_schema.referential_constraints rc
+		JOIN information_schema.table_constraints fk
+		  ON rc.constraint_name = fk.constraint_name
+		  AND rc.constraint_schema = fk.constraint_schema
+		WHERE fk.table_name = ?
+		  AND fk.constraint_type = 'FOREIGN KEY';`
+
+	rows, err := e.db.QueryContext(ctx, query, tableName)
+	if err != nil {
+		return nil, fmt.Errorf("execute foreign key query: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*meteorv1beta1.Edge
+	for rows.Next() {
+		var referencedTable string
+		if err := rows.Scan(&referencedTable); err != nil {
+			e.logger.Error("failed to scan foreign key row", "error", err)
+			continue
+		}
+		targetURN := models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, referencedTable))
+		edges = append(edges, models.LineageEdge(tableURN, targetURN, "snowflake"))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over foreign keys: %w", err)
+	}
+
+	return edges, nil
 }
 
 // extractColumns extracts columns from a given table
