@@ -88,6 +88,7 @@ func (c *Client) GetAllDashboardDetails(ctx context.Context, uids []string) ([]D
 				key = panel.DataSource
 			}
 			dashboard.Dashboard.Panels[j].DataSource = dataSources[key].Type
+			dashboard.Dashboard.Panels[j].DataSourceUID = dataSources[key].UID
 		}
 		dashboard.Meta.URL = c.urlb.New().Path(dashboard.Meta.URL).URL().String()
 		dashboards = append(dashboards, dashboard)
@@ -171,23 +172,30 @@ type DashboardDetail struct {
 }
 
 type Meta struct {
-	Slug string `json:"slug"`
-	URL  string `json:"url"`
+	Slug        string `json:"slug"`
+	URL         string `json:"url"`
+	CreatedBy   string `json:"createdBy"`
+	UpdatedBy   string `json:"updatedBy"`
+	FolderTitle string `json:"folderTitle"`
+	FolderUID   string `json:"folderUid"`
+	FolderURL   string `json:"folderUrl"`
 }
 
 type Dashboard struct {
-	UID         string  `json:"uid"`
-	Description string  `json:"description"`
-	Panels      []Panel `json:"panels"`
+	UID         string   `json:"uid"`
+	Description string   `json:"description"`
+	Panels      []Panel  `json:"panels"`
+	Tags        []string `json:"tags"`
 }
 
 type Panel struct {
-	ID          int      `json:"id"`
-	Title       string   `json:"title"`
-	Type        string   `json:"type"`
-	Description string   `json:"description"`
-	DataSource  string   `json:"datasource"`
-	Targets     []Target `json:"targets"`
+	ID            int      `json:"id"`
+	Title         string   `json:"title"`
+	Type          string   `json:"type"`
+	Description   string   `json:"description"`
+	DataSource    string   `json:"datasource"`
+	DataSourceUID string   `json:"-"` // resolved from datasource lookup
+	Targets       []Target `json:"targets"`
 }
 
 type Target struct {
@@ -195,7 +203,10 @@ type Target struct {
 }
 
 type DataSource struct {
+	UID       string `json:"uid"`
 	Name      string `json:"name"`
 	Type      string `json:"type"`
+	URL       string `json:"url"`
+	Database  string `json:"database"`
 	IsDefault bool   `json:"isDefult"`
 }

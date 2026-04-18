@@ -28,15 +28,20 @@ source:
 
 | Property | Type | Description |
 | :------- | :--- | :---------- |
-| `properties.user_id` | `int` | ID of the dashboard owner. |
-| `properties.version` | `int` | Dashboard version number. |
-| `properties.slug` | `string` | Dashboard URL slug. |
-
-> **Note:** The Redash public API does not expose chart/widget details for dashboards, so `properties.charts` is not emitted.
+| `user_id` | `int` | ID of the dashboard owner. |
+| `version` | `int` | Dashboard version number. |
+| `slug` | `string` | Dashboard URL slug. |
+| `is_archived` | `bool` | Whether the dashboard is archived. |
+| `is_draft` | `bool` | Whether the dashboard is a draft. |
+| `tags` | `[]any` | Dashboard tags. |
+| `created_at` | `string` | Creation timestamp (RFC 3339). |
+| `updated_at` | `string` | Last update timestamp (RFC 3339). |
 
 ## Edges
 
-This extractor does not emit edges.
+| Source | Target | Type | Description |
+| :----- | :----- | :--- | :---------- |
+| `dashboard` | `user` | `owned_by` | Dashboard is owned by the user who created it. |
 
 ## Contributing
 

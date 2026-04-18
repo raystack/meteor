@@ -13,6 +13,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -33,8 +34,9 @@ var defaultTopics = map[string]struct{}{
 
 // Config holds the set of configuration for the kafka extractor
 type Config struct {
-	Broker string     `json:"broker" yaml:"broker" mapstructure:"broker" validate:"required"`
-	Auth   AuthConfig `json:"auth_config" yaml:"auth_config" mapstructure:"auth_config"`
+	Broker  string     `json:"broker" yaml:"broker" mapstructure:"broker" validate:"required"`
+	Auth    AuthConfig `json:"auth_config" yaml:"auth_config" mapstructure:"auth_config"`
+	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract"`
 }
 
 type AuthConfig struct {
@@ -63,10 +65,16 @@ type AuthConfig struct {
 	}
 }
 
-var sampleConfig = `broker: "localhost:9092"`
+var sampleConfig = `
+broker: "localhost:9092"
+# extract specifies which entity types to extract.
+# Defaults to all: ["topics", "consumer_groups"]
+extract:
+  - topics
+  - consumer_groups`
 
 var info = plugins.Info{
-	Description:  "Topic list from Apache Kafka.",
+	Description:  "Topic and consumer group metadata from Apache Kafka.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "extractor"},
@@ -78,8 +86,10 @@ type Extractor struct {
 	plugins.BaseExtractor
 	// internal states
 	conn       sarama.Consumer
+	admin      sarama.ClusterAdmin
 	logger     log.Logger
 	config     Config
+	extract    map[string]bool
 	clientDurn metric.Int64Histogram
 }
 
@@ -127,12 +137,28 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 
 	consumer, err := sarama.NewConsumer([]string{e.config.Broker}, consumerConfig)
 	if err != nil {
-		fmt.Printf("Error is here !! %s", err.Error())
 		return fmt.Errorf("failed to create kafka consumer for brokers %s and config %+v. Error %s", e.config.Broker,
 			consumerConfig, err.Error())
 	}
-
 	e.conn = consumer
+
+	admin, err := sarama.NewClusterAdmin([]string{e.config.Broker}, consumerConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create kafka cluster admin: %w", err)
+	}
+	e.admin = admin
+
+	e.extract = map[string]bool{
+		"topics":          true,
+		"consumer_groups": true,
+	}
+	if len(e.config.Extract) > 0 {
+		e.extract = make(map[string]bool, len(e.config.Extract))
+		for _, v := range e.config.Extract {
+			e.extract[v] = true
+		}
+	}
+
 	return nil
 }
 
@@ -140,6 +166,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // if so, then extracts metadata from the kafka broker
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	defer e.conn.Close()
+	defer e.admin.Close()
 
 	defer func(start time.Time) {
 		attributes := []attribute.KeyValue{
@@ -162,16 +189,41 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		)
 	}(time.Now())
 
+	if e.extract["topics"] {
+		if err := e.extractTopics(ctx, emit); err != nil {
+			return fmt.Errorf("extract topics: %w", err)
+		}
+	}
+
+	if e.extract["consumer_groups"] {
+		if err := e.extractConsumerGroups(ctx, emit); err != nil {
+			return fmt.Errorf("extract consumer_groups: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (e *Extractor) extractTopics(_ context.Context, emit plugins.Emit) error {
 	topics, err := e.conn.Topics()
 	if err != nil {
 		return fmt.Errorf("fetch topics: %w", err)
 	}
 
-	// build and push topics
+	// Fetch topic metadata for replication factor.
+	topicMetadata, err := e.admin.DescribeTopics(topics)
+	if err != nil {
+		e.logger.Warn("failed to describe topics, continuing with basic metadata", "err", err)
+		topicMetadata = nil
+	}
+
+	metadataByName := make(map[string]*sarama.TopicMetadata, len(topicMetadata))
+	for _, tm := range topicMetadata {
+		metadataByName[tm.Name] = tm
+	}
+
 	for _, topic := range topics {
-		// skip if topic is a default topic
-		_, isDefaultTopic := defaultTopics[topic]
-		if isDefaultTopic {
+		if _, isDefault := defaultTopics[topic]; isDefault {
 			continue
 		}
 
@@ -180,10 +232,123 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			e.logger.Error("failed to fetch partitions for topic", "err", err, "topic", topic)
 			continue
 		}
-		record := e.buildRecord(topic, len(partitions))
+
+		record := e.buildTopicRecord(topic, len(partitions), metadataByName[topic])
 		emit(record)
 	}
 	return nil
+}
+
+func (e *Extractor) extractConsumerGroups(_ context.Context, emit plugins.Emit) error {
+	groups, err := e.admin.ListConsumerGroups()
+	if err != nil {
+		return fmt.Errorf("list consumer groups: %w", err)
+	}
+
+	groupNames := make([]string, 0, len(groups))
+	for name := range groups {
+		groupNames = append(groupNames, name)
+	}
+
+	if len(groupNames) == 0 {
+		return nil
+	}
+
+	descriptions, err := e.admin.DescribeConsumerGroups(groupNames)
+	if err != nil {
+		return fmt.Errorf("describe consumer groups: %w", err)
+	}
+
+	for _, desc := range descriptions {
+		record := e.buildConsumerGroupRecord(desc)
+		emit(record)
+	}
+	return nil
+}
+
+func (e *Extractor) buildTopicRecord(topicName string, numOfPartitions int, metadata *sarama.TopicMetadata) models.Record {
+	props := map[string]any{
+		"number_of_partitions": int64(numOfPartitions),
+	}
+
+	if metadata != nil && len(metadata.Partitions) > 0 {
+		props["replication_factor"] = int64(len(metadata.Partitions[0].Replicas))
+	}
+
+	// Fetch topic config entries (retention.ms, cleanup.policy, etc.).
+	configEntries, err := e.admin.DescribeConfig(sarama.ConfigResource{
+		Type: sarama.TopicResource,
+		Name: topicName,
+	})
+	if err == nil {
+		for _, entry := range configEntries {
+			switch entry.Name {
+			case "retention.ms":
+				props["retention_ms"] = entry.Value
+			case "cleanup.policy":
+				props["cleanup_policy"] = entry.Value
+			case "min.insync.replicas":
+				props["min_insync_replicas"] = entry.Value
+			}
+		}
+	}
+
+	entity := models.NewEntity(
+		models.NewURN("kafka", e.UrnScope, "topic", topicName),
+		"topic",
+		topicName,
+		"kafka",
+		props,
+	)
+	return models.NewRecord(entity)
+}
+
+func (e *Extractor) buildConsumerGroupRecord(desc *sarama.GroupDescription) models.Record {
+	urn := models.NewURN("kafka", e.UrnScope, "consumer_group", desc.GroupId)
+
+	// Collect unique topics consumed by this group from member assignments.
+	consumedTopics := make(map[string]struct{})
+	members := make([]any, 0, len(desc.Members))
+	for memberID, member := range desc.Members {
+		memberProps := map[string]any{
+			"member_id": memberID,
+			"client_id": member.ClientId,
+			"host":      member.ClientHost,
+		}
+		members = append(members, memberProps)
+
+		assignment, err := member.GetMemberAssignment()
+		if err == nil && assignment != nil {
+			for topic := range assignment.Topics {
+				consumedTopics[topic] = struct{}{}
+			}
+		}
+	}
+
+	props := map[string]any{
+		"state":         desc.State,
+		"protocol":      desc.Protocol,
+		"protocol_type": desc.ProtocolType,
+		"num_members":   int64(len(desc.Members)),
+	}
+	if len(members) > 0 {
+		props["members"] = members
+	}
+
+	entity := models.NewEntity(urn, "consumer_group", desc.GroupId, "kafka", props)
+
+	// Create edges from consumer group to each consumed topic.
+	var edges []*meteorv1beta1.Edge
+	for topic := range consumedTopics {
+		edges = append(edges, &meteorv1beta1.Edge{
+			SourceUrn: urn,
+			TargetUrn: models.NewURN("kafka", e.UrnScope, "topic", topic),
+			Type:      "consumed_by",
+			Source:    "kafka",
+		})
+	}
+
+	return models.NewRecord(entity, edges...)
 }
 
 func (e *Extractor) createTLSConfig() (*tls.Config, error) {
@@ -219,22 +384,6 @@ func (e *Extractor) createTLSConfig() (*tls.Config, error) {
 		RootCAs:            caCertPool,
 		InsecureSkipVerify: e.config.Auth.TLS.InsecureSkipVerify,
 	}, nil
-}
-
-// Build topic metadata model using a topic and number of partitions
-func (e *Extractor) buildRecord(topicName string, numOfPartitions int) models.Record {
-	props := map[string]any{
-		"number_of_partitions": int64(numOfPartitions),
-	}
-
-	entity := models.NewEntity(
-		models.NewURN("kafka", e.UrnScope, "topic", topicName),
-		"topic",
-		topicName,
-		"kafka",
-		props,
-	)
-	return models.NewRecord(entity)
 }
 
 func init() {

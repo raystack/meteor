@@ -115,11 +115,8 @@ func (s *Sink) sinkRecord(ctx context.Context, record models.Record) error {
 		return fmt.Errorf("upsert entity: %w", err)
 	}
 
-	// 2. Upsert non-lineage edges (lineage is sent inline with the entity).
+	// 2. Upsert all edges uniformly via UpsertEdge.
 	for _, edge := range record.Edges() {
-		if edge.GetType() == "lineage" {
-			continue
-		}
 		edgeReq := UpsertEdgeRequest{
 			SourceURN: edge.GetSourceUrn(),
 			TargetURN: edge.GetTargetUrn(),
@@ -150,21 +147,8 @@ func (s *Sink) buildEntityRequest(record models.Record) UpsertEntityRequest {
 		Source:      entity.GetSource(),
 	}
 
-	// Copy properties from entity
 	if entity.GetProperties() != nil {
 		req.Properties = entity.GetProperties().AsMap()
-	}
-
-	// Extract upstreams/downstreams from lineage edges
-	for _, edge := range record.Edges() {
-		if edge.GetType() != "lineage" {
-			continue
-		}
-		if edge.GetSourceUrn() == entity.GetUrn() {
-			req.Downstreams = append(req.Downstreams, edge.GetTargetUrn())
-		} else if edge.GetTargetUrn() == entity.GetUrn() {
-			req.Upstreams = append(req.Upstreams, edge.GetSourceUrn())
-		}
 	}
 
 	return req

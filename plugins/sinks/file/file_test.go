@@ -106,7 +106,7 @@ func TestSink(t *testing.T) {
 			Type:   "table",
 		}
 		edges := []*meteorv1beta1.Edge{
-			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "lineage", Source: "bigquery"},
+			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "derived_from", Source: "bigquery"},
 			{SourceUrn: "urn:bigquery:p:table:d.t1", TargetUrn: "urn:user:alice@co.com", Type: "owned_by", Source: "bigquery"},
 		}
 		record := models.NewRecord(entity, edges...)
@@ -131,7 +131,7 @@ func TestSink(t *testing.T) {
 			Type:   "table",
 		}
 		edges := []*meteorv1beta1.Edge{
-			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "lineage", Source: "bigquery"},
+			{SourceUrn: "urn:upstream", TargetUrn: "urn:bigquery:p:table:d.t1", Type: "derived_from", Source: "bigquery"},
 		}
 		record := models.NewRecord(entity, edges...)
 		err = fileSink.Sink(context.TODO(), []models.Record{record})

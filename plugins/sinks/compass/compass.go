@@ -8,8 +8,6 @@ type UpsertEntityRequest struct {
 	Description string         `json:"description,omitempty"`
 	Source      string         `json:"source"`
 	Properties  map[string]any `json:"properties,omitempty"`
-	Upstreams   []string       `json:"upstreams,omitempty"`
-	Downstreams []string       `json:"downstreams,omitempty"`
 }
 
 // UpsertEdgeRequest is the payload for Compass v2 UpsertEdge endpoint.

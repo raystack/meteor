@@ -174,17 +174,17 @@ func TestExtract(t *testing.T) {
 					"urn:user:myteam@company.com",
 					"application_yaml",
 				),
-				models.LineageEdge(
+				models.DerivedFromEdge(
+					"urn:application_yaml:test-application:application:test",
 					"urn:bigquery:bq-raw-internal:table:bq-raw-internal:dagstream.production_feast09_s2id13_30min_demand",
-					"urn:application_yaml:test-application:application:test",
 					"application_yaml",
 				),
-				models.LineageEdge(
+				models.DerivedFromEdge(
+					"urn:application_yaml:test-application:application:test",
 					"urn:kafka:int-dagstream-kafka.yonkou.io:topic:staging_feast09_s2id13_30min_demand",
-					"urn:application_yaml:test-application:application:test",
 					"application_yaml",
 				),
-				models.LineageEdge(
+				models.GeneratesEdge(
 					"urn:application_yaml:test-application:application:test",
 					"urn:kafka:1-my-kafka.company.com,2-my-kafka.company.com:topic:staging_feast09_mixed_granularity_demand_forecast_3es",
 					"application_yaml",

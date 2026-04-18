@@ -35,12 +35,38 @@ func NewEntity(urn, typ, name, source string, props map[string]any) *meteorv1bet
 	}
 }
 
-// LineageEdge creates a lineage edge from sourceURN to targetURN.
-func LineageEdge(sourceURN, targetURN, source string) *meteorv1beta1.Edge {
+// DerivedFromEdge creates a derived_from edge: entityURN is derived from dependencyURN.
+// Use when an entity reads from or depends on another (e.g. view from table,
+// dashboard from datasource, job from upstream).
+func DerivedFromEdge(entityURN, dependencyURN, source string) *meteorv1beta1.Edge {
+	return &meteorv1beta1.Edge{
+		SourceUrn: entityURN,
+		TargetUrn: dependencyURN,
+		Type:      "derived_from",
+		Source:    source,
+	}
+}
+
+// GeneratesEdge creates a generates edge: entityURN generates outputURN.
+// Use when an entity produces or writes to another (e.g. job writes to
+// downstream table, application produces output).
+func GeneratesEdge(entityURN, outputURN, source string) *meteorv1beta1.Edge {
+	return &meteorv1beta1.Edge{
+		SourceUrn: entityURN,
+		TargetUrn: outputURN,
+		Type:      "generates",
+		Source:    source,
+	}
+}
+
+// ReferencesEdge creates a references edge from sourceURN to targetURN.
+// Use this for structural relationships like foreign keys, where one entity
+// references another but data does not necessarily flow between them.
+func ReferencesEdge(sourceURN, targetURN, source string) *meteorv1beta1.Edge {
 	return &meteorv1beta1.Edge{
 		SourceUrn: sourceURN,
 		TargetUrn: targetURN,
-		Type:      "lineage",
+		Type:      "references",
 		Source:    source,
 	}
 }

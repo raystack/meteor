@@ -157,7 +157,7 @@ func TestSink(t *testing.T) {
 		assert.NotNil(t, entityReq.Properties["columns"])
 	})
 
-	t.Run("should send upstreams and downstreams in entity request", func(t *testing.T) {
+	t.Run("should send derived_from and generates edges via UpsertEdge", func(t *testing.T) {
 		client := &mockHTTPClient{}
 		client.SetupResponse(200, `{}`)
 		ctx := context.TODO()
@@ -175,18 +175,28 @@ func TestSink(t *testing.T) {
 			Type:   "topic",
 		}
 		edges := []*meteorv1beta1.Edge{
-			{SourceUrn: "urn-1", TargetUrn: "my-topic-urn", Type: "lineage"},
-			{SourceUrn: "urn-2", TargetUrn: "my-topic-urn", Type: "lineage"},
-			{SourceUrn: "my-topic-urn", TargetUrn: "urn-3", Type: "lineage"},
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn-1", Type: "derived_from", Source: "kafka"},
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn-2", Type: "derived_from", Source: "kafka"},
+			{SourceUrn: "my-topic-urn", TargetUrn: "urn-3", Type: "generates", Source: "kafka"},
 		}
 		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity, edges...)})
 		assert.NoError(t, err)
 
-		require.Len(t, client.requests, 1)
-		var entityReq compass.UpsertEntityRequest
-		decodeBody(t, client.requests[0], &entityReq)
-		assert.Equal(t, []string{"urn-1", "urn-2"}, entityReq.Upstreams)
-		assert.Equal(t, []string{"urn-3"}, entityReq.Downstreams)
+		// 1 entity + 3 edge requests (all edges go through UpsertEdge).
+		require.Len(t, client.requests, 4)
+		assert.Equal(t, upsertEntityURL, reqURL(client.requests[0]))
+
+		var edge1 compass.UpsertEdgeRequest
+		decodeBody(t, client.requests[1], &edge1)
+		assert.Equal(t, upsertEdgeURL, reqURL(client.requests[1]))
+		assert.Equal(t, "derived_from", edge1.Type)
+		assert.Equal(t, "my-topic-urn", edge1.SourceURN)
+		assert.Equal(t, "urn-1", edge1.TargetURN)
+
+		var edge3 compass.UpsertEdgeRequest
+		decodeBody(t, client.requests[3], &edge3)
+		assert.Equal(t, "generates", edge3.Type)
+		assert.Equal(t, "urn-3", edge3.TargetURN)
 	})
 
 	t.Run("should send ownership edges", func(t *testing.T) {

@@ -41,10 +41,10 @@ func TestNewRecordWithMultipleEdges(t *testing.T) {
 		Name: "t1",
 		Type: "table",
 	}
-	lineageEdge := &meteorv1beta1.Edge{
+	derivedEdge := &meteorv1beta1.Edge{
 		SourceUrn: "urn:test:scope:table:t1",
 		TargetUrn: "urn:test:scope:table:t2",
-		Type:      "lineage",
+		Type:      "derived_from",
 		Source:    "test",
 	}
 	ownerEdge := &meteorv1beta1.Edge{
@@ -53,12 +53,12 @@ func TestNewRecordWithMultipleEdges(t *testing.T) {
 		Type:      "owned_by",
 		Source:    "test",
 	}
-	record := models.NewRecord(entity, lineageEdge, ownerEdge)
+	record := models.NewRecord(entity, derivedEdge, ownerEdge)
 	assert.Equal(t, entity, record.Entity())
 	assert.Len(t, record.Edges(), 2)
-	assert.Equal(t, lineageEdge, record.Edges()[0])
+	assert.Equal(t, derivedEdge, record.Edges()[0])
 	assert.Equal(t, ownerEdge, record.Edges()[1])
-	assert.Equal(t, "lineage", record.Edges()[0].GetType())
+	assert.Equal(t, "derived_from", record.Edges()[0].GetType())
 	assert.Equal(t, "owned_by", record.Edges()[1].GetType())
 }
 

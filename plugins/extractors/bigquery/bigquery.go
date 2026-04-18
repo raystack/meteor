@@ -438,7 +438,7 @@ func (e *Extractor) buildRecord(ctx context.Context, t *bigquery.Table, md *bigq
 		if e.config.BuildViewLineage {
 			upstreamURNs := getUpstreamURNs(query)
 			for _, upstreamURN := range upstreamURNs {
-				edges = append(edges, models.LineageEdge(upstreamURN, tableURN, "bigquery"))
+				edges = append(edges, models.DerivedFromEdge(tableURN, upstreamURN, "bigquery"))
 			}
 		}
 	}

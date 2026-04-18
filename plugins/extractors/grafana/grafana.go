@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
@@ -18,9 +19,10 @@ var summary string
 
 // Config holds the set of configuration for the grafana extractor
 type Config struct {
-	BaseURL string  `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
-	APIKey  string  `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
-	Exclude Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+	BaseURL string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
+	APIKey  string   `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
+	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Exclude Exclude  `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
 type Exclude struct {
@@ -31,12 +33,17 @@ type Exclude struct {
 var sampleConfig = `
 base_url: grafana_server
 api_key: your_api_key
+# extract specifies which entity types to extract.
+# Defaults to all: ["dashboards", "datasources"]
+extract:
+  - dashboards
+  - datasources
 exclude:
   dashboards: [dashboard_uid_1, dashboard_uid_2]
   panels: [dashboard_uid_3.panel_id_1]`
 
 var info = plugins.Info{
-	Description:  "Dashboard list from Grafana server.",
+	Description:  "Dashboard and datasource metadata from Grafana server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "extractor"},
@@ -47,6 +54,7 @@ type Extractor struct {
 	plugins.BaseExtractor
 	client             *Client
 	config             Config
+	extract            map[string]bool
 	excludedDashboards map[string]bool
 	excludedPanels     map[string]bool
 	logger             log.Logger
@@ -72,6 +80,17 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	e.excludedDashboards = sqlutil.BuildBoolMap(e.config.Exclude.Dashboards)
 	e.excludedPanels = sqlutil.BuildBoolMap(e.config.Exclude.Panels)
 
+	e.extract = map[string]bool{
+		"dashboards":  true,
+		"datasources": true,
+	}
+	if len(e.config.Extract) > 0 {
+		e.extract = make(map[string]bool, len(e.config.Extract))
+		for _, v := range e.config.Extract {
+			e.extract[v] = true
+		}
+	}
+
 	// build client
 	var err error
 	e.client, err = NewClient(&http.Client{}, e.config)
@@ -81,6 +100,38 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 // Extract checks if the extractor is configured and
 // if so, then it extracts the assets from the extractor.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+	if e.extract["datasources"] {
+		if err := e.extractDatasources(ctx, emit); err != nil {
+			return fmt.Errorf("extract datasources: %w", err)
+		}
+	}
+
+	if e.extract["dashboards"] {
+		if err := e.extractDashboards(ctx, emit); err != nil {
+			return fmt.Errorf("extract dashboards: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (e *Extractor) extractDatasources(ctx context.Context, emit plugins.Emit) error {
+	dataSources, err := e.client.GetAllDatasources(ctx)
+	if err != nil {
+		return fmt.Errorf("fetch datasources: %w", err)
+	}
+
+	for _, ds := range dataSources {
+		if ds.UID == "" {
+			continue
+		}
+		record := e.buildDatasourceRecord(ds)
+		emit(record)
+	}
+	return nil
+}
+
+func (e *Extractor) extractDashboards(ctx context.Context, emit plugins.Emit) error {
 	uids, err := e.client.SearchAllDashboardUIDs(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch dashboards: %w", err)
@@ -92,7 +143,6 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	}
 
 	for _, dashboardDetail := range dashboardDetails {
-		// skip excluded dashboard uids
 		if e.excludedDashboards[dashboardDetail.Dashboard.UID] {
 			continue
 		}
@@ -103,9 +153,31 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return nil
 }
 
+func (e *Extractor) buildDatasourceRecord(ds DataSource) models.Record {
+	urn := models.NewURN("grafana", e.UrnScope, "datasource", ds.UID)
+	props := map[string]any{
+		"type": ds.Type,
+	}
+	if ds.URL != "" {
+		props["url"] = ds.URL
+	}
+	if ds.Database != "" {
+		props["database"] = ds.Database
+	}
+	if ds.IsDefault {
+		props["is_default"] = true
+	}
+
+	entity := models.NewEntity(urn, "datasource", ds.Name, "grafana", props)
+	return models.NewRecord(entity)
+}
+
 // grafanaDashboardToRecord converts a grafana dashboard to a meteor Record
 func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.Record {
 	var charts []map[string]any
+	// Track unique datasource UIDs for lineage edges.
+	dsUIDs := make(map[string]struct{})
+
 	for _, panel := range dashboard.Dashboard.Panels {
 		// skip excluded panel ids
 		panelUID := fmt.Sprintf("%s.%d", dashboard.Dashboard.UID, panel.ID)
@@ -114,6 +186,10 @@ func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.R
 		}
 		c := e.grafanaPanelToChart(panel, dashboard.Dashboard.UID, dashboard.Meta.URL)
 		charts = append(charts, c)
+
+		if panel.DataSourceUID != "" {
+			dsUIDs[panel.DataSourceUID] = struct{}{}
+		}
 	}
 
 	urn := models.NewURN("grafana", e.UrnScope, "dashboard", dashboard.Dashboard.UID)
@@ -126,9 +202,32 @@ func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.R
 	if dashboard.Dashboard.Description != "" {
 		props["description"] = dashboard.Dashboard.Description
 	}
+	if dashboard.Meta.FolderTitle != "" {
+		props["folder"] = dashboard.Meta.FolderTitle
+	}
+	if dashboard.Meta.CreatedBy != "" {
+		props["created_by"] = dashboard.Meta.CreatedBy
+	}
+	if dashboard.Meta.UpdatedBy != "" {
+		props["updated_by"] = dashboard.Meta.UpdatedBy
+	}
+	if len(dashboard.Dashboard.Tags) > 0 {
+		props["tags"] = dashboard.Dashboard.Tags
+	}
 
 	entity := models.NewEntity(urn, "dashboard", dashboard.Meta.Slug, "grafana", props)
-	return models.NewRecord(entity)
+
+	// Create derived_from edges from dashboard to each datasource.
+	var edges []*meteorv1beta1.Edge
+	for dsUID := range dsUIDs {
+		edges = append(edges, models.DerivedFromEdge(
+			urn,
+			models.NewURN("grafana", e.UrnScope, "datasource", dsUID),
+			"grafana",
+		))
+	}
+
+	return models.NewRecord(entity, edges...)
 }
 
 // grafanaPanelToChart converts a grafana panel to a chart map

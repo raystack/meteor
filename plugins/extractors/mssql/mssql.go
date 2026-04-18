@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
@@ -128,14 +129,48 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("get columns: %w", err)
 	}
-	// push table to channel
-	e.emit(models.NewRecord(models.NewEntity(
-		models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		"table", tableName, "mssql",
-		map[string]any{"columns": columns},
-	)))
 
+	tableURN := models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName))
+	entity := models.NewEntity(tableURN, "table", tableName, "mssql", map[string]any{"columns": columns})
+
+	edges, err := e.getForeignKeyEdges(ctx, database, tableName, tableURN)
+	if err != nil {
+		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", database, tableName))
+	}
+
+	e.emit(models.NewRecord(entity, edges...))
 	return nil
+}
+
+// getForeignKeyEdges queries foreign key constraints and returns references edges.
+func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
+	//nolint:gosec
+	query := fmt.Sprintf(
+		`SELECT DISTINCT OBJECT_NAME(fk.referenced_object_id) AS referenced_table
+		FROM %s.sys.foreign_keys fk
+		WHERE OBJECT_NAME(fk.parent_object_id) = ?`, database)
+
+	rows, err := e.db.QueryContext(ctx, query, tableName)
+	if err != nil {
+		return nil, fmt.Errorf("execute foreign key query: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*meteorv1beta1.Edge
+	for rows.Next() {
+		var referencedTable string
+		if err := rows.Scan(&referencedTable); err != nil {
+			e.logger.Error("failed to scan foreign key row", "error", err)
+			continue
+		}
+		targetURN := models.NewURN("mssql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, referencedTable))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "mssql"))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over foreign keys: %w", err)
+	}
+
+	return edges, nil
 }
 
 // getColumns extract columns from the given table

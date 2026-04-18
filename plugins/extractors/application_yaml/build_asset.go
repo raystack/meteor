@@ -45,13 +45,13 @@ func buildRecord(scope string, svc Application) models.Record {
 		edges = append(edges, models.OwnerEdge(urn, ownerURN, service))
 	}
 
-	// Lineage edges: upstreams (inputs -> this entity)
+	// Upstream edges: this entity is derived from its inputs
 	for _, inputURN := range svc.Inputs {
-		edges = append(edges, models.LineageEdge(inputURN, urn, service))
+		edges = append(edges, models.DerivedFromEdge(urn, inputURN, service))
 	}
-	// Lineage edges: downstreams (this entity -> outputs)
+	// Downstream edges: this entity generates its outputs
 	for _, outputURN := range svc.Outputs {
-		edges = append(edges, models.LineageEdge(urn, outputURN, service))
+		edges = append(edges, models.GeneratesEdge(urn, outputURN, service))
 	}
 
 	entity := models.NewEntity(urn, typ, svc.Name, service, props)

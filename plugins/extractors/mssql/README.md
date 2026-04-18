@@ -45,7 +45,9 @@ System databases `master`, `msdb`, `model`, and `tempdb` are excluded by default
 
 ## Edges
 
-This extractor does not emit edges.
+| Source | Target | Type | Description |
+| :----- | :----- | :--- | :---------- |
+| `table` | `table` | `references` | Foreign key relationship to the referenced table. |
 
 ## Contributing
 

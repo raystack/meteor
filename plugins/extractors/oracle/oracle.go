@@ -93,13 +93,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	}
 
 	for _, table := range tables {
-		result, err := e.getTableMetadata(ctx, e.db, database, table)
+		entity, edges, err := e.getTableMetadata(ctx, e.db, database, table)
 		if err != nil {
 			e.logger.Error("failed to get table metadata, skipping table", "error", err)
-			// continue
+			continue
 		}
-		// Publish metadata to channel
-		emit(models.NewRecord(result))
+		emit(models.NewRecord(entity, edges...))
 	}
 
 	return nil
@@ -128,16 +127,16 @@ func (*Extractor) getUserName(ctx context.Context, db *sql.DB) (string, error) {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, error) {
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, []*meteorv1beta1.Edge, error) {
 	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// get table row count
 	rows, err := db.QueryContext(ctx, `select count(*) from `+tableName) //nolint:gosec
 	if err != nil {
-		return nil, fmt.Errorf("run query for count: %w", err)
+		return nil, nil, fmt.Errorf("run query for count: %w", err)
 	}
 	defer rows.Close()
 
@@ -149,7 +148,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("scan row count: %w", err)
+		return nil, nil, fmt.Errorf("scan row count: %w", err)
 	}
 
 	props := map[string]any{
@@ -161,11 +160,46 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		}
 	}
 
-	return models.NewEntity(
-		models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-		"table", tableName, "Oracle",
-		props,
-	), nil
+	tableURN := models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName))
+	entity := models.NewEntity(tableURN, "table", tableName, "Oracle", props)
+
+	edges, err := e.getForeignKeyEdges(ctx, db, dbName, tableName, tableURN)
+	if err != nil {
+		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
+	}
+
+	return entity, edges, nil
+}
+
+// getForeignKeyEdges queries foreign key constraints and returns references edges.
+func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
+	query := fmt.Sprintf(`SELECT DISTINCT c2.TABLE_NAME AS referenced_table
+		FROM USER_CONSTRAINTS c1
+		JOIN USER_CONSTRAINTS c2 ON c1.R_CONSTRAINT_NAME = c2.CONSTRAINT_NAME
+		WHERE c1.CONSTRAINT_TYPE = 'R'
+		  AND c1.TABLE_NAME = '%s'`, tableName)
+
+	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("execute foreign key query: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*meteorv1beta1.Edge
+	for rows.Next() {
+		var referencedTable string
+		if err := rows.Scan(&referencedTable); err != nil {
+			e.logger.Error("failed to scan foreign key row", "error", err)
+			continue
+		}
+		targetURN := models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, referencedTable))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "oracle"))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over foreign keys: %w", err)
+	}
+
+	return edges, nil
 }
 
 // Prepares the list of columns and the attached metadata

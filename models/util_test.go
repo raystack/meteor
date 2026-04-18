@@ -47,12 +47,20 @@ func TestNewEntity(t *testing.T) {
 	assert.NotNil(t, entity.GetProperties())
 }
 
-func TestLineageEdge(t *testing.T) {
-	edge := models.LineageEdge("urn:source", "urn:target", "bigquery")
-	assert.Equal(t, "urn:source", edge.GetSourceUrn())
-	assert.Equal(t, "urn:target", edge.GetTargetUrn())
-	assert.Equal(t, "lineage", edge.GetType())
+func TestDerivedFromEdge(t *testing.T) {
+	edge := models.DerivedFromEdge("urn:view", "urn:table", "bigquery")
+	assert.Equal(t, "urn:view", edge.GetSourceUrn())
+	assert.Equal(t, "urn:table", edge.GetTargetUrn())
+	assert.Equal(t, "derived_from", edge.GetType())
 	assert.Equal(t, "bigquery", edge.GetSource())
+}
+
+func TestGeneratesEdge(t *testing.T) {
+	edge := models.GeneratesEdge("urn:job", "urn:table", "optimus")
+	assert.Equal(t, "urn:job", edge.GetSourceUrn())
+	assert.Equal(t, "urn:table", edge.GetTargetUrn())
+	assert.Equal(t, "generates", edge.GetType())
+	assert.Equal(t, "optimus", edge.GetSource())
 }
 
 func TestOwnerEdge(t *testing.T) {
@@ -80,7 +88,7 @@ func TestRecordToJSON(t *testing.T) {
 		Urn:  "urn:test:s:table:t1",
 		Name: "t1",
 	}
-	edge := models.LineageEdge("urn:a", "urn:b", "test")
+	edge := models.DerivedFromEdge("urn:a", "urn:b", "test")
 	record := models.NewRecord(entity, edge)
 
 	b, err := models.RecordToJSON(record)
@@ -138,16 +146,16 @@ func TestRecordToJSONWithMultipleEdges(t *testing.T) {
 		Urn:  "urn:test:s:table:t1",
 		Name: "t1",
 	}
-	lineage := models.LineageEdge("urn:a", "urn:b", "test")
+	derived := models.DerivedFromEdge("urn:test:s:table:t1", "urn:b", "test")
 	owner := models.OwnerEdge("urn:test:s:table:t1", "urn:user:bob@co.com", "test")
-	record := models.NewRecord(entity, lineage, owner)
+	record := models.NewRecord(entity, derived, owner)
 
 	b, err := models.RecordToJSON(record)
 	require.NoError(t, err)
 	s := string(b)
 	assert.Contains(t, s, `"entity"`)
 	assert.Contains(t, s, `"edges"`)
-	assert.Contains(t, s, `"lineage"`)
+	assert.Contains(t, s, `"derived_from"`)
 	assert.Contains(t, s, `"owned_by"`)
 	assert.Contains(t, s, `"urn:user:bob@co.com"`)
 }

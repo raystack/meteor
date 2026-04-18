@@ -1,6 +1,6 @@
 # grafana
 
-Extract dashboard metadata from a Grafana server.
+Extract dashboard and datasource metadata from a Grafana server.
 
 ## Usage
 
@@ -10,6 +10,11 @@ source:
   config:
     base_url: http://localhost:3000
     api_key: Bearer qweruqwryqwLKJ
+    # extract specifies which entity types to extract.
+    # Defaults to all: ["dashboards", "datasources"]
+    extract:
+      - dashboards
+      - datasources
     exclude:
       dashboards:
         - dashboard_uid_1
@@ -24,23 +29,30 @@ source:
 | :-- | :--- | :------- | :---------- |
 | `base_url` | `string` | Yes | URL of the Grafana server. |
 | `api_key` | `string` | Yes | API key to access the Grafana API. |
+| `extract` | `[]string` | No | Entity types to extract. Defaults to `["dashboards", "datasources"]`. |
 | `exclude.dashboards` | `[]string` | No | Dashboard UIDs to exclude from extraction. |
 | `exclude.panels` | `[]string` | No | Panel IDs to exclude, in the format `{dashboard_uid}.{panel_id}`. |
 
 ## Entities
 
+### Dashboard
+
 - **Entity type:** `dashboard`
 - **URN format:** `urn:grafana:{scope}:dashboard:{uid}`
 
-### Properties
+#### Properties
 
 | Property | Type | Description |
 | :------- | :--- | :---------- |
-| `properties.url` | `string` | Full URL to the dashboard. |
-| `properties.description` | `string` | Dashboard description (if set). |
-| `properties.charts` | `[]object` | List of panel/chart objects (see below). |
+| `url` | `string` | Full URL to the dashboard. |
+| `description` | `string` | Dashboard description (if set). |
+| `folder` | `string` | Folder name containing the dashboard. |
+| `created_by` | `string` | User who created the dashboard. |
+| `updated_by` | `string` | User who last updated the dashboard. |
+| `tags` | `[]string` | Dashboard tags. |
+| `charts` | `[]object` | List of panel/chart objects (see below). |
 
-### Chart sub-fields
+#### Chart sub-fields
 
 | Field | Type | Description |
 | :---- | :--- | :---------- |
@@ -55,9 +67,25 @@ source:
 | `dashboard_urn` | `string` | Parent dashboard URN. |
 | `dashboard_source` | `string` | Always `grafana`. |
 
+### Datasource
+
+- **Entity type:** `datasource`
+- **URN format:** `urn:grafana:{scope}:datasource:{uid}`
+
+#### Properties
+
+| Property | Type | Description |
+| :------- | :--- | :---------- |
+| `type` | `string` | Datasource type (e.g. `postgres`, `prometheus`). |
+| `url` | `string` | Connection URL. |
+| `database` | `string` | Database name (if applicable). |
+| `is_default` | `bool` | Whether this is the default datasource. |
+
 ## Edges
 
-This extractor does not emit edges.
+| Source | Target | Type | Description |
+| :----- | :----- | :--- | :---------- |
+| `dashboard` | `datasource` | `lineage` | Dashboard panels consume data from this datasource. |
 
 ## Contributing
 

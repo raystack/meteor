@@ -119,10 +119,16 @@ func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (models.R
 	for _, cu := range chartData {
 		for _, upstreamURN := range cu.upstreams {
 			if !existing[upstreamURN] {
-				edges = append(edges, models.LineageEdge(upstreamURN, dashboardURN, "metabase"))
+				edges = append(edges, models.DerivedFromEdge(dashboardURN, upstreamURN, "metabase"))
 				existing[upstreamURN] = true
 			}
 		}
+	}
+
+	// Create owned_by edge to the dashboard creator.
+	if dashboard.CreatorID > 0 {
+		ownerURN := models.NewURN("metabase", e.UrnScope, "user", fmt.Sprintf("%d", dashboard.CreatorID))
+		edges = append(edges, models.OwnerEdge(dashboardURN, ownerURN, "metabase"))
 	}
 
 	charts := make([]map[string]any, 0, len(chartData))
