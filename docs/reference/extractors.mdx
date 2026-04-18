@@ -28,6 +28,7 @@ source:
 | [`clickhouse`][clickhouse] | `table` | — | ClickHouse SQL |
 | [`couchdb`][couchdb] | `table` | — | CouchDB HTTP API |
 | [`csv`][csv] | `table` | — | Local filesystem |
+| [`dbt`][dbt] | `model`, `source` | `derived_from`, `owned_by` | dbt manifest.json |
 | [`elastic`][elastic] | `table` | — | Elasticsearch API |
 | [`mariadb`][mariadb] | `table` | — | MariaDB SQL |
 | [`mongodb`][mongodb] | `table` | — | MongoDB driver |
@@ -65,6 +66,8 @@ Each extractor emits one or more entity types. All entities share the same flat 
 | `team` | Teams within an organisation | github |
 | `document` | Documentation files from repositories | github |
 | `bucket` | Cloud storage containers | gcs |
+| `model` | dbt transformation models | dbt |
+| `source` | dbt external source definitions | dbt |
 | `job` | Scheduled data transformation tasks | optimus |
 | `application` | Services and applications | application_yaml |
 
@@ -74,9 +77,9 @@ Edges represent relationships between entities. Not all extractors emit edges �
 
 | Edge Type | Meaning | Extractors |
 | :--- | :--- | :--- |
-| `derived_from` | Entity depends on / reads from target (upstream dependency) | bigquery, metabase, tableau, optimus, application_yaml |
+| `derived_from` | Entity depends on / reads from target (upstream dependency) | bigquery, dbt, metabase, tableau, optimus, application_yaml |
 | `generates` | Entity produces / writes to target (downstream output) | optimus, application_yaml |
-| `owned_by` | Entity is owned by a user or team | tableau, optimus, application_yaml, github |
+| `owned_by` | Entity is owned by a user or team | dbt, tableau, optimus, application_yaml, github |
 | `member_of` | User belongs to an org or team | github |
 | `belongs_to` | Entity belongs to a parent entity | github |
 
@@ -86,6 +89,7 @@ Edges represent relationships between entities. Not all extractors emit edges �
 [clickhouse]: https://github.com/raystack/meteor/tree/main/plugins/extractors/clickhouse/README.md
 [couchdb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/couchdb/README.md
 [csv]: https://github.com/raystack/meteor/tree/main/plugins/extractors/csv/README.md
+[dbt]: https://github.com/raystack/meteor/tree/main/plugins/extractors/dbt/README.md
 [elastic]: https://github.com/raystack/meteor/tree/main/plugins/extractors/elastic/README.md
 [mariadb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mariadb/README.md
 [mongodb]: https://github.com/raystack/meteor/tree/main/plugins/extractors/mongodb/README.md

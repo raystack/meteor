@@ -1,0 +1,113 @@
+{
+  "nodes": {
+    "model.jaffle_shop.customers": {
+      "unique_id": "model.jaffle_shop.customers",
+      "resource_type": "model",
+      "name": "customers",
+      "schema": "jaffle_shop",
+      "database": "analytics",
+      "description": "This table has basic information about customers.",
+      "columns": {
+        "id": {
+          "name": "id",
+          "description": "Primary key",
+          "data_type": ""
+        },
+        "name": {
+          "name": "name",
+          "description": "Customer name",
+          "data_type": "VARCHAR"
+        }
+      },
+      "depends_on": {
+        "nodes": [
+          "model.jaffle_shop.stg_orders",
+          "source.jaffle_shop.raw.customers"
+        ]
+      },
+      "tags": ["finance", "daily"],
+      "meta": {
+        "owner": "analytics-team"
+      },
+      "config": {
+        "materialized": "table"
+      },
+      "path": "models/customers.sql",
+      "language": "sql"
+    },
+    "model.jaffle_shop.stg_orders": {
+      "unique_id": "model.jaffle_shop.stg_orders",
+      "resource_type": "model",
+      "name": "stg_orders",
+      "schema": "jaffle_shop",
+      "database": "analytics",
+      "description": "Staged orders data.",
+      "columns": {},
+      "depends_on": {
+        "nodes": [
+          "source.jaffle_shop.raw.orders"
+        ]
+      },
+      "tags": [],
+      "meta": {},
+      "config": {
+        "materialized": "view"
+      },
+      "path": "models/staging/stg_orders.sql",
+      "language": "sql"
+    },
+    "test.jaffle_shop.not_null_customers_id": {
+      "unique_id": "test.jaffle_shop.not_null_customers_id",
+      "resource_type": "test",
+      "name": "not_null_customers_id",
+      "schema": "jaffle_shop",
+      "database": "analytics",
+      "description": "",
+      "columns": {},
+      "depends_on": {
+        "nodes": ["model.jaffle_shop.customers"]
+      },
+      "tags": [],
+      "meta": {},
+      "config": {
+        "materialized": ""
+      },
+      "path": "tests/not_null_customers_id.sql",
+      "language": "sql"
+    }
+  },
+  "sources": {
+    "source.jaffle_shop.raw.customers": {
+      "unique_id": "source.jaffle_shop.raw.customers",
+      "name": "customers",
+      "source_name": "raw",
+      "schema": "raw_data",
+      "database": "raw_db",
+      "description": "Raw customers from the payment system.",
+      "columns": {
+        "id": {
+          "name": "id",
+          "description": "Customer ID",
+          "data_type": "INTEGER"
+        }
+      },
+      "loader": "stitch",
+      "tags": ["raw"],
+      "meta": {
+        "owner": "data-eng"
+      }
+    },
+    "source.jaffle_shop.raw.orders": {
+      "unique_id": "source.jaffle_shop.raw.orders",
+      "name": "orders",
+      "source_name": "raw",
+      "schema": "raw_data",
+      "database": "raw_db",
+      "description": "",
+      "columns": {},
+      "loader": "",
+      "tags": [],
+      "meta": {}
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "nodes": {
+    "model.jaffle_shop.customers": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "INTEGER",
+          "index": 1,
+          "comment": ""
+        },
+        "name": {
+          "name": "name",
+          "type": "STRING",
+          "index": 2,
+          "comment": ""
+        }
+      },
+      "stats": {
+        "row_count": {
+          "id": "row_count",
+          "label": "Row Count",
+          "value": 100,
+          "description": "Number of rows"
+        }
+      }
+    }
+  }
+}
