@@ -24,8 +24,9 @@ import (
 var summary string
 
 type Config struct {
-	Host    string            `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
-	Headers map[string]string `json:"headers" yaml:"headers" mapstructure:"headers"`
+	Host           string            `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Headers        map[string]string `json:"headers" yaml:"headers" mapstructure:"headers"`
+	MaxConcurrency int               `json:"max_concurrency" yaml:"max_concurrency" mapstructure:"max_concurrency"`
 }
 
 var info = plugins.Info{
@@ -39,6 +40,8 @@ var info = plugins.Info{
 	headers:
 	  Compass-User-UUID: meteor@raystack.io
 	  X-Other-Header: value1, value2
+	# Maximum number of concurrent requests to compass per batch. 0 means no limit.
+	# max_concurrency: 10
 	`),
 }
 
@@ -84,7 +87,11 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	}
 
 	errGroup := errgroup.Group{}
-	errGroup.SetLimit(len(batch))
+	limit := len(batch)
+	if s.config.MaxConcurrency > 0 && s.config.MaxConcurrency < limit {
+		limit = s.config.MaxConcurrency
+	}
+	errGroup.SetLimit(limit)
 
 	for _, record := range batch {
 		record := record
@@ -109,13 +116,17 @@ func (*Sink) Close() error { return nil }
 func (s *Sink) sinkRecord(ctx context.Context, record models.Record) error {
 	entity := record.Entity()
 
-	// 1. Upsert the entity.
-	entityReq := s.buildEntityRequest(record)
-	if err := s.post(ctx, upsertEntityRoute, entityReq); err != nil {
-		return fmt.Errorf("upsert entity: %w", err)
+	// Skip entity upsert only for bare records that exist solely to carry edges
+	// (no properties, no name, no description — just a URN and type for edge context).
+	edgeOnly := entity.GetProperties() == nil && entity.GetName() == "" && entity.GetDescription() == ""
+	if !edgeOnly {
+		entityReq := s.buildEntityRequest(record)
+		if err := s.post(ctx, upsertEntityRoute, entityReq); err != nil {
+			return fmt.Errorf("upsert entity: %w", err)
+		}
 	}
 
-	// 2. Upsert all edges uniformly via UpsertEdge.
+	// Upsert all edges uniformly via UpsertEdge.
 	for _, edge := range record.Edges() {
 		edgeReq := UpsertEdgeRequest{
 			SourceURN: edge.GetSourceUrn(),

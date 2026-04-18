@@ -73,7 +73,7 @@ func TestSink(t *testing.T) {
 		}})
 		require.NoError(t, err)
 
-		entity := &meteorv1beta1.Entity{Type: "table"}
+		entity := &meteorv1beta1.Entity{Type: "table", Name: "my-table"}
 		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "compass returns 404")
@@ -92,7 +92,7 @@ func TestSink(t *testing.T) {
 				}})
 				require.NoError(t, err)
 
-				entity := &meteorv1beta1.Entity{Type: "table"}
+				entity := &meteorv1beta1.Entity{Type: "table", Name: "my-table"}
 				err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity)})
 				require.Error(t, err)
 				assert.ErrorAs(t, err, &plugins.RetryError{})
@@ -303,6 +303,67 @@ func TestSink(t *testing.T) {
 		require.Len(t, client.requests, 1)
 		req := client.requests[0]
 		assert.Contains(t, req.Header.Get("Compass-User-UUID"), "meteor@raystack.io")
+	})
+
+	t.Run("should skip entity upsert for edge-only records", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
+			"host": host,
+		}})
+		require.NoError(t, err)
+
+		// Entity with only URN/type/source — no name, description, or properties.
+		entity := &meteorv1beta1.Entity{
+			Urn:    "my-repo-urn",
+			Source: "github",
+			Type:   "repository",
+		}
+		edges := []*meteorv1beta1.Edge{
+			{SourceUrn: "user-urn-1", TargetUrn: "my-repo-urn", Type: "has_access_to", Source: "github"},
+			{SourceUrn: "user-urn-2", TargetUrn: "my-repo-urn", Type: "has_access_to", Source: "github"},
+		}
+		err = compassSink.Sink(ctx, []models.Record{models.NewRecord(entity, edges...)})
+		assert.NoError(t, err)
+
+		// Should have only 2 edge requests, no entity upsert.
+		require.Len(t, client.requests, 2)
+		assert.Equal(t, upsertEdgeURL, reqURL(client.requests[0]))
+		assert.Equal(t, upsertEdgeURL, reqURL(client.requests[1]))
+	})
+
+	t.Run("should respect max_concurrency config", func(t *testing.T) {
+		client := &mockHTTPClient{}
+		client.SetupResponse(200, `{}`)
+		ctx := context.TODO()
+
+		compassSink := compass.New(client, testutils.Logger)
+		err := compassSink.Init(ctx, plugins.Config{RawConfig: map[string]any{
+			"host":            host,
+			"max_concurrency": 2,
+		}})
+		require.NoError(t, err)
+
+		// Create a batch of 5 records.
+		var batch []models.Record
+		for i := 0; i < 5; i++ {
+			entity := &meteorv1beta1.Entity{
+				Urn:    fmt.Sprintf("urn-%d", i),
+				Name:   fmt.Sprintf("entity-%d", i),
+				Source: "test",
+				Type:   "table",
+			}
+			batch = append(batch, models.NewRecord(entity))
+		}
+
+		err = compassSink.Sink(ctx, batch)
+		assert.NoError(t, err)
+
+		// All 5 entity requests should complete despite concurrency limit.
+		require.Len(t, client.requests, 5)
 	})
 
 	t.Run("should flatten data into properties without @type", func(t *testing.T) {
