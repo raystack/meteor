@@ -13,6 +13,7 @@ import (
 
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
@@ -104,7 +105,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		return fmt.Errorf("get dashboards: %w", err)
 	}
 	for _, dashboard := range dashboards {
-		record, err := e.buildDashboard(ctx, dashboard.ID)
+		record, err := e.buildDashboard(ctx, dashboard)
 		if err != nil {
 			return fmt.Errorf("build dashboard: %w", err)
 		}
@@ -114,23 +115,37 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 // buildDashboard builds a dashboard from superset server
-func (e *Extractor) buildDashboard(ctx context.Context, id int) (models.Record, error) {
-	var dashboard Dashboard
-	charts, err := e.getChartsList(ctx, id)
+func (e *Extractor) buildDashboard(ctx context.Context, dashboard Dashboard) (models.Record, error) {
+	charts, err := e.getChartsList(ctx, dashboard.ID)
 	if err != nil {
 		return models.Record{}, fmt.Errorf("fetch charts: %w", err)
 	}
 
-	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", id))
+	urn := models.NewURN("superset", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.ID))
 	props := map[string]any{
 		"charts": charts,
 	}
 	if dashboard.URL != "" {
 		props["url"] = dashboard.URL
 	}
+	if dashboard.Slug != "" {
+		props["slug"] = dashboard.Slug
+	}
+	props["published"] = dashboard.Published
+	if dashboard.ChangedByName != "" {
+		props["changed_by"] = dashboard.ChangedByName
+	}
 
 	entity := models.NewEntity(urn, "dashboard", dashboard.DashboardTitle, "superset", props)
-	return models.NewRecord(entity), nil
+
+	var edges []*meteorv1beta1.Edge
+	// Create owned_by edges for each owner.
+	for _, owner := range dashboard.Owners {
+		ownerURN := models.NewURN("superset", e.UrnScope, "user", fmt.Sprintf("%d", owner.ID))
+		edges = append(edges, models.OwnerEdge(urn, ownerURN, "superset"))
+	}
+
+	return models.NewRecord(entity, edges...), nil
 }
 
 // getDashboardsList gets a list of dashboards from superset server

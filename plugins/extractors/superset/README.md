@@ -32,8 +32,11 @@ source:
 
 | Property | Type | Description |
 | :------- | :--- | :---------- |
-| `properties.url` | `string` | Dashboard URL (if available). |
-| `properties.charts` | `[]object` | List of chart objects (see below). |
+| `url` | `string` | Dashboard URL. |
+| `slug` | `string` | Dashboard slug. |
+| `published` | `bool` | Whether the dashboard is published. |
+| `changed_by` | `string` | Name of the user who last modified the dashboard. |
+| `charts` | `[]object` | List of chart objects (see below). |
 
 ### Chart sub-fields
 
@@ -49,7 +52,9 @@ source:
 
 ## Edges
 
-This extractor does not emit edges.
+| Source | Target | Type | Description |
+| :----- | :----- | :--- | :---------- |
+| `dashboard` | `user` | `owned_by` | Dashboard is owned by a user. |
 
 ## Contributing
 
