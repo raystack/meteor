@@ -14,6 +14,7 @@ import (
 
 	_ "github.com/ClickHouse/clickhouse-go"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -52,6 +53,7 @@ func TestMain(m *testing.M) {
 		Repository:   "yandex/clickhouse-server",
 		Tag:          "21.7.4-alpine",
 		ExposedPorts: []string{"9000"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"9000": {{HostPort: "0"}}},
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig/users.xml:/etc/clickhouse-server/users.d/user.xml:rw", pwd),
 		},

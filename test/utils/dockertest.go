@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/ory/dockertest/v3"
 )
 
@@ -37,7 +38,9 @@ func CreateContainer(opts dockertest.RunOptions, retryOp func(r *dockertest.Reso
 	if err != nil {
 		return nil, fmt.Errorf("create dockertest pool: %w", err)
 	}
-	resource, err := pool.RunWithOptions(&opts)
+	resource, err := pool.RunWithOptions(&opts, func(hc *dc.HostConfig) {
+		hc.PublishAllPorts = false
+	})
 	if err != nil {
 		return nil, fmt.Errorf("start resource: %w", err)
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/raystack/meteor/test/utils"
 
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/superset"
 	"github.com/raystack/meteor/test/mocks"
@@ -68,6 +69,7 @@ func TestMain(m *testing.M) {
 		Repository:   "apache/superset",
 		Tag:          "6b136c2bc9a6c9756e5319b045e3c42da06243cb",
 		ExposedPorts: []string{"8088"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"8088": {{HostPort: "0"}}},
 		Mounts: []string{
 			fmt.Sprintf("%s/localConfig:/app/pythonpath:rw", pwd),
 		},

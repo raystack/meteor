@@ -13,6 +13,7 @@ import (
 
 	kafkaLib "github.com/IBM/sarama"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -35,14 +36,18 @@ func TestMain(m *testing.M) {
 	}
 
 	var broker *kafkaLib.Broker
-	// setup test
+	// Kafka requires a fixed port because the advertised listener address must
+	// match the host-accessible port. Dynamic ports don't work since Kafka
+	// advertises its internal port to clients.
+	const kafkaPort = "9093"
 	opts := dockertest.RunOptions{
 		Repository: "moeenz/docker-kafka-kraft",
 		Tag:        "229159a4a45b",
 		Env: []string{
 			"KRAFT_CONTAINER_HOST_NAME=1",
 		},
-		ExposedPorts: []string{"9093"},
+		ExposedPorts: []string{kafkaPort},
+		PortBindings: map[docker.Port][]docker.PortBinding{docker.Port(kafkaPort): {{HostIP: "0.0.0.0", HostPort: kafkaPort}}},
 	}
 
 	retryFn := func(resource *dockertest.Resource) (err error) {

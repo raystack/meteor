@@ -14,6 +14,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -49,6 +50,7 @@ func TestMain(m *testing.M) {
 			"MYSQL_ALLOW_EMPTY_PASSWORD=true",
 		},
 		ExposedPorts: []string{"3306"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"3306": {{HostPort: "0"}}},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {

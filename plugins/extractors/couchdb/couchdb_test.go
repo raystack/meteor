@@ -17,6 +17,7 @@ import (
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/couchdb"
 	"github.com/raystack/meteor/test/mocks"
@@ -60,6 +61,7 @@ func TestMain(m *testing.M) {
 			fmt.Sprintf("%s/localConfig:/opt/couchdb/etc/local.d:rw", pwd),
 		},
 		ExposedPorts: []string{"5984"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"5984": {{HostPort: "0"}}},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {

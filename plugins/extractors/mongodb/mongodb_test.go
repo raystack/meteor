@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -53,16 +54,12 @@ func TestMain(m *testing.M) {
 			"MONGO_INITDB_ROOT_PASSWORD=" + pass,
 		},
 		ExposedPorts: []string{"27017"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"27017": {{HostPort: "0"}}},
 	}
 	retryFn := func(resource *dockertest.Resource) (err error) {
 		host = resource.GetHostPort("27017/tcp")
 		uri := fmt.Sprintf("mongodb://%s:%s@%s", user, pass, host)
-		clientOptions := options.Client().ApplyURI(uri)
-		client, err = mongo.NewClient(clientOptions)
-		if err != nil {
-			return
-		}
-		err = client.Connect(ctx)
+		client, err = mongo.Connect(ctx, options.Client().ApplyURI(uri))
 		if err != nil {
 			return
 		}

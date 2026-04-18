@@ -18,6 +18,7 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/postgres"
 	"github.com/raystack/meteor/test/mocks"
@@ -50,6 +51,7 @@ func TestMain(m *testing.M) {
 		Tag:          "12.3",
 		Env:          []string{"POSTGRES_USER=" + root, "POSTGRES_PASSWORD=" + pass, "POSTGRES_DB=" + defaultDB},
 		ExposedPorts: []string{"5432"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"5432": {{HostPort: "0"}}},
 	}
 
 	// Exponential backoff-retry for container to be ready to accept connections

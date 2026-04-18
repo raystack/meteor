@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/mariadb"
 	"github.com/raystack/meteor/test/mocks"
@@ -47,6 +48,7 @@ func TestMain(m *testing.M) {
 			"MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=true",
 		},
 		ExposedPorts: []string{"3306"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"3306": {{HostPort: "0"}}},
 	}
 
 	// Exponential backoff-retry for container to accept connections

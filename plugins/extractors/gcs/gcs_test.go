@@ -13,6 +13,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -52,6 +53,7 @@ func TestMain(m *testing.M) {
 			"-scheme", "http",
 		},
 		ExposedPorts: []string{"4443"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"4443": {{HostPort: "0"}}},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) error {

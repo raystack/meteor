@@ -15,6 +15,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/nsf/jsondiff"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/extractors/bigquery"
@@ -59,6 +60,7 @@ func TestMain(m *testing.M) {
 			"--data-from-yaml=/work/testdata/data.yaml",
 		},
 		ExposedPorts: []string{"9050"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"9050": {{HostPort: "0"}}},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) error {

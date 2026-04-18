@@ -8,10 +8,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
@@ -54,12 +57,14 @@ func TestMain(m *testing.M) {
 			fmt.Sprintf("%s/localConfig/cassandra.yaml:/etc/cassandra/cassandra.yaml", pwd),
 		},
 		ExposedPorts: []string{"9042"},
+		PortBindings: map[docker.Port][]docker.PortBinding{"9042": {{HostPort: "0"}}},
 	}
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	retryFn := func(resource *dockertest.Resource) (err error) {
 		hostPort := resource.GetHostPort("9042/tcp")
-		host = "127.0.0.1"
-		fmt.Sscanf(hostPort, "%*[^:]:%d", &port)
+		parts := strings.Split(hostPort, ":")
+		host = parts[0]
+		port, _ = strconv.Atoi(parts[1])
 		//create a new session
 		cluster := gocql.NewCluster(host)
 		cluster.Authenticator = gocql.PasswordAuthenticator{
