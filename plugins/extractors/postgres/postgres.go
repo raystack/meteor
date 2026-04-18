@@ -131,13 +131,12 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 		}
 
 		for _, table := range tables {
-			result, err := e.getTableMetadata(ctx, db, database, table)
+			entity, edges, err := e.getTableMetadata(ctx, db, database, table)
 			if err != nil {
 				e.logger.Error("failed to get table metadata, skipping table", "error", err)
 				continue
 			}
-			// Publish metadata to channel
-			emit(models.NewRecord(result))
+			emit(models.NewRecord(entity, edges...))
 		}
 	}
 
@@ -145,10 +144,10 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 }
 
 // Prepares the list of tables and the attached metadata
-func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, error) {
+func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, tableName string) (*meteorv1beta1.Entity, []*meteorv1beta1.Edge, error) {
 	columns, err := e.getColumnMetadata(ctx, db, tableName)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	props := map[string]any{
@@ -163,11 +162,53 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 		props["grants"] = usrPrivilegeInfo["grants"]
 	}
 
-	return models.NewEntity(
-		models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName)),
-		"table", tableName, "postgres",
-		props,
-	), nil
+	tableURN := models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName))
+	entity := models.NewEntity(tableURN, "table", tableName, "postgres", props)
+
+	// Build lineage edges from foreign key relationships.
+	edges, err := e.getForeignKeyEdges(ctx, db, dbName, tableName, tableURN)
+	if err != nil {
+		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
+	}
+
+	return entity, edges, nil
+}
+
+// getForeignKeyEdges queries foreign key constraints and returns lineage edges
+// from this table to the referenced tables.
+func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
+	query := `SELECT DISTINCT ccu.table_name AS referenced_table
+		FROM information_schema.table_constraints AS tc
+		JOIN information_schema.referential_constraints AS rc
+		  ON tc.constraint_name = rc.constraint_name
+		  AND tc.constraint_schema = rc.constraint_schema
+		JOIN information_schema.constraint_column_usage AS ccu
+		  ON rc.unique_constraint_name = ccu.constraint_name
+		  AND rc.unique_constraint_schema = ccu.constraint_schema
+		WHERE tc.constraint_type = 'FOREIGN KEY'
+		  AND tc.table_name = '%s';`
+
+	rows, err := db.QueryContext(ctx, fmt.Sprintf(query, tableName))
+	if err != nil {
+		return nil, fmt.Errorf("execute foreign key query: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*meteorv1beta1.Edge
+	for rows.Next() {
+		var referencedTable string
+		if err := rows.Scan(&referencedTable); err != nil {
+			e.logger.Error("failed to scan foreign key row", "error", err)
+			continue
+		}
+		targetURN := models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, referencedTable))
+		edges = append(edges, models.LineageEdge(tableURN, targetURN, "postgres"))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over foreign keys: %w", err)
+	}
+
+	return edges, nil
 }
 
 // Prepares the list of columns and the attached metadata
