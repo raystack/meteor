@@ -31,7 +31,7 @@ sinks:
 
 ## Compass
 
-Sends each Record to [Compass](https://github.com/raystack/compass) via HTTP. The entity is upserted with its properties, and lineage edges are included inline. Non-lineage edges (such as `owned_by`) are upserted separately.
+Sends each Record to [Compass](https://github.com/raystack/compass) via HTTP. The entity is upserted with its properties, and all edges are upserted uniformly via the UpsertEdge endpoint.
 
 ```yaml
 sinks:

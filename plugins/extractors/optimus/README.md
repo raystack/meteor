@@ -49,8 +49,8 @@ source:
 
 | Edge Type | Source URN | Target URN | Description |
 |:----------|:-----------|:-----------|:------------|
-| `lineage` | Upstream resource URN | Job URN | Upstream dependency (BigQuery or MaxCompute table). |
-| `lineage` | Job URN | Downstream resource URN | Downstream destination (BigQuery or MaxCompute table). |
+| `derived_from` | Upstream resource URN | Job URN | Upstream dependency (BigQuery or MaxCompute table). |
+| `generates` | Job URN | Downstream resource URN | Downstream destination (BigQuery or MaxCompute table). |
 | `owned_by` | Job URN | `urn:user:{owner_email}` | Job owner. |
 
 ### MaxCompute support

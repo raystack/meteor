@@ -25,8 +25,8 @@ sinks:
 
 For each Record the sink:
 
-1. **Upserts the Entity** via `POST /raystack.compass.v1beta1.CompassService/UpsertEntity` -- sends `urn`, `type`, `name`, `description`, `source`, and `properties`. Lineage edges are included inline as `upstreams` and `downstreams` URN arrays.
-2. **Upserts non-lineage Edges** via `POST /raystack.compass.v1beta1.CompassService/UpsertEdge` -- one request per edge (e.g. `owned_by`), sending `source_urn`, `target_urn`, `type`, `source`, and `properties`.
+1. **Upserts the Entity** via `POST /raystack.compass.v1beta1.CompassService/UpsertEntity` -- sends `urn`, `type`, `name`, `description`, `source`, and `properties`.
+2. **Upserts all Edges** via `POST /raystack.compass.v1beta1.CompassService/UpsertEdge` -- one request per edge (e.g. `owned_by`, `derived_from`, `generates`), sending `source_urn`, `target_urn`, `type`, `source`, and `properties`.
 
 Requests are made concurrently within a batch. Server errors (5xx) are returned as retryable errors.
 

@@ -66,8 +66,8 @@ Environment variables with the configured prefix (default `CI`) are available as
 | Edge Type | Source URN | Target URN | Description |
 |:----------|:-----------|:-----------|:------------|
 | `owned_by` | Application URN | `urn:user:{team.email}` (or `urn:user:{team.id}`) | Team ownership. Emitted when `team.id` is set. |
-| `lineage` | Input URN | Application URN | Upstream dependency from `inputs[]`. |
-| `lineage` | Application URN | Output URN | Downstream dependency from `outputs[]`. |
+| `derived_from` | Input URN | Application URN | Upstream dependency from `inputs[]`. |
+| `generates` | Application URN | Output URN | Downstream dependency from `outputs[]`. |
 
 ## Contributing
 

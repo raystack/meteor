@@ -13,7 +13,7 @@ order: 5
 Each record flowing through the pipeline contains an **Entity** and its **Edges**. When a sink receives a record, it is responsible for handling both:
 
 - **Entity**: The core metadata (urn, type, name, description, source, properties).
-- **Edges**: Relationships such as ownership (`owned_by`) and lineage (`lineage`), each linking a source URN to a target URN.
+- **Edges**: Relationships such as ownership (`owned_by`) and lineage (`derived_from`/`generates`), each linking a source URN to a target URN.
 
 How sinks handle edges depends on the destination. For example, the Compass sink sends entities and edges together so that Compass can build its relationship graph. The Kafka and HTTP sinks serialize the entire record (entity + edges) as JSON and send it to the configured endpoint.
 
@@ -59,7 +59,7 @@ sinks:
       host: https://compass.example.com
 ```
 
-Upload metadata to [Compass](https://github.com/raystack/compass), Raystack's metadata catalog service. The Compass sink sends each entity along with its edges. Ownership edges become owner associations and lineage edges become upstream/downstream relationships in Compass.
+Upload metadata to [Compass](https://github.com/raystack/compass), Raystack's metadata catalog service. The Compass sink sends each entity along with its edges, which are upserted uniformly via the UpsertEdge API.
 
 * **File**
 

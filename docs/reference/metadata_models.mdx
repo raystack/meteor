@@ -31,14 +31,15 @@ An Edge represents a relationship between two entities (ownership, lineage, etc.
 |:--------------|:------------------|:--------------------------------------------------------|
 | `source_urn`  | `string`          | URN of the source entity                                |
 | `target_urn`  | `string`          | URN of the target entity                                |
-| `type`        | `string`          | Relationship type: `owned_by`, `lineage`, etc.          |
+| `type`        | `string`          | Relationship type: `owned_by`, `derived_from`, `generates`, etc. |
 | `source`      | `string`          | Source system that reported this relationship            |
 | `properties`  | `structpb.Struct` | Additional metadata about the relationship              |
 
 ### Relationship Types
 
 - **`owned_by`**: Indicates ownership. Replaces the old `owners` field.
-- **`lineage`**: Indicates data flow (upstream/downstream). Replaces the old `lineage.upstreams` and `lineage.downstreams` fields.
+- **`derived_from`**: Indicates an upstream dependency — the entity depends on or reads from the target.
+- **`generates`**: Indicates a downstream output — the entity produces or writes to the target.
 - **`member_of`**: Indicates membership in a group, team, or organisation.
 - **`belongs_to`**: Indicates an entity belongs to a parent entity (e.g. document to repository).
 

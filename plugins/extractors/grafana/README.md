@@ -85,7 +85,7 @@ source:
 
 | Source | Target | Type | Description |
 | :----- | :----- | :--- | :---------- |
-| `dashboard` | `datasource` | `lineage` | Dashboard panels consume data from this datasource. |
+| `dashboard` | `datasource` | `derived_from` | Dashboard panels consume data from this datasource. |
 
 ## Contributing
 

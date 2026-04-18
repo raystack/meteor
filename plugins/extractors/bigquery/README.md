@@ -136,7 +136,7 @@ Populated when `collect_table_usage` is enabled.
 
 | Type | Source | Target | Description |
 | :--- | :----- | :----- | :---------- |
-| `lineage` | upstream table URN | this table URN | Upstream dependency parsed from view SQL. Emitted when `build_view_lineage` is enabled and the table is a view or materialized view |
+| `derived_from` | upstream table URN | this table URN | Upstream dependency parsed from view SQL. Emitted when `build_view_lineage` is enabled and the table is a view or materialized view |
 
 ## Contributing
 

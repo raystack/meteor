@@ -65,7 +65,7 @@ source:
 
 | Type | Source URN | Target URN | Description |
 | :--- | :--------- | :--------- | :---------- |
-| `lineage` | Upstream table URN | Dashboard URN | One edge per upstream table connected to the workbook. Supports DatabaseServer, CloudFile, File, and WebDataConnector sources. MaxCompute JDBC connections are also detected automatically. |
+| `derived_from` | Upstream table URN | Dashboard URN | One edge per upstream table connected to the workbook. Supports DatabaseServer, CloudFile, File, and WebDataConnector sources. MaxCompute JDBC connections are also detected automatically. |
 | `owned_by` | Dashboard URN | `urn:user:{owner_email}` | Ownership edge linking the workbook to its owner. |
 
 ## Contributing

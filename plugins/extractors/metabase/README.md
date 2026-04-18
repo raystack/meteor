@@ -63,7 +63,7 @@ source:
 
 | Type | Source URN | Target URN | Description |
 | :--- | :--------- | :--------- | :---------- |
-| `lineage` | Upstream table URN | Dashboard URN | One edge per unique upstream table resolved from cards. Supports postgres, mysql, bigquery, and h2 databases. |
+| `derived_from` | Upstream table URN | Dashboard URN | One edge per unique upstream table resolved from cards. Supports postgres, mysql, bigquery, and h2 databases. |
 | `owned_by` | Dashboard URN | User URN | Dashboard is owned by the user who created it. |
 
 ## Contributing
