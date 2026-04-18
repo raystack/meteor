@@ -171,7 +171,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 	return entity, edges, nil
 }
 
-// getForeignKeyEdges queries foreign key constraints and returns lineage edges.
+// getForeignKeyEdges queries foreign key constraints and returns references edges.
 func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
 	query := fmt.Sprintf(`SELECT DISTINCT c2.TABLE_NAME AS referenced_table
 		FROM USER_CONSTRAINTS c1
@@ -193,7 +193,7 @@ func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, 
 			continue
 		}
 		targetURN := models.NewURN("oracle", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, referencedTable))
-		edges = append(edges, models.LineageEdge(tableURN, targetURN, "oracle"))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "oracle"))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over foreign keys: %w", err)

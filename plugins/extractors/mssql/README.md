@@ -47,7 +47,7 @@ System databases `master`, `msdb`, `model`, and `tempdb` are excluded by default
 
 | Source | Target | Type | Description |
 | :----- | :----- | :--- | :---------- |
-| `table` | `table` | `lineage` | Foreign key relationship to the referenced table. |
+| `table` | `table` | `references` | Foreign key relationship to the referenced table. |
 
 ## Contributing
 

@@ -45,6 +45,18 @@ func LineageEdge(sourceURN, targetURN, source string) *meteorv1beta1.Edge {
 	}
 }
 
+// ReferencesEdge creates a references edge from sourceURN to targetURN.
+// Use this for structural relationships like foreign keys, where one entity
+// references another but data does not necessarily flow between them.
+func ReferencesEdge(sourceURN, targetURN, source string) *meteorv1beta1.Edge {
+	return &meteorv1beta1.Edge{
+		SourceUrn: sourceURN,
+		TargetUrn: targetURN,
+		Type:      "references",
+		Source:    source,
+	}
+}
+
 // OwnerEdge creates an owned_by edge from entityURN to an owner.
 func OwnerEdge(entityURN, ownerURN, source string) *meteorv1beta1.Edge {
 	return &meteorv1beta1.Edge{

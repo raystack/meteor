@@ -203,7 +203,7 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	return nil
 }
 
-// getForeignKeyEdges queries foreign key constraints and returns lineage edges.
+// getForeignKeyEdges queries foreign key constraints and returns references edges.
 func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
 	query := `SELECT DISTINCT fk.pk_table_name AS referenced_table
 		FROM information_schema.referential_constraints rc
@@ -227,7 +227,7 @@ func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName,
 			continue
 		}
 		targetURN := models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, referencedTable))
-		edges = append(edges, models.LineageEdge(tableURN, targetURN, "snowflake"))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "snowflake"))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over foreign keys: %w", err)

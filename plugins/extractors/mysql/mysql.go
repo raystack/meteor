@@ -163,7 +163,7 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	return nil
 }
 
-// getForeignKeyEdges queries foreign key constraints and returns lineage edges.
+// getForeignKeyEdges queries foreign key constraints and returns references edges.
 func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
 	query := `SELECT DISTINCT REFERENCED_TABLE_NAME
 		FROM information_schema.KEY_COLUMN_USAGE
@@ -184,7 +184,7 @@ func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName,
 			continue
 		}
 		targetURN := models.NewURN("mysql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, referencedTable))
-		edges = append(edges, models.LineageEdge(tableURN, targetURN, "mysql"))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "mysql"))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over foreign keys: %w", err)

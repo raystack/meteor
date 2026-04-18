@@ -165,7 +165,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 	tableURN := models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, tableName))
 	entity := models.NewEntity(tableURN, "table", tableName, "postgres", props)
 
-	// Build lineage edges from foreign key relationships.
+	// Build references edges from foreign key relationships.
 	edges, err := e.getForeignKeyEdges(ctx, db, dbName, tableName, tableURN)
 	if err != nil {
 		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", dbName, tableName))
@@ -174,7 +174,7 @@ func (e *Extractor) getTableMetadata(ctx context.Context, db *sql.DB, dbName, ta
 	return entity, edges, nil
 }
 
-// getForeignKeyEdges queries foreign key constraints and returns lineage edges
+// getForeignKeyEdges queries foreign key constraints and returns references edges
 // from this table to the referenced tables.
 func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
 	query := `SELECT DISTINCT ccu.table_name AS referenced_table
@@ -202,7 +202,7 @@ func (e *Extractor) getForeignKeyEdges(ctx context.Context, db *sql.DB, dbName, 
 			continue
 		}
 		targetURN := models.NewURN("postgres", e.UrnScope, "table", fmt.Sprintf("%s.%s", dbName, referencedTable))
-		edges = append(edges, models.LineageEdge(tableURN, targetURN, "postgres"))
+		edges = append(edges, models.ReferencesEdge(tableURN, targetURN, "postgres"))
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate over foreign keys: %w", err)

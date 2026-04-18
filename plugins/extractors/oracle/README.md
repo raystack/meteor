@@ -39,7 +39,7 @@ source:
 
 | Source | Target | Type | Description |
 | :----- | :----- | :--- | :---------- |
-| `table` | `table` | `lineage` | Foreign key relationship to the referenced table. |
+| `table` | `table` | `references` | Foreign key relationship to the referenced table. |
 
 ## Contributing
 
