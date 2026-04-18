@@ -17,6 +17,8 @@ source:
         - dataset_b
       tables:
         - dataset_c.table_a
+      labels:
+        env: staging
     max_page_size: 100
     include_column_profile: true
     build_view_lineage: true
@@ -53,6 +55,7 @@ source:
 | `table_pattern` | `string` | `gofood.fact_` | Regex pattern to whitelist tables to extract | _optional_ |
 | `exclude.datasets` | `[]string` | `[dataset_a]` | Dataset IDs to exclude | _optional_ |
 | `exclude.tables` | `[]string` | `[dataset_c.table_a]` | Table names in `datasetID.tableID` format to exclude | _optional_ |
+| `exclude.labels` | `map[string]string` | `{env: staging}` | Tables with any matching label key-value pair are excluded | _optional_ |
 | `max_page_size` | `int` | `100` | Page size hint for BigQuery API list calls | _optional_ |
 | `dataset_page_size` | `int` | `10` | Page size for listing datasets. Falls back to `max_page_size` | _optional_ |
 | `table_page_size` | `int` | `50` | Page size for listing tables. Falls back to `max_page_size` | _optional_ |

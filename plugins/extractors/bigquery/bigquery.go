@@ -62,6 +62,8 @@ type Exclude struct {
 	Datasets []string `json:"datasets" yaml:"datasets" mapstructure:"datasets"`
 	// list of tableNames in format - datasetID.tableID
 	Tables []string `json:"tables" yaml:"tables" mapstructure:"tables"`
+	// list of label key-value pairs; tables matching any label are excluded
+	Labels map[string]string `json:"labels" yaml:"labels" mapstructure:"labels"`
 }
 
 const (
@@ -83,6 +85,8 @@ exclude:
 	- dataset_b
   tables:
 	- dataset_c.table_a
+  labels:
+	env: staging
 max_page_size: 100
 include_column_profile: true
 build_view_lineage: true
@@ -332,6 +336,14 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 				tmd, err := e.fetchTableMetadata(ctx, table)
 				if err != nil {
 					e.logger.Error("failed to fetch table metadata", "err", err, "table", tableFQN)
+					return nil
+				}
+				if IsExcludedByLabels(tmd.Labels, e.config.Exclude.Labels) {
+					e.excludedTableCtr.Add(ctx, 1, metric.WithAttributes(
+						attribute.String("bq.project_id", e.config.ProjectID),
+						attribute.String("bq.dataset_id", ds.DatasetID),
+					))
+					e.logger.Debug("excluding table by labels", "dataset_id", ds.DatasetID, "table_id", table.TableID)
 					return nil
 				}
 				record, err := e.buildRecord(ctx, table, tmd)
@@ -796,6 +808,21 @@ func IsExcludedTable(datasetID, tableID string, excludedTables []string) bool {
 		}
 	}
 
+	return false
+}
+
+// isExcludedByLabels returns true if the table's labels match any of the
+// configured exclude labels. A match means the table has the same key with
+// the same value.
+func IsExcludedByLabels(tableLabels, excludeLabels map[string]string) bool {
+	if len(excludeLabels) == 0 {
+		return false
+	}
+	for k, v := range excludeLabels {
+		if tableLabels[k] == v {
+			return true
+		}
+	}
 	return false
 }
 
