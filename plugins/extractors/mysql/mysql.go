@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
@@ -149,14 +150,47 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	if err != nil {
 		return fmt.Errorf("extract columns: %w", err)
 	}
-	// push table to channel
-	e.emit(models.NewRecord(models.NewEntity(
-		models.NewURN("mysql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName)),
-		"table", tableName, "mysql",
-		map[string]any{"columns": columns},
-	)))
 
+	tableURN := models.NewURN("mysql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName))
+	entity := models.NewEntity(tableURN, "table", tableName, "mysql", map[string]any{"columns": columns})
+
+	edges, err := e.getForeignKeyEdges(ctx, database, tableName, tableURN)
+	if err != nil {
+		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", database, tableName))
+	}
+
+	e.emit(models.NewRecord(entity, edges...))
 	return nil
+}
+
+// getForeignKeyEdges queries foreign key constraints and returns lineage edges.
+func (e *Extractor) getForeignKeyEdges(ctx context.Context, database, tableName, tableURN string) ([]*meteorv1beta1.Edge, error) {
+	query := `SELECT DISTINCT REFERENCED_TABLE_NAME
+		FROM information_schema.KEY_COLUMN_USAGE
+		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+		  AND REFERENCED_TABLE_NAME IS NOT NULL;`
+
+	rows, err := e.db.QueryContext(ctx, query, database, tableName)
+	if err != nil {
+		return nil, fmt.Errorf("execute foreign key query: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*meteorv1beta1.Edge
+	for rows.Next() {
+		var referencedTable string
+		if err := rows.Scan(&referencedTable); err != nil {
+			e.logger.Error("failed to scan foreign key row", "error", err)
+			continue
+		}
+		targetURN := models.NewURN("mysql", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, referencedTable))
+		edges = append(edges, models.LineageEdge(tableURN, targetURN, "mysql"))
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate over foreign keys: %w", err)
+	}
+
+	return edges, nil
 }
 
 // Extract columns from a given table
