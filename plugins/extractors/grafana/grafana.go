@@ -217,10 +217,10 @@ func (e *Extractor) grafanaDashboardToRecord(dashboard DashboardDetail) models.R
 
 	entity := models.NewEntity(urn, "dashboard", dashboard.Meta.Slug, "grafana", props)
 
-	// Create lineage edges from dashboard to each datasource.
+	// Create derived_from edges from dashboard to each datasource.
 	var edges []*meteorv1beta1.Edge
 	for dsUID := range dsUIDs {
-		edges = append(edges, models.LineageEdge(
+		edges = append(edges, models.DerivedFromEdge(
 			urn,
 			models.NewURN("grafana", e.UrnScope, "datasource", dsUID),
 			"grafana",

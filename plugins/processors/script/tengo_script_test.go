@@ -229,7 +229,7 @@ func TestProcess(t *testing.T) {
 			{
 				SourceUrn: "urn:test:test:table:src",
 				TargetUrn: "urn:test:test:table:upstream",
-				Type:      "lineage",
+				Type:      "derived_from",
 				Source:     "test",
 			},
 		}

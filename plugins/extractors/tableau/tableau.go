@@ -119,11 +119,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 func (e *Extractor) buildDashboard(wb *Workbook) (models.Record, error) {
 	dashboardURN := models.NewURN("tableau", e.UrnScope, "workbook", wb.ID)
 
-	// Build lineage edges from upstream tables
+	// Build derived_from edges from upstream tables
 	var edges []*meteorv1beta1.Edge
 	lineageURNs := e.buildLineageURNs(wb.UpstreamTables)
 	for _, upstreamURN := range lineageURNs {
-		edges = append(edges, models.LineageEdge(upstreamURN, dashboardURN, "tableau"))
+		edges = append(edges, models.DerivedFromEdge(dashboardURN, upstreamURN, "tableau"))
 	}
 
 	// Build owner edge

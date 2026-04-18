@@ -67,7 +67,7 @@ func TestSink(t *testing.T) {
 		})
 		edges := []*meteorv1beta1.Edge{
 			models.OwnerEdge("urn:test:scope:table:t1", "urn:test:scope:user:alice", "test"),
-			models.LineageEdge("urn:test:scope:table:upstream", "urn:test:scope:table:t1", "test"),
+			models.DerivedFromEdge("urn:test:scope:table:t1", "urn:test:scope:table:upstream", "test"),
 		}
 		record := models.NewRecord(entity, edges...)
 

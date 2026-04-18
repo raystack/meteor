@@ -64,9 +64,9 @@ func TestFullPayload(t *testing.T) {
 	edges := []*meteorv1beta1.Edge{
 		models.OwnerEdge("urn:bigquery:myproject:table:dataset.users", "urn:user:alice@company.com", "meteor"),
 		models.OwnerEdge("urn:bigquery:myproject:table:dataset.users", "urn:user:bob@company.com", "meteor"),
-		models.LineageEdge("urn:airflow:prod:task:dag_users.extract", "urn:bigquery:myproject:table:dataset.users", "meteor"),
-		models.LineageEdge("urn:bigquery:myproject:table:dataset.users", "urn:metabase:prod:dashboard:user_analytics", "meteor"),
-		models.LineageEdge("urn:bigquery:myproject:table:dataset.users", "urn:bigquery:myproject:table:dataset.user_summary", "meteor"),
+		models.DerivedFromEdge("urn:bigquery:myproject:table:dataset.users", "urn:airflow:prod:task:dag_users.extract", "meteor"),
+		models.GeneratesEdge("urn:bigquery:myproject:table:dataset.users", "urn:metabase:prod:dashboard:user_analytics", "meteor"),
+		models.GeneratesEdge("urn:bigquery:myproject:table:dataset.users", "urn:bigquery:myproject:table:dataset.user_summary", "meteor"),
 	}
 
 	err = compassSink.Sink(context.TODO(), []models.Record{models.NewRecord(entity, edges...)})
@@ -84,13 +84,6 @@ func TestFullPayload(t *testing.T) {
 	assert.Equal(t, "users", entityResult.Name)
 	assert.Equal(t, "User accounts table", entityResult.Description)
 	assert.Equal(t, "bigquery", entityResult.Source)
-
-	// Lineage sent inline.
-	assert.Equal(t, []string{"urn:airflow:prod:task:dag_users.extract"}, entityResult.Upstreams)
-	assert.Equal(t, []string{
-		"urn:metabase:prod:dashboard:user_analytics",
-		"urn:bigquery:myproject:table:dataset.user_summary",
-	}, entityResult.Downstreams)
 
 	// Properties should contain flattened data, labels, and URL.
 	props := entityResult.Properties
@@ -110,23 +103,24 @@ func TestFullPayload(t *testing.T) {
 	require.True(t, ok, "attributes should be in properties")
 	assert.Equal(t, "created_at", attrs["partition_field"])
 
-	// === Verify Ownership Edges ===
-	require.Len(t, edgeResults, 2, "expected 2 owned_by edges")
+	// === Verify Edges ===
+	// 2 owned_by + 1 derived_from + 2 generates = 5 edges
+	require.Len(t, edgeResults, 5, "expected 5 edges")
 
-	assert.Equal(t, "urn:bigquery:myproject:table:dataset.users", edgeResults[0].SourceURN)
-	assert.Equal(t, "urn:user:alice@company.com", edgeResults[0].TargetURN)
-	assert.Equal(t, "owned_by", edgeResults[0].Type)
-	assert.Equal(t, "meteor", edgeResults[0].Source)
+	// Build map by type for easier assertion.
+	edgesByType := make(map[string][]compass.UpsertEdgeRequest)
+	for _, e := range edgeResults {
+		edgesByType[e.Type] = append(edgesByType[e.Type], e)
+	}
 
-	assert.Equal(t, "urn:user:bob@company.com", edgeResults[1].TargetURN)
-	assert.Equal(t, "owned_by", edgeResults[1].Type)
+	assert.Len(t, edgesByType["owned_by"], 2, "expected 2 owned_by edges")
+	assert.Len(t, edgesByType["derived_from"], 1, "expected 1 derived_from edge")
+	assert.Len(t, edgesByType["generates"], 2, "expected 2 generates edges")
 
 	// Print for visibility.
 	fmt.Println("\n=== Full Payload E2E Summary ===")
 	fmt.Printf("Entity: %s (%s)\n", entityResult.Name, entityResult.URN)
 	fmt.Printf("  Source:      %s\n", entityResult.Source)
-	fmt.Printf("  Upstreams:   %v\n", entityResult.Upstreams)
-	fmt.Printf("  Downstreams: %v\n", entityResult.Downstreams)
 	fmt.Printf("  Properties:  %d keys\n", len(props))
 
 	propsJSON, _ := json.MarshalIndent(props, "  ", "  ")

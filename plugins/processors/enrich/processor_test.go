@@ -94,7 +94,7 @@ func TestProcess(t *testing.T) {
 		require.NoError(t, err)
 
 		entity := models.NewEntity("urn:table:1", "table", "my-table", "bigquery", nil)
-		lineage := models.LineageEdge("urn:table:1", "urn:table:2", "bigquery")
+		lineage := models.GeneratesEdge("urn:table:1", "urn:table:2", "bigquery")
 		owner := models.OwnerEdge("urn:table:1", "urn:user:alice", "bigquery")
 		rec := models.NewRecord(entity, lineage, owner)
 

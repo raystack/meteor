@@ -119,7 +119,7 @@ func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (models.R
 	for _, cu := range chartData {
 		for _, upstreamURN := range cu.upstreams {
 			if !existing[upstreamURN] {
-				edges = append(edges, models.LineageEdge(upstreamURN, dashboardURN, "metabase"))
+				edges = append(edges, models.DerivedFromEdge(dashboardURN, upstreamURN, "metabase"))
 				existing[upstreamURN] = true
 			}
 		}

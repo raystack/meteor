@@ -130,7 +130,7 @@ func TestProcess(t *testing.T) {
 		entity := models.NewEntity("urn:test:scope:table:t4", "table", "t4", "test", nil)
 		edges := []*meteorv1beta1.Edge{
 			models.OwnerEdge("urn:test:scope:table:t4", "urn:test:scope:user:alice", "test"),
-			models.LineageEdge("urn:test:scope:table:t4", "urn:test:scope:table:t5", "test"),
+			models.GeneratesEdge("urn:test:scope:table:t4", "urn:test:scope:table:t5", "test"),
 		}
 		rec := models.NewRecord(entity, edges...)
 
@@ -141,7 +141,7 @@ func TestProcess(t *testing.T) {
 		require.Len(t, resultEdges, 2)
 		assert.Equal(t, "owned_by", resultEdges[0].Type)
 		assert.Equal(t, "urn:test:scope:user:alice", resultEdges[0].TargetUrn)
-		assert.Equal(t, "lineage", resultEdges[1].Type)
+		assert.Equal(t, "generates", resultEdges[1].Type)
 		assert.Equal(t, "urn:test:scope:table:t5", resultEdges[1].TargetUrn)
 	})
 }

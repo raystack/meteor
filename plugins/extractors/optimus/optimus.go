@@ -148,13 +148,13 @@ func (e *Extractor) buildJob(ctx context.Context, jobSpec *pb.JobSpecification, 
 	jobID := fmt.Sprintf("%s.%s.%s", project, namespace, jobSpec.Name)
 	urn := models.NewURN(service, e.UrnScope, "job", jobID)
 
-	// Build edges for lineage
+	// Build edges for data dependencies
 	var edges []*meteorv1beta1.Edge
 	for _, upstreamURN := range upstreamURNs {
-		edges = append(edges, models.LineageEdge(upstreamURN, urn, service))
+		edges = append(edges, models.DerivedFromEdge(urn, upstreamURN, service))
 	}
 	for _, downstreamURN := range downstreamURNs {
-		edges = append(edges, models.LineageEdge(urn, downstreamURN, service))
+		edges = append(edges, models.GeneratesEdge(urn, downstreamURN, service))
 	}
 
 	// Build owner edge
