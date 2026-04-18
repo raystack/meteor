@@ -47,7 +47,7 @@ type Config struct {
 	TablePattern         string  `mapstructure:"table_pattern"`
 	Exclude              Exclude `mapstructure:"exclude"`
 	IncludeColumnProfile bool    `mapstructure:"include_column_profile"`
-	// MaxPreviewRows can also be set to -1 to restrict adding preview_rows key in asset data
+	// MaxPreviewRows can also be set to -1 to restrict adding preview_rows key in entity properties
 	MaxPreviewRows      int      `mapstructure:"max_preview_rows" default:"30"`
 	MixValues           bool     `mapstructure:"mix_values" default:"false"`
 	IsCollectTableUsage bool     `mapstructure:"collect_table_usage" default:"false"`
@@ -336,7 +336,7 @@ func (e *Extractor) extractTable(ctx context.Context, ds *bigquery.Dataset, emit
 				}
 				record, err := e.buildRecord(ctx, table, tmd)
 				if err != nil {
-					e.logger.Error("failed to build asset", "err", err, "table", tableFQN)
+					e.logger.Error("failed to build record", "err", err, "table", tableFQN)
 					return nil
 				}
 				emit(record)

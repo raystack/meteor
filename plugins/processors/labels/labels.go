@@ -26,13 +26,13 @@ type Processor struct {
 }
 
 var sampleConfig = `
-# Append labels to asset
+# Append labels to entity
 # labels:
 #   fieldA: valueA
 #   fieldB: valueB`
 
 var info = plugins.Info{
-	Description:  "Append labels to assets",
+	Description:  "Append labels to entities",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"processor", "transform", "labels"},

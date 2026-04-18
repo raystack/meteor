@@ -24,13 +24,13 @@ source:
       engine: tengo
       source: |
         for u in response.body.users {
-          asset := new_asset("user")
-          asset.urn = format("urn:my_svc:%s:user:%s", recipe_scope, u.id)
-          asset.name = u.full_name
-          asset.source = "my_svc"
-          asset.properties.email = u.email
-          asset.properties.status = u.active ? "active" : "suspended"
-          emit(asset)
+          entity := new_entity("user")
+          entity.urn = format("urn:my_svc:%s:user:%s", recipe_scope, u.id)
+          entity.name = u.full_name
+          entity.source = "my_svc"
+          entity.properties.email = u.email
+          entity.properties.status = u.active ? "active" : "suspended"
+          emit(entity)
         }
 ```
 
@@ -83,18 +83,16 @@ HTTP response object with `status_code`, `header`, and `body`. Header names are 
 }
 ```
 
-### `new_asset(type) -> entity`
+### `new_entity(type) -> entity`
 
 Creates a new entity map of the given type (e.g. `"user"`, `"table"`, `"topic"`, `"job"`, `"dashboard"`, `"bucket"`, `"model"`, `"application"`, etc.).
 
 Set fields on the returned map:
-- `asset.urn` - Entity URN (string)
-- `asset.name` - Entity name (string)
-- `asset.source` - Source system name (string)
-- `asset.description` - Description (string)
-- `asset.properties.*` - Type-specific metadata as flat key-value pairs
-
-**Important:** Do not overwrite `asset.properties` as a whole; set individual keys instead.
+- `entity.urn` - Entity URN (string)
+- `entity.name` - Entity name (string)
+- `entity.source` - Source system name (string)
+- `entity.description` - Description (string)
+- `entity.properties.*` - Type-specific metadata as flat key-value pairs
 
 ### `emit(entity)`
 
@@ -118,11 +116,11 @@ for item in response.body.items {
 results := execute_request(reqs...)
 for r in results {
   if is_error(r) { continue }
-  asset := new_asset("job")
-  asset.urn = format("urn:my_svc:%s:job:%s", recipe_scope, r.body.id)
-  asset.name = r.body.name
-  asset.source = "my_svc"
-  emit(asset)
+  entity := new_entity("job")
+  entity.urn = format("urn:my_svc:%s:job:%s", recipe_scope, r.body.id)
+  entity.name = r.body.name
+  entity.source = "my_svc"
+  emit(entity)
 }
 ```
 
@@ -132,7 +130,7 @@ Terminates script execution.
 
 ## Entities
 
-The output depends entirely on the user-defined script. The script can emit zero or more entities of any supported type via `new_asset` and `emit`.
+The output depends entirely on the user-defined script. The script can emit zero or more entities of any supported type via `new_entity` and `emit`.
 
 ## Edges
 

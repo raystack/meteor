@@ -42,7 +42,7 @@ source:
 | `properties.window_truncate_to` | `string` | Window truncation setting. |
 | `properties.start_date` | `string` | Job start date. |
 | `properties.end_date` | `string` | Job end date. |
-| `properties.sql` | `string` | SQL query from `query.sql` asset (if present). |
+| `properties.sql` | `string` | SQL query from `query.sql` resource (if present). |
 | `properties.task` | `map[string]any` | Task details (`name`, `description`, `image`). |
 
 ## Edges

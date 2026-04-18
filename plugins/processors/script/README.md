@@ -10,7 +10,7 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.properties.custom_flag = "reviewed"
+        entity.properties.custom_flag = "reviewed"
 ```
 
 ## Configuration
@@ -22,7 +22,7 @@ processors:
 
 ## Behavior
 
-The entity is exposed in the script as a variable called `asset` (kept for backward compatibility). It has the following fields:
+The entity is exposed in the script as a variable called `entity`. It has the following fields:
 
 | Field         | Type     | Description                                        |
 | :------------ | :------- | :------------------------------------------------- |
@@ -35,7 +35,7 @@ The entity is exposed in the script as a variable called `asset` (kept for backw
 | `create_time` | `string` | Creation timestamp (RFC 3339)                      |
 | `update_time` | `string` | Last update timestamp (RFC 3339)                   |
 
-All type-specific data (schema, columns, labels, config, etc.) lives under `asset.properties`. Mutations to `asset` fields inside the script are reflected in the output record.
+All type-specific data (schema, columns, labels, config, etc.) lives under `entity.properties`. Mutations to `entity` fields inside the script are reflected in the output record.
 
 Edges attached to the record are passed through unchanged.
 
@@ -51,10 +51,10 @@ Add a label and modify a timestamp:
 ```go
 times := import("times")
 
-asset.properties.labels = merge({script_engine: "tengo"}, asset.properties.labels)
+entity.properties.labels = merge({script_engine: "tengo"}, entity.properties.labels)
 
-update_time := times.parse("2006-01-02T15:04:05Z07:00", asset.properties.update_time)
-asset.properties.update_time = times.add_date(update_time, 0, 0, 1)
+update_time := times.parse("2006-01-02T15:04:05Z07:00", entity.properties.update_time)
+entity.properties.update_time = times.add_date(update_time, 0, 0, 1)
 ```
 
 ## Contributing

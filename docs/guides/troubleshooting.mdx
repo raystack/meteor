@@ -69,7 +69,7 @@ Common issues and solutions when working with Meteor.
 
 ### Empty results
 
-**Symptom:** Recipe runs successfully but produces no assets.
+**Symptom:** Recipe runs successfully but produces no entities.
 
 **Solutions:**
 - Check that the source has data accessible with the provided credentials.
@@ -79,12 +79,12 @@ Common issues and solutions when working with Meteor.
 
 ### Partial extraction
 
-**Symptom:** Some assets are extracted but others are missing.
+**Symptom:** Some entities are extracted but others are missing.
 
 **Solutions:**
 - Check the `exclude` configuration in your recipe.
 - For database extractors, ensure the user has permissions on all target schemas.
-- Check Meteor logs for per-asset errors that may indicate permission issues on specific resources.
+- Check Meteor logs for per-entity errors that may indicate permission issues on specific resources.
 
 ## Sink Issues
 

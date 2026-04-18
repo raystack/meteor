@@ -62,7 +62,7 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.name = asset.name + " (processed)"
+        entity.name = entity.name + " (processed)"
 ```
 
 ## Writing a Recipe with Processors
@@ -88,7 +88,7 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.name = asset.name + " [" + asset.source + "]"
+        entity.name = entity.name + " [" + entity.source + "]"
 ```
 
 In this example, each entity first gets enriched with a `domain` attribute, then gets labeled with `source: meteor`, and finally has its name modified by the script processor.

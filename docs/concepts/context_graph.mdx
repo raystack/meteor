@@ -12,9 +12,9 @@ Meteor closes this gap. By continuously extracting metadata — schemas, lineage
 
 ## What is a Context Graph?
 
-A context graph is a connected, queryable representation of your data ecosystem. It captures not just what assets exist, but how they relate to each other:
+A context graph is a connected, queryable representation of your data ecosystem. It captures not just what entities exist, but how they relate to each other:
 
-- **Nodes** represent assets: tables, dashboards, jobs, topics, models, buckets, users, repositories, teams, groups.
+- **Nodes** represent entities: tables, dashboards, jobs, topics, models, buckets, users, repositories, teams, groups.
 - **Edges** represent relationships: lineage (which table feeds which dashboard), ownership (who is responsible), membership (who belongs to which team), and dependency (which job produces which dataset).
 
 Unlike a flat catalog or a search index, a context graph preserves **structure**. It knows that a revenue dashboard depends on a sales table, which is produced by an ETL job, which reads from a Kafka topic. This structure is what makes AI useful over enterprise data.
@@ -34,10 +34,10 @@ Meteor's extractors connect to 30+ data sources — databases (BigQuery, Postgre
 
 ### Process
 
-Processors enrich and transform assets in-flight before they reach a sink. Use them to:
+Processors enrich and transform entities in-flight before they reach a sink. Use them to:
 
 - Append **labels** for classification (environment, domain, sensitivity, PII)
-- **Enrich** assets with custom fields from external systems
+- **Enrich** entities with custom fields from external systems
 - Run **scripts** (Tengo) for arbitrary transformation logic, including HTTP calls to external APIs
 
 ### Deliver
@@ -77,7 +77,7 @@ With Meteor's lineage graph, AI can:
 - **Root-cause analysis** — "This metric dropped. What changed upstream?"
 - **Dependency awareness** — "Before deprecating this dataset, show me everything downstream."
 
-### Asset Discovery for AI Agents
+### Entity Discovery for AI Agents
 
 Function-calling AI agents need to know what tools and data are available. The context graph serves as the agent's **world model**:
 
@@ -96,10 +96,10 @@ Meteor's plugin architecture makes it straightforward to extend the context grap
 
 | Capability | Approach |
 |---|---|
-| **Semantic search** | Use a script processor to generate vector embeddings from asset descriptions, enabling similarity-based retrieval |
-| **Business glossary** | Extract metric definitions and business terms as first-class assets, linking them to underlying tables |
-| **Usage signals** | Build extractors that capture query frequency and dashboard views, helping AI rank assets by relevance |
-| **Data quality** | Enrich assets with freshness, completeness, and anomaly scores so AI can assess data trustworthiness |
+| **Semantic search** | Use a script processor to generate vector embeddings from entity descriptions, enabling similarity-based retrieval |
+| **Business glossary** | Extract metric definitions and business terms as first-class entities, linking them to underlying tables |
+| **Usage signals** | Build extractors that capture query frequency and dashboard views, helping AI rank entities by relevance |
+| **Data quality** | Enrich entities with freshness, completeness, and anomaly scores so AI can assess data trustworthiness |
 | **LLM-optimized exports** | Create sinks that format metadata as structured context windows sized for LLM consumption |
 
 ## The Flywheel
@@ -109,7 +109,7 @@ The context graph is not a one-time build. It is a continuously improving loop:
 1. **Meteor extracts** metadata from across the data ecosystem
 2. **The context graph** grows richer with each extraction cycle
 3. **AI systems** use the graph for grounding, reasoning, and discovery
-4. **AI interactions** reveal gaps — missing descriptions, unknown lineage, unlabeled assets
+4. **AI interactions** reveal gaps — missing descriptions, unknown lineage, unlabeled entities
 5. **Teams fill gaps**, improving metadata quality
 6. **Meteor captures** the improvements, and the cycle continues
 

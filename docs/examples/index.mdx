@@ -24,7 +24,7 @@ export METEOR_BIGQUERY_PROJECT_ID=my-gcp-project
 meteor run ./bigquery-kafka-recipe.yaml
 ```
 
-Extracts BigQuery metadata with column profiling enabled and streams it to a Kafka topic. The `key_path` config keys each message by asset URN for consistent partitioning.
+Extracts BigQuery metadata with column profiling enabled and streams it to a Kafka topic. The `key_path` config keys each message by entity URN for consistent partitioning.
 
 ## Postgres to Compass
 
@@ -46,7 +46,7 @@ export METEOR_KAFKA_BROKERS=broker1:9092,broker2:9092
 meteor run ./bigquery-multi-sink.yaml
 ```
 
-Demonstrates multiple sinks and chained processors. Extracts BigQuery metadata with column profiling and view lineage, enriches and labels assets, then sends to both Compass and Kafka simultaneously.
+Demonstrates multiple sinks and chained processors. Extracts BigQuery metadata with column profiling and view lineage, enriches and labels entities, then sends to both Compass and Kafka simultaneously.
 
 ## Tableau to File
 

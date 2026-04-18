@@ -18,8 +18,8 @@ sinks:
         source: |
           payload := {
             details: {
-              some_key: asset.urn,
-              another_key: asset.name
+              some_key: entity.urn,
+              another_key: entity.name
             }
           }
           sink(payload)
@@ -44,7 +44,7 @@ sinks:
 
 **Script globals:**
 
-- `asset` -- The Entity object with fields: `urn`, `type`, `name`, `description`, `source`, `properties`, `create_time`, `update_time`. (Named `asset` for backward compatibility.)
+- `entity` -- The Entity object with fields: `urn`, `type`, `name`, `description`, `source`, `properties`, `create_time`, `update_time`.
 - `sink(payload)` -- Sends the HTTP request with the given payload.
 - `exit()` -- Terminates script execution.
 

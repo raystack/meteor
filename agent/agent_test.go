@@ -930,7 +930,7 @@ func TestAgentRun(t *testing.T) {
 						"engine": "tengo",
 						"script": heredoc.Doc(`
 							text := import("text")
-							asset.description = text.replace(asset.description, "incredible", "amazing", -1)
+							entity.description = text.replace(entity.description, "incredible", "amazing", -1)
 						`),
 					},
 				},

@@ -70,7 +70,7 @@ processors:
 
 ## script
 
-Transforms the entity using a user-defined script. The entity is exposed to the script as an `asset` variable (a map). Currently [Tengo][tengo] is the only supported engine. The script has full control over entity fields, including the ability to make HTTP calls to external services.
+Transforms the entity using a user-defined script. The entity is exposed to the script as an `entity` variable (a map). Currently [Tengo][tengo] is the only supported engine. The script has full control over entity fields, including the ability to make HTTP calls to external services.
 
 ```yaml
 processors:
@@ -78,7 +78,7 @@ processors:
     config:
       engine: tengo
       script: |
-        asset.name = asset.name + " (processed)"
+        entity.name = entity.name + " (processed)"
 ```
 
 | Key | Type | Description | Required |

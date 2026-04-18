@@ -18,7 +18,7 @@ import (
 
 var (
 	ctx    = context.Background()
-	script = `asset.owners = append(asset.owners || [], { name: "Big Mom", email: "big.mom@wholecakeisland.com" })`
+	script = `entity.owners = append(entity.owners || [], { name: "Big Mom", email: "big.mom@wholecakeisland.com" })`
 )
 
 func TestInit(t *testing.T) {
@@ -85,7 +85,7 @@ func TestProcess(t *testing.T) {
 					return m1
 				}
 
-				asset.properties = merge(asset.properties || {}, {script_engine: "tengo"})
+				entity.properties = merge(entity.properties || {}, {script_engine: "tengo"})
 				`),
 			input: &meteorv1beta1.Entity{
 				Urn:    "urn:testservice:test-testservice:feature_table:avg_dispatch_arrival_time_10_mins",
@@ -116,7 +116,7 @@ func TestProcess(t *testing.T) {
 		{
 			name: "UnknownFields",
 			script: heredoc.Doc(`
-				asset.does_not_exist = "value"
+				entity.does_not_exist = "value"
 			`),
 			input: &meteorv1beta1.Entity{
 				Urn:  "urn:test:test:table:test",
@@ -127,7 +127,7 @@ func TestProcess(t *testing.T) {
 		},
 		{
 			name:   "ModifyEntityName",
-			script: `asset.name = "new-name"`,
+			script: `entity.name = "new-name"`,
 			input: &meteorv1beta1.Entity{
 				Urn:    "urn:test:test:table:test",
 				Name:   "old-name",
@@ -144,7 +144,7 @@ func TestProcess(t *testing.T) {
 		{
 			name: "EntityWithNilProperties",
 			script: heredoc.Doc(`
-				asset.properties = {new_key: "new_value"}
+				entity.properties = {new_key: "new_value"}
 			`),
 			input: &meteorv1beta1.Entity{
 				Urn:    "urn:test:test:table:test",
@@ -211,7 +211,7 @@ func TestProcess(t *testing.T) {
 		p := New(testutils.Logger)
 		err := p.Init(ctx, plugins.Config{
 			RawConfig: map[string]any{
-				"script": `asset.name = "modified"`,
+				"script": `entity.name = "modified"`,
 				"engine": "tengo",
 			},
 		})

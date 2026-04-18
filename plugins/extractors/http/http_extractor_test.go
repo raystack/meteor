@@ -339,7 +339,7 @@ func TestExtract(t *testing.T) {
 			expectedErr: "context deadline exceeded",
 		},
 		{
-			name: "AssetFromResponse",
+			name: "EntityFromResponse",
 			rawCfg: map[string]any{
 				"request": map[string]any{
 					"url":          "{{serverURL}}/api/v1/endpoint",
@@ -350,28 +350,28 @@ func TestExtract(t *testing.T) {
 					"engine": "tengo",
 					"source": heredoc.Doc(`
 						body := response.body
-						asset := new_asset("user")
+						entity := new_entity("user")
 						// URN format: "urn:{service}:{scope}:{type}:{id}"
-						asset.urn = format("urn:%s:%s:user:%s", "my_usr_svc", recipe_scope, body.employee_id)
-						asset.name = body.fullname
-						asset.source = "my_usr_svc"
-						// asset.type = "user" // not required, new_asset("user") sets the field.
-						asset.data.email = body.work_email
-						asset.data.username = body.employee_id
-						asset.data.first_name = body.legal_first_name
-						asset.data.last_name = body.legal_last_name
-						asset.data.full_name = body.fullname
-						asset.data.display_name = body.fullname
-						asset.data.title = body.business_title
-						asset.data.status = body.terminated == "true" ? "suspended" : "active"
-						asset.data.manager_email = body.manager_email
-						asset.data.attributes = {
+						entity.urn = format("urn:%s:%s:user:%s", "my_usr_svc", recipe_scope, body.employee_id)
+						entity.name = body.fullname
+						entity.source = "my_usr_svc"
+						// entity.type = "user" // not required, new_entity("user") sets the field.
+						entity.properties.email = body.work_email
+						entity.properties.username = body.employee_id
+						entity.properties.first_name = body.legal_first_name
+						entity.properties.last_name = body.legal_last_name
+						entity.properties.full_name = body.fullname
+						entity.properties.display_name = body.fullname
+						entity.properties.title = body.business_title
+						entity.properties.status = body.terminated == "true" ? "suspended" : "active"
+						entity.properties.manager_email = body.manager_email
+						entity.properties.attributes = {
 							manager_id:           body.manager_id,
 							cost_center_id:       body.cost_center_id,
 							supervisory_org_name: body.supervisory_org_name,
 							location_id:          body.location_id
 						}
-						emit(asset)
+						emit(entity)
 					`),
 				},
 			},
@@ -386,30 +386,26 @@ func TestExtract(t *testing.T) {
 				Source: "my_usr_svc",
 				Type:   "user",
 				Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
-					"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-						"first_name":    structpb.NewStringValue("Van"),
-						"last_name":     structpb.NewStringValue("Stump"),
-						"full_name":     structpb.NewStringValue("Van Stump"),
-						"display_name":  structpb.NewStringValue("Van Stump"),
-						"email":         structpb.NewStringValue("vstump0@pcworld.com"),
-						"title":         structpb.NewStringValue("General Manager"),
-						"manager_email": structpb.NewStringValue("vgchampain1@dot.gov"),
-						"status":        structpb.NewStringValue("active"),
-						"username":      structpb.NewStringValue("395f8292-d48b-431b-9e2d-63b3dcd4b986"),
-						"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"cost_center_id":       structpb.NewStringValue("d6b470d8-e1ed-43ee-ab43-a645e607cf81"),
-							"location_id":          structpb.NewStringValue("MA"),
-							"manager_id":           structpb.NewStringValue("496a320c-3c0a-4c0d-9658-a4f1dbbae20d"),
-							"supervisory_org_name": structpb.NewStringValue("Research and Development"),
-						}}),
+					"first_name":    structpb.NewStringValue("Van"),
+					"last_name":     structpb.NewStringValue("Stump"),
+					"full_name":     structpb.NewStringValue("Van Stump"),
+					"display_name":  structpb.NewStringValue("Van Stump"),
+					"email":         structpb.NewStringValue("vstump0@pcworld.com"),
+					"title":         structpb.NewStringValue("General Manager"),
+					"manager_email": structpb.NewStringValue("vgchampain1@dot.gov"),
+					"status":        structpb.NewStringValue("active"),
+					"username":      structpb.NewStringValue("395f8292-d48b-431b-9e2d-63b3dcd4b986"),
+					"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"cost_center_id":       structpb.NewStringValue("d6b470d8-e1ed-43ee-ab43-a645e607cf81"),
+						"location_id":          structpb.NewStringValue("MA"),
+						"manager_id":           structpb.NewStringValue("496a320c-3c0a-4c0d-9658-a4f1dbbae20d"),
+						"supervisory_org_name": structpb.NewStringValue("Research and Development"),
 					}}),
-					"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
-					"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 				}},
 			}},
 		},
 		{
-			name: "MultipleAssetsFromResponse",
+			name: "MultipleEntitiesFromResponse",
 			rawCfg: map[string]any{
 				"request": map[string]any{
 					"url":          "{{serverURL}}/api/v1/endpoint",
@@ -459,25 +455,25 @@ func TestExtract(t *testing.T) {
 						
 						body := response.body
 						for ft in body.tables {
-							ast := new_asset("feature_table")
-							ast.urn = format(
+							e := new_entity("feature_table")
+							e.urn = format(
 								"urn:featurestore:staging:feature_table:%s.%s",
 								body.project, ft.spec.name
 							)
-							ast.name = ft.spec.name
-							ast.source = "featurestore"
-							ast.type = "feature_table"
-							ast.data = merge(ast.data, {
+							e.name = ft.spec.name
+							e.source = "featurestore"
+							e.type = "feature_table"
+							e.properties = merge(e.properties, {
 								namespace: body.project,
-								entities: enum.map(ft.spec.entities, func(i, e){
-									entity := enum.find(body.entities, func(i, entity) {
-										return e == entity.spec.name
+								entities: enum.map(ft.spec.entities, func(i, ent){
+									found := enum.find(body.entities, func(i, item) {
+										return ent == item.spec.name
 									})
 									return {
-										name: entity.spec.name,
+										name: found.spec.name,
 										labels: {
-											"value_type": entity.spec.value_type,
-											"description": entity.spec.description
+											"value_type": found.spec.value_type,
+											"description": found.spec.description
 										}
 									}
 								}),
@@ -488,13 +484,11 @@ func TestExtract(t *testing.T) {
 									}
 								}),
 								create_time: ft.meta.created_timestamp,
-								update_time: ft.meta.last_updated_timestamp
+								update_time: ft.meta.last_updated_timestamp,
+								upstreams: buildUpstreams(ft),
+								labels: ft.spec.labels
 							})
-							ast.lineage = {
-								upstreams: buildUpstreams(ft)
-							}
-							ast.labels = ft.spec.labels
-							emit(ast)
+							emit(e)
 						}
 					`),
 				},
@@ -511,41 +505,36 @@ func TestExtract(t *testing.T) {
 					Source: "featurestore",
 					Type:   "feature_table",
 					Properties: buildProps(t, map[string]any{
-						"data": map[string]any{
-							"namespace": "sauron",
-							"entities": []any{
-								map[string]any{
-									"name":   "merchant_uuid",
-									"labels": map[string]any{"description": "merchant uuid", "value_type": "STRING"},
-								},
+						"namespace": "sauron",
+						"entities": []any{
+							map[string]any{
+								"name":   "merchant_uuid",
+								"labels": map[string]any{"description": "merchant uuid", "value_type": "STRING"},
 							},
-							"features": []any{
-								map[string]any{"name": "avg_t2_merchant_3d", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_t2_merchant_1d", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_merchant_price", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_t2_same_hour_merchant_1m", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_t2_merchant_1w", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_gmv_merchant_1w", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_gmv_merchant_1d", "data_type": "DOUBLE"},
-								map[string]any{"name": "merch_demand_same_hour_1m", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_t2_merchant_3h", "data_type": "DOUBLE"},
-								map[string]any{"name": "t2_discovery", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_gmv_merchant_3h", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_gmv_merchant_1m", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_gmv_same_hour_merchant_1m", "data_type": "DOUBLE"},
-								map[string]any{"name": "avg_t2_merchant_1m", "data_type": "DOUBLE"},
-							},
-							"create_time": "2022-08-08T03:17:54Z",
-							"update_time": "2022-08-08T03:17:54Z",
 						},
-						"labels": nil,
-						"lineage": map[string]any{
-							"upstreams": []any{
-								map[string]any{
-									"urn":     "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
-									"service": "bigquery",
-									"type":    "table",
-								},
+						"features": []any{
+							map[string]any{"name": "avg_t2_merchant_3d", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_t2_merchant_1d", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_merchant_price", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_t2_same_hour_merchant_1m", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_t2_merchant_1w", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_gmv_merchant_1w", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_gmv_merchant_1d", "data_type": "DOUBLE"},
+							map[string]any{"name": "merch_demand_same_hour_1m", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_t2_merchant_3h", "data_type": "DOUBLE"},
+							map[string]any{"name": "t2_discovery", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_gmv_merchant_3h", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_gmv_merchant_1m", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_gmv_same_hour_merchant_1m", "data_type": "DOUBLE"},
+							map[string]any{"name": "avg_t2_merchant_1m", "data_type": "DOUBLE"},
+						},
+						"create_time": "2022-08-08T03:17:54Z",
+						"update_time": "2022-08-08T03:17:54Z",
+						"upstreams": []any{
+							map[string]any{
+								"urn":     "urn:bigquery:celestial-dragons-staging:table:celestial-dragons-staging:feast.merchant_uuid_t2_discovery",
+								"service": "bigquery",
+								"type":    "table",
 							},
 						},
 					}),
@@ -556,31 +545,26 @@ func TestExtract(t *testing.T) {
 					Source: "featurestore",
 					Type:   "feature_table",
 					Properties: buildProps(t, map[string]any{
-						"data": map[string]any{
-							"namespace": "sauron",
-							"entities": []any{
-								map[string]any{
-									"name":   "merchant_uuid",
-									"labels": map[string]any{"description": "merchant uuid", "value_type": "STRING"},
-								},
+						"namespace": "sauron",
+						"entities": []any{
+							map[string]any{
+								"name":   "merchant_uuid",
+								"labels": map[string]any{"description": "merchant uuid", "value_type": "STRING"},
 							},
-							"features": []any{
-								map[string]any{"name": "ongoing_placed_and_waiting_acceptance_orders", "data_type": "INT64"},
-								map[string]any{"name": "ongoing_orders", "data_type": "INT64"},
-								map[string]any{"name": "merchant_avg_dispatch_arrival_time_10m", "data_type": "FLOAT"},
-								map[string]any{"name": "ongoing_accepted_orders", "data_type": "INT64"},
-							},
-							"create_time": "2022-09-19T22:42:04Z",
-							"update_time": "2022-09-21T13:23:02Z",
 						},
-						"labels": nil,
-						"lineage": map[string]any{
-							"upstreams": []any{
-								map[string]any{
-									"urn":     "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
-									"service": "kafka",
-									"type":    "topic",
-								},
+						"features": []any{
+							map[string]any{"name": "ongoing_placed_and_waiting_acceptance_orders", "data_type": "INT64"},
+							map[string]any{"name": "ongoing_orders", "data_type": "INT64"},
+							map[string]any{"name": "merchant_avg_dispatch_arrival_time_10m", "data_type": "FLOAT"},
+							map[string]any{"name": "ongoing_accepted_orders", "data_type": "INT64"},
+						},
+						"create_time": "2022-09-19T22:42:04Z",
+						"update_time": "2022-09-21T13:23:02Z",
+						"upstreams": []any{
+							map[string]any{
+								"urn":     "urn:kafka:int-dagstream-kafka.yonkou.io:topic:GO_FOOD-delay-allocation-merchant-feature-10m-log",
+								"service": "kafka",
+								"type":    "topic",
 							},
 						},
 					}),
@@ -615,15 +599,15 @@ func TestExtract(t *testing.T) {
 							continue
 						  }
 						  
-						  asset := new_asset("job")
-						  asset.name = r.body.name
+						  entity := new_entity("job")
+						  entity.name = r.body.name
 						  exec_cfg := r.body["execution-config"]
-						  asset.data.attributes = {
+						  entity.properties.attributes = {
 							"job_id": r.body.jid,
 							"job_parallelism": exec_cfg["job-parallelism"],
 							"config": exec_cfg["user-config"]
 						  }
-						  emit(asset)
+						  emit(entity)
 						}
 					`),
 				},
@@ -657,8 +641,7 @@ func TestExtract(t *testing.T) {
 					Name: "data-test-external-voucher-dagger",
 					Type: "job",
 					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
-						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 								"job_id":          structpb.NewStringValue("72b6753ab1984be6a65055b95ea9dd32"),
 								"job_parallelism": structpb.NewNumberValue(1),
 								"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -690,17 +673,14 @@ func TestExtract(t *testing.T) {
 									"STREAMS":                           structpb.NewStringValue(`[{"SOURCE_KAFKA_TOPIC_NAMES":"segmentation-message","INPUT_SCHEMA_PROTO_CLASS":"com.company.esb.segmentation.UpdateLogMessage","INPUT_SCHEMA_TABLE":"table1","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_COMMIT_ENABLE":"false","SOURCE_KAFKA_CONSUMER_CONFIG_AUTO_OFFSET_RESET":"latest","SOURCE_KAFKA_CONSUMER_CONFIG_GROUP_ID":"data-test-external-voucher-dagger-0001","SOURCE_KAFKA_CONSUMER_CONFIG_BOOTSTRAP_SERVERS":"<REDACTED>","INPUT_SCHEMA_EVENT_TIMESTAMP_FIELD_INDEX":"3","SOURCE_KAFKA_NAME":"data-dagstream"}]`),
 								}}),
 							}}),
-						}}),
-						"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
-						"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
+					}}),
 					}},
 				},
 				{
 					Name: "data-booking-map-matching-dagger",
 					Type: "job",
 					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
-						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 								"job_id":          structpb.NewStringValue("3473947d1115c155513014cc6ecbd2fa"),
 								"job_parallelism": structpb.NewNumberValue(1),
 								"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -754,16 +734,13 @@ func TestExtract(t *testing.T) {
 								}}),
 							}}),
 						}}),
-						"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
-						"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 					}},
 				},
 				{
 					Name: "data-eim-driver-nearby-staging-dagger",
 					Type: "job",
 					Properties: &structpb.Struct{Fields: map[string]*structpb.Value{
-						"data": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
-							"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
+						"attributes": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
 								"job_id":          structpb.NewStringValue("9b12cb10b119b957b085c08e49bde3f2"),
 								"job_parallelism": structpb.NewNumberValue(1),
 								"config": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{
@@ -798,8 +775,6 @@ func TestExtract(t *testing.T) {
 								}}),
 							}}),
 						}}),
-						"labels":  structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
-						"lineage": structpb.NewStructValue(&structpb.Struct{Fields: map[string]*structpb.Value{}}),
 					}},
 				},
 			},
@@ -848,7 +823,7 @@ func TestExtract(t *testing.T) {
 						if !response.body.success {
 							exit()
 						}
-						a := new_asset("invalid")
+						a := new_entity("invalid")
 					`),
 				},
 			},
@@ -857,7 +832,7 @@ func TestExtract(t *testing.T) {
 			},
 		},
 		{
-			name: "NewAssetWithoutType",
+			name: "NewEntityWithoutType",
 			rawCfg: map[string]any{
 				"request": map[string]any{
 					"url":          "{{serverURL}}/api/v1/endpoint",
@@ -867,7 +842,7 @@ func TestExtract(t *testing.T) {
 				"script": map[string]any{
 					"engine": "tengo",
 					"source": heredoc.Doc(`
-						a := new_asset()
+						a := new_entity()
 						emit(a)
 					`),
 				},
@@ -875,10 +850,10 @@ func TestExtract(t *testing.T) {
 			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				testutils.Respond(t, w, http.StatusOK, `{}`)
 			},
-			expectedErr: "Runtime Error: wrong number of arguments in call to 'user-function:new_asset'",
+			expectedErr: "Runtime Error: wrong number of arguments in call to 'user-function:new_entity'",
 		},
 		{
-			name: "InvalidAssetType",
+			name: "EmitNewEntity",
 			rawCfg: map[string]any{
 				"request": map[string]any{
 					"url":          "{{serverURL}}/api/v1/endpoint",
@@ -888,7 +863,7 @@ func TestExtract(t *testing.T) {
 				"script": map[string]any{
 					"engine": "tengo",
 					"source": heredoc.Doc(`
-						a := new_asset("invalid")
+						a := new_entity("invalid")
 						emit(a)
 					`),
 				},
@@ -899,11 +874,6 @@ func TestExtract(t *testing.T) {
 			expected: []*meteorv1beta1.Entity{
 				{
 					Type: "invalid",
-					Properties: buildProps(t, map[string]any{
-						"data":    map[string]any{},
-						"lineage": map[string]any{},
-						"labels":  map[string]any{},
-					}),
 				},
 			},
 		},
@@ -925,7 +895,7 @@ func TestExtract(t *testing.T) {
 			handler: func(t *testing.T, w http.ResponseWriter, r *http.Request) {
 				testutils.Respond(t, w, http.StatusOK, `{}`)
 			},
-			expectedErr: "Runtime Error: invalid type for argument 'asset' in call to 'user-function:emit': expected Map, found string",
+			expectedErr: "Runtime Error: invalid type for argument 'entity' in call to 'user-function:emit': expected Map, found string",
 		},
 		{
 			name: "EmitMultiple",
@@ -938,7 +908,7 @@ func TestExtract(t *testing.T) {
 				"script": map[string]any{
 					"engine": "tengo",
 					"source": heredoc.Doc(`
-						emit(new_asset("user"), new_asset("user"))
+						emit(new_entity("user"), new_entity("user"))
 					`),
 				},
 			},

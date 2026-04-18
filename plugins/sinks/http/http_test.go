@@ -180,8 +180,8 @@ func TestSink(t *testing.T) {
 				"source": `
 					payload := {
 						details: {
-							some_key: asset.urn,
-							another_key: asset.name
+							some_key: entity.urn,
+							another_key: entity.name
 						}
 					}
 					sink(payload)

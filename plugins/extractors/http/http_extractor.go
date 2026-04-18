@@ -76,20 +76,20 @@ var sampleConfig = heredoc.Doc(`
 	script:
 	  engine: tengo
 	  source: |
-	    asset := new_asset("user")
-	    // modify the asset using 'response'...
-	    emit(asset)
+	    entity := new_entity("user")
+	    // modify the entity using 'response'...
+	    emit(entity)
 `)
 
 var info = plugins.Info{
-	Description:  "Assets metadata from an external HTTP API",
+	Description:  "Extract metadata from an external HTTP API",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"http", "extractor"},
 }
 
 // Extractor is responsible for executing an HTTP request as per configuration
-// and executing the script with the response to 'extract' assets from within
+// and executing the script with the response to extract entities from within
 // the script.
 type Extractor struct {
 	plugins.BaseExtractor
@@ -123,7 +123,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 
 // Extract executes an HTTP request as per the configuration and if successful,
 // executes the script. The script has access to the response and can use the
-// same to 'emit' assets from within the script.
+// same to emit entities from within the script.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	if e.config.BeforeScript != nil {
 		if err := e.executeScript(ctx, nil, *e.config.BeforeScript, emit); err != nil {

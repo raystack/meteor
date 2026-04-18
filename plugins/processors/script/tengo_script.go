@@ -32,7 +32,7 @@ type Config struct {
 	Script string `mapstructure:"script" validate:"required"`
 }
 
-// Processor executes the configured Tengo script to transform the given asset
+// Processor executes the configured Tengo script to transform the given entity
 // record.
 type Processor struct {
 	plugins.BasePlugin
@@ -45,11 +45,11 @@ type Processor struct {
 var sampleConfig = heredoc.Doc(`
 	engine: tengo
 	script: |
-	  asset.name = asset.name + " (modified)"
+	  entity.name = entity.name + " (modified)"
 `)
 
 var info = plugins.Info{
-	Description:  "Transform the asset with a Tengo script",
+	Description:  "Transform the entity with a Tengo script",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"processor", "transform", "script"},
@@ -71,7 +71,7 @@ func (p *Processor) Init(ctx context.Context, config plugins.Config) error {
 	}
 
 	s, err := tengoutil.NewSecureScript(([]byte)(p.config.Script), map[string]any{
-		"asset": map[string]any{},
+		"entity": map[string]any{},
 	})
 	if err != nil {
 		return fmt.Errorf("script processor init: %w", err)
@@ -94,14 +94,14 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 		return models.Record{}, fmt.Errorf("script processor: %w", err)
 	}
 
-	assetMap, ok := m.(map[string]any)
+	entityMap, ok := m.(map[string]any)
 	if !ok {
 		return models.Record{}, fmt.Errorf("script processor: expected map[string]interface{}, got %T", m)
 	}
 
 	c := p.compiled.Clone()
-	if err := c.Set("asset", assetMap); err != nil {
-		return models.Record{}, fmt.Errorf("script processor: set asset into vm: %w", err)
+	if err := c.Set("entity", entityMap); err != nil {
+		return models.Record{}, fmt.Errorf("script processor: set entity into vm: %w", err)
 	}
 
 	if err := c.RunContext(ctx); err != nil {
@@ -111,14 +111,14 @@ func (p *Processor) Process(ctx context.Context, src models.Record) (models.Reco
 	// Merge the result back into the original map.
 	// Tengo returns only modified fields from an ImmutableMap, so we merge
 	// the script output on top of the original to preserve unmodified fields.
-	resultMap := c.Get("asset").Map()
+	resultMap := c.Get("entity").Map()
 	for k, v := range resultMap {
-		assetMap[k] = v
+		entityMap[k] = v
 	}
 
 	var transformed *meteorv1beta1.Entity
-	if err := structmap.AsStruct(assetMap, &transformed); err != nil {
-		return models.Record{}, fmt.Errorf("script processor: overwrite asset: %w", err)
+	if err := structmap.AsStruct(entityMap, &transformed); err != nil {
+		return models.Record{}, fmt.Errorf("script processor: overwrite entity: %w", err)
 	}
 
 	return models.NewRecord(transformed, src.Edges()...), nil

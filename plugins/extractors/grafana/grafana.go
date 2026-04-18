@@ -98,7 +98,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 }
 
 // Extract checks if the extractor is configured and
-// if so, then it extracts the assets from the extractor.
+// if so, then it extracts the metadata from the extractor.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	if e.extract["datasources"] {
 		if err := e.extractDatasources(ctx, emit); err != nil {

@@ -26,12 +26,12 @@ func (s *Sink) executeScript(ctx context.Context, url string, entity *meteorv1be
 	if err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
-	assetMap, err := structmap.AsMap(entity)
+	entityMap, err := structmap.AsMap(entity)
 	if err != nil {
 		return fmt.Errorf("convert entity to map: %w", err)
 	}
-	if err := c.Set("asset", assetMap); err != nil {
-		return fmt.Errorf("set asset into vm: %w", err)
+	if err := c.Set("entity", entityMap); err != nil {
+		return fmt.Errorf("set entity into vm: %w", err)
 	}
 	if err := c.RunContext(ctx); err != nil && !errors.Is(err, errUserExit) {
 		return fmt.Errorf("run: %w", err)
@@ -40,7 +40,7 @@ func (s *Sink) executeScript(ctx context.Context, url string, entity *meteorv1be
 }
 func (s *Sink) scriptGlobals(ctx context.Context, url string) map[string]any {
 	return map[string]any{
-		"asset": map[string]any{},
+		"entity": map[string]any{},
 		"sink": &tengo.UserFunction{
 			Name:  "sink",
 			Value: s.executeRequestWrapper(ctx, url),

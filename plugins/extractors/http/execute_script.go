@@ -56,9 +56,9 @@ func (e *Extractor) scriptGlobals(ctx context.Context, res any, emit plugins.Emi
 		"recipe_scope": &tengo.String{Value: e.UrnScope},
 		"request":      req,
 		"response":     res,
-		"new_asset": &tengo.UserFunction{
-			Name:  "new_asset",
-			Value: newAssetWrapper(),
+		"new_entity": &tengo.UserFunction{
+			Name:  "new_entity",
+			Value: newEntityWrapper(),
 		},
 		"emit": &tengo.UserFunction{
 			Name:  "emit",
@@ -101,7 +101,7 @@ func (e *Extractor) convertRequestToTengoObj() (tengo.Object, error) {
 	return tengo.FromInterface(res)
 }
 
-func newAssetWrapper() tengo.CallableFunc {
+func newEntityWrapper() tengo.CallableFunc {
 	return func(args ...tengo.Object) (tengo.Object, error) {
 		if len(args) != 1 {
 			return nil, tengo.ErrWrongNumArguments
@@ -116,7 +116,7 @@ func newAssetWrapper() tengo.CallableFunc {
 			}
 		}
 
-		return newAsset(typ)
+		return newEntity(typ)
 	}
 }
 
@@ -129,7 +129,7 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 		m, ok := tengo.ToInterface(args[0]).(map[string]any)
 		if !ok {
 			return nil, tengo.ErrInvalidArgumentType{
-				Name:     "asset",
+				Name:     "entity",
 				Expected: "Map",
 				Found:    args[0].TypeName(),
 			}
@@ -141,11 +141,17 @@ func emitWrapper(emit plugins.Emit) tengo.CallableFunc {
 		name, _ := m["name"].(string)
 		source, _ := m["source"].(string)
 
-		// Everything else goes into properties
+		// Build properties from the map. If a "properties" key exists, merge
+		// its contents directly (avoid nesting properties.properties).
 		props := make(map[string]any)
+		if p, ok := m["properties"].(map[string]any); ok {
+			for k, v := range p {
+				props[k] = v
+			}
+		}
 		for k, v := range m {
 			switch k {
-			case "urn", "type", "name", "source", "description":
+			case "urn", "type", "name", "source", "description", "properties":
 				// already handled
 			default:
 				props[k] = v
@@ -279,18 +285,15 @@ func executeRequestWrapper(ctx context.Context, concurrency int, executeRequest 
 	}
 }
 
-func newAsset(typ string) (tengo.Object, error) {
+func newEntity(typ string) (tengo.Object, error) {
 	if typ == "" {
-		return nil, fmt.Errorf("new asset: type must not be empty")
+		return nil, fmt.Errorf("new entity: type must not be empty")
 	}
 
 	return &tengo.Map{
 		Value: map[string]tengo.Object{
-			"type": &tengo.String{Value: typ},
-			// Kept for backward compatibility with existing scripts.
-			"data":    &tengo.Map{Value: map[string]tengo.Object{}},
-			"lineage": &tengo.Map{Value: map[string]tengo.Object{}},
-			"labels":  &tengo.Map{Value: map[string]tengo.Object{}},
+			"type":       &tengo.String{Value: typ},
+			"properties": &tengo.Map{Value: map[string]tengo.Object{}},
 		},
 	}, nil
 }

@@ -81,7 +81,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 }
 
 // Extract extracts the data from the extractor
-// The data is returned as a list of assets.Asset
+// The data is returned as a list of Records.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	e.emit = emit
 	adminUsers, err := e.fetchUsers(ctx)

@@ -120,7 +120,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 
 // Extract checks if the extractor is configured and
 // if so, then extracts the metadata and
-// returns the assets.
+// returns the records.
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	return e.getTablesInfo(ctx, emit)
 }

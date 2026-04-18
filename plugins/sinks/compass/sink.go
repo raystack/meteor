@@ -93,7 +93,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 			s.logger.Info("sinking record to compass", "record", entity.GetUrn())
 
 			if err := s.sinkRecord(ctx, record); err != nil {
-				return fmt.Errorf("sink asset %s: %w", entity.GetUrn(), err)
+				return fmt.Errorf("sink entity %s: %w", entity.GetUrn(), err)
 			}
 
 			s.logger.Info("successfully sinked record to compass", "record", entity.GetUrn())
