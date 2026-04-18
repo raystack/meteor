@@ -125,6 +125,12 @@ func (e *Extractor) buildDashboard(ctx context.Context, d m.Dashboard) (models.R
 		}
 	}
 
+	// Create owned_by edge to the dashboard creator.
+	if dashboard.CreatorID > 0 {
+		ownerURN := models.NewURN("metabase", e.UrnScope, "user", fmt.Sprintf("%d", dashboard.CreatorID))
+		edges = append(edges, models.OwnerEdge(dashboardURN, ownerURN, "metabase"))
+	}
+
 	charts := make([]map[string]any, 0, len(chartData))
 	for _, cu := range chartData {
 		charts = append(charts, cu.chart)
