@@ -1,0 +1,131 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when working with Meteor.
+order: 5
+---
+
+# Troubleshooting
+
+Common issues and solutions when working with Meteor.
+
+## Connection Issues
+
+### Database connection refused
+
+**Symptom:** `connection refused` or `dial tcp: connect` errors when running a recipe.
+
+**Solutions:**
+- Verify the host and port in your recipe config are correct and reachable from where Meteor is running.
+- Check that the database server allows connections from Meteor's IP address (firewall rules, security groups).
+- For Docker deployments, use the container network address, not `localhost`.
+
+### Authentication failures
+
+**Symptom:** `authentication failed` or `access denied` errors.
+
+**Solutions:**
+- Verify credentials in your recipe config or environment variables.
+- Check that the database user has read permissions on the schemas you want to extract.
+- For GCP services (BigQuery, Bigtable, GCS), ensure the service account has the required IAM roles.
+
+### TLS/SSL errors
+
+**Symptom:** `x509: certificate` or `tls: handshake failure` errors.
+
+**Solutions:**
+- If the data source uses a self-signed certificate, check the extractor README for SSL configuration options.
+- Ensure the system's CA certificates are up to date.
+
+## Recipe Issues
+
+### Recipe validation errors
+
+**Symptom:** `invalid recipe` or `validation failed` errors when running `meteor run`.
+
+**Solutions:**
+- Run `meteor lint <recipe-file>` to validate recipe syntax before running.
+- Ensure `name`, `version`, and `source` fields are present.
+- Ensure at least one sink is defined.
+- Check that the extractor and sink names match registered plugin names. Use `meteor list extractors` and `meteor list sinks` to see available plugins.
+
+### Environment variables not resolved
+
+**Symptom:** Template variables like `{{ .connection_url }}` appear literally in error messages.
+
+**Solutions:**
+- Environment variables must have the `METEOR_` prefix. For example, `METEOR_CONNECTION_URL` maps to `{{ .connection_url }}` in the recipe.
+- Ensure the variable is exported: `export METEOR_CONNECTION_URL=...`
+- You can also use the `--var` flag to pass variables from a YAML file.
+
+### Unknown extractor or sink
+
+**Symptom:** `no extractor found` or `no sink found` errors.
+
+**Solutions:**
+- Check spelling — extractor names are lowercase (e.g., `bigquery`, not `BigQuery`).
+- Run `meteor list extractors` or `meteor list sinks` to confirm the plugin is registered.
+
+## Extraction Issues
+
+### Empty results
+
+**Symptom:** Recipe runs successfully but produces no assets.
+
+**Solutions:**
+- Check that the source has data accessible with the provided credentials.
+- For database extractors, verify the user has `SELECT` permissions on the target schemas/tables.
+- Check if `exclude` config is filtering out all results.
+- For BigQuery, ensure `project_id` is correct and the service account can list datasets.
+
+### Partial extraction
+
+**Symptom:** Some assets are extracted but others are missing.
+
+**Solutions:**
+- Check the `exclude` configuration in your recipe.
+- For database extractors, ensure the user has permissions on all target schemas.
+- Check Meteor logs for per-asset errors that may indicate permission issues on specific resources.
+
+## Sink Issues
+
+### Compass sink returns errors
+
+**Symptom:** HTTP errors when sinking to Compass.
+
+**Solutions:**
+- Verify the `host` URL is correct and Compass is running.
+- Check that the `type` in the config matches a valid Compass type.
+- Ensure the `mapping` config maps required fields correctly.
+
+### Kafka sink connection timeout
+
+**Symptom:** Timeouts when publishing to Kafka.
+
+**Solutions:**
+- Verify broker addresses in the `brokers` config.
+- Check that Meteor can reach the Kafka brokers (network, firewall).
+- Ensure the Kafka topic exists or auto-creation is enabled on the cluster.
+
+## Performance
+
+### Extraction is slow
+
+**Solutions:**
+- For BigQuery, reduce scope using `exclude` to skip unnecessary datasets.
+- Disable `include_column_profile` if column profiling is not needed — it significantly increases extraction time.
+- For large sources, consider splitting into multiple recipes by dataset or schema.
+
+### High memory usage
+
+**Solutions:**
+- Meteor is designed for low memory usage, but extracting from very large sources can increase consumption.
+- Split large extraction jobs into smaller, focused recipes.
+- When running in containers, set appropriate memory limits and monitor usage.
+
+## Getting Help
+
+If you cannot resolve an issue:
+
+1. Check the [GitHub issues](https://github.com/raystack/meteor/issues) for known problems and solutions.
+2. Open a new issue with your recipe (redact credentials), the full error message, and Meteor version (`meteor version`).
+3. Join the community on [Slack](https://raystack.slack.com) for real-time help.
