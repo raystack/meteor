@@ -32,6 +32,8 @@ source:
 | `properties.columns[].name` | `string` | Field name. |
 | `properties.columns[].data_type` | `string` | Elasticsearch field type (e.g. `text`, `keyword`). |
 | `properties.profile.total_rows` | `int` | Number of documents in the index (omitted if zero). |
+| `properties.number_of_shards` | `string` | Number of primary shards for the index. |
+| `properties.number_of_replicas` | `string` | Number of replica shards for the index. |
 
 ## Edges
 

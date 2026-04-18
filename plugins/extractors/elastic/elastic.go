@@ -126,6 +126,15 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 				"total_rows": int64(docCount),
 			}
 		}
+
+		// Enrich with index settings (shards, replicas).
+		settings, err := e.getIndexSettings(indexName)
+		if err == nil {
+			for k, v := range settings {
+				props[k] = v
+			}
+		}
+
 		emit(models.NewRecord(models.NewEntity(
 			models.NewURN("elasticsearch", e.UrnScope, "index", indexName),
 			"table", indexName, "elasticsearch",
@@ -133,6 +142,45 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		)))
 	}
 	return
+}
+
+// getIndexSettings retrieves settings like number of shards and replicas.
+func (e *Extractor) getIndexSettings(index string) (map[string]any, error) {
+	res, err := e.client.Indices.GetSettings(
+		e.client.Indices.GetSettings.WithIndex(index),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	var r map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]any)
+	indexData, ok := r[index].(map[string]any)
+	if !ok {
+		return result, nil
+	}
+	settings, ok := indexData["settings"].(map[string]any)
+	if !ok {
+		return result, nil
+	}
+	indexSettings, ok := settings["index"].(map[string]any)
+	if !ok {
+		return result, nil
+	}
+
+	if v, ok := indexSettings["number_of_shards"]; ok {
+		result["number_of_shards"] = v
+	}
+	if v, ok := indexSettings["number_of_replicas"]; ok {
+		result["number_of_replicas"] = v
+	}
+
+	return result, nil
 }
 
 // listIndexInfo returns the properties of the index
