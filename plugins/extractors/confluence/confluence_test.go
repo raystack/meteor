@@ -147,12 +147,11 @@ func TestExtract(t *testing.T) {
 		require.NoError(t, err)
 
 		records := emitter.Get()
-		for _, r := range records {
-			props := r.Entity().GetProperties().AsMap()
-			if key, ok := props["space_key"]; ok {
-				assert.NotEqual(t, "ARCHIVE", key)
-			}
-		}
+		spaceRecords := findAllByType(records, "space")
+		require.Len(t, spaceRecords, 1)
+
+		props := spaceRecords[0].Entity().GetProperties().AsMap()
+		assert.Equal(t, "ENG", props["space_key"])
 	})
 }
 

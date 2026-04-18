@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
@@ -150,8 +151,8 @@ func (e *Extractor) buildPageRecord(page Page, space Space, spaceURN string, lab
 		"space_key":  space.Key,
 		"status":     page.Status,
 		"version":    page.Version.Number,
-		"created_at": page.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		"updated_at": page.Version.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		"created_at": page.CreatedAt.UTC().Format(time.RFC3339),
+		"updated_at": page.Version.CreatedAt.UTC().Format(time.RFC3339),
 	}
 	if len(labelNames) > 0 {
 		props["labels"] = labelNames

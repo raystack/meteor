@@ -148,15 +148,34 @@ func (c *Client) GetPages(ctx context.Context, spaceID string) ([]Page, error) {
 	return all, nil
 }
 
-// GetPageLabels returns labels for a page.
+// GetPageLabels returns all labels for a page, handling pagination.
 func (c *Client) GetPageLabels(ctx context.Context, pageID string) ([]Label, error) {
-	var resp struct {
-		Results []Label `json:"results"`
+	var all []Label
+	cursor := ""
+	for {
+		params := url.Values{}
+		params.Set("limit", "25")
+		if cursor != "" {
+			params.Set("cursor", cursor)
+		}
+
+		var resp struct {
+			Results []Label `json:"results"`
+			Links   struct {
+				Next string `json:"next"`
+			} `json:"_links"`
+		}
+		if err := c.get(ctx, "/api/v2/pages/"+pageID+"/labels", params, &resp); err != nil {
+			return nil, fmt.Errorf("get labels for page %s: %w", pageID, err)
+		}
+		all = append(all, resp.Results...)
+
+		cursor = parseCursor(resp.Links.Next)
+		if cursor == "" {
+			break
+		}
 	}
-	if err := c.get(ctx, "/api/v2/pages/"+pageID+"/labels", nil, &resp); err != nil {
-		return nil, fmt.Errorf("get labels for page %s: %w", pageID, err)
-	}
-	return resp.Results, nil
+	return all, nil
 }
 
 func (c *Client) get(ctx context.Context, path string, params url.Values, out any) error {
