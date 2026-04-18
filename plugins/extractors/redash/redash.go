@@ -12,6 +12,7 @@ import (
 
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/internal/urlbuilder"
 	"github.com/raystack/meteor/registry"
@@ -100,13 +101,32 @@ func (e *Extractor) buildDashboard(dashboard Results) models.Record {
 	dashboardUrn := models.NewURN("redash", e.UrnScope, "dashboard", fmt.Sprintf("%d", dashboard.Id))
 
 	props := map[string]any{
-		"user_id": dashboard.UserId,
-		"version": dashboard.Version,
-		"slug":    dashboard.Slug,
+		"user_id":     dashboard.UserId,
+		"version":     dashboard.Version,
+		"slug":        dashboard.Slug,
+		"is_archived": dashboard.IsArchived,
+		"is_draft":    dashboard.IsDraft,
+	}
+	if len(dashboard.Tags) > 0 {
+		props["tags"] = dashboard.Tags
+	}
+	if !dashboard.CreatedAt.IsZero() {
+		props["created_at"] = dashboard.CreatedAt.Format(time.RFC3339)
+	}
+	if !dashboard.UpdatedAt.IsZero() {
+		props["updated_at"] = dashboard.UpdatedAt.Format(time.RFC3339)
 	}
 
 	entity := models.NewEntity(dashboardUrn, "dashboard", dashboard.Name, "redash", props)
-	return models.NewRecord(entity)
+
+	// Create owned_by edge to the dashboard creator.
+	var edges []*meteorv1beta1.Edge
+	if dashboard.User.Id != 0 {
+		ownerURN := models.NewURN("redash", e.UrnScope, "user", fmt.Sprintf("%d", dashboard.User.Id))
+		edges = append(edges, models.OwnerEdge(dashboardUrn, ownerURN, "redash"))
+	}
+
+	return models.NewRecord(entity, edges...)
 }
 
 // getDashboardsList gets a list of dashboards from redash server
