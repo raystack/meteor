@@ -29,7 +29,7 @@ source:
 | :-- | :--- | :------- | :---------- |
 | `org` | `string` | Yes | Name of the GitHub organisation. |
 | `token` | `string` | Yes | GitHub API access token. |
-| `extract` | `[]string` | No | Entity types to extract. Defaults to all: `users`, `repositories`, `teams`, `documents`. |
+| `extract` | `[]string` | No | Entity types to extract. Defaults to all: `users`, `repositories`, `teams`, `documents`, `collaborators`. |
 | `docs.repos` | `[]string` | No | Repositories to scan for documents. Defaults to all org repos. |
 | `docs.paths` | `[]string` | No | Directory paths to scan within each repo. Defaults to `["docs"]`. |
 | `docs.pattern` | `string` | No | Glob pattern to match files. Defaults to `"*.md"`. |
@@ -100,6 +100,11 @@ The extractor emits four entity types and their relationships as edges.
 | `owned_by`   | `repository` | `user`       | Repository is owned by a user          |
 | `member_of`  | `user`       | `team`       | User is a member of a team             |
 | `belongs_to` | `document`   | `repository` | Document belongs to a repository       |
+| `has_access_to` | `user`    | `repository` | User has access to a repository (properties: `permission`) |
+
+### Collaborator Permissions
+
+When `collaborators` is included in `extract`, the extractor lists collaborators for each repository and emits `has_access_to` edges with a `permission` property indicating the highest access level: `admin`, `maintain`, `push`, `triage`, or `pull`.
 
 ## Contributing
 

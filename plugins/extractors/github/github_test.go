@@ -13,6 +13,7 @@ import (
 
 	gh "github.com/google/go-github/v68/github"
 	"github.com/raystack/meteor/models"
+	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	extractor "github.com/raystack/meteor/plugins/extractors/github"
 	"github.com/raystack/meteor/test/mocks"
@@ -487,6 +488,76 @@ func TestExtract(t *testing.T) {
 		assert.Contains(t, err.Error(), "extract users")
 	})
 
+	t.Run("should extract collaborators with has_access_to edges", func(t *testing.T) {
+		server := setupServer(t, serverConfig{
+			repos: []*gh.Repository{
+				{
+					NodeID:   strPtr("R_repo1"),
+					Name:     strPtr("meteor"),
+					FullName: strPtr("my-org/meteor"),
+				},
+			},
+			repoCollaborators: map[string][]*gh.User{
+				"meteor": {
+					{NodeID: strPtr("U_alice"), Login: strPtr("alice"), Permissions: map[string]bool{"admin": true, "push": true, "pull": true}},
+					{NodeID: strPtr("U_bob"), Login: strPtr("bob"), Permissions: map[string]bool{"push": true, "pull": true}},
+				},
+			},
+		})
+		defer server.Close()
+
+		extr := initExtractor(t, server.URL, map[string]any{
+			"extract": []string{"collaborators"},
+		})
+
+		emitter := mocks.NewEmitter()
+		err := extr.Extract(context.Background(), emitter.Push)
+		require.NoError(t, err)
+
+		records := emitter.Get()
+		require.Len(t, records, 1)
+
+		entity := records[0].Entity()
+		assert.Equal(t, models.NewURN("github", urnScope, "repository", "R_repo1"), entity.GetUrn())
+		assert.Equal(t, "repository", entity.GetType())
+
+		edges := records[0].Edges()
+		require.Len(t, edges, 2)
+
+		for _, edge := range edges {
+			assert.Equal(t, "has_access_to", edge.GetType())
+			assert.Equal(t, models.NewURN("github", urnScope, "repository", "R_repo1"), edge.GetTargetUrn())
+		}
+
+		// Check permission levels via edge properties.
+		aliceEdge := findEdgeBySource(edges, models.NewURN("github", urnScope, "user", "U_alice"))
+		require.NotNil(t, aliceEdge)
+		assert.Equal(t, "admin", aliceEdge.GetProperties().AsMap()["permission"])
+
+		bobEdge := findEdgeBySource(edges, models.NewURN("github", urnScope, "user", "U_bob"))
+		require.NotNil(t, bobEdge)
+		assert.Equal(t, "push", bobEdge.GetProperties().AsMap()["permission"])
+	})
+
+	t.Run("should skip collaborators for repos that fail", func(t *testing.T) {
+		server := setupServer(t, serverConfig{
+			repos: []*gh.Repository{
+				{NodeID: strPtr("R_repo1"), Name: strPtr("meteor"), FullName: strPtr("my-org/meteor")},
+			},
+			// No repoCollaborators entry → will 404
+		})
+		defer server.Close()
+
+		extr := initExtractor(t, server.URL, map[string]any{
+			"extract": []string{"collaborators"},
+		})
+
+		emitter := mocks.NewEmitter()
+		err := extr.Extract(context.Background(), emitter.Push)
+		require.NoError(t, err)
+		assert.Empty(t, emitter.Get())
+	})
+
 	t.Run("should extract repos without owner edge when owner is nil", func(t *testing.T) {
 		server := setupServer(t, serverConfig{
 			repos: []*gh.Repository{
@@ -537,12 +608,13 @@ func initExtractor(t *testing.T, serverURL string, extraConfig map[string]any) *
 }
 
 type serverConfig struct {
-	members      []*gh.User
-	userDetails  map[string]*gh.User
-	repos        []*gh.Repository
-	teams        []*gh.Team
-	teamMembers  map[string][]*gh.User
-	repoContents map[string]map[string]any // key: "repo/path" -> {"type":"dir","entries":[]} or {"type":"file","file":*RepositoryContent}
+	members           []*gh.User
+	userDetails       map[string]*gh.User
+	repos             []*gh.Repository
+	teams             []*gh.Team
+	teamMembers       map[string][]*gh.User
+	repoContents      map[string]map[string]any // key: "repo/path" -> {"type":"dir","entries":[]} or {"type":"file","file":*RepositoryContent}
+	repoCollaborators map[string][]*gh.User      // key: repo name -> collaborators
 }
 
 func setupServer(t *testing.T, cfg serverConfig) *httptest.Server {
@@ -580,7 +652,7 @@ func setupServer(t *testing.T, cfg serverConfig) *httptest.Server {
 			writeJSON(w, []*gh.User{})
 		}
 	})
-	// Individual repo endpoint for docs.repos config.
+	// Individual repo endpoint for docs.repos config, contents, and collaborators.
 	mux.HandleFunc("/api/v3/repos/my-org/", func(w http.ResponseWriter, r *http.Request) {
 		urlPath := r.URL.Path
 		const prefix = "/api/v3/repos/my-org/"
@@ -597,6 +669,17 @@ func setupServer(t *testing.T, cfg serverConfig) *httptest.Server {
 				} else {
 					writeJSON(w, entry["file"])
 				}
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+			return
+		}
+
+		// Check if this is a collaborators request: "{repo}/collaborators"
+		if strings.HasSuffix(rest, "/collaborators") {
+			repoName := rest[:len(rest)-len("/collaborators")]
+			if collabs, ok := cfg.repoCollaborators[repoName]; ok {
+				writeJSON(w, collabs)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -667,4 +750,13 @@ func boolPtr(b bool) *bool    { return &b }
 func intPtr(i int) *int       { return &i }
 
 func indexOf(s, substr string) int { return strings.Index(s, substr) }
+
+func findEdgeBySource(edges []*meteorv1beta1.Edge, sourceURN string) *meteorv1beta1.Edge {
+	for _, e := range edges {
+		if e.GetSourceUrn() == sourceURN {
+			return e
+		}
+	}
+	return nil
+}
 

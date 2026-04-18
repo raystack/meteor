@@ -14,6 +14,7 @@ import (
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:embed README.md
@@ -36,12 +37,13 @@ var sampleConfig = `
 org: raystack
 token: github_token
 # extract specifies which entity types to extract.
-# Defaults to all: ["users", "repositories", "teams"]
+# Defaults to all: ["users", "repositories", "teams", "documents", "collaborators"]
 extract:
   - users
   - repositories
   - teams
   - documents
+  - collaborators
 # docs configures document extraction (only used when "documents" is in extract).
 docs:
   # repos limits which repositories to scan. If empty, scans all org repos.
@@ -53,7 +55,7 @@ docs:
   pattern: "*.md"`
 
 var info = plugins.Info{
-	Description:  "Extract metadata from a GitHub organisation including users, repositories, teams, and documents.",
+	Description:  "Extract metadata from a GitHub organisation including users, repositories, teams, documents, and collaborator permissions.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"platform", "extractor"},
@@ -83,10 +85,11 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 	e.client = gh.NewClient(tc)
 
 	e.extract = map[string]bool{
-		"users":        true,
-		"repositories": true,
-		"teams":        true,
-		"documents":    true,
+		"users":         true,
+		"repositories":  true,
+		"teams":         true,
+		"documents":     true,
+		"collaborators": true,
 	}
 	if len(e.config.Extract) > 0 {
 		e.extract = make(map[string]bool, len(e.config.Extract))
@@ -122,6 +125,11 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
 	if e.extract["documents"] {
 		if err := e.extractDocuments(ctx, emit); err != nil {
 			return fmt.Errorf("extract documents: %w", err)
+		}
+	}
+	if e.extract["collaborators"] {
+		if err := e.extractCollaborators(ctx, emit); err != nil {
+			return fmt.Errorf("extract collaborators: %w", err)
 		}
 	}
 	return nil
@@ -426,6 +434,81 @@ func (e *Extractor) emitDocument(ctx context.Context, emit plugins.Emit, repo *g
 
 	emit(models.NewRecord(entity, edges...))
 	return nil
+}
+
+func (e *Extractor) extractCollaborators(ctx context.Context, emit plugins.Emit) error {
+	repoOpts := &gh.RepositoryListByOrgOptions{
+		ListOptions: gh.ListOptions{PerPage: 100},
+	}
+	for {
+		repos, resp, err := e.client.Repositories.ListByOrg(ctx, e.config.Org, repoOpts)
+		if err != nil {
+			return fmt.Errorf("list repositories: %w", err)
+		}
+
+		for _, repo := range repos {
+			if err := e.extractRepoCollaborators(ctx, emit, repo); err != nil {
+				e.logger.Warn("failed to extract collaborators, skipping",
+					"repo", repo.GetFullName(), "error", err)
+			}
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		repoOpts.Page = resp.NextPage
+	}
+	return nil
+}
+
+func (e *Extractor) extractRepoCollaborators(ctx context.Context, emit plugins.Emit, repo *gh.Repository) error {
+	repoURN := models.NewURN("github", e.UrnScope, "repository", repo.GetNodeID())
+	opts := &gh.ListCollaboratorsOptions{
+		ListOptions: gh.ListOptions{PerPage: 100},
+	}
+
+	var edges []*meteorv1beta1.Edge
+	for {
+		collaborators, resp, err := e.client.Repositories.ListCollaborators(ctx, e.config.Org, repo.GetName(), opts)
+		if err != nil {
+			return fmt.Errorf("list collaborators for %s: %w", repo.GetName(), err)
+		}
+
+		for _, collab := range collaborators {
+			userURN := models.NewURN("github", e.UrnScope, "user", collab.GetNodeID())
+			props, _ := structpb.NewStruct(map[string]any{
+				"permission": resolvePermission(collab.GetPermissions()),
+			})
+			edges = append(edges, &meteorv1beta1.Edge{
+				SourceUrn:  userURN,
+				TargetUrn:  repoURN,
+				Type:       "has_access_to",
+				Source:     "github",
+				Properties: props,
+			})
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	if len(edges) > 0 {
+		entity := models.NewEntity(repoURN, "repository", repo.GetName(), "github", nil)
+		emit(models.NewRecord(entity, edges...))
+	}
+	return nil
+}
+
+// resolvePermission returns the highest permission level from the permissions map.
+func resolvePermission(perms map[string]bool) string {
+	for _, level := range []string{"admin", "maintain", "push", "triage", "pull"} {
+		if perms[level] {
+			return level
+		}
+	}
+	return "pull"
 }
 
 func init() {
