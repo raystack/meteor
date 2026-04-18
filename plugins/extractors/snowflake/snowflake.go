@@ -43,13 +43,14 @@ var info = plugins.Info{
 // Extractor manages the extraction of data from snowflake
 type Extractor struct {
 	plugins.BaseExtractor
-	logger        log.Logger
-	config        Config
-	excludedDbs   map[string]bool
-	excludedTbl   map[string]bool
-	httpTransport http.RoundTripper
-	db            *sql.DB
-	emit          plugins.Emit
+	logger          log.Logger
+	config          Config
+	excludedDbs     map[string]bool
+	excludedTbl     map[string]bool
+	httpTransport   http.RoundTripper
+	skipForeignKeys bool
+	db              *sql.DB
+	emit            plugins.Emit
 }
 
 // Option provides extension abstraction to Extractor constructor
@@ -59,6 +60,14 @@ type Option func(*Extractor)
 func WithHTTPTransport(htr http.RoundTripper) Option {
 	return func(e *Extractor) {
 		e.httpTransport = htr
+	}
+}
+
+// WithSkipForeignKeys disables foreign key extraction, useful for testing
+// with recorded HTTP fixtures that don't include foreign key query responses.
+func WithSkipForeignKeys() Option {
+	return func(e *Extractor) {
+		e.skipForeignKeys = true
 	}
 }
 
@@ -194,9 +203,12 @@ func (e *Extractor) processTable(ctx context.Context, database, tableName string
 	tableURN := models.NewURN("snowflake", e.UrnScope, "table", fmt.Sprintf("%s.%s", database, tableName))
 	entity := models.NewEntity(tableURN, "table", tableName, "Snowflake", map[string]any{"columns": columns})
 
-	edges, err := e.getForeignKeyEdges(ctx, database, tableName, tableURN)
-	if err != nil {
-		e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", database, tableName))
+	var edges []*meteorv1beta1.Edge
+	if !e.skipForeignKeys {
+		edges, err = e.getForeignKeyEdges(ctx, database, tableName, tableURN)
+		if err != nil {
+			e.logger.Warn("unable to fetch foreign key info", "err", err, "table", fmt.Sprintf("%s.%s", database, tableName))
+		}
 	}
 
 	e.emit(models.NewRecord(entity, edges...))

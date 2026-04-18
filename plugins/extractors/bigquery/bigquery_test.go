@@ -81,7 +81,9 @@ func TestMain(m *testing.M) {
 	}
 	purgeFn, err := utils.CreateContainer(opts, retryFn)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("start resource:", err)
+		dockerAvailable = false
+		os.Exit(m.Run())
 	}
 
 	// run tests

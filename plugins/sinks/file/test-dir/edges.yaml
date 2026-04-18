@@ -2,7 +2,7 @@
     - source: bigquery
       source_urn: urn:upstream
       target_urn: urn:bigquery:p:table:d.t1
-      type: lineage
+      type: derived_from
   entity:
     name: t1
     source: bigquery

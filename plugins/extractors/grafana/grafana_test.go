@@ -59,14 +59,82 @@ func TestInit(t *testing.T) {
 
 func TestExtract(t *testing.T) {
 	t.Run("should extract grafana metadata into meta dashboard", func(t *testing.T) {
-		expected := []*meteorv1beta1.Entity{
+		ctx := context.TODO()
+		extractor := grafana.New(utils.Logger)
+		err := extractor.Init(ctx, plugins.Config{
+			URNScope: urnScope,
+			RawConfig: map[string]any{
+				"base_url": testServer.URL,
+				"api_key":  "qwerty123",
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		emitter := mocks.NewEmitter()
+		err = extractor.Extract(ctx, emitter.Push)
+		assert.NoError(t, err)
+
+		actual := emitter.GetAllEntities()
+
+		// Datasources come from map iteration (non-deterministic order),
+		// so collect them by URN for comparison.
+		dsByURN := make(map[string]*meteorv1beta1.Entity)
+		var dashboards []*meteorv1beta1.Entity
+		for _, e := range actual {
+			if e.Type == "datasource" {
+				dsByURN[e.Urn] = e
+			} else {
+				dashboards = append(dashboards, e)
+			}
+		}
+
+		// Verify datasource entities.
+		assert.Len(t, dsByURN, 2)
+		expectedDatasources := map[string]*meteorv1beta1.Entity{
+			"urn:grafana:test-grafana:datasource:Dkd9hvWnz": models.NewEntity(
+				"urn:grafana:test-grafana:datasource:Dkd9hvWnz",
+				"datasource",
+				"PostgreSQL",
+				"grafana",
+				map[string]any{
+					"type":     "postgres",
+					"url":      "host.docker.internal:5432",
+					"database": "random",
+				},
+			),
+			"urn:grafana:test-grafana:datasource:Pa4J0vZnk": models.NewEntity(
+				"urn:grafana:test-grafana:datasource:Pa4J0vZnk",
+				"datasource",
+				"PostgreSQL-1",
+				"grafana",
+				map[string]any{
+					"type":     "postgres",
+					"url":      "host.docker.internal:5432",
+					"database": "random",
+				},
+			),
+		}
+		for urn, expectedDS := range expectedDatasources {
+			actualDS, ok := dsByURN[urn]
+			if assert.True(t, ok, "missing datasource %s", urn) {
+				utils.AssertEqualProto(t, expectedDS, actualDS)
+			}
+		}
+
+		// Verify dashboard entities (these are emitted in deterministic order).
+		expectedDashboards := []*meteorv1beta1.Entity{
 			models.NewEntity(
 				"urn:grafana:test-grafana:dashboard:HzK8qNW7z",
 				"dashboard",
 				"new-dashboard-copy",
 				"grafana",
 				map[string]any{
-					"url": fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+					"url":        fmt.Sprintf("%s/d/HzK8qNW7z/new-dashboard-copy", testServer.URL),
+					"folder":     "General",
+					"created_by": "admin",
+					"updated_by": "admin",
 					"charts": []any{
 						map[string]any{
 							"urn":              "urn:grafana:test-grafana:panel:HzK8qNW7z.2",
@@ -88,6 +156,10 @@ func TestExtract(t *testing.T) {
 				map[string]any{
 					"url":         fmt.Sprintf("%s/d/5WsKOvW7z/test-dashboard-updated", testServer.URL),
 					"description": "this is description for testing",
+					"folder":      "testing-testing",
+					"created_by":  "admin",
+					"updated_by":  "admin",
+					"tags":        []any{"test", "dev"},
 					"charts": []any{
 						map[string]any{
 							"urn":              "urn:grafana:test-grafana:panel:5WsKOvW7z.4",
@@ -114,25 +186,7 @@ func TestExtract(t *testing.T) {
 				},
 			),
 		}
-
-		ctx := context.TODO()
-		extractor := grafana.New(utils.Logger)
-		err := extractor.Init(ctx, plugins.Config{
-			URNScope: urnScope,
-			RawConfig: map[string]any{
-				"base_url": testServer.URL,
-				"api_key":  "qwerty123",
-			},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		emitter := mocks.NewEmitter()
-		err = extractor.Extract(ctx, emitter.Push)
-
-		assert.NoError(t, err)
-		utils.AssertEqualProtos(t, expected, emitter.GetAllEntities())
+		utils.AssertEqualProtos(t, expectedDashboards, dashboards)
 	})
 }
 

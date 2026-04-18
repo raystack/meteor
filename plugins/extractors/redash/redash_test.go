@@ -63,14 +63,22 @@ func TestExtract(t *testing.T) {
 	t.Run("should return dashboard model", func(t *testing.T) {
 		expectedData := []*meteorv1beta1.Entity{
 			models.NewEntity("urn:redash:test-redash:dashboard:421", "dashboard", "firstDashboard", "redash", map[string]any{
-				"user_id": float64(1),
-				"version": float64(1),
-				"slug":    "new-dashboard-copy",
+				"user_id":     float64(1),
+				"version":     float64(1),
+				"slug":        "new-dashboard-copy",
+				"created_at":  "2022-06-29T10:29:26Z",
+				"updated_at":  "2022-06-29T10:29:26Z",
+				"is_archived": false,
+				"is_draft":    true,
 			}),
 			models.NewEntity("urn:redash:test-redash:dashboard:634", "dashboard", "secondDashboard", "redash", map[string]any{
-				"user_id": float64(1),
-				"version": float64(2),
-				"slug":    "test-dashboard-updated",
+				"user_id":     float64(1),
+				"version":     float64(2),
+				"slug":        "test-dashboard-updated",
+				"created_at":  "2022-06-29T10:29:26Z",
+				"updated_at":  "2022-06-29T10:29:26Z",
+				"is_archived": false,
+				"is_draft":    true,
 			}),
 		}
 

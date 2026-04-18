@@ -196,6 +196,8 @@ func getExpectedVal(t *testing.T) []*meteorv1beta1.Entity {
 			"columns": []any{
 				map[string]any{"name": "SomeStr", "data_type": "text"},
 			},
+			"number_of_shards":   "1",
+			"number_of_replicas": "1",
 			"profile": map[string]any{
 				"total_rows": float64(1),
 			},
@@ -204,6 +206,8 @@ func getExpectedVal(t *testing.T) []*meteorv1beta1.Entity {
 			"columns": []any{
 				map[string]any{"name": "SomeStr", "data_type": "text"},
 			},
+			"number_of_shards":   "1",
+			"number_of_replicas": "1",
 			"profile": map[string]any{
 				"total_rows": float64(1),
 			},

@@ -7,7 +7,9 @@
     "source": "gcs",
     "properties": {
       "location": "US-CENTRAL1",
+      "requester_pays": false,
       "storage_type": "",
+      "versioning_enabled": false,
       "blobs": [
         {
           "urn": "urn:gcs:google-project-id:object:test-bucket/some_file.txt",

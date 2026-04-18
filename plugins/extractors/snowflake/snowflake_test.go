@@ -61,7 +61,8 @@ func TestExtract(t *testing.T) {
 		ctx := context.TODO()
 		newExtractor := snowflake.New(
 			utils.Logger,
-			snowflake.WithHTTPTransport(r))
+			snowflake.WithHTTPTransport(r),
+			snowflake.WithSkipForeignKeys())
 
 		if err := newExtractor.Init(ctx, plugins.Config{
 			URNScope: urnScope,

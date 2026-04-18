@@ -185,13 +185,25 @@ func TestExtract(t *testing.T) {
 
 		expected := []*meteorv1beta1.Entity{
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-1", "topic", "meteor-test-topic-1", "kafka", map[string]any{
+				"cleanup_policy":       "delete",
+				"min_insync_replicas":  "1",
 				"number_of_partitions": float64(1),
+				"replication_factor":   float64(1),
+				"retention_ms":         "604800000",
 			}),
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-2", "topic", "meteor-test-topic-2", "kafka", map[string]any{
+				"cleanup_policy":       "delete",
+				"min_insync_replicas":  "1",
 				"number_of_partitions": float64(1),
+				"replication_factor":   float64(1),
+				"retention_ms":         "604800000",
 			}),
 			models.NewEntity("urn:kafka:test-kafka:topic:meteor-test-topic-3", "topic", "meteor-test-topic-3", "kafka", map[string]any{
+				"cleanup_policy":       "delete",
+				"min_insync_replicas":  "1",
 				"number_of_partitions": float64(1),
+				"replication_factor":   float64(1),
+				"retention_ms":         "604800000",
 			}),
 		}
 
