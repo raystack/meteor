@@ -9,7 +9,10 @@ source:
   name: postgres
   config:
     connection_url: postgres://admin:pass123@localhost:5432/postgres?sslmode=disable
-    exclude: testDB,secondaryDB
+    exclude:
+      databases:
+        - testDB
+        - secondaryDB
 ```
 
 ## Configuration
@@ -17,7 +20,7 @@ source:
 | Key | Type | Required | Description |
 | :-- | :--- | :------- | :---------- |
 | `connection_url` | `string` | Yes | PostgreSQL connection URL. |
-| `exclude` | `string` | No | Comma-separated list of databases to exclude. |
+| `exclude.databases` | `[]string` | No | List of databases to exclude. |
 
 ## Entities
 

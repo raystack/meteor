@@ -9,7 +9,12 @@ source:
   name: presto
   config:
     connection_url: http://user:pass@localhost:8080
-    exclude_catalog: memory,system,tpcds,tpch
+    exclude:
+      catalogs:
+        - memory
+        - system
+        - tpcds
+        - tpch
 ```
 
 ## Configuration
@@ -17,7 +22,7 @@ source:
 | Key | Type | Required | Description |
 | :-- | :--- | :------- | :---------- |
 | `connection_url` | `string` | Yes | HTTP URL to access the Presto server. |
-| `exclude_catalog` | `string` | No | Comma-separated list of catalog names to exclude. |
+| `exclude.catalogs` | `[]string` | No | List of catalog names to exclude. |
 
 ## Entities
 

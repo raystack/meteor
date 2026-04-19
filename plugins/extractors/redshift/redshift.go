@@ -19,13 +19,18 @@ import (
 //go:embed README.md
 var summary string
 
-// Config holds the set of configuration for the metabase extractor
+// Config holds the set of configuration for the redshift extractor
 type Config struct {
-	ClusterID string `json:"cluster_id" yaml:"cluster_id" mapstructure:"cluster_id" validate:"required"`
-	DBName    string `json:"db_name" yaml:"db_name" mapstructure:"db_name" validate:"required"`
-	DBUser    string `json:"db_user" yaml:"db_user" mapstructure:"db_user" validate:"required"`
-	AWSRegion string `json:"aws_region" yaml:"aws_region" mapstructure:"aws_region" validate:"required"`
-	Exclude   string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+	ClusterID string  `json:"cluster_id" yaml:"cluster_id" mapstructure:"cluster_id" validate:"required"`
+	DBName    string  `json:"db_name" yaml:"db_name" mapstructure:"db_name" validate:"required"`
+	DBUser    string  `json:"db_user" yaml:"db_user" mapstructure:"db_user" validate:"required"`
+	AWSRegion string  `json:"aws_region" yaml:"aws_region" mapstructure:"aws_region" validate:"required"`
+	Exclude   Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+// Exclude contains the list of databases to skip during extraction.
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
 }
 
 var sampleConfig = `
@@ -33,7 +38,9 @@ cluster_id: cluster_test
 db_name: testDB
 db_user: testUser
 aws_region: us-east-1
-exclude: secondaryDB
+exclude:
+  databases:
+    - secondaryDB
 `
 
 var info = plugins.Info{

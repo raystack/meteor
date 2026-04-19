@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 
 	prestoClient "github.com/prestodb/presto-go-client/presto" // presto driver
 	"github.com/raystack/meteor/models"
@@ -24,13 +23,23 @@ var summary string
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
-	Exclude       string `json:"exclude_catalog" yaml:"exclude_catalog" mapstructure:"exclude_catalog"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+// Exclude contains the list of catalogs to skip during extraction.
+type Exclude struct {
+	Catalogs []string `json:"catalogs" yaml:"catalogs" mapstructure:"catalogs"`
 }
 
 var sampleConfig = `
 connection_url: "http://user:pass@localhost:8080"
-exclude_catalog: "memory,system,tpcds,tpch"`
+exclude:
+  catalogs:
+    - memory
+    - system
+    - tpcds
+    - tpch`
 
 var info = plugins.Info{
 	Description:  "Table metadata from Presto server.",
@@ -74,9 +83,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// build excluded catalog list
-	var excludeList []string
-	excludeList = append(excludeList, strings.Split(e.config.Exclude, ",")...)
-	e.excludedCatalog = sqlutil.BuildBoolMap(excludeList)
+	e.excludedCatalog = sqlutil.BuildBoolMap(e.config.Exclude.Catalogs)
 
 	// create presto client
 	e.db, err = sqlutil.OpenWithOtel("presto", e.config.ConnectionURL, semconv.DBSystemKey.String("presto"))

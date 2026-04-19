@@ -9,7 +9,10 @@ source:
   name: couchdb
   config:
     connection_url: http://admin:pass123@localhost:5984/
-    exclude: database_a,database_b
+    exclude:
+      databases:
+        - database_a
+        - database_b
 ```
 
 ## Configuration
@@ -17,7 +20,7 @@ source:
 | Key | Type | Required | Description |
 | :-- | :--- | :------- | :---------- |
 | `connection_url` | `string` | Yes | URL to access the CouchDB server. |
-| `exclude` | `string` | No | Comma-separated list of database names to exclude. Internal databases (`_global_changes`, `_replicator`, `_users`) are excluded by default. |
+| `exclude.databases` | `[]string` | No | List of database names to exclude. Internal databases (`_global_changes`, `_replicator`, `_users`) are excluded by default. |
 
 ## Entities
 

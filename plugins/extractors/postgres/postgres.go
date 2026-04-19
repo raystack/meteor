@@ -25,13 +25,21 @@ var defaultDBList = []string{"information_schema", "root", "postgres"}
 
 // Config holds the set of configuration options for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
-	Exclude       string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+// Exclude contains the list of databases to skip during extraction.
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
 }
 
 var sampleConfig = `
 connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disable"
-exclude: testDB,secondaryDB`
+exclude:
+  databases:
+    - testDB
+    - secondaryDB`
 
 var info = plugins.Info{
 	Description:  "Table metadata and metrics from PostgreSQL server.",
@@ -79,7 +87,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// build excluded database list
-	excludeList := append(defaultDBList, strings.Split(e.config.Exclude, ",")...)
+	excludeList := append(defaultDBList, e.config.Exclude.Databases...)
 	e.excludedDbs = sqlutil.BuildBoolMap(excludeList)
 
 	// Create database connection

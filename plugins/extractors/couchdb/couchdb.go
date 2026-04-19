@@ -5,7 +5,6 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 	"reflect"
-	"strings"
 
 	_ "github.com/go-kivik/couchdb"
 	"github.com/go-kivik/kivik"
@@ -27,13 +26,21 @@ var defaultDBList = []string{
 
 // Config holds the connection URL for the extractor
 type Config struct {
-	ConnectionURL string `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
-	Exclude       string `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+	ConnectionURL string  `json:"connection_url" yaml:"connection_url" mapstructure:"connection_url" validate:"required"`
+	Exclude       Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
+}
+
+// Exclude contains the list of databases to skip during extraction.
+type Exclude struct {
+	Databases []string `json:"databases" yaml:"databases" mapstructure:"databases"`
 }
 
 var sampleConfig = `
 connection_url: http://admin:pass123@localhost:3306/
-exclude: database_a,database_b`
+exclude:
+  databases:
+    - database_a
+    - database_b`
 
 var info = plugins.Info{
 	Description:  "Document metadata from Apache CouchDB server.",
@@ -73,7 +80,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	}
 
 	// build excluded database list
-	excludedList := append(defaultDBList, strings.Split(e.config.Exclude, ",")...)
+	excludedList := append(defaultDBList, e.config.Exclude.Databases...)
 	e.excludedDbs = sqlutil.BuildBoolMap(excludedList)
 
 	// create client

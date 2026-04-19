@@ -12,7 +12,9 @@ source:
     db_name: testDB
     db_user: testUser
     aws_region: us-east-1
-    exclude: secondaryDB
+    exclude:
+      databases:
+        - secondaryDB
 ```
 
 ## Configuration
@@ -23,7 +25,7 @@ source:
 | `db_name`    | `string` | Yes      | Default database name for the Redshift cluster    |
 | `db_user`    | `string` | Yes      | Database username for the Redshift cluster         |
 | `aws_region` | `string` | Yes      | AWS region of the Redshift cluster                |
-| `exclude`    | `string` | No       | Comma-separated list of databases to exclude      |
+| `exclude.databases` | `[]string` | No | List of databases to exclude                    |
 
 Authentication uses the default AWS credential chain (environment variables, shared credentials file, or IAM role).
 
