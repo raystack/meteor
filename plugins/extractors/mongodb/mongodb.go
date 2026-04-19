@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/pkg/errors"
-
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -84,7 +82,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 
 	// setup client
 	if e.client, err = createAndConnnectClient(ctx, e.config.ConnectionURL); err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("failed to create client: %w", err)
 	}
 
 	return
@@ -94,7 +92,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	databases, err := e.client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
-		return errors.Wrap(err, "failed to list database names")
+		return fmt.Errorf("failed to list database names: %w", err)
 	}
 
 	for _, dbName := range databases {
@@ -104,7 +102,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 
 		database := e.client.Database(dbName)
 		if err := e.extractCollections(ctx, database, emit); err != nil {
-			return errors.Wrap(err, "failed to extract collections")
+			return fmt.Errorf("failed to extract collections: %w", err)
 		}
 	}
 
@@ -115,7 +113,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, emit plugins.Emit) (err error) {
 	collections, err := db.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
-		return errors.Wrap(err, "failed to list collection names")
+		return fmt.Errorf("failed to list collection names: %w", err)
 	}
 
 	// we need to sort the collections for testing purpose
@@ -130,7 +128,7 @@ func (e *Extractor) extractCollections(ctx context.Context, db *mongo.Database, 
 
 		table, err := e.buildTable(ctx, db, collectionName)
 		if err != nil {
-			return errors.Wrap(err, "failed to build table")
+			return fmt.Errorf("failed to build table: %w", err)
 		}
 
 		emit(models.NewRecord(table))
@@ -144,7 +142,7 @@ func (e *Extractor) buildTable(ctx context.Context, db *mongo.Database, collecti
 	// get total rows
 	totalRows, err := db.Collection(collectionName).EstimatedDocumentCount(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch total no of rows")
+		err = fmt.Errorf("failed to fetch total no of rows: %w", err)
 		return
 	}
 

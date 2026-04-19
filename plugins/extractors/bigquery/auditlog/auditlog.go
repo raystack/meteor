@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"errors"
+
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/logging/logadmin"
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/plugins"
 	log "github.com/raystack/salt/observability/logger"
 	"go.opentelemetry.io/otel"

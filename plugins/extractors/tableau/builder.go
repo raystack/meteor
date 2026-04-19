@@ -1,8 +1,10 @@
 package tableau
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 func (e *Extractor) buildLineageURNs(tables []*Table) []string {
@@ -30,7 +32,7 @@ func (e *Extractor) buildLineageResourceURN(t *Table) (string, error) {
 		var db DatabaseServer
 		err := mapstructure.Decode(upstreamDB, &db)
 		if err != nil {
-			return "", errors.Wrap(err, "error cast database to DatabaseServer struct")
+			return "", fmt.Errorf("error cast database to DatabaseServer struct: %w", err)
 		}
 		return db.CreateResourceURN(table), nil
 	}
@@ -39,7 +41,7 @@ func (e *Extractor) buildLineageResourceURN(t *Table) (string, error) {
 		var db CloudFile
 		err := mapstructure.Decode(upstreamDB, &db)
 		if err != nil {
-			return "", errors.Wrap(err, "error cast database to CloudFile struct")
+			return "", fmt.Errorf("error cast database to CloudFile struct: %w", err)
 		}
 		return db.CreateResourceURN(table), nil
 	}
@@ -48,7 +50,7 @@ func (e *Extractor) buildLineageResourceURN(t *Table) (string, error) {
 		var db File
 		err := mapstructure.Decode(upstreamDB, &db)
 		if err != nil {
-			return "", errors.Wrap(err, "error cast database to File struct")
+			return "", fmt.Errorf("error cast database to File struct: %w", err)
 		}
 		return db.CreateResourceURN(table), nil
 	}
@@ -57,7 +59,7 @@ func (e *Extractor) buildLineageResourceURN(t *Table) (string, error) {
 		var db WebDataConnector
 		err := mapstructure.Decode(upstreamDB, &db)
 		if err != nil {
-			return "", errors.Wrap(err, "error cast database to WebDataConnector struct")
+			return "", fmt.Errorf("error cast database to WebDataConnector struct: %w", err)
 		}
 		return db.CreateResourceURN(table), nil
 	}

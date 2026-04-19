@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"cloud.google.com/go/storage"
-	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 )
 
@@ -20,7 +20,7 @@ type GCSWriter struct {
 func NewWriter(ctx context.Context, serviceAccountJSON []byte, bucketname string, filepath string) (*GCSWriter, error) {
 	client, err := storage.NewClient(ctx, option.WithAuthCredentialsJSON(option.ServiceAccount, serviceAccountJSON))
 	if err != nil {
-		return nil, errors.Wrap(err, "error in creating client")
+		return nil, fmt.Errorf("error in creating client: %w", err)
 	}
 
 	writer := client.Bucket(bucketname).Object(filepath).NewWriter(ctx)
@@ -32,7 +32,7 @@ func NewWriter(ctx context.Context, serviceAccountJSON []byte, bucketname string
 
 func (c *GCSWriter) WriteData(data []byte) error {
 	if _, err := c.writer.Write(data); err != nil {
-		return errors.Wrap(err, "error in writing data to an object")
+		return fmt.Errorf("error in writing data to an object: %w", err)
 	}
 
 	return nil

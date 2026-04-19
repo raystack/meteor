@@ -15,7 +15,6 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -165,7 +164,7 @@ func setup() (err error) {
 		fmt.Sprintf(`GRANT ALL PERMISSIONS ON ALL KEYSPACES TO '%s'`, user),
 	})
 	if err != nil {
-		return errors.Wrap(err, "fail to create database")
+		return fmt.Errorf("fail to create database: %w", err)
 	}
 
 	//create and populate tables
@@ -176,7 +175,7 @@ func setup() (err error) {
 		fmt.Sprintf(`INSERT INTO %s.jobs (jobid, job, department) VALUES (2, 'test2', 'test22');`, keyspace),
 	})
 	if err != nil {
-		return errors.Wrap(err, "fail to populate database")
+		return fmt.Errorf("fail to populate database: %w", err)
 	}
 	return
 }

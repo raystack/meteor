@@ -2,11 +2,11 @@ package generator
 
 import (
 	_ "embed"
+	"fmt"
 	"io"
 	"strings"
 	"text/template"
 
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/registry"
 )
 
@@ -54,7 +54,7 @@ func Recipe(p RecipeParams) (*TemplateData, error) {
 
 		sourceInfo, err := registry.Extractors.Info(p.Source)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to provide extractor information")
+			return nil, fmt.Errorf("failed to provide extractor information: %w", err)
 		}
 
 		tem.Source.SampleConfig = sourceInfo.SampleConfig
@@ -64,7 +64,7 @@ func Recipe(p RecipeParams) (*TemplateData, error) {
 		for _, sink := range p.Sinks {
 			info, err := registry.Sinks.Info(sink)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to provide sink information")
+				return nil, fmt.Errorf("failed to provide sink information: %w", err)
 			}
 			tem.Sinks[sink] = info.SampleConfig
 		}
@@ -74,7 +74,7 @@ func Recipe(p RecipeParams) (*TemplateData, error) {
 		for _, procc := range p.Processors {
 			info, err := registry.Processors.Info(procc)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to provide processor information")
+				return nil, fmt.Errorf("failed to provide processor information: %w", err)
 			}
 			tem.Processors[procc] = info.SampleConfig
 		}
@@ -93,7 +93,7 @@ func RecipeWriteTo(p RecipeParams, writer io.Writer) error {
 		template.New("recipe.yaml").Funcs(TemplateFuncs).Parse(RecipeTemplate),
 	)
 	if err := tmpl.Execute(writer, *tem); err != nil {
-		return errors.Wrap(err, "failed to execute template")
+		return fmt.Errorf("failed to execute template: %w", err)
 	}
 	return nil
 }

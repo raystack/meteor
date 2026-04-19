@@ -1,7 +1,8 @@
 package registry
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/raystack/meteor/plugins"
 )
 
@@ -40,7 +41,7 @@ func (f *ExtractorFactory) List() map[string]plugins.Info {
 // Register registers an Extractor.
 func (f *ExtractorFactory) Register(name string, extractorFn func() plugins.Extractor) (err error) {
 	if _, ok := f.fnStore[name]; ok {
-		return errors.Errorf("duplicate extractor: %s", name)
+		return fmt.Errorf("duplicate extractor: %s", name)
 	}
 	f.fnStore[name] = extractorFn
 	return nil

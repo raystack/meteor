@@ -2,12 +2,14 @@ package tableau
 
 import (
 	"fmt"
-	"github.com/raystack/meteor/plugins"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/raystack/meteor/plugins"
+
+	"errors"
+
 	"github.com/raystack/meteor/models"
 )
 

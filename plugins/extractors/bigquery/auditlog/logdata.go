@@ -1,7 +1,9 @@
 package auditlog
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"github.com/raystack/meteor/plugins"
 	loggingpb "google.golang.org/genproto/googleapis/cloud/bigquery/logging/v1"
 )
@@ -55,12 +57,12 @@ func (ld *LogData) validateAuditData() (err error) {
 	// if referenced tables is empty, we don't count it
 	stats := job.GetJobStatistics()
 	if stats == nil {
-		err = errors.Errorf("job statistics is nil")
+		err = fmt.Errorf("job statistics is nil")
 		return
 	}
 
 	if len(stats.ReferencedTables) == 0 {
-		err = errors.Errorf("no referenced tables found")
+		err = fmt.Errorf("no referenced tables found")
 		return
 	}
 
@@ -84,7 +86,7 @@ func (ld *LogData) validateAuditData() (err error) {
 
 	if jobStatus.GetError() != nil {
 		if jobErrMsg := jobStatus.GetError().GetMessage(); jobErrMsg != "" {
-			err = errors.Errorf("job status has error: %s", jobErrMsg)
+			err = fmt.Errorf("job status has error: %s", jobErrMsg)
 			return
 		}
 	}

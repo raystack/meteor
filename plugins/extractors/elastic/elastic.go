@@ -4,9 +4,8 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"reflect"
-
-	"github.com/pkg/errors"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/raystack/meteor/models"
@@ -72,7 +71,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 		Password: e.config.Password,
 	}
 	if e.client, err = elasticsearch.NewClient(cfg); err != nil {
-		return errors.Wrap(err, "failed to create client")
+		return fmt.Errorf("failed to create client: %w", err)
 	}
 
 	return
@@ -85,7 +84,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 		e.client.Cluster.Health.WithLevel("indices"),
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to fetch cluster information")
+		return fmt.Errorf("failed to fetch cluster information: %w", err)
 	}
 	var r map[string]any
 	err = json.NewDecoder(res.Body).Decode(&r)
@@ -193,7 +192,7 @@ func (e *Extractor) listIndexInfo(index string) (result map[string]any, err erro
 		e.client.Indices.GetMapping.WithIndex(index),
 	)
 	if err != nil {
-		err = errors.Wrap(err, "failed to retrieve index")
+		err = fmt.Errorf("failed to retrieve index: %w", err)
 		return
 	}
 	err = json.NewDecoder(res.Body).Decode(&r)

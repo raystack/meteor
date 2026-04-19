@@ -12,10 +12,11 @@ import (
 	"sync"
 	"time"
 
+	"errors"
+
 	"cloud.google.com/go/bigquery"
 	datacatalog "cloud.google.com/go/datacatalog/apiv1"
 	"cloud.google.com/go/datacatalog/apiv1/datacatalogpb"
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"

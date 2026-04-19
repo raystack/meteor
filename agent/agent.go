@@ -8,7 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/raystack/meteor/metrics/otelmw"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"

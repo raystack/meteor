@@ -6,8 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"errors"
+
 	"cloud.google.com/go/storage"
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/plugins/sqlutil"

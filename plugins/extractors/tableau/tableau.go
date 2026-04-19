@@ -3,9 +3,9 @@ package tableau
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -101,7 +101,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) {
 	projects, err := e.client.GetAllProjects(ctx)
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch list of projects")
+		err = fmt.Errorf("failed to fetch list of projects: %w", err)
 		return
 	}
 

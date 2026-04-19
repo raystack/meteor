@@ -34,7 +34,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nsf/jsondiff v0.0.0-20260207060731-8e8d90c4c0ac
 	github.com/ory/dockertest/v3 v3.12.0
-	github.com/pkg/errors v0.9.1
 	github.com/prestodb/presto-go-client v1.0.0
 	github.com/raystack/optimus v0.7.2-0.20230725205201-5874457c7bbe
 	github.com/raystack/salt v0.7.0
@@ -139,6 +138,7 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect

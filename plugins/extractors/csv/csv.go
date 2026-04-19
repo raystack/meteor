@@ -10,7 +10,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/registry"

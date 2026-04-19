@@ -5,8 +5,6 @@ import (
 	_ "embed" // used to print the embedded assets
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/gocql/gocql"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins/sqlutil"
@@ -105,7 +103,7 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) (err error)
 	cluster.ProtoVersion = 4
 	cluster.Port = e.config.Port
 	if e.session, err = cluster.CreateSession(); err != nil {
-		return errors.Wrap(err, "failed to create session")
+		return fmt.Errorf("failed to create session: %w", err)
 	}
 
 	return
@@ -126,7 +124,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 	for scanner.Next() {
 		var keyspace string
 		if err = scanner.Scan(&keyspace); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", keyspace)
+			return fmt.Errorf("failed to iterate over %s: %w", keyspace, err)
 		}
 
 		// skip if database is default
@@ -134,7 +132,7 @@ func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) (err error) 
 			continue
 		}
 		if err = e.extractTables(keyspace); err != nil {
-			return errors.Wrapf(err, "failed to extract tables from %s", keyspace)
+			return fmt.Errorf("failed to extract tables from %s: %w", keyspace, err)
 		}
 	}
 
@@ -151,13 +149,13 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 	for scanner.Next() {
 		var tableName string
 		if err = scanner.Scan(&tableName); err != nil {
-			return errors.Wrapf(err, "failed to iterate over %s", tableName)
+			return fmt.Errorf("failed to iterate over %s: %w", tableName, err)
 		}
 		if e.isExcludedTable(keyspace, tableName) {
 			continue
 		}
 		if err = e.processTable(keyspace, tableName); err != nil {
-			return errors.Wrap(err, "failed to process table")
+			return fmt.Errorf("failed to process table: %w", err)
 		}
 	}
 
@@ -168,7 +166,7 @@ func (e *Extractor) extractTables(keyspace string) (err error) {
 func (e *Extractor) processTable(keyspace string, tableName string) (err error) {
 	columns, err := e.extractColumns(keyspace, tableName)
 	if err != nil {
-		return errors.Wrap(err, "failed to extract columns")
+		return fmt.Errorf("failed to extract columns: %w", err)
 	}
 
 	// push table to channel

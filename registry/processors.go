@@ -1,7 +1,8 @@
 package registry
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"github.com/raystack/meteor/plugins"
 )
 
@@ -40,7 +41,7 @@ func (f *ProcessorFactory) List() map[string]plugins.Info {
 // Register registers a Processor.
 func (f *ProcessorFactory) Register(name string, fn func() plugins.Processor) (err error) {
 	if _, ok := f.fnStore[name]; ok {
-		return errors.Errorf("duplicate processor: %s", name)
+		return fmt.Errorf("duplicate processor: %s", name)
 	}
 	f.fnStore[name] = fn
 	return nil

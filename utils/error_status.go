@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

@@ -1,7 +1,9 @@
 package auditlog
 
 import (
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
+
 	"github.com/raystack/meteor/plugins/extractors/bigquery/sqlparser"
 )
 
@@ -42,7 +44,7 @@ func (b *TableStats) Populate(ld *LogData) (err error) {
 	sqlQuery, err := b.processedLog.GetQuery()
 	if err != nil {
 		// log query not exist here
-		err = errors.Wrap(err, "can't get query")
+		err = fmt.Errorf("can't get query: %w", err)
 		return
 	}
 
