@@ -1,4 +1,4 @@
-# redshift
+# Amazon Redshift
 
 Extract table metadata from Amazon Redshift clusters.
 

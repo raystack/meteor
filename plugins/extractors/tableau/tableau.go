@@ -25,10 +25,17 @@ sitename: testdev550928
 `
 
 var info = plugins.Info{
-	Description:  "Dashboard list from Tableau server",
+	Description:  "Dashboard metadata from Tableau server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"saas", "bi"},
+	Entities: []plugins.EntityInfo{
+		{Type: "dashboard", URNPattern: "urn:tableau:{scope}:workbook:{workbook_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "dashboard", To: "table"},
+		{Type: "owned_by", From: "dashboard", To: "user"},
+	},
 }
 
 // Config that holds a set of configuration for tableau extractor

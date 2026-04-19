@@ -1,4 +1,4 @@
-# mssql
+# Microsoft SQL Server
 
 Extract table metadata from Microsoft SQL Server databases.
 

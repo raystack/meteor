@@ -32,13 +32,16 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Compressed, high-performance, data storage system.",
+	Description: "Table metadata from Google Cloud Bigtable.",
 	Summary:     summary,
-	Tags:        []string{"gcp", "extractor"},
+	Tags:        []string{"gcp", "database"},
 	SampleConfig: heredoc.Doc(`
 		project_id: google-project-id
 		service_account_base64: ____base64_encoded_service_account____
 	`),
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:bigtable:{project_id}:table:{instance}.{table}"},
+	},
 }
 
 // InstancesFetcher is an interface for fetching instances

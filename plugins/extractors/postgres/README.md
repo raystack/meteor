@@ -1,4 +1,4 @@
-# Postgres
+# PostgreSQL
 
 Extract table metadata from a PostgreSQL server.
 

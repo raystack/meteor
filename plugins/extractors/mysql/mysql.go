@@ -50,7 +50,13 @@ var info = plugins.Info{
 	Description:  "Table metadata from MySQL server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:mysql:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from MySQL

@@ -35,10 +35,13 @@ exclude:
   tables: [dataset_c.table_a]`
 
 var info = plugins.Info{
-	Description:  "Column-oriented DBMS for online analytical processing.",
+	Description:  "Table metadata from ClickHouse server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:clickhouse:{scope}:table:{database}.{table}"},
+	},
 }
 
 // Extractor manages the output stream

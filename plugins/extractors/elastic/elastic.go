@@ -30,10 +30,13 @@ password: "changeme"
 host: elastic_server`
 
 var info = plugins.Info{
-	Description:  "Search engine based on the Lucene library.",
+	Description:  "Index metadata from Elasticsearch cluster.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:elasticsearch:{scope}:index:{index_name}"},
+	},
 }
 
 // Extractor manages the extraction of data from elastic

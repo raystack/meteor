@@ -1,4 +1,4 @@
-# metabase
+# Metabase
 
 Extract dashboard metadata from a Metabase server.
 

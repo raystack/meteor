@@ -1,4 +1,4 @@
-# application_yaml
+# Application YAML
 
 Extract application metadata from a YAML file, including lineage and ownership.
 

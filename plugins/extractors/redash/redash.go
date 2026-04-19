@@ -36,10 +36,16 @@ api_key: t33I8i8OFnVt3t9Bjj2RXr8nCBz0xyzVZ318Zwbj
 `
 
 var info = plugins.Info{
-	Description:  "Dashboard list from Redash server.",
+	Description:  "Dashboard metadata from Redash server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "bi"},
+	Entities: []plugins.EntityInfo{
+		{Type: "dashboard", URNPattern: "urn:redash:{scope}:dashboard:{dashboard_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "owned_by", From: "dashboard", To: "user"},
+	},
 }
 
 // Extractor manages the extraction of data from the redash server

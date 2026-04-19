@@ -39,10 +39,13 @@ service_account_json: {
 user_email: user@raystack.com`
 
 var info = plugins.Info{
-	Description:  "User list from Google Workspace",
+	Description:  "User metadata from Google Workspace.",
 	SampleConfig: sampleConfig,
-	Tags:         []string{"platform", "extractor"},
+	Tags:         []string{"gcp", "platform"},
 	Summary:      summary,
+	Entities: []plugins.EntityInfo{
+		{Type: "user", URNPattern: "urn:gsuite:{scope}:user:{primary_email}"},
+	},
 }
 
 // Extractor manages the extraction of data from the extractor

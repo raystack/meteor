@@ -1,4 +1,4 @@
-# presto
+# PrestoDB
 
 Extract table metadata from a Presto server.
 

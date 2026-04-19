@@ -1,4 +1,4 @@
-# superset
+# Apache Superset
 
 Extract dashboard metadata from an Apache Superset server.
 

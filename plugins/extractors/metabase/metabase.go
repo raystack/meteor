@@ -31,10 +31,17 @@ username: meteor_tester
 password: meteor_pass_1234`
 
 var info = plugins.Info{
-	Description:  "Dashboard list from Metabase server.",
+	Description:  "Dashboard metadata from Metabase server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "bi"},
+	Entities: []plugins.EntityInfo{
+		{Type: "dashboard", URNPattern: "urn:metabase:{scope}:collection:{dashboard_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "dashboard", To: "table"},
+		{Type: "owned_by", From: "dashboard", To: "user"},
+	},
 }
 
 // Config holds the set of configuration for the metabase extractor

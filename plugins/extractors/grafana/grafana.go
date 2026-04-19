@@ -46,7 +46,13 @@ var info = plugins.Info{
 	Description:  "Dashboard and datasource metadata from Grafana server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "bi"},
+	Entities: []plugins.EntityInfo{
+		{Type: "dashboard", URNPattern: "urn:grafana:{scope}:dashboard:{uid}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "dashboard", To: "datasource"},
+	},
 }
 
 // Extractor manages the communication with the Grafana Server

@@ -52,10 +52,18 @@ var sampleConfig = heredoc.Doc(`
 `)
 
 var info = plugins.Info{
-	Description:  "Application metadata from YAML file",
+	Description:  "Application metadata from YAML file.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"application", "file"},
+	Tags:         []string{"file", "platform"},
+	Entities: []plugins.EntityInfo{
+		{Type: "application", URNPattern: "urn:application_yaml:{scope}:application:{name}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "owned_by", From: "application", To: "user"},
+		{Type: "derived_from", From: "application", To: "application"},
+		{Type: "generates", From: "application", To: "application"},
+	},
 }
 
 // Extractor is the extractor instance for application YAML file.

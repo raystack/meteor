@@ -15,9 +15,11 @@ func New() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  false,
 		Example: heredoc.Doc(`
-			$ meteor list extractors
 			$ meteor run recipe.yaml
-			$ meteor gen recipe --extractor=date --sink console
+			$ meteor lint recipe.yaml
+			$ meteor plugins list
+			$ meteor plugins info bigquery
+			$ meteor recipe init sample -e bigquery -s compass
 		`),
 		Annotations: map[string]string{
 			"group": "core",
@@ -33,13 +35,13 @@ func New() *cobra.Command {
 
 	commander.New(cmd).Init()
 
-	cmd.AddCommand(VersionCmd())
-	cmd.AddCommand(GenCmd())
-	cmd.AddCommand(ListCmd())
-	cmd.AddCommand(InfoCmd())
 	cmd.AddCommand(RunCmd())
 	cmd.AddCommand(LintCmd())
-	cmd.AddCommand(NewCmd())
+	cmd.AddCommand(RecipeCmd())
+	cmd.AddCommand(PluginsCmd())
+	cmd.AddCommand(EntitiesCmd())
+	cmd.AddCommand(EdgesCmd())
+	cmd.AddCommand(VersionCmd())
 
 	return cmd
 }

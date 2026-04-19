@@ -44,10 +44,18 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description:  "Optimus' jobs metadata",
+	Description:  "Job metadata from Raystack Optimus.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"optimus", "bigquery"},
+	Tags:         []string{"oss", "orchestration"},
+	Entities: []plugins.EntityInfo{
+		{Type: "job", URNPattern: "urn:optimus:{scope}:job:{project}.{namespace}.{job_name}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "job", To: "table"},
+		{Type: "generates", From: "job", To: "table"},
+		{Type: "owned_by", From: "job", To: "user"},
+	},
 }
 
 // Extractor manages the communication with the bigquery service

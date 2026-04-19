@@ -42,10 +42,17 @@ exclude:
   - ARCHIVE`
 
 var info = plugins.Info{
-	Description:  "Extract page metadata and relationships from Confluence spaces.",
+	Description:  "Page metadata and relationships from Confluence spaces.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"confluence", "extractor"},
+	Tags:         []string{"saas", "collaboration"},
+	Entities: []plugins.EntityInfo{
+		{Type: "document", URNPattern: "urn:confluence:{scope}:document:{page_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "child_of", From: "document", To: "document"},
+		{Type: "owned_by", From: "document", To: "user"},
+	},
 }
 
 type Extractor struct {

@@ -1,4 +1,4 @@
-# snowflake
+# Snowflake
 
 Extract table metadata from Snowflake databases.
 

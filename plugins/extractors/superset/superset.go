@@ -38,10 +38,16 @@ host: http://localhost:3000
 provider: db`
 
 var info = plugins.Info{
-	Description:  "Dashboard list from Superset server.",
+	Description:  "Dashboard metadata from Apache Superset server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "bi"},
+	Entities: []plugins.EntityInfo{
+		{Type: "dashboard", URNPattern: "urn:superset:{scope}:dashboard:{dashboard_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "owned_by", From: "dashboard", To: "user"},
+	},
 }
 
 // Extractor manages the extraction of data

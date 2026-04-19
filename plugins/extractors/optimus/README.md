@@ -1,4 +1,4 @@
-# optimus
+# Raystack Optimus
 
 Extract job metadata from Optimus, including lineage and ownership.
 

@@ -36,7 +36,10 @@ var info = plugins.Info{
 	Description:  "Table metadata from Presto server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:presto:{scope}:table:{catalog}.{schema}.{table}"},
+	},
 }
 
 // Extractor manages the extraction of data

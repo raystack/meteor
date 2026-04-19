@@ -49,10 +49,13 @@ exclude:
 	- dataset_c.table_a`
 
 var info = plugins.Info{
-	Description:  "Collection metadata from MongoDB Server",
+	Description:  "Collection metadata from MongoDB server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:mongodb:{scope}:collection:{database}.{collection}"},
+	},
 }
 
 // Extractor manages the communication with the mongo server

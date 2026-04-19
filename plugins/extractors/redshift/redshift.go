@@ -37,10 +37,13 @@ exclude: secondaryDB
 `
 
 var info = plugins.Info{
-	Description:  "Table metadata from Redshift server.",
+	Description:  "Table metadata from Amazon Redshift.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"aws", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:redshift:{cluster_id}:table:{cluster_id}.{database}.{table}"},
+	},
 }
 
 // Option provides extension abstraction to Extractor constructor

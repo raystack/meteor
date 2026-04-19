@@ -30,10 +30,18 @@ manifest: target/manifest.json
 # catalog: target/catalog.json`
 
 var info = plugins.Info{
-	Description:  "Extract metadata from dbt manifest including models, sources, and lineage.",
+	Description:  "Model and source metadata from dbt manifest.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"dbt", "extractor"},
+	Tags:         []string{"oss", "orchestration"},
+	Entities: []plugins.EntityInfo{
+		{Type: "model", URNPattern: "urn:dbt:{scope}:model:{model_path}"},
+		{Type: "source", URNPattern: "urn:dbt:{scope}:source:{source_path}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "model", To: "model"},
+		{Type: "owned_by", From: "model", To: "user"},
+	},
 }
 
 type Extractor struct {

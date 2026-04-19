@@ -1,4 +1,4 @@
-# elasticsearch
+# Elasticsearch
 
 Extract index metadata from an Elasticsearch cluster.
 

@@ -40,10 +40,16 @@ type Exclude struct {
 var sampleConfig = `connection_url: "sqlserver://admin:pass123@localhost:3306/"`
 
 var info = plugins.Info{
-	Description:  "Table metdata from MSSQL server",
+	Description:  "Table metadata from Microsoft SQL Server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"microsoft", "extractor"},
+	Tags:         []string{"microsoft", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:mssql:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from the database

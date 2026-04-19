@@ -1,4 +1,4 @@
-# kafka
+# Apache Kafka
 
 Extract topic and consumer group metadata from Apache Kafka.
 

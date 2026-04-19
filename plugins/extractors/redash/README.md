@@ -1,4 +1,4 @@
-# redash
+# Redash
 
 Extract dashboard metadata from a Redash server.
 

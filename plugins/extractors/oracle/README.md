@@ -1,4 +1,4 @@
-# oracle
+# Oracle Database
 
 Extract table metadata from Oracle databases.
 

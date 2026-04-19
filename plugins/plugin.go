@@ -18,12 +18,27 @@ const (
 
 type Emit func(models.Record)
 
+// EntityInfo describes an entity type produced by a plugin.
+type EntityInfo struct {
+	Type       string `yaml:"type"`        // e.g. "table", "topic", "dashboard"
+	URNPattern string `yaml:"urn_pattern"` // e.g. "urn:bigquery:{project_id}:table:{dataset}.{table}"
+}
+
+// EdgeInfo describes an edge type produced by a plugin.
+type EdgeInfo struct {
+	Type string `yaml:"type"` // e.g. "derived_from", "owned_by", "references"
+	From string `yaml:"from"` // source entity type
+	To   string `yaml:"to"`   // target entity type
+}
+
 // Info represents the meta.yaml file of a plugin.
 type Info struct {
-	Description  string   `yaml:"description"`
-	SampleConfig string   `yaml:"sample_config"`
-	Tags         []string `yaml:"tags"`
-	Summary      string   `yaml:"summary"`
+	Description  string       `yaml:"description"`
+	SampleConfig string       `yaml:"sample_config"`
+	Tags         []string     `yaml:"tags"`
+	Summary      string       `yaml:"summary"`
+	Entities     []EntityInfo `yaml:"entities"`
+	Edges        []EdgeInfo   `yaml:"edges"`
 }
 
 type Config struct {

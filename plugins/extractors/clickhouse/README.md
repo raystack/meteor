@@ -1,4 +1,4 @@
-# clickhouse
+# ClickHouse
 
 Extract table metadata from a ClickHouse server.
 

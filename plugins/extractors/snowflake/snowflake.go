@@ -37,7 +37,13 @@ var info = plugins.Info{
 	Description:  "Table metadata from Snowflake server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"saas", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:snowflake:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from snowflake

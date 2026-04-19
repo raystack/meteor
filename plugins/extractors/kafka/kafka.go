@@ -77,7 +77,14 @@ var info = plugins.Info{
 	Description:  "Topic and consumer group metadata from Apache Kafka.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "streaming"},
+	Entities: []plugins.EntityInfo{
+		{Type: "topic", URNPattern: "urn:kafka:{scope}:topic:{topic_name}"},
+		{Type: "consumer_group", URNPattern: "urn:kafka:{scope}:consumer_group:{group_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "consumed_by", From: "consumer_group", To: "topic"},
+	},
 }
 
 // Extractor manages the extraction of data

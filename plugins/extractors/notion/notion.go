@@ -33,10 +33,17 @@ extract:
   - databases`
 
 var info = plugins.Info{
-	Description:  "Extract page and database metadata from a Notion workspace.",
+	Description:  "Page and database metadata from a Notion workspace.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"notion", "extractor"},
+	Tags:         []string{"saas", "collaboration"},
+	Entities: []plugins.EntityInfo{
+		{Type: "document", URNPattern: "urn:notion:{scope}:document:{page_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "child_of", From: "document", To: "document"},
+		{Type: "owned_by", From: "document", To: "user"},
+	},
 }
 
 type Extractor struct {

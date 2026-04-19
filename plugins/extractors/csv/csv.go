@@ -30,10 +30,13 @@ type Config struct {
 var sampleConfig = `path: ./path-to-a-file-or-a-directory`
 
 var info = plugins.Info{
-	Description:  "Comma separated file",
+	Description:  "Column metadata from CSV files.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"file", "extractor"},
+	Tags:         []string{"file", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:csv:{scope}:file:{filename}"},
+	},
 }
 
 // Extractor manages the extraction of data from the extractor

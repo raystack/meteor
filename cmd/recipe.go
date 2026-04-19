@@ -2,33 +2,34 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/generator"
+	"github.com/raystack/meteor/recipe"
 	"github.com/raystack/meteor/registry"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
-// NewCmd creates a command object for the "new" action
-func NewCmd() *cobra.Command {
+// RecipeCmd creates the top-level recipe command.
+func RecipeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "new",
-		Short: "Bootstrap new recipes",
+		Use:   "recipe <command>",
+		Short: "Manage recipes",
 		Annotations: map[string]string{
 			"group": "core",
 		},
 	}
-
-	cmd.AddCommand(NewRecipeCmd())
-
+	cmd.AddCommand(recipeInitCmd())
+	cmd.AddCommand(recipeGenCmd())
 	return cmd
 }
 
-// NewRecipeCmd creates a command object for newerating recipes
-func NewRecipeCmd() *cobra.Command {
+func recipeInitCmd() *cobra.Command {
 	var (
 		extractor  string
 		scope      string
@@ -37,25 +38,24 @@ func NewRecipeCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:     "recipe [name]",
-		Aliases: []string{"r"},
-		Args:    cobra.MatchAll(cobra.ExactArgs(1)),
-		Short:   "Generate a new recipe",
+		Use:   "init [name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Bootstrap a new recipe",
 		Long: heredoc.Doc(`
-			Generate a new recipe.
+			Bootstrap a new recipe.
 
 			The recipe will be printed on standard output.
 			Specify recipe name with the first argument without extension.
-			Use commma to separate multiple sinks and processors.`),
+			Use comma to separate multiple sinks and processors.`),
 		Example: heredoc.Doc(`
-			# generate a recipe with a bigquery extractor and a console sink
-			$ meteor new recipe sample -e bigquery -s console
+			# bootstrap a recipe with a bigquery extractor and a console sink
+			$ meteor recipe init sample -e bigquery -s console
 
-			# generate recipe with multiple sinks
-			$ meteor new recipe sample -e bigquery -s compass,kafka -p enrich
+			# bootstrap recipe with multiple sinks
+			$ meteor recipe init sample -e bigquery -s compass,kafka -p enrich
 
 			# store recipe to a file
-			$ meteor new recipe sample -e bigquery -s compass > recipe.yaml
+			$ meteor recipe init sample -e bigquery -s compass > recipe.yaml
 		`),
 		Annotations: map[string]string{
 			"group": "core",
@@ -102,15 +102,61 @@ func NewRecipeCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&extractor, "extractor", "e", "", "Type of extractor")
 	cmd.Flags().StringVarP(&scope, "scope", "n", "", "URN's namespace")
-	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "List of sink types")
-	cmd.Flags().StringVarP(&processors, "processors", "p", "", "List of processor types")
+	cmd.Flags().StringVarP(&sinks, "sinks", "s", "", "Comma-separated list of sink types")
+	cmd.Flags().StringVarP(&processors, "processors", "p", "", "Comma-separated list of processor types")
 
 	if err := cmd.MarkFlagRequired("scope"); err != nil {
 		panic(err)
 	}
 
 	return cmd
+}
 
+func recipeGenCmd() *cobra.Command {
+	var (
+		outputDirPath string
+		dataFilePath  string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "gen <template-path>",
+		Args:  cobra.ExactArgs(1),
+		Short: "Generate recipes from a template",
+		Long: heredoc.Doc(`
+			Generate multiple recipes using a template and list of data.
+
+			The generated recipes will be created in the output directory.`,
+		),
+		Example: heredoc.Doc(`
+			$ meteor recipe gen my-template.yaml -o ./output-dir -d ./data.yaml
+		`),
+		Annotations: map[string]string{
+			"group": "core",
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			templatePath := args[0]
+
+			bytes, err := os.ReadFile(dataFilePath)
+			if err != nil {
+				return fmt.Errorf("error reading data: %w", err)
+			}
+			var data []recipe.TemplateData
+			if err := yaml.Unmarshal(bytes, &data); err != nil {
+				return fmt.Errorf("error parsing data: %w", err)
+			}
+
+			return recipe.FromTemplate(recipe.TemplateConfig{
+				TemplateFilePath: templatePath,
+				OutputDirPath:    outputDirPath,
+				Data:             data,
+			})
+		},
+	}
+
+	cmd.Flags().StringVarP(&outputDirPath, "output", "o", "", "Output directory")
+	cmd.Flags().StringVarP(&dataFilePath, "data", "d", "", "Template's data file")
+
+	return cmd
 }
 
 func recipeSinkSurvey() ([]string, error) {
@@ -158,7 +204,7 @@ func recipeProcessorSurvey() ([]string, error) {
 		{
 			Name: "processor",
 			Prompt: &survey.MultiSelect{
-				Message: "Select processor",
+				Message: "Select processor(s)",
 				Options: availableProcessors,
 				Help:    "Select the processor(s) for this recipe",
 			},

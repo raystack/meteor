@@ -58,7 +58,19 @@ var info = plugins.Info{
 	Description:  "Extract metadata from a GitHub organisation including users, repositories, teams, documents, and collaborator permissions.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"platform", "extractor"},
+	Tags:         []string{"saas", "scm"},
+	Entities: []plugins.EntityInfo{
+		{Type: "user", URNPattern: "urn:github:{scope}:user:{user_id}"},
+		{Type: "repository", URNPattern: "urn:github:{scope}:repository:{repo_id}"},
+		{Type: "team", URNPattern: "urn:github:{scope}:team:{team_id}"},
+		{Type: "document", URNPattern: "urn:github:{scope}:document:{doc_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "member_of", From: "user", To: "team"},
+		{Type: "owned_by", From: "repository", To: "user"},
+		{Type: "belongs_to", From: "repository", To: "team"},
+		{Type: "has_access_to", From: "user", To: "repository"},
+	},
 }
 
 type Extractor struct {

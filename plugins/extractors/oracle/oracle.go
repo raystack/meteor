@@ -26,10 +26,16 @@ type Config struct {
 var sampleConfig = `connection_url: oracle://username:passwd@localhost:1521/xe`
 
 var info = plugins.Info{
-	Description:  "Table metadata oracle SQL Database.",
+	Description:  "Table metadata from Oracle Database.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:oracle:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from the extractor

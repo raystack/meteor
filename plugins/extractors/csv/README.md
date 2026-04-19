@@ -1,4 +1,4 @@
-# csv
+# CSV
 
 Extract column metadata from CSV files.
 

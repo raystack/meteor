@@ -45,10 +45,16 @@ exclude:
   tables: [table_a,table_b]`
 
 var info = plugins.Info{
-	Description:  "Table metadata from Mariadb server.",
+	Description:  "Table metadata from MariaDB server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:mariadb:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from Mariadb

@@ -1,4 +1,4 @@
-# gsuite
+# Google Workspace
 
 Extract user metadata from Google Workspace (G Suite).
 

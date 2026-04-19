@@ -34,10 +34,16 @@ connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disabl
 exclude: testDB,secondaryDB`
 
 var info = plugins.Info{
-	Description:  "Table metadata and metrics from Postgres SQL sever.",
+	Description:  "Table metadata and metrics from PostgreSQL server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:postgres:{scope}:table:{database}.{table}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "references", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the extraction of data from the extractor

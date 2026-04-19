@@ -1,4 +1,4 @@
-# http
+# HTTP API
 
 Extract metadata from any external HTTP API using a user-defined [Tengo](https://github.com/d5/tengo) script.
 

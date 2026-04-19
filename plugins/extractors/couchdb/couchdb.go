@@ -36,10 +36,13 @@ connection_url: http://admin:pass123@localhost:3306/
 exclude: database_a,database_b`
 
 var info = plugins.Info{
-	Description:  "Table metadata from CouchDB server,",
+	Description:  "Document metadata from Apache CouchDB server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:couchdb:{scope}:table:{database}.{doc_id}"},
+	},
 }
 
 // Extractor manages the extraction of data from CouchDB

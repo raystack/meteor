@@ -1,4 +1,4 @@
-# couchdb
+# Apache CouchDB
 
 Extract document metadata from a CouchDB server.
 

@@ -1,4 +1,4 @@
-# bigtable
+# Google Cloud Bigtable
 
 Extract table metadata from Google Cloud Bigtable instances.
 

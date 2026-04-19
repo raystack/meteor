@@ -1,4 +1,4 @@
-# grafana
+# Grafana
 
 Extract dashboard and datasource metadata from a Grafana server.
 

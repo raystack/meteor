@@ -51,10 +51,13 @@ service_account_json: |-
 exclude: [bucket_a,bucket_b]`
 
 var info = plugins.Info{
-	Description:  "Online file storage service By Google",
+	Description:  "Bucket and blob metadata from Google Cloud Storage.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"gcp", "extractor"},
+	Tags:         []string{"gcp", "storage"},
+	Entities: []plugins.EntityInfo{
+		{Type: "bucket", URNPattern: "urn:gcs:{project_id}:bucket:{bucket_name}"},
+	},
 }
 
 // Extractor manages the extraction of data

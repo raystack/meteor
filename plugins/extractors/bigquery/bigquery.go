@@ -109,10 +109,16 @@ collect_table_usage: false
 usage_period_in_day: 7`
 
 var info = plugins.Info{
-	Description:  "Big Query table metadata and metrics",
+	Description:  "Table metadata and metrics from Google BigQuery.",
 	SampleConfig: sampleConfig,
-	Tags:         []string{"gcp", "table"},
+	Tags:         []string{"gcp", "database"},
 	Summary:      summary,
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:bigquery:{project_id}:table:{project_id}:{dataset_id}.{table_id}"},
+	},
+	Edges: []plugins.EdgeInfo{
+		{Type: "derived_from", From: "table", To: "table"},
+	},
 }
 
 // Extractor manages the communication with the bigquery service

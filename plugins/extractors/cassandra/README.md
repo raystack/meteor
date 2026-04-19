@@ -1,4 +1,4 @@
-# cassandra
+# Apache Cassandra
 
 Extract table metadata from a Cassandra server.
 

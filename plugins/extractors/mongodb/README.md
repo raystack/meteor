@@ -1,4 +1,4 @@
-# mongodb
+# MongoDB
 
 Extract collection metadata from a MongoDB server.
 

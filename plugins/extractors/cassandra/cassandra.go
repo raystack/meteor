@@ -54,10 +54,13 @@ port: 9042
 `
 
 var info = plugins.Info{
-	Description:  "Table metadata from cassandra server.",
+	Description:  "Table metadata from Apache Cassandra server.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"oss", "extractor"},
+	Tags:         []string{"oss", "database"},
+	Entities: []plugins.EntityInfo{
+		{Type: "table", URNPattern: "urn:cassandra:{scope}:table:{keyspace}.{table}"},
+	},
 }
 
 // Extractor manages the extraction of data from cassandra

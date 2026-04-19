@@ -1,4 +1,4 @@
-# tableau
+# Tableau
 
 Extract dashboard (workbook) metadata from a Tableau server.
 

@@ -1,4 +1,4 @@
-# gcs
+# Google Cloud Storage
 
 Extract bucket and blob metadata from Google Cloud Storage.
 
