@@ -30,7 +30,7 @@ func TestInit(t *testing.T) {
 	t.Run("should return error for invalid config", func(t *testing.T) {
 		client := new(mockClient)
 		config := map[string]any{
-			"host":           "sample-host",
+			"host":           "http://sample-host",
 			"instance_label": "my-metabase",
 		}
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{
@@ -42,14 +42,14 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should authenticate with client if config is valid", func(t *testing.T) {
 		config := map[string]any{
-			"host":           "sample-host",
+			"host":           "http://sample-host",
 			"instance_label": "my-metabase",
 			"username":       "user",
 			"password":       "sample-password",
 		}
 
 		client := new(mockClient)
-		client.On("Authenticate", "sample-host", "user", "sample-password", "").Return(nil)
+		client.On("Authenticate", "http://sample-host", "user", "sample-password", "").Return(nil)
 
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope:  urnScope,
@@ -59,13 +59,13 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should allow session_id to replace username and password", func(t *testing.T) {
 		config := map[string]any{
-			"host":           "sample-host",
+			"host":           "http://sample-host",
 			"instance_label": "my-metabase",
 			"session_id":     "sample-session",
 		}
 
 		client := new(mockClient)
-		client.On("Authenticate", "sample-host", "", "", "sample-session").Return(nil)
+		client.On("Authenticate", "http://sample-host", "", "", "sample-session").Return(nil)
 
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope:  urnScope,
@@ -75,13 +75,13 @@ func TestInit(t *testing.T) {
 	})
 	t.Run("should return error on authentication failure", func(t *testing.T) {
 		config := map[string]any{
-			"host":           "sample-host",
+			"host":           "http://sample-host",
 			"instance_label": "my-metabase",
 			"session_id":     "sample-session",
 		}
 
 		client := new(mockClient)
-		client.On("Authenticate", "sample-host", "", "", "sample-session").Return(errors.New("some error"))
+		client.On("Authenticate", "http://sample-host", "", "", "sample-session").Return(errors.New("some error"))
 
 		err := metabase.New(client, testutils.Logger).Init(context.TODO(), plugins.Config{
 			URNScope:  urnScope,

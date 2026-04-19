@@ -19,9 +19,9 @@ var summary string
 
 // Config holds the set of configuration for the grafana extractor
 type Config struct {
-	BaseURL string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
+	BaseURL string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required,url"`
 	APIKey  string   `json:"api_key" yaml:"api_key" mapstructure:"api_key" validate:"required"`
-	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract" validate:"omitempty,dive,oneof=dashboards datasources"`
 	Exclude Exclude  `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 
@@ -31,7 +31,7 @@ type Exclude struct {
 }
 
 var sampleConfig = `
-base_url: grafana_server
+base_url: https://grafana.example.com
 api_key: your_api_key
 # extract specifies which entity types to extract.
 # Defaults to all: ["dashboards", "datasources"]

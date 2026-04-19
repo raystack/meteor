@@ -19,8 +19,8 @@ import (
 var summary string
 
 type Config struct {
-	Manifest string `json:"manifest" yaml:"manifest" mapstructure:"manifest" validate:"required"`
-	Catalog  string `json:"catalog" yaml:"catalog" mapstructure:"catalog"`
+	Manifest string `json:"manifest" yaml:"manifest" mapstructure:"manifest" validate:"required,file"`
+	Catalog  string `json:"catalog" yaml:"catalog" mapstructure:"catalog" validate:"omitempty,file"`
 }
 
 var sampleConfig = `

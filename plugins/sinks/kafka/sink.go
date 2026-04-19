@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 
-	"github.com/pkg/errors"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
@@ -31,7 +31,7 @@ type Config struct {
 var info = plugins.Info{
 	Description: "Sink metadata to Apache Kafka topic",
 	Summary:     summary,
-	Tags:        []string{"kafka", "topic", "sink"},
+	Tags:        []string{"oss", "streaming"},
 	SampleConfig: heredoc.Doc(`
 	# Kafka broker addresses
 	brokers: "localhost:9092"
@@ -74,12 +74,21 @@ func (s *Sink) Init(ctx context.Context, config plugins.Config) (err error) {
 
 func (s *Sink) Sink(ctx context.Context, batch []models.Record) (err error) {
 	for _, record := range batch {
-		// TODO: Only the entity is serialized as a proto value; edges (lineage,
-		// ownership) are dropped because there is no proto wrapper for a full
-		// Record. To include edges, either define a Record proto message or
-		// switch to JSON serialization.
-		if err := s.push(ctx, record.Entity()); err != nil {
-			return err
+		kafkaValue, err := models.RecordToJSON(record)
+		if err != nil {
+			return fmt.Errorf("serialize record: %w", err)
+		}
+
+		kafkaKey, err := s.buildKey(record.Entity(), s.config.KeyPath)
+		if err != nil {
+			return fmt.Errorf("build kafka key: %w", err)
+		}
+
+		if err := s.writer.WriteMessages(ctx, kafka.Message{
+			Key:   kafkaKey,
+			Value: kafkaValue,
+		}); err != nil {
+			return fmt.Errorf("write message: %w", err)
 		}
 	}
 
@@ -90,45 +99,12 @@ func (s *Sink) Close() (err error) {
 	return s.writer.Close()
 }
 
-func (s *Sink) push(ctx context.Context, payload any) error {
-	kafkaValue, err := s.buildValue(payload)
-	if err != nil {
-		return err
-	}
-
-	kafkaKey, err := s.buildKey(payload, s.config.KeyPath)
-	if err != nil {
-		return err
-	}
-
-	err = s.writer.WriteMessages(ctx,
-		kafka.Message{
-			Key:   kafkaKey,
-			Value: kafkaValue,
-		},
-	)
-	if err != nil {
-		return errors.Wrap(err, "failed to write messages")
-	}
-
-	return nil
-}
-
-func (s *Sink) buildValue(value any) ([]byte, error) {
-	protoBytes, err := proto.Marshal(value.(proto.Message))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to serialize payload as a protobuf message")
-	}
-	return protoBytes, nil
-}
-
-// we can optimize this by caching descriptor and key path
+// buildKey extracts a proto field from the entity to use as the Kafka message key.
 func (s *Sink) buildKey(payload any, keyPath string) ([]byte, error) {
 	if keyPath == "" {
 		return nil, nil
 	}
 
-	// extract key field name and value
 	fieldName, err := s.getTopLevelKeyFromPath(keyPath)
 	if err != nil {
 		return nil, err
@@ -138,18 +114,16 @@ func (s *Sink) buildKey(payload any, keyPath string) ([]byte, error) {
 		return nil, err
 	}
 
-	// get descriptor
 	reflector, ok := payload.(ProtoReflector)
 	if !ok {
-		return nil, errors.New("not a valid proto payload")
+		return nil, fmt.Errorf("not a valid proto payload")
 	}
 	messageDescriptor := reflector.ProtoReflect().Descriptor()
 	fieldDescriptor := messageDescriptor.Fields().ByJSONName(keyJSONName)
 	if fieldDescriptor == nil {
-		return nil, errors.New("failed to build kafka key")
+		return nil, fmt.Errorf("failed to build kafka key")
 	}
 
-	// populate message
 	dynamicMsgKey := dynamicpb.NewMessage(messageDescriptor)
 	dynamicMsgKey.Set(fieldDescriptor, protoreflect.ValueOfString(keyString))
 	return proto.Marshal(dynamicMsgKey)
@@ -161,21 +135,21 @@ func (s *Sink) extractKeyFromPayload(fieldName string, value any) (string, strin
 		valueOf = valueOf.Elem()
 	}
 	if valueOf.Kind() != reflect.Struct {
-		return "", "", errors.New("invalid data")
+		return "", "", fmt.Errorf("invalid data")
 	}
 
 	structField, ok := valueOf.Type().FieldByName(fieldName)
 	if !ok {
-		return "", "", errors.New("invalid path, unknown field")
+		return "", "", fmt.Errorf("invalid path, unknown field")
 	}
 	jsonName := strings.Split(structField.Tag.Get("json"), ",")[0]
 
 	fieldVal := valueOf.FieldByName(fieldName)
 	if !fieldVal.IsValid() || fieldVal.IsZero() {
-		return "", "", errors.New("invalid path, unknown field")
+		return "", "", fmt.Errorf("invalid path, unknown field")
 	}
 	if fieldVal.Type().Kind() != reflect.String {
-		return "", "", errors.Errorf("unsupported key type, should be string found: %s", fieldVal.Type().String())
+		return "", "", fmt.Errorf("unsupported key type, should be string found: %s", fieldVal.Type().String())
 	}
 
 	return fieldVal.String(), jsonName, nil
@@ -184,10 +158,10 @@ func (s *Sink) extractKeyFromPayload(fieldName string, value any) (string, strin
 func (s *Sink) getTopLevelKeyFromPath(keyPath string) (string, error) {
 	keyPaths := strings.Split(keyPath, ".")
 	if len(keyPaths) < 2 {
-		return "", errors.New("invalid path, require at least one field name e.g.: .Urn")
+		return "", fmt.Errorf("invalid path, require at least one field name e.g.: .Urn")
 	}
 	if len(keyPaths) > 2 {
-		return "", errors.New("invalid path, doesn't support nested field names yet")
+		return "", fmt.Errorf("invalid path, doesn't support nested field names yet")
 	}
 	return keyPaths[1], nil
 }

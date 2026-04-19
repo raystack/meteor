@@ -23,7 +23,7 @@ var summary string
 type Config struct {
 	Org     string     `json:"org" yaml:"org" mapstructure:"org" validate:"required"`
 	Token   string     `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
-	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract" validate:"omitempty,dive,oneof=users repositories teams documents collaborators"`
 	Docs    DocsConfig `json:"docs" yaml:"docs" mapstructure:"docs"`
 }
 

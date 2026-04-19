@@ -13,7 +13,6 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/metrics/otelhttpclient"
 	"github.com/raystack/meteor/models"
-	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
@@ -34,9 +33,9 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Send metadata to http service",
+	Description: "Send metadata to HTTP service.",
 	Summary:     summary,
-	Tags:        []string{"http", "sink"},
+	Tags:        []string{"oss", "http"},
 	SampleConfig: heredoc.Doc(`
 	# The url (hostname and route) of the http service
 	url: https://compass.requestcatcher.com/{{ .Type }}/{{ .Urn }}
@@ -90,7 +89,7 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 	for _, record := range batch {
 		entity := record.Entity()
 		s.logger.Info("sinking record to http", "record", entity.GetUrn())
-		if err := s.send(ctx, entity); err != nil {
+		if err := s.send(ctx, record); err != nil {
 			return fmt.Errorf("send data: %w", err)
 		}
 
@@ -102,7 +101,8 @@ func (s *Sink) Sink(ctx context.Context, batch []models.Record) error {
 
 func (*Sink) Close() error { return nil }
 
-func (s *Sink) send(ctx context.Context, entity *meteorv1beta1.Entity) error {
+func (s *Sink) send(ctx context.Context, record models.Record) error {
+	entity := record.Entity()
 	t := template.Must(template.New("url").Parse(s.config.URL))
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, entity); err != nil {
@@ -112,11 +112,10 @@ func (s *Sink) send(ctx context.Context, entity *meteorv1beta1.Entity) error {
 	if s.config.Script != nil {
 		return s.executeScript(ctx, url, entity)
 	}
-	payload, err := models.EntityToJSON(entity)
+	payload, err := models.RecordToJSON(record)
 	if err != nil {
 		return fmt.Errorf("build http payload: %w", err)
 	}
-	// send request
 	return s.makeRequest(ctx, url, payload)
 }
 func (s *Sink) makeRequest(ctx context.Context, url string, payload []byte) error {

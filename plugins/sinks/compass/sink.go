@@ -24,7 +24,7 @@ import (
 var summary string
 
 type Config struct {
-	Host           string            `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Host           string            `json:"host" yaml:"host" mapstructure:"host" validate:"required,url"`
 	Headers        map[string]string `json:"headers" yaml:"headers" mapstructure:"headers"`
 	MaxConcurrency int               `json:"max_concurrency" yaml:"max_concurrency" mapstructure:"max_concurrency"`
 }
@@ -32,7 +32,7 @@ type Config struct {
 var info = plugins.Info{
 	Description: "Send metadata to compass http service",
 	Summary:     summary,
-	Tags:        []string{"http", "sink"},
+	Tags:        []string{"oss", "catalog"},
 	SampleConfig: heredoc.Doc(`
 	# The hostname of the compass service
 	host: https://compass.com

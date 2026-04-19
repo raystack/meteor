@@ -36,7 +36,7 @@ func TestInit(t *testing.T) {
 			},
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "read manifest")
+		assert.ErrorAs(t, err, &plugins.InvalidConfigError{})
 	})
 
 	t.Run("should succeed with valid manifest", func(t *testing.T) {

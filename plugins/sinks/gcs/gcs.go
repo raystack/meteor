@@ -49,7 +49,7 @@ var info = plugins.Info{
        "client_x509_cert_url": "xxxxxxx"
      }
 	`),
-	Tags: []string{"gcs", "sink"},
+	Tags: []string{"gcp", "storage"},
 }
 
 type Sink struct {

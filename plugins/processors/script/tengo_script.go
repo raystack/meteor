@@ -52,7 +52,7 @@ var info = plugins.Info{
 	Description:  "Transform the entity with a Tengo script",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"processor", "transform", "script"},
+	Tags:         []string{"oss", "transform"},
 }
 
 // New create a new processor

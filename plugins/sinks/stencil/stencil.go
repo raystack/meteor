@@ -33,7 +33,7 @@ type Config struct {
 var info = plugins.Info{
 	Description: "Send metadata to stencil http service",
 	Summary:     summary,
-	Tags:        []string{"http", "sink"},
+	Tags:        []string{"oss", "schema"},
 	SampleConfig: heredoc.Doc(`
 	# The hostname of the stencil service
 	host: https://stencil.com

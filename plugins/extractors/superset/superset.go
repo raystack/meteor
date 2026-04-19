@@ -27,7 +27,7 @@ var summary string
 type Config struct {
 	Username string `json:"username" yaml:"username" mapstructure:"username" validate:"required"`
 	Password string `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
-	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Host     string `json:"host" yaml:"host" mapstructure:"host" validate:"required,url"`
 	Provider string `json:"provider" yaml:"provider" mapstructure:"provider" validate:"required"`
 }
 

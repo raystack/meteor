@@ -29,7 +29,7 @@ type Config struct {
 var info = plugins.Info{
 	Description: "Save output to a file",
 	Summary:     summary,
-	Tags:        []string{"file", "json", "yaml", "sink"},
+	Tags:        []string{"oss", "storage"},
 	SampleConfig: heredoc.Doc(`
 	path: ./output-filename.txt
 	format: ndjson

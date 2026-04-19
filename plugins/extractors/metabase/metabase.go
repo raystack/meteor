@@ -46,7 +46,7 @@ var info = plugins.Info{
 
 // Config holds the set of configuration for the metabase extractor
 type Config struct {
-	Host          string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Host          string `json:"host" yaml:"host" mapstructure:"host" validate:"required,url"`
 	InstanceLabel string `json:"instance_label" yaml:"instance_label" mapstructure:"instance_label" validate:"required"`
 	Username      string `json:"username" yaml:"username" mapstructure:"username" validate:"required_without=SessionID"`
 	Password      string `json:"password" yaml:"password" mapstructure:"password"`

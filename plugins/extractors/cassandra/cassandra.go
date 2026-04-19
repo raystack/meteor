@@ -37,7 +37,7 @@ type Config struct {
 	UserID   string  `json:"user_id" yaml:"user_id" mapstructure:"user_id" validate:"required"`
 	Password string  `json:"password" yaml:"password" mapstructure:"password" validate:"required"`
 	Host     string  `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
-	Port     int     `json:"port" yaml:"port" mapstructure:"port" validate:"required"`
+	Port     int     `json:"port" yaml:"port" mapstructure:"port" validate:"required,gte=1,lte=65535"`
 	Exclude  Exclude `json:"exclude" yaml:"exclude" mapstructure:"exclude"`
 }
 

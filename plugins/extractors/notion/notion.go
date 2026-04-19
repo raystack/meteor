@@ -20,8 +20,8 @@ var summary string
 
 type Config struct {
 	Token   string   `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
-	BaseURL string   `json:"base_url" yaml:"base_url" mapstructure:"base_url"`
-	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract"`
+	BaseURL string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" default:"https://api.notion.com"`
+	Extract []string `json:"extract" yaml:"extract" mapstructure:"extract" validate:"omitempty,dive,oneof=pages databases"`
 }
 
 var sampleConfig = `

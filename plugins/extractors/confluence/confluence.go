@@ -19,7 +19,7 @@ import (
 var summary string
 
 type Config struct {
-	BaseURL  string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required"`
+	BaseURL  string   `json:"base_url" yaml:"base_url" mapstructure:"base_url" validate:"required,url"`
 	Username string   `json:"username" yaml:"username" mapstructure:"username" validate:"required"`
 	Token    string   `json:"token" yaml:"token" mapstructure:"token" validate:"required"`
 	Spaces   []string `json:"spaces" yaml:"spaces" mapstructure:"spaces"`

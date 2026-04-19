@@ -17,7 +17,7 @@ var summary string
 var info = plugins.Info{
 	Description:  "Log to standard output",
 	Summary:      summary,
-	Tags:         []string{"log", "sink"},
+	Tags:         []string{"oss", "debug"},
 	SampleConfig: "",
 }
 

@@ -36,33 +36,22 @@ var defaultTopics = map[string]struct{}{
 type Config struct {
 	Broker  string     `json:"broker" yaml:"broker" mapstructure:"broker" validate:"required"`
 	Auth    AuthConfig `json:"auth_config" yaml:"auth_config" mapstructure:"auth_config"`
-	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract"`
+	Extract []string   `json:"extract" yaml:"extract" mapstructure:"extract" validate:"omitempty,dive,oneof=topics consumer_groups"`
 }
 
 type AuthConfig struct {
 	TLS struct {
-		// Whether to use TLS when connecting to the broker
-		// (defaults to false).
-		Enabled bool `mapstructure:"enabled"`
-
-		// controls whether a client verifies the server's certificate chain and host name
-		// defaults to false
-		InsecureSkipVerify bool `mapstructure:"insecure_skip_verify"`
-
-		// certificate file for client authentication
-		CertFile string `mapstructure:"cert_file"`
-
-		// key file for client authentication
-		KeyFile string `mapstructure:"key_file"`
-
-		// certificate authority file for TLS client authentication
-		CAFile string `mapstructure:"ca_file"`
+		Enabled            bool   `mapstructure:"enabled"`
+		InsecureSkipVerify bool   `mapstructure:"insecure_skip_verify"`
+		CertFile           string `mapstructure:"cert_file" validate:"required_if=Enabled true"`
+		KeyFile            string `mapstructure:"key_file" validate:"required_if=Enabled true"`
+		CAFile             string `mapstructure:"ca_file" validate:"required_if=Enabled true"`
 	} `mapstructure:"tls"`
 
 	SASL struct {
 		Enabled   bool   `mapstructure:"enabled"`
-		Mechanism string `mapstructure:"mechanism"`
-	}
+		Mechanism string `mapstructure:"mechanism" validate:"required_if=Enabled true"`
+	} `mapstructure:"sasl"`
 }
 
 var sampleConfig = `

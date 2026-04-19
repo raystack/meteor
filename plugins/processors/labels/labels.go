@@ -35,7 +35,7 @@ var info = plugins.Info{
 	Description:  "Append labels to entities",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
-	Tags:         []string{"processor", "transform", "labels"},
+	Tags:         []string{"oss", "transform"},
 }
 
 // New create a new processor

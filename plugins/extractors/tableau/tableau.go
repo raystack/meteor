@@ -40,7 +40,7 @@ var info = plugins.Info{
 
 // Config that holds a set of configuration for tableau extractor
 type Config struct {
-	Host      string `json:"host" yaml:"host" mapstructure:"host" validate:"required"`
+	Host      string `json:"host" yaml:"host" mapstructure:"host" validate:"required,url"`
 	Version   string `json:"version" yaml:"version" mapstructure:"version" validate:"required"` // float as string
 	Username  string `json:"username" yaml:"username" mapstructure:"username"`
 	Password  string `json:"password" yaml:"password" mapstructure:"password" validate:"required_with=Username"`
