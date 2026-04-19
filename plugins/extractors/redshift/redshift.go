@@ -12,6 +12,7 @@ import (
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/plugins/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 )
@@ -67,9 +68,10 @@ func WithClient(redshiftClient redshiftdataapiserviceiface.RedshiftDataAPIServic
 // from the redshift server
 type Extractor struct {
 	plugins.BaseExtractor
-	config Config
-	logger log.Logger
-	client redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
+	config      Config
+	logger      log.Logger
+	client      redshiftdataapiserviceiface.RedshiftDataAPIServiceAPI
+	excludedDbs map[string]bool
 }
 
 // New returns a pointer to an initialized Extractor Object
@@ -93,6 +95,8 @@ func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
 		return err
 	}
 
+	e.excludedDbs = sqlutil.BuildBoolMap(e.config.Exclude.Databases)
+
 	if e.client == nil {
 		// Create session
 		sess := session.Must(session.NewSession())
@@ -112,6 +116,9 @@ func (e *Extractor) Extract(_ context.Context, emit plugins.Emit) error {
 	}
 
 	for _, database := range listDB {
+		if e.excludedDbs[database] {
+			continue
+		}
 		tables, err := e.GetTables(database)
 		if err != nil {
 			e.logger.Error("failed to get tables, skipping database", "error", err)
