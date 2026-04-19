@@ -27,7 +27,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Save output to a file",
+	Description: "Save metadata to a local file.",
 	Summary:     summary,
 	Tags:        []string{"oss", "storage"},
 	SampleConfig: heredoc.Doc(`

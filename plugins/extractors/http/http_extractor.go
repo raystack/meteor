@@ -82,7 +82,7 @@ var sampleConfig = heredoc.Doc(`
 `)
 
 var info = plugins.Info{
-	Description:  "Extract metadata from an external HTTP API.",
+	Description:  "Metadata from an external HTTP API.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"http", "platform"},

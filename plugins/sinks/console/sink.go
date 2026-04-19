@@ -15,7 +15,7 @@ import (
 var summary string
 
 var info = plugins.Info{
-	Description:  "Log to standard output",
+	Description:  "Log metadata to standard output.",
 	Summary:      summary,
 	Tags:         []string{"oss", "debug"},
 	SampleConfig: "",

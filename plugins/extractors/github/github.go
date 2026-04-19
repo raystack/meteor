@@ -55,7 +55,7 @@ docs:
   pattern: "*.md"`
 
 var info = plugins.Info{
-	Description:  "Extract metadata from a GitHub organisation including users, repositories, teams, documents, and collaborator permissions.",
+	Description:  "Metadata from a GitHub organisation.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"saas", "scm"},

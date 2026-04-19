@@ -29,7 +29,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "saves data in google cloud storage bucket",
+	Description: "Save metadata to Google Cloud Storage.",
 	Summary:     summary,
 	SampleConfig: heredoc.Doc(`
 	project_id: google-project-id

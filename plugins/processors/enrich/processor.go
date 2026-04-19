@@ -33,7 +33,7 @@ var sampleConfig = `
 #   fieldB: valueB`
 
 var info = plugins.Info{
-	Description:  "Append custom fields to records",
+	Description:  "Append custom fields to records.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "transform"},

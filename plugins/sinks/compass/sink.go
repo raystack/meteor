@@ -30,7 +30,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Send metadata to compass http service",
+	Description: "Send metadata to Raystack Compass.",
 	Summary:     summary,
 	Tags:        []string{"oss", "catalog"},
 	SampleConfig: heredoc.Doc(`

@@ -29,7 +29,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Sink metadata to Apache Kafka topic",
+	Description: "Send metadata to Apache Kafka topic.",
 	Summary:     summary,
 	Tags:        []string{"oss", "streaming"},
 	SampleConfig: heredoc.Doc(`

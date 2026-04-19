@@ -31,7 +31,7 @@ type Config struct {
 }
 
 var info = plugins.Info{
-	Description: "Send metadata to stencil http service",
+	Description: "Send metadata to Raystack Stencil.",
 	Summary:     summary,
 	Tags:        []string{"oss", "schema"},
 	SampleConfig: heredoc.Doc(`

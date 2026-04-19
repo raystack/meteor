@@ -32,7 +32,7 @@ var sampleConfig = `
 #   fieldB: valueB`
 
 var info = plugins.Info{
-	Description:  "Append labels to entities",
+	Description:  "Append labels to entities.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "transform"},

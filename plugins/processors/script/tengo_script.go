@@ -49,7 +49,7 @@ var sampleConfig = heredoc.Doc(`
 `)
 
 var info = plugins.Info{
-	Description:  "Transform the entity with a Tengo script",
+	Description:  "Transform records with a Tengo script.",
 	SampleConfig: sampleConfig,
 	Summary:      summary,
 	Tags:         []string{"oss", "transform"},
