@@ -24,14 +24,14 @@ func TestInvalidConfigError(t *testing.T) {
 				Type:       "extractor",
 				PluginName: "testplugin",
 				Errors: []ConfigError{
-					{Key: "engine", Message: "validation for field 'engine' failed on the 'oneof' tag"},
-					{Key: "script", Message: "validation for field 'script' failed on the 'required' tag"},
+					{Key: "engine", Message: "field 'engine' must be one of [tengo], got \"mango\""},
+					{Key: "script", Message: "field 'script' is required"},
 				},
 			},
 			expected: heredoc.Doc(`
 				invalid extractor config:
-					 * validation for field 'engine' failed on the 'oneof' tag
-					 * validation for field 'script' failed on the 'required' tag`),
+					 * field 'engine' must be one of [tengo], got "mango"
+					 * field 'script' is required`),
 			hasError: true,
 		},
 		{
@@ -39,12 +39,12 @@ func TestInvalidConfigError(t *testing.T) {
 			err: InvalidConfigError{
 				PluginName: "testplugin",
 				Errors: []ConfigError{
-					{Key: "engine", Message: "validation for field 'engine' failed on the 'oneof' tag"},
+					{Key: "engine", Message: "field 'engine' must be one of [tengo], got \"mango\""},
 				},
 			},
 			expected: heredoc.Doc(`
 				invalid config:
-					 * validation for field 'engine' failed on the 'oneof' tag`),
+					 * field 'engine' must be one of [tengo], got "mango"`),
 			hasError: true,
 		},
 		{

@@ -49,14 +49,14 @@ func TestInit(t *testing.T) {
 		{
 			name:        "ReqURLRequired",
 			rawCfg:      map[string]any{},
-			expectedErr: "validation for field 'request.url' failed on the 'required' tag",
+			expectedErr: "field 'request.url' is required",
 		},
 		{
 			name: "ReqURLInvalid",
 			rawCfg: map[string]any{
 				"request": map[string]any{"url": "invalid_url"},
 			},
-			expectedErr: "validation for field 'request.url' failed on the 'url' tag",
+			expectedErr: "field 'request.url' must be a valid URL (e.g. https://example.com), got \"invalid_url\"",
 		},
 		{
 			name: "ReqQueryParamInvalidKey",
@@ -65,7 +65,7 @@ func TestInit(t *testing.T) {
 					"query_params": []QueryParam{{Value: "v"}},
 				},
 			},
-			expectedErr: "validation for field 'request.query_params[0].key' failed on the 'required' tag",
+			expectedErr: "field 'request.query_params[0].key' is required",
 		},
 		{
 			name: "ReqQueryParamInvalidValue",
@@ -74,12 +74,12 @@ func TestInit(t *testing.T) {
 					"query_params": []QueryParam{{Key: "k"}},
 				},
 			},
-			expectedErr: "validation for field 'request.query_params[0].value' failed on the 'required' tag",
+			expectedErr: "field 'request.query_params[0].value' is required",
 		},
 		{
 			name:        "ReqContentTypeRequired",
 			rawCfg:      map[string]any{},
-			expectedErr: "validation for field 'request.content_type' failed on the 'required' tag",
+			expectedErr: "field 'request.content_type' is required",
 		},
 		{
 			name: "ReqContentTypeUnsupported",
@@ -88,12 +88,12 @@ func TestInit(t *testing.T) {
 					"content_type": "application/text",
 				},
 			},
-			expectedErr: "validation for field 'request.content_type' failed on the 'oneof' tag",
+			expectedErr: "field 'request.content_type' must be one of [application/json], got \"application/text\"",
 		},
 		{
 			name:        "ReqAcceptRequired",
 			rawCfg:      map[string]any{},
-			expectedErr: "validation for field 'request.accept' failed on the 'required' tag",
+			expectedErr: "field 'request.accept' is required",
 		},
 		{
 			name: "ReqAcceptUnsupported",
@@ -102,7 +102,7 @@ func TestInit(t *testing.T) {
 					"accept": "application/text",
 				},
 			},
-			expectedErr: "validation for field 'request.accept' failed on the 'oneof' tag",
+			expectedErr: "field 'request.accept' must be one of [application/json], got \"application/text\"",
 		},
 		{
 			name: "ReqMethodUnsupported",
@@ -111,7 +111,7 @@ func TestInit(t *testing.T) {
 					"method": "PUT",
 				},
 			},
-			expectedErr: "validation for field 'request.method' failed on the 'oneof' tag",
+			expectedErr: "field 'request.method' must be one of [GET POST], got \"PUT\"",
 		},
 		{
 			name: "ReqTimeoutInvalid",
@@ -120,19 +120,19 @@ func TestInit(t *testing.T) {
 					"timeout": 1,
 				},
 			},
-			expectedErr: "validation for field 'request.timeout' failed on the 'min' tag",
+			expectedErr: "field 'request.timeout' must be at least 1ms",
 		},
 		{
 			name: "SuccessCodesInvalid",
 			rawCfg: map[string]any{
 				"success_codes": []int{10000},
 			},
-			expectedErr: "validation for field 'success_codes[0]' failed on the 'lt' tag",
+			expectedErr: "field 'success_codes[0]' failed validation: lt=300",
 		},
 		{
 			name:        "ScriptEngineRequired",
 			rawCfg:      map[string]any{},
-			expectedErr: "validation for field 'script.engine' failed on the 'required' tag",
+			expectedErr: "field 'script.engine' is required",
 		},
 		{
 			name: "ScriptEngineUnsupported",
@@ -141,12 +141,12 @@ func TestInit(t *testing.T) {
 					"engine": "mango",
 				},
 			},
-			expectedErr: "validation for field 'script.engine' failed on the 'oneof' tag",
+			expectedErr: "field 'script.engine' must be one of [tengo], got \"mango\"",
 		},
 		{
 			name:        "ScriptSourceRequired",
 			rawCfg:      map[string]any{},
-			expectedErr: "validation for field 'script.source' failed on the 'required' tag",
+			expectedErr: "field 'script.source' is required",
 		},
 	}
 	for _, tc := range cases {
