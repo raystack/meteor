@@ -23,6 +23,7 @@ import (
 	_ "github.com/raystack/meteor/plugins/extractors/mssql"
 	_ "github.com/raystack/meteor/plugins/extractors/mysql"
 	_ "github.com/raystack/meteor/plugins/extractors/notion"
+	_ "github.com/raystack/meteor/plugins/extractors/openapi"
 	_ "github.com/raystack/meteor/plugins/extractors/optimus"
 	_ "github.com/raystack/meteor/plugins/extractors/oracle"
 	_ "github.com/raystack/meteor/plugins/extractors/postgres"
