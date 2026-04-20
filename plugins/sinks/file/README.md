@@ -27,4 +27,4 @@ Each Record (Entity + Edges) is serialized as JSON. In `ndjson` mode, one JSON o
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/contribute/guide.mdx#adding-a-new-sink) for information on contributing to this module.

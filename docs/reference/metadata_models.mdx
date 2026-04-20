@@ -15,7 +15,7 @@ An Entity represents a metadata resource (table, dashboard, topic, job, user, et
 | Field         | Type                    | Description                                             |
 |:--------------|:------------------------|:--------------------------------------------------------|
 | `urn`         | `string`                | Unique resource name. Format: `urn:{source}:{scope}:{type}:{name}` |
-| `type`        | `string`                | Entity type: `table`, `dashboard`, `topic`, `job`, `user`, `bucket`, `application`, `model`, `feature_table`, `metric`, `experiment`, `group` |
+| `type`        | `string`                | Entity type: `table`, `dashboard`, `topic`, `job`, `user`, `bucket`, `application`, `model`, `repository`, `team`, `document`, `consumer_group`, `api` |
 | `name`        | `string`                | Human-readable name                                     |
 | `description` | `string`                | Description of the entity                               |
 | `source`      | `string`                | Source system (e.g. `bigquery`, `postgres`, `kafka`)    |
@@ -42,6 +42,8 @@ An Edge represents a relationship between two entities (ownership, lineage, etc.
 - **`generates`**: Indicates a downstream output — the entity produces or writes to the target.
 - **`member_of`**: Indicates membership in a group, team, or organisation.
 - **`belongs_to`**: Indicates an entity belongs to a parent entity (e.g. document to repository).
+- **`child_of`**: Indicates a parent-child hierarchy (e.g. sub-page within a page).
+- **`consumed_by`**: Indicates a consumer group reads from a topic.
 
 ## Record
 
@@ -52,30 +54,30 @@ A Record is the unit of data flowing through the Meteor pipeline. It wraps an En
 
 ## Supported Entity Types
 
-- **bucket**: Cloud storage containers (GCS, S3, etc.)
-- **dashboard**: Data visualization dashboards (Metabase, Grafana, Tableau, etc.)
-- **table**: Database tables and views (BigQuery, Postgres, MySQL, etc.)
-- **topic**: Message bus topics (Kafka, Pub/Sub, Pulsar, etc.)
-- **job**: Scheduled/recurring data transformation tasks
-- **user**: User accounts (GitHub, LDAP, Google Suite, etc.)
-- **repository**: Source code repositories (GitHub, etc.)
-- **team**: Teams within an organisation (GitHub, etc.)
-- **document**: Documentation files from repositories (GitHub, etc.)
+- **api**: API schemas from OpenAPI specs and protobuf definitions
 - **application**: Services communicating over APIs
+- **bucket**: Cloud storage containers (GCS, etc.)
+- **consumer_group**: Kafka consumer groups
+- **dashboard**: Data visualization dashboards (Metabase, Grafana, Tableau, etc.)
+- **document**: Documentation pages (Confluence, Notion, GitHub, etc.)
+- **job**: Scheduled/recurring data transformation tasks (Optimus, etc.)
 - **model**: Machine learning models
-- **feature_table**: ML feature tables
-- **metric**: Metric definitions
-- **experiment**: A/B experiments
-- **group**: User groups
+- **repository**: Source code repositories (GitHub, etc.)
+- **table**: Database tables and views (BigQuery, Postgres, MySQL, etc.)
+- **team**: Teams within an organisation (GitHub, etc.)
+- **topic**: Message bus topics (Kafka, etc.)
+- **user**: User accounts (GitHub, Google Suite, etc.)
 
-To see which extractors emit which entity types, visit [here](./extractors).
+The HTTP extractor can emit custom entity types as defined by its script configuration.
+
+To see which extractors emit which entity types, run `meteor entities` or visit [here](./extractors).
 
 ## Usage
 
 ```go
 import (
     "github.com/raystack/meteor/models"
-    meteorv1beta1 "github.com/raystack/proton/meteor/v1beta1"
+    meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
     "google.golang.org/protobuf/types/known/structpb"
 )
 

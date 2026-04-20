@@ -29,4 +29,4 @@ If `key_path` is set, the value of that Entity field is used as the Kafka messag
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/contribute/guide.mdx#adding-a-new-sink) for information on contributing to this module.

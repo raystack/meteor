@@ -123,12 +123,39 @@ sinks:
     config:
       host: https://stencil.com
       namespace_id: myNamespace
-      schema_id: mySchema
       format: json
-      send_format_header: false
 ```
 
-Upload metadata of a given schema `format` in the existing `namespace_id` present in Stencil. Request will be sent via HTTP to a given host.
+Upload metadata of a given schema `format` in the existing `namespace_id` present in Stencil. Supported formats: `json`, `avro`.
+
+* **S3**
+
+```yaml
+sinks:
+  - name: s3
+    config:
+      bucket_url: s3://bucket-name/target-folder
+      region: us-east-1
+      object_prefix: github-users
+      access_key_id: <access-key-id>
+      secret_access_key: <secret-access-key>
+```
+
+Sinks NDJSON data to an Amazon S3 bucket. Supports S3-compatible stores (MinIO, etc.) via the `endpoint` config.
+
+* **Azure Blob**
+
+```yaml
+sinks:
+  - name: azure_blob
+    config:
+      storage_account_url: https://myaccount.blob.core.windows.net
+      container_name: my-container
+      object_prefix: github-users
+      account_key: <account-key>
+```
+
+Sinks NDJSON data to an Azure Blob Storage container.
 
 ## Serializer
 

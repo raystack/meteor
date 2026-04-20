@@ -18,7 +18,7 @@ $ brew install raystack/tap/meteor
 $ meteor
 
 # list down all the supported extractors, sinks, and processors
-$ meteor list extractors
+$ meteor plugins list
 ```
 
 ## Binary from releases
@@ -41,7 +41,7 @@ $ docker pull raystack/meteor
 $ docker run --rm raystack/meteor
 
 # list down all the extractors currently supported
-$ docker run --rm raystack/meteor meteor list extractors
+$ docker run --rm raystack/meteor meteor plugins list --type extractor
 ```
 
 ## Build from source

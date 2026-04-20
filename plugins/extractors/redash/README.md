@@ -45,4 +45,4 @@ source:
 
 ## Contributing
 
-Refer to the [contribution guide](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guide](../../../docs/contribute/guide.mdx#adding-a-new-extractor) for information on contributing to this module.

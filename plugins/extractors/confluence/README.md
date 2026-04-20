@@ -75,4 +75,4 @@ The extractor scans page content for URN patterns (`urn:service:scope:type:id`) 
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-extractor) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/contribute/guide.mdx#adding-a-new-extractor) for information on contributing to this module.

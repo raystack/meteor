@@ -1,43 +1,16 @@
 ---
 title: Configuration
-description: Reference for all Meteor application configurations including server, recipe, log, and plugin settings.
+description: Reference for all Meteor application configurations.
 order: 2
 ---
 
 # Configuration
 
-This page contains references for all the application configurations for Meteor.
+Meteor is configured via a YAML file (default: `./meteor.yaml`) and environment variables. This page covers all available settings.
 
-## Table of Contents
+## Agent Configuration
 
-- [Server](#server)
-- [Recipe](#recipe)
-- [Log](#log)
-- [Extractor Configuration](#extractor-configuration)
-- [Sink Configuration](#sink-configuration)
-- [Processor Configuration](#processor-configuration)
-
-## Server
-
-Configuration for the Meteor server when running in server mode.
-
-### `PORT`
-
-- Example value: `8080`
-- Type: `optional`
-- Default: `3000`
-- Port to listen on.
-
-## Recipe
-
-### `RECIPE_STORAGE_URL`
-
-- Example value: `s3://my-bucket?region=us-west-1`
-- Type: `optional`
-- Default: `mem://`
-- Object storage URL to persist recipes. Supports GCS (`gs://`), S3 (`s3://`), local filesystem (`file:///path`), and in-memory (`mem://`).
-
-## Log
+These settings control Meteor's runtime behavior and can be set in `meteor.yaml` or as environment variables.
 
 ### `LOG_LEVEL`
 
@@ -45,6 +18,66 @@ Configuration for the Meteor server when running in server mode.
 - Type: `optional`
 - Default: `info`
 - Controls log verbosity. Supported values: `debug`, `info`, `warn`, `error`.
+- Can also be overridden per-run with `meteor run --log-level debug`.
+
+### `MAX_RETRIES`
+
+- Example value: `3`
+- Type: `optional`
+- Default: `5`
+- Maximum number of retry attempts for extractor and sink operations.
+
+### `RETRY_INITIAL_INTERVAL_SECONDS`
+
+- Example value: `10`
+- Type: `optional`
+- Default: `5`
+- Initial interval in seconds between retry attempts. Uses exponential backoff.
+
+### `STOP_ON_SINK_ERROR`
+
+- Example value: `true`
+- Type: `optional`
+- Default: `false`
+- When `true`, stops the pipeline if any sink returns an error after exhausting retries. When `false`, logs the error and continues.
+
+### `SINK_BATCH_SIZE`
+
+- Example value: `10`
+- Type: `optional`
+- Default: `1`
+- Number of records to batch before sending to each sink.
+
+### `OTEL_ENABLED`
+
+- Example value: `true`
+- Type: `optional`
+- Default: `false`
+- Enable OpenTelemetry metrics and tracing.
+
+### `OTEL_COLLECTOR_ADDR`
+
+- Example value: `otel-collector:4317`
+- Type: `optional`
+- Default: `localhost:4317`
+- Address of the OpenTelemetry collector (gRPC endpoint).
+
+### `OTEL_TRACE_SAMPLE_PROBABILITY`
+
+- Example value: `0.5`
+- Type: `optional`
+- Default: `1`
+- Trace sampling probability (0.0 to 1.0).
+
+### Sample `meteor.yaml`
+
+```yaml
+LOG_LEVEL: info
+MAX_RETRIES: 5
+RETRY_INITIAL_INTERVAL_SECONDS: 5
+STOP_ON_SINK_ERROR: false
+SINK_BATCH_SIZE: 1
+```
 
 ## Environment Variables
 

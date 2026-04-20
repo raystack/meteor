@@ -28,6 +28,8 @@ sinks:
 | [`http`](#http) | Send entity JSON to any HTTP endpoint | HTTP API |
 | [`stencil`](#stencil) | Register table schemas in Stencil | Stencil API (HTTP) |
 | [`gcs`](#gcs) | Write records as NDJSON to Google Cloud Storage | GCS bucket |
+| [`s3`](#s3) | Write records as NDJSON to Amazon S3 or S3-compatible storage | S3 bucket |
+| [`azure_blob`](#azure-blob) | Write records as NDJSON to Azure Blob Storage | Azure container |
 
 ## Compass
 
@@ -162,3 +164,53 @@ sinks:
 | `service_account_json` | Service account JSON key as a string | No* |
 
 *One of `service_account_base64` or `service_account_json` is required.
+
+## S3
+
+Writes records as NDJSON to an Amazon S3 bucket or any S3-compatible storage (MinIO, DigitalOcean Spaces, etc.). Each record is serialized as a JSON line. The output object is named with an optional prefix and a timestamp.
+
+```yaml
+sinks:
+  - name: s3
+    config:
+      bucket_url: s3://my-bucket/metadata
+      region: us-east-1
+      object_prefix: github-users
+      access_key_id: AKIAIOSFODNN7EXAMPLE
+      secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
+| Key | Description | Required |
+| :-- | :---------- | :------- |
+| `bucket_url` | S3 destination in the form `s3://bucket/path` | Yes |
+| `region` | AWS region | Yes |
+| `object_prefix` | Prefix for the output object name | No |
+| `access_key_id` | AWS access key ID | No* |
+| `secret_access_key` | AWS secret access key | No* |
+| `endpoint` | Custom S3 endpoint for S3-compatible stores | No |
+
+*If credentials are omitted, the default AWS credential chain is used (env vars, instance profile, etc.).
+
+## Azure Blob
+
+Writes records as NDJSON to an Azure Blob Storage container. Each record is serialized as a JSON line. The output blob is named with an optional prefix and a timestamp.
+
+```yaml
+sinks:
+  - name: azure_blob
+    config:
+      storage_account_url: https://myaccount.blob.core.windows.net
+      container_name: my-container
+      object_prefix: github-users
+      account_key: <account-key>
+```
+
+| Key | Description | Required |
+| :-- | :---------- | :------- |
+| `storage_account_url` | Azure storage account URL | Yes |
+| `container_name` | Blob container name | Yes |
+| `object_prefix` | Prefix for the output blob name | No |
+| `account_key` | Azure storage account key | No* |
+| `connection_string` | Azure storage connection string | No* |
+
+*One of `account_key` or `connection_string` is required.

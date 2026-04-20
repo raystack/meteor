@@ -11,30 +11,29 @@ Thus, for the entire set of orchestration all you will need to provide will be r
 
 Read more about the concepts of Recipe [here](../concepts/recipe).
 
-A sample recipe can be generated using the `meteor new` command mentioned [below](#generating-new-sample-recipes).
+A sample recipe can be generated using the `meteor recipe init` command mentioned [below](#generating-new-sample-recipes).
 
-One can also generate multiple recipes with similar configurations using the `meteor gen` command mentioned [below](#generating-multiple-recipes-from-a-template).
+One can also generate multiple recipes with similar configurations using the `meteor recipe gen` command mentioned [below](#generating-multiple-recipes-from-a-template).
 
 After making the necessary changes to the source, and sinks as per your local setup, you can validate the sample-recipe using steps mentioned [here](#linting-recipes).
 
 ## Generating new Sample recipe(s)
 
 ```bash
-# generate a sample recipe
 # generate a recipe with a bigquery extractor and a console sink
-$ meteor new recipe sample -e <name-of-extractor> -s <single-or-multiple-sinks> -p <name-of-processors>
+$ meteor recipe init sample -n <scope> -e <name-of-extractor> -s <single-or-multiple-sinks> -p <name-of-processors>
 
 # command to generate recipe with multiple sinks
-$ meteor new recipe sample -e bigquery -s compass,kafka
+$ meteor recipe init sample -n mycompany -e bigquery -s compass,kafka
 
 # for the tour you can use a single console sink
 # extractor(-e) as postgres, sink(-s) and enrich processor(-p)
 # save the generated recipe to a recipe.yaml
-$ meteor new recipe sample -e postgres -s console -p enrich > recipe.yaml
+$ meteor recipe init sample -n mycompany -e postgres -s console -p enrich > recipe.yaml
 
 # if not sure about the list of plugins you can choose from
 # the cli is interactive
-$ meteor new recipe sample
+$ meteor recipe init sample -n mycompany
 ```
 
 ## Generating multiple recipes from a template
@@ -43,7 +42,7 @@ Usually it may be required by user to generate multiple recipes with similar con
 
 ```bash
 # generate multiple recipes with same template
-$ meteor gen template.yaml -d <templates-data> -o <output-directory>
+$ meteor recipe gen template.yaml -d <templates-data> -o <output-directory>
 ```
 
 ## Linting Recipe(s)

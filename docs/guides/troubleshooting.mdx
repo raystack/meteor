@@ -46,7 +46,7 @@ Common issues and solutions when working with Meteor.
 - Run `meteor lint <recipe-file>` to validate recipe syntax before running.
 - Ensure `name`, `version`, and `source` fields are present.
 - Ensure at least one sink is defined.
-- Check that the extractor and sink names match registered plugin names. Use `meteor list extractors` and `meteor list sinks` to see available plugins.
+- Check that the extractor and sink names match registered plugin names. Use `meteor plugins list --type extractor` and `meteor plugins list --type sink` to see available plugins.
 
 ### Environment variables not resolved
 
@@ -63,7 +63,7 @@ Common issues and solutions when working with Meteor.
 
 **Solutions:**
 - Check spelling — extractor names are lowercase (e.g., `bigquery`, not `BigQuery`).
-- Run `meteor list extractors` or `meteor list sinks` to confirm the plugin is registered.
+- Run `meteor plugins list --type extractor` or `meteor plugins list --type sink` to confirm the plugin is registered.
 
 ## Extraction Issues
 

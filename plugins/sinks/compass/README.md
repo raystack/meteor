@@ -33,4 +33,4 @@ Requests are made concurrently within a batch (controlled by `max_concurrency`).
 
 ## Contributing
 
-Refer to the [contribution guidelines](../../../docs/docs/contribute/guide.md#adding-a-new-sink) for information on contributing to this module.
+Refer to the [contribution guidelines](../../../docs/contribute/guide.mdx#adding-a-new-sink) for information on contributing to this module.

@@ -16,26 +16,29 @@ Some details on these 3 are:
 - **Sinks** are the plugins that act as the destination of our metadata after extraction and processing.
 
 Read more about the concepts on each of these in [concepts](../concepts/overview).
-To get more context on these plugins, it is recommended to try out the `list` command to get the list of plugins of a specific type. Commands to list the plugins are mentioned below
+To get more context on these plugins, it is recommended to try out the `plugins list` command to get the list of plugins of a specific type. Commands to list the plugins are mentioned below
 
 ## Listing all the plugins
 
 ```bash
-# list all available extractors
-$ meteor list extractors
+# list all available plugins
+$ meteor plugins list
 
-# list all extractors with alias 'e'
-$ meteor list e
+# list only extractors
+$ meteor plugins list --type extractor
 
-# list available sinks
-$ meteor list sinks
+# list only sinks
+$ meteor plugins list --type sink
 
-# list all sinks with alias 's'
-$ meteor list s
+# list only processors
+$ meteor plugins list --type processor
 
-# list all available processors
-$ meteor list processors
+# filter extractors by entity type
+$ meteor plugins list --entity-type table
 
-# list all processors with alias 'p'
-$ meteor list p
+# filter extractors by tag
+$ meteor plugins list --tag gcp
+
+# output as JSON
+$ meteor plugins list --format json
 ```

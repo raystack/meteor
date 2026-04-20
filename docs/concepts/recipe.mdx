@@ -31,10 +31,11 @@ sinks: # required - at least 1 sink defined
       url: "https://example.com/metadata"
   - name: console
 processors: # optional - metadata processors
-  - name: metadata
+  - name: enrich
     config:
-      foo: bar
-      bar: foo
+      attributes:
+        team: data-platform
+        environment: production
 ```
 
 ### Glossary Table

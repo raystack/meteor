@@ -59,8 +59,8 @@ Meteor’s CLI is fully featured but simple to use, even for those who have very
 # List of commands
 $ meteor --help
 
-# Print command reference
-$ meteor reference
+# List available plugins
+$ meteor plugins list
 ```
 
 ## Running locally
