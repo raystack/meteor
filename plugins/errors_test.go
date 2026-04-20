@@ -81,7 +81,7 @@ func TestNotFoundError(t *testing.T) {
 				Type: "extractor",
 				Name: "testplugin",
 			},
-			expected: "could not find extractor \"testplugin\"",
+			expected: "could not find extractor \"testplugin\"\n  Run 'meteor plugins list --type extractor' to see available plugins.",
 		},
 	}
 	for _, tt := range tests {

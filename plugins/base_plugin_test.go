@@ -68,9 +68,9 @@ func TestBasePluginValidate(t *testing.T) {
 
 		assert.Equal(t, err, plugins.InvalidConfigError{
 			Errors: []plugins.ConfigError{
-				{Key: "field_a", Message: "validation for field 'field_a' failed on the 'required' tag"},
-				{Key: "field_b", Message: "validation for field 'field_b' failed on the 'url' tag"},
-				{Key: "nested.field_c", Message: "validation for field 'nested.field_c' failed on the 'required' tag"},
+				{Key: "field_a", Message: "field 'field_a' is required"},
+				{Key: "field_b", Message: "field 'field_b' must be a valid URL (e.g. https://example.com), got \"\""},
+				{Key: "nested.field_c", Message: "field 'nested.field_c' is required"},
 			},
 		})
 	})
