@@ -10,7 +10,7 @@ import (
 	"github.com/go-kivik/kivik"
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/meteor/plugins/sqlutil"
+	"github.com/raystack/meteor/plugins/internal/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 )

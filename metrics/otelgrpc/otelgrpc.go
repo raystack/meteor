@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raystack/meteor/utils"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -73,7 +72,7 @@ func (m *Monitor) RecordUnary(ctx context.Context, p UnaryParams) {
 
 	attrs := make([]attribute.KeyValue, len(m.attributes))
 	copy(attrs, m.attributes)
-	attrs = append(attrs, attribute.String("rpc.grpc.status_text", utils.StatusText(p.Err)))
+	attrs = append(attrs, attribute.String("rpc.grpc.status_text", StatusText(p.Err)))
 	attrs = append(attrs, attribute.String("network.type", netTypeFromCtx(ctx)))
 	attrs = append(attrs, ParseFullMethod(p.Method)...)
 
@@ -93,7 +92,7 @@ func (m *Monitor) RecordUnary(ctx context.Context, p UnaryParams) {
 func (m *Monitor) RecordStream(ctx context.Context, start time.Time, method string, err error) {
 	attrs := make([]attribute.KeyValue, len(m.attributes))
 	copy(attrs, m.attributes)
-	attrs = append(attrs, attribute.String("rpc.grpc.status_text", utils.StatusText(err)))
+	attrs = append(attrs, attribute.String("rpc.grpc.status_text", StatusText(err)))
 	attrs = append(attrs, attribute.String("network.type", netTypeFromCtx(ctx)))
 	attrs = append(attrs, ParseFullMethod(method)...)
 

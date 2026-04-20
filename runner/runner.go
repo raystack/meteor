@@ -1,4 +1,4 @@
-package agent
+package runner
 
 import (
 	"context"
@@ -21,8 +21,8 @@ import (
 // TimerFn of function type
 type TimerFn func() func() int
 
-// Agent runs recipes for specified plugins.
-type Agent struct {
+// Runner runs recipes for specified plugins.
+type Runner struct {
 	extractorFactory *registry.ExtractorFactory
 	processorFactory *registry.ProcessorFactory
 	sinkFactory      *registry.SinkFactory
@@ -36,8 +36,8 @@ type Agent struct {
 	recordLimit      int
 }
 
-// NewAgent returns an Agent with plugin factories.
-func NewAgent(config Config) *Agent {
+// NewRunner returns a Runner with plugin factories.
+func NewRunner(config Config) *Runner {
 	mt := config.Monitor
 
 	timerFn := config.TimerFn
@@ -46,7 +46,7 @@ func NewAgent(config Config) *Agent {
 	}
 
 	retrier := newRetrier(config.MaxRetries, config.RetryInitialInterval)
-	return &Agent{
+	return &Runner{
 		extractorFactory: config.ExtractorFactory,
 		processorFactory: config.ProcessorFactory,
 		sinkFactory:      config.SinkFactory,
@@ -62,7 +62,7 @@ func NewAgent(config Config) *Agent {
 }
 
 // Validate checks the recipe for linting errors.
-func (r *Agent) Validate(rcp recipe.Recipe) []error {
+func (r *Runner) Validate(rcp recipe.Recipe) []error {
 	var errs []error
 	if ext, err := r.extractorFactory.Get(rcp.Source.Name); err != nil {
 		errs = append(errs, err)
@@ -101,7 +101,7 @@ func (r *Agent) Validate(rcp recipe.Recipe) []error {
 }
 
 // RunMultiple executes multiple recipes.
-func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run {
+func (r *Runner) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run {
 	var wg sync.WaitGroup
 	runs := make([]Run, len(recipes))
 
@@ -120,7 +120,7 @@ func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run 
 }
 
 // Run executes the specified recipe.
-func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
+func (r *Runner) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
 	run.DryRun = r.dryRun
 	run.EntityTypes = make(map[string]int)
@@ -253,7 +253,7 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	return run
 }
 
-func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
+func (r *Runner) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str *stream) (runFn func() error, err error) {
 	extractor, err := r.extractorFactory.Get(sr.Name)
 	if err != nil {
 		return nil, fmt.Errorf("find extractor %q: %w", sr.Name, err)
@@ -270,7 +270,7 @@ func (r *Agent) setupExtractor(ctx context.Context, sr recipe.PluginRecipe, str 
 	}, nil
 }
 
-func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream, recipeName string) (err error) {
+func (r *Runner) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str *stream, recipeName string) (err error) {
 	proc, err := r.processorFactory.Get(pr.Name)
 	if err != nil {
 		return fmt.Errorf("find processor %q: %w", pr.Name, err)
@@ -297,7 +297,7 @@ func (r *Agent) setupProcessor(ctx context.Context, pr recipe.PluginRecipe, str 
 	return nil
 }
 
-func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipeName string) error {
+func (r *Runner) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *stream, recipeName string) error {
 	pluginInfo := PluginInfo{
 		RecipeName: recipeName,
 		PluginName: sr.Name,
@@ -364,7 +364,7 @@ func (r *Agent) setupSink(ctx context.Context, sr recipe.PluginRecipe, stream *s
 	return nil
 }
 
-func (r *Agent) logAndRecordMetrics(ctx context.Context, run Run) {
+func (r *Runner) logAndRecordMetrics(ctx context.Context, run Run) {
 	if r.monitor != nil {
 		r.monitor.RecordRun(ctx, run)
 	}
@@ -384,7 +384,7 @@ func (r *Agent) logAndRecordMetrics(ctx context.Context, run Run) {
 }
 
 // enrichInvalidConfigError enrich the error with plugin information
-func (r *Agent) enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
+func (r *Runner) enrichInvalidConfigError(err error, pluginName string, pluginType plugins.PluginType) error {
 	var e plugins.InvalidConfigError
 	if !errors.As(err, &e) {
 		return err

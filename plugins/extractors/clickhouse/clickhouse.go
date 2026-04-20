@@ -9,7 +9,7 @@ import (
 	_ "github.com/ClickHouse/clickhouse-go" // clickhouse driver
 	"github.com/raystack/meteor/models"
 	"github.com/raystack/meteor/plugins"
-	"github.com/raystack/meteor/plugins/sqlutil"
+	"github.com/raystack/meteor/plugins/internal/sqlutil"
 	"github.com/raystack/meteor/registry"
 	log "github.com/raystack/salt/observability/logger"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"

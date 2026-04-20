@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/runner"
 	"github.com/raystack/meteor/config"
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/recipe"
@@ -61,7 +61,7 @@ func LintCmd() *cobra.Command {
 			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
 			plugins.SetLog(lg)
 
-			runner := agent.NewAgent(agent.Config{
+			rnr := runner.NewRunner(runner.Config{
 				ExtractorFactory: registry.Extractors,
 				ProcessorFactory: registry.Processors,
 				SinkFactory:      registry.Sinks,
@@ -81,7 +81,7 @@ func LintCmd() *cobra.Command {
 
 			// Run linters and generate report
 			for _, recipe := range recipes {
-				errs := runner.Validate(recipe)
+				errs := rnr.Validate(recipe)
 				var row []string
 				var icon string
 

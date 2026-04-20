@@ -1,11 +1,11 @@
-package utils
+package otelgrpc_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
-	"errors"
-
+	"github.com/raystack/meteor/metrics/otelgrpc"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,7 +40,7 @@ func TestStatusCode(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, StatusCode(tc.err))
+			assert.Equal(t, tc.expected, otelgrpc.StatusCode(tc.err))
 		})
 	}
 }

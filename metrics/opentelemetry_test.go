@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/runner"
 	"github.com/raystack/meteor/config"
 	"github.com/raystack/meteor/metrics"
 	"github.com/raystack/meteor/recipe"
@@ -34,7 +34,7 @@ func TestOtelMonitor_RecordRun(t *testing.T) {
 
 		monitor := metrics.NewOtelMonitor()
 
-		monitor.RecordRun(ctx, agent.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
+		monitor.RecordRun(ctx, runner.Run{Recipe: recipe, DurationInMs: duration, RecordCount: recordCount, Success: false})
 
 		assert.NotNil(t, monitor)
 		assert.NotNil(t, done)
@@ -64,7 +64,7 @@ func TestOtelMonitor_RecordPlugin(t *testing.T) {
 		monitor := metrics.NewOtelMonitor()
 
 		monitor.RecordPlugin(context.Background(),
-			agent.PluginInfo{
+			runner.PluginInfo{
 				RecipeName: recipe.Name,
 				PluginName: recipe.Sinks[0].Name,
 				PluginType: "sink",

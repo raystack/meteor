@@ -1,4 +1,4 @@
-package agent_test
+package runner_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/runner"
 	"github.com/raystack/meteor/models"
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"github.com/raystack/meteor/plugins"
@@ -45,16 +45,16 @@ var validRecipe = recipe.Recipe{
 	},
 }
 
-func TestAgentRun(t *testing.T) {
+func TestRunnerRun(t *testing.T) {
 	t.Run("should return run", func(t *testing.T) {
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      registry.NewSinkFactory(),
 			Logger:           utils.Logger,
 		})
 		run := r.Run(ctx, validRecipe)
-		assert.IsType(t, agent.Run{}, run)
+		assert.IsType(t, runner.Run{}, run)
 		assert.Equal(t, validRecipe, run.Recipe)
 	})
 
@@ -72,10 +72,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -103,10 +103,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      sf,
@@ -136,10 +136,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      registry.NewSinkFactory(),
@@ -173,10 +173,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -212,10 +212,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -253,10 +253,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -295,10 +295,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -336,10 +336,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -384,10 +384,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -431,10 +431,10 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -480,11 +480,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -530,11 +530,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -582,11 +582,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -645,11 +645,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -702,11 +702,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -757,11 +757,11 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory:     ef,
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
@@ -812,12 +812,12 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
-		monitor.On("RecordSinkRetryCount", mockCtx, mock.AnythingOfType("agent.PluginInfo"))
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
+		monitor.On("RecordSinkRetryCount", mockCtx, mock.AnythingOfType("runner.PluginInfo"))
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory:     ef,
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
@@ -872,12 +872,12 @@ func TestAgentRun(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", utils.OfTypeContext(), mock.AnythingOfType("agent.Run")).Once()
-		monitor.On("RecordPlugin", utils.OfTypeContext(), mock.AnythingOfType("agent.PluginInfo")).Maybe()
-		monitor.On("RecordSinkRetryCount", utils.OfTypeContext(), mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", utils.OfTypeContext(), mock.AnythingOfType("runner.Run")).Once()
+		monitor.On("RecordPlugin", utils.OfTypeContext(), mock.AnythingOfType("runner.PluginInfo")).Maybe()
+		monitor.On("RecordSinkRetryCount", utils.OfTypeContext(), mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory:     ef,
 			ProcessorFactory:     pf,
 			SinkFactory:          sf,
@@ -907,7 +907,7 @@ func TestAgentRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: registry.Extractors,
 			ProcessorFactory: registry.Processors,
 			SinkFactory:      sf,
@@ -968,7 +968,7 @@ func TestAgentRun(t *testing.T) {
 	})
 
 	t.Run("should close stream after sink finishes writing records", func(t *testing.T) {
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: registry.Extractors,
 			ProcessorFactory: registry.Processors,
 			SinkFactory:      registry.Sinks,
@@ -999,7 +999,7 @@ func TestAgentRun(t *testing.T) {
 	})
 }
 
-func TestAgentRunMultiple(t *testing.T) {
+func TestRunnerRunMultiple(t *testing.T) {
 	t.Run("should return list of runs when finished", func(t *testing.T) {
 		validRecipe2 := validRecipe
 		validRecipe2.Name = "sample-2"
@@ -1036,11 +1036,11 @@ func TestAgentRunMultiple(t *testing.T) {
 		}
 
 		monitor := newMockMonitor()
-		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("agent.Run"))
-		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("agent.PluginInfo")).Maybe()
+		monitor.On("RecordRun", mockCtx, mock.AnythingOfType("runner.Run"))
+		monitor.On("RecordPlugin", mockCtx, mock.AnythingOfType("runner.PluginInfo")).Maybe()
 		defer monitor.AssertExpectations(t)
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -1053,7 +1053,7 @@ func TestAgentRunMultiple(t *testing.T) {
 		for i := range runs {
 			runs[i].DurationInMs = 0
 		}
-		assert.Equal(t, []agent.Run{
+		assert.Equal(t, []runner.Run{
 			{Recipe: validRecipe, RecordCount: len(data), RecordsExtracted: 1, Success: true, EntityTypes: map[string]int{}},
 			{Recipe: validRecipe2, RecordCount: len(data), RecordsExtracted: 1, Success: true, EntityTypes: map[string]int{}},
 		}, runs)
@@ -1062,7 +1062,7 @@ func TestAgentRunMultiple(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	t.Run("should return error if plugins in recipe not found in Factory", func(t *testing.T) {
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: registry.NewExtractorFactory(),
 			ProcessorFactory: registry.NewProcessorFactory(),
 			SinkFactory:      registry.NewSinkFactory(),
@@ -1125,7 +1125,7 @@ func TestValidate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		r := agent.NewAgent(agent.Config{
+		r := runner.NewRunner(runner.Config{
 			ExtractorFactory: ef,
 			ProcessorFactory: pf,
 			SinkFactory:      sf,
@@ -1169,15 +1169,15 @@ func newMockMonitor() *mockMonitor {
 	return &mockMonitor{}
 }
 
-func (m *mockMonitor) RecordRun(ctx context.Context, run agent.Run) {
+func (m *mockMonitor) RecordRun(ctx context.Context, run runner.Run) {
 	m.Called(ctx, run)
 }
 
-func (m *mockMonitor) RecordPlugin(ctx context.Context, pluginInfo agent.PluginInfo) {
+func (m *mockMonitor) RecordPlugin(ctx context.Context, pluginInfo runner.PluginInfo) {
 	m.Called(ctx, pluginInfo)
 }
 
-func (m *mockMonitor) RecordSinkRetryCount(ctx context.Context, pluginInfo agent.PluginInfo) {
+func (m *mockMonitor) RecordSinkRetryCount(ctx context.Context, pluginInfo runner.PluginInfo) {
 	m.Called(ctx, pluginInfo)
 }
 

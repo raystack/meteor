@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/runner"
 	"github.com/raystack/meteor/config"
 	"github.com/raystack/meteor/metrics"
 	"github.com/raystack/meteor/plugins"
@@ -84,7 +84,7 @@ func RunCmd() *cobra.Command {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var mts agent.Monitor
+			var mts runner.Monitor
 
 			if cfg.OtelEnabled {
 				doneOtlp, err := metrics.InitOtel(ctx, cfg, lg, Version)
@@ -96,7 +96,7 @@ func RunCmd() *cobra.Command {
 				mts = metrics.NewOtelMonitor()
 			}
 
-			runner := agent.NewAgent(agent.Config{
+			rnr := runner.NewRunner(runner.Config{
 				ExtractorFactory:     registry.Extractors,
 				ProcessorFactory:     registry.Processors,
 				SinkFactory:          registry.Sinks,
@@ -137,7 +137,7 @@ func RunCmd() *cobra.Command {
 			)
 
 			// Run recipes and collect results
-			runs := runner.RunMultiple(ctx, recipes)
+			runs := rnr.RunMultiple(ctx, recipes)
 			for _, run := range runs {
 				lg.Debug("recipe details", "recipe", run.Recipe)
 				var row []string
@@ -201,7 +201,7 @@ func formatEntityTypes(types map[string]int) string {
 }
 
 // printRunErrors prints error details for failed runs.
-func printRunErrors(runs []agent.Run) {
+func printRunErrors(runs []runner.Run) {
 	for _, run := range runs {
 		if run.Error != nil {
 			fmt.Printf("  %s %s: %s\n", printer.Icon("failure"), run.Recipe.Name, run.Error)

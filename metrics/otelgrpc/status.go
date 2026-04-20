@@ -1,4 +1,4 @@
-package utils
+package otelgrpc
 
 import (
 	"errors"

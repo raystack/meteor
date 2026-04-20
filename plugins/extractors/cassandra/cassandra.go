@@ -7,7 +7,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/raystack/meteor/models"
-	"github.com/raystack/meteor/plugins/sqlutil"
+	"github.com/raystack/meteor/plugins/internal/sqlutil"
 
 	"github.com/raystack/meteor/plugins"
 	"github.com/raystack/meteor/registry"

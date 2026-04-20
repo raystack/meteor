@@ -3,7 +3,7 @@ package metrics
 import (
 	"context"
 
-	"github.com/raystack/meteor/agent"
+	"github.com/raystack/meteor/runner"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -41,7 +41,7 @@ func NewOtelMonitor() *OtelMonitor {
 }
 
 // RecordRun records a run behavior
-func (m *OtelMonitor) RecordRun(ctx context.Context, run agent.Run) {
+func (m *OtelMonitor) RecordRun(ctx context.Context, run runner.Run) {
 	m.recipeDuration.Record(ctx,
 		float64(run.DurationInMs)/1000.0,
 		metric.WithAttributes(
@@ -70,9 +70,9 @@ func (m *OtelMonitor) RecordRun(ctx context.Context, run agent.Run) {
 }
 
 // RecordPlugin records a individual plugin behavior in a run, this is being handled in otelmw
-func (*OtelMonitor) RecordPlugin(context.Context, agent.PluginInfo) {}
+func (*OtelMonitor) RecordPlugin(context.Context, runner.PluginInfo) {}
 
-func (m *OtelMonitor) RecordSinkRetryCount(ctx context.Context, pluginInfo agent.PluginInfo) {
+func (m *OtelMonitor) RecordSinkRetryCount(ctx context.Context, pluginInfo runner.PluginInfo) {
 	m.sinkRetries.Add(ctx,
 		1,
 		metric.WithAttributes(

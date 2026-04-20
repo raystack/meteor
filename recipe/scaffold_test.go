@@ -1,12 +1,12 @@
-package generator_test
+package recipe_test
 
 import (
 	"bytes"
 	_ "embed"
 	"testing"
 
-	"github.com/raystack/meteor/generator"
 	"github.com/raystack/meteor/plugins"
+	"github.com/raystack/meteor/recipe"
 	"github.com/raystack/meteor/registry"
 	"github.com/raystack/meteor/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ import (
 
 var recipeVersions = [1]string{"v1beta1"}
 
-func TestRecipe(t *testing.T) {
+func TestScaffold(t *testing.T) {
 	var err error
 	err = registry.Extractors.Register("test-extractor", func() plugins.Extractor {
 		extr := mocks.NewExtractor()
@@ -47,22 +47,22 @@ func TestRecipe(t *testing.T) {
 	assert.NoError(t, err)
 
 	type args struct {
-		p generator.RecipeParams
+		p recipe.ScaffoldParams
 	}
 	tests := []struct {
 		name        string
 		args        args
-		expected    *generator.TemplateData
+		expected    *recipe.ScaffoldData
 		expectedErr string
 	}{
 		{
 			name: "success with minimal params",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name: "test-name",
 				},
 			},
-			expected: &generator.TemplateData{
+			expected: &recipe.ScaffoldData{
 				Name:    "test-name",
 				Version: recipeVersions[len(recipeVersions)-1],
 			},
@@ -70,14 +70,14 @@ func TestRecipe(t *testing.T) {
 		{
 			name: "success with full params",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name:       "test-name",
 					Source:     "test-extractor",
 					Sinks:      []string{"test-sink"},
 					Processors: []string{"test-processor"},
 				},
 			},
-			expected: &generator.TemplateData{
+			expected: &recipe.ScaffoldData{
 				Name:    "test-name",
 				Version: recipeVersions[len(recipeVersions)-1],
 				Source: struct {
@@ -98,7 +98,7 @@ func TestRecipe(t *testing.T) {
 		{
 			name: "error with invalid source",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name:   "test-name",
 					Source: "invalid-source",
 				},
@@ -109,7 +109,7 @@ func TestRecipe(t *testing.T) {
 		{
 			name: "error with invalid sinks",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name:  "test-name",
 					Sinks: []string{"invalid-sink"},
 				},
@@ -120,7 +120,7 @@ func TestRecipe(t *testing.T) {
 		{
 			name: "error with invalid processors",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name:       "test-name",
 					Processors: []string{"invalid-processor"},
 				},
@@ -131,7 +131,7 @@ func TestRecipe(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := generator.Recipe(tt.args.p)
+			actual, err := recipe.Scaffold(tt.args.p)
 			if tt.expectedErr != "" {
 				assert.ErrorContains(t, err, tt.expectedErr)
 				return
@@ -143,9 +143,9 @@ func TestRecipe(t *testing.T) {
 	}
 }
 
-func TestRecipeWriteTo(t *testing.T) {
+func TestScaffoldWriteTo(t *testing.T) {
 	type args struct {
-		p generator.RecipeParams
+		p recipe.ScaffoldParams
 	}
 	tests := []struct {
 		name           string
@@ -156,24 +156,18 @@ func TestRecipeWriteTo(t *testing.T) {
 		{
 			name: "success with minimal params",
 			args: args{
-				p: generator.RecipeParams{
+				p: recipe.ScaffoldParams{
 					Name: "test-name",
 				},
 			},
-			expectedWriter: `name: test-name
-version: v1beta1
-source:
-  name: 
-  config:     
-    
-`,
+			expectedWriter: "name: test-name\nversion: v1beta1\nsource:\n  name: \n  config:     \n    \n",
 			expectedErr: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			writer := &bytes.Buffer{}
-			err := generator.RecipeWriteTo(tt.args.p, writer)
+			err := recipe.ScaffoldWriteTo(tt.args.p, writer)
 			if tt.expectedErr != "" {
 				assert.ErrorContains(t, err, tt.expectedErr)
 				return
@@ -195,7 +189,7 @@ func TestGetRecipeVersions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := generator.GetRecipeVersions()
+			actual := recipe.GetRecipeVersions()
 			assert.Equal(t, tt.expected, actual)
 		})
 	}

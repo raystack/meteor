@@ -8,7 +8,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/raystack/meteor/generator"
 	log "github.com/raystack/salt/observability/logger"
 	"gopkg.in/yaml.v3"
 )
@@ -74,7 +73,7 @@ func (r *Reader) readFile(path string) (Recipe, error) {
 		node.Name.Value = fileName
 	}
 
-	versions := generator.GetRecipeVersions()
+	versions := GetRecipeVersions()
 	err = validateRecipeVersion(node.Version.Value, versions[len(versions)-1])
 	if err != nil {
 		return Recipe{}, err

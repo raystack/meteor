@@ -1,4 +1,4 @@
-package agent
+package runner
 
 import (
 	"context"
@@ -12,7 +12,7 @@ type PluginInfo struct {
 	BatchSize  int
 }
 
-// Monitor is the interface for monitoring the agent.
+// Monitor is the interface for monitoring the runner.
 type Monitor interface {
 	RecordRun(ctx context.Context, run Run)
 	RecordPlugin(ctx context.Context, pluginInfo PluginInfo)

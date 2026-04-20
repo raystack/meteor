@@ -1,4 +1,4 @@
-package generator
+package recipe
 
 import (
 	_ "embed"
@@ -11,10 +11,10 @@ import (
 )
 
 //go:embed recipe.yaml
-var RecipeTemplate string
+var ScaffoldTemplate string
 
-// TemplateData represents the template for generating a recipe.
-type TemplateData struct {
+// ScaffoldData represents the template for generating a recipe.
+type ScaffoldData struct {
 	Name    string
 	Version string
 	Source  struct {
@@ -26,14 +26,14 @@ type TemplateData struct {
 	Processors map[string]string
 }
 
-var TemplateFuncs = map[string]any{
+var ScaffoldFuncs = map[string]any{
 	"indent": indent,
 	"rawfmt": rawfmt,
 }
 
 var recipeVersions = [1]string{"v1beta1"}
 
-type RecipeParams struct {
+type ScaffoldParams struct {
 	Name       string
 	Source     string
 	Scope      string
@@ -41,9 +41,9 @@ type RecipeParams struct {
 	Processors []string
 }
 
-// Recipe checks if the recipe is valid and returns a Template
-func Recipe(p RecipeParams) (*TemplateData, error) {
-	tem := &TemplateData{
+// Scaffold checks if the recipe is valid and returns a ScaffoldData
+func Scaffold(p ScaffoldParams) (*ScaffoldData, error) {
+	tem := &ScaffoldData{
 		Name:    p.Name,
 		Version: recipeVersions[len(recipeVersions)-1],
 	}
@@ -83,14 +83,14 @@ func Recipe(p RecipeParams) (*TemplateData, error) {
 	return tem, nil
 }
 
-// RecipeWriteTo build and apply recipe to provided io writer
-func RecipeWriteTo(p RecipeParams, writer io.Writer) error {
-	tem, err := Recipe(p)
+// ScaffoldWriteTo build and apply recipe to provided io writer
+func ScaffoldWriteTo(p ScaffoldParams, writer io.Writer) error {
+	tem, err := Scaffold(p)
 	if err != nil {
 		return err
 	}
 	tmpl := template.Must(
-		template.New("recipe.yaml").Funcs(TemplateFuncs).Parse(RecipeTemplate),
+		template.New("recipe.yaml").Funcs(ScaffoldFuncs).Parse(ScaffoldTemplate),
 	)
 	if err := tmpl.Execute(writer, *tem); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)

@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/googleapis/gax-go/v2/apierror"
-	"github.com/raystack/meteor/utils"
+	"github.com/raystack/meteor/metrics/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -107,7 +107,7 @@ func (o *InstanceAdminClientMW) Instances(ctx context.Context) (res []*bigtable.
 }
 
 func apiErrReason(err error) string {
-	reason := utils.StatusCode(err).String()
+	reason := otelgrpc.StatusCode(err).String()
 	var apiErr *apierror.APIError
 	if errors.As(err, &apiErr) {
 		reason = apiErr.Reason()

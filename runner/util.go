@@ -1,4 +1,4 @@
-package agent
+package runner
 
 import (
 	"github.com/raystack/meteor/plugins"
