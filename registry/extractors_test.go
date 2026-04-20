@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/raystack/meteor/plugins"
@@ -18,7 +19,11 @@ func TestExtractorFactoryGet(t *testing.T) {
 			t.Error(err.Error())
 		}
 		_, err := factory.Get(name)
-		assert.Equal(t, plugins.NotFoundError{Type: "extractor", Name: name}, err)
+		var nfErr plugins.NotFoundError
+		assert.ErrorAs(t, err, &nfErr)
+		assert.Equal(t, plugins.PluginTypeExtractor, nfErr.Type)
+		assert.Equal(t, name, nfErr.Name)
+		assert.NotEmpty(t, nfErr.Available)
 	})
 
 	t.Run("should return a new instance of extractor with given name", func(t *testing.T) {
@@ -97,7 +102,11 @@ func TestExtractorFactoryInfo(t *testing.T) {
 			t.Error(err.Error())
 		}
 		_, err = factory.Info("mock")
-		assert.Equal(t, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "mock"}, err)
+		var nfErr plugins.NotFoundError
+		assert.True(t, errors.As(err, &nfErr))
+		assert.Equal(t, plugins.PluginTypeExtractor, nfErr.Type)
+		assert.Equal(t, "mock", nfErr.Name)
+		assert.Contains(t, nfErr.Available, "mock1")
 	})
 }
 

@@ -18,4 +18,6 @@ type Config struct {
 	StopOnSinkError      bool
 	TimerFn              TimerFn
 	SinkBatchSize        int
+	DryRun               bool
+	RecordLimit          int
 }

@@ -16,7 +16,15 @@ func (f *ExtractorFactory) Get(name string) (plugins.Extractor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: name, Available: f.names()}
+}
+
+func (f *ExtractorFactory) names() []string {
+	names := make([]string, 0, len(f.fnStore))
+	for n := range f.fnStore {
+		names = append(names, n)
+	}
+	return names
 }
 
 // Info returns information about an Extractor.

@@ -1054,8 +1054,8 @@ func TestAgentRunMultiple(t *testing.T) {
 			runs[i].DurationInMs = 0
 		}
 		assert.Equal(t, []agent.Run{
-			{Recipe: validRecipe, RecordCount: len(data), AssetsExtracted: 1, Success: true},
-			{Recipe: validRecipe2, RecordCount: len(data), AssetsExtracted: 1, Success: true},
+			{Recipe: validRecipe, RecordCount: len(data), RecordsExtracted: 1, Success: true, EntityTypes: map[string]int{}},
+			{Recipe: validRecipe2, RecordCount: len(data), RecordsExtracted: 1, Success: true, EntityTypes: map[string]int{}},
 		}, runs)
 	})
 }
@@ -1068,13 +1068,11 @@ func TestValidate(t *testing.T) {
 			SinkFactory:      registry.NewSinkFactory(),
 			Logger:           utils.Logger,
 		})
-		var expectedErrs []error
 		errs := r.Validate(validRecipe)
-		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "test-extractor"})
-		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: "test-sink"})
-		expectedErrs = append(expectedErrs, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: "test-processor"})
 		assert.Equal(t, 3, len(errs))
-		assert.Equal(t, expectedErrs, errs)
+		assert.ErrorIs(t, errs[0], plugins.NotFoundError{Type: plugins.PluginTypeExtractor, Name: "test-extractor"})
+		assert.ErrorIs(t, errs[1], plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: "test-sink"})
+		assert.ErrorIs(t, errs[2], plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: "test-processor"})
 	})
 	t.Run("", func(t *testing.T) {
 		invalidRecipe := recipe.Recipe{

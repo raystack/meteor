@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/raystack/meteor/agent"
@@ -22,9 +23,10 @@ func LintCmd() *cobra.Command {
 		report   [][]string
 		success  = 0
 		failures = 0
+		logLevel string
 	)
 
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:     "lint [path]",
 		Aliases: []string{"l"},
 		Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
@@ -50,6 +52,10 @@ func LintCmd() *cobra.Command {
 			cfg, err := config.Load("./meteor.yaml")
 			if err != nil {
 				return err
+			}
+
+			if logLevel != "" {
+				cfg.LogLevel = logLevel
 			}
 
 			lg := log.NewLogrus(log.LogrusWithLevel(cfg.LogLevel))
@@ -104,6 +110,10 @@ func LintCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&logLevel, "log-level", "", "Override log level (debug, info, warn, error)")
+
+	return cmd
 }
 
 // printLintErrors prints the recipe errors
@@ -149,7 +159,13 @@ func printPluginErrors(rcp recipe.Recipe, err plugins.NotFoundError) {
 // printPluginError prints the plugin type error
 func printPluginError(rcp recipe.Recipe, plugin recipe.PluginRecipe, err plugins.NotFoundError) {
 	line := plugin.Node.Name.Line
-	fmt.Printf("%s: invalid '%s' %s on line: %d\n", rcp.Name, err.Name, err.Type, line)
+	fmt.Printf("%s: %s %q not found (line %d)\n", rcp.Name, err.Type, err.Name, line)
+	if suggestions := err.Error(); strings.Contains(suggestions, "Did you mean") {
+		// Extract suggestion portion from the error message.
+		fmt.Printf("  %s\n", suggestions[strings.Index(suggestions, "Did you mean"):])
+	} else {
+		fmt.Printf("  Run 'meteor plugins list --type %s' to see available plugins.\n", err.Type)
+	}
 }
 
 // printConfigErrors print the plugin's config error
@@ -179,16 +195,17 @@ func printConfigError(rcp recipe.Recipe, pluginNode recipe.PluginNode, err plugi
 		if ok {
 			line := cfg.Line
 			fmt.Printf(
-				"%s: invalid %s %s config on line: %d: %s\n",
+				"%s: %s %s config error on line %d: %s\n",
 				rcp.Name, err.PluginName, err.Type, line, cfgErr.Message,
 			)
 		} else {
 			fmt.Printf(
-				"%s: invalid %s %s config: %s\n",
+				"%s: %s %s config error: %s\n",
 				rcp.Name, err.PluginName, err.Type, cfgErr.Message,
 			)
 		}
 	}
+	fmt.Printf("  Run 'meteor plugins info %s' to see the expected config.\n", err.PluginName)
 }
 
 // findPluginByName checks plugin by provided name

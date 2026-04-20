@@ -19,7 +19,7 @@ func New() *cobra.Command {
 			$ meteor lint recipe.yaml
 			$ meteor plugins list
 			$ meteor plugins info bigquery
-			$ meteor recipe init sample -e bigquery -s compass
+			$ meteor recipe init sample -n mycompany -e bigquery -s compass
 		`),
 		Annotations: map[string]string{
 			"group": "core",

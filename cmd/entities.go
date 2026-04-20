@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -14,7 +15,9 @@ import (
 
 // EntitiesCmd creates a command to list entity types across all extractors.
 func EntitiesCmd() *cobra.Command {
-	return &cobra.Command{
+	var format string
+
+	cmd := &cobra.Command{
 		Use:   "entities",
 		Short: "List entity types across all extractors",
 		Long: heredoc.Doc(`
@@ -24,6 +27,7 @@ func EntitiesCmd() *cobra.Command {
 		`),
 		Example: heredoc.Doc(`
 			$ meteor entities
+			$ meteor entities --format json
 		`),
 		Annotations: map[string]string{
 			"group": "core",
@@ -44,6 +48,23 @@ func EntitiesCmd() *cobra.Command {
 			}
 			sort.Strings(types)
 
+			if format == "json" {
+				type entityJSON struct {
+					Type       string   `json:"type"`
+					Extractors []string `json:"extractors"`
+				}
+				var result []entityJSON
+				for _, t := range types {
+					names := entityMap[t]
+					sort.Strings(names)
+					result = append(result, entityJSON{Type: t, Extractors: names})
+				}
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "  ")
+				_ = enc.Encode(result)
+				return
+			}
+
 			fmt.Printf("\n%s %d entity types\n\n", printer.Greenf("Showing"), len(types))
 
 			report := [][]string{}
@@ -58,11 +79,17 @@ func EntitiesCmd() *cobra.Command {
 			printer.Table(os.Stdout, report)
 		},
 	}
+
+	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
+
+	return cmd
 }
 
 // EdgesCmd creates a command to list edge types across all extractors.
 func EdgesCmd() *cobra.Command {
-	return &cobra.Command{
+	var format string
+
+	cmd := &cobra.Command{
 		Use:   "edges",
 		Short: "List edge types across all extractors",
 		Long: heredoc.Doc(`
@@ -72,6 +99,7 @@ func EdgesCmd() *cobra.Command {
 		`),
 		Example: heredoc.Doc(`
 			$ meteor edges
+			$ meteor edges --format json
 		`),
 		Annotations: map[string]string{
 			"group": "core",
@@ -101,6 +129,25 @@ func EdgesCmd() *cobra.Command {
 			}
 			sort.Strings(types)
 
+			if format == "json" {
+				type edgeJSON struct {
+					Type       string   `json:"type"`
+					From       string   `json:"from"`
+					To         string   `json:"to"`
+					Extractors []string `json:"extractors"`
+				}
+				var result []edgeJSON
+				for _, t := range types {
+					e := edgeMap[t]
+					sort.Strings(e.extractors)
+					result = append(result, edgeJSON{Type: t, From: e.from, To: e.to, Extractors: e.extractors})
+				}
+				enc := json.NewEncoder(os.Stdout)
+				enc.SetIndent("", "  ")
+				_ = enc.Encode(result)
+				return
+			}
+
 			fmt.Printf("\n%s %d edge types\n\n", printer.Greenf("Showing"), len(types))
 
 			report := [][]string{}
@@ -116,4 +163,8 @@ func EdgesCmd() *cobra.Command {
 			printer.Table(os.Stdout, report)
 		},
 	}
+
+	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
+
+	return cmd
 }

@@ -32,6 +32,8 @@ type Agent struct {
 	stopOnSinkError  bool
 	timerFn          TimerFn
 	sinkBatchSize    int
+	dryRun           bool
+	recordLimit      int
 }
 
 // NewAgent returns an Agent with plugin factories.
@@ -54,6 +56,8 @@ func NewAgent(config Config) *Agent {
 		retrier:          retrier,
 		timerFn:          timerFn,
 		sinkBatchSize:    config.SinkBatchSize,
+		dryRun:           config.DryRun,
+		recordLimit:      config.RecordLimit,
 	}
 }
 
@@ -118,53 +122,88 @@ func (r *Agent) RunMultiple(ctx context.Context, recipes []recipe.Recipe) []Run 
 // Run executes the specified recipe.
 func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 	run.Recipe = recipe
+	run.DryRun = r.dryRun
+	run.EntityTypes = make(map[string]int)
 	r.logger.Info("running recipe", "recipe", run.Recipe.Name)
+
+	if r.dryRun {
+		r.logger.Info("dry-run mode: sinks will be skipped", "recipe", run.Recipe.Name)
+	}
 
 	var (
 		getDuration       = r.timerFn()
 		stream            = newStream()
 		recordCnt         int64
 		extractorRetryCnt int64
+		entityMu          sync.Mutex
+		limitCtx          = ctx
+		limitCancel       context.CancelFunc
 	)
+
+	if r.recordLimit > 0 {
+		limitCtx, limitCancel = context.WithCancel(ctx)
+		defer limitCancel()
+	}
 
 	defer func() {
 		run.DurationInMs = getDuration()
 		run.ExtractorRetries = int(extractorRetryCnt)
-		run.AssetsExtracted = int(recordCnt)
+		run.RecordsExtracted = int(recordCnt)
 		r.logAndRecordMetrics(ctx, run)
 	}()
 
-	runExtractor, err := r.setupExtractor(ctx, recipe.Source, stream)
+	runExtractor, err := r.setupExtractor(limitCtx, recipe.Source, stream)
 	if err != nil {
-		run.Error = fmt.Errorf("setup extractor: %w", err)
+		run.Error = fmt.Errorf("setup extractor %q: %w", recipe.Source.Name, err)
 		return run
 	}
 
 	for _, pr := range recipe.Processors {
 		if err := r.setupProcessor(ctx, pr, stream, recipe.Name); err != nil {
-			run.Error = fmt.Errorf("setup processor: %w", err)
+			run.Error = fmt.Errorf("setup processor %q: %w", pr.Name, err)
 			return run
 		}
 	}
 
-	for _, sr := range recipe.Sinks {
-		err := r.setupSink(ctx, sr, stream, recipe.Name)
-		if err != nil {
-			run.Error = fmt.Errorf("setup sink: %w", err)
-			return run
+	if !r.dryRun {
+		for _, sr := range recipe.Sinks {
+			err := r.setupSink(ctx, sr, stream, recipe.Name)
+			if err != nil {
+				run.Error = fmt.Errorf("setup sink %q: %w", sr.Name, err)
+				return run
+			}
 		}
+	} else {
+		// In dry-run mode, add a no-op subscriber so the stream pipeline works.
+		stream.subscribe(func(records []models.Record) error {
+			return nil
+		}, 1)
 	}
 
-	// to gather total number of records extracted
+	// to gather total number of records extracted and track entity types
 	stream.setMiddleware(func(src models.Record) (models.Record, error) {
-		atomic.AddInt64(&recordCnt, 1)
+		cnt := atomic.AddInt64(&recordCnt, 1)
 		r.logger.Info("Successfully extracted record", "record", src.Entity().GetUrn(), "recipe", recipe.Name)
+
+		if etype := src.Entity().GetType(); etype != "" {
+			entityMu.Lock()
+			run.EntityTypes[etype]++
+			entityMu.Unlock()
+		}
+
+		if r.recordLimit > 0 && int(cnt) >= r.recordLimit {
+			r.logger.Info("record limit reached, stopping extraction", "limit", r.recordLimit, "recipe", recipe.Name)
+			if limitCancel != nil {
+				limitCancel()
+			}
+		}
+
 		return src, nil
 	})
 
 	// a goroutine to shut down stream gracefully
 	go func() {
-		<-ctx.Done()
+		<-limitCtx.Done()
 		r.logger.Info("force closing run", "recipe", recipe.Name)
 		stream.Close()
 	}()
@@ -192,11 +231,11 @@ func (r *Agent) Run(ctx context.Context, recipe recipe.Recipe) (run Run) {
 		}
 
 		err := r.retrier.retry(
-			ctx,
+			limitCtx,
 			func() error { return runExtractor() },
 			retryNotification,
 		)
-		if err != nil {
+		if err != nil && limitCtx.Err() == nil {
 			run.Error = fmt.Errorf("run extractor: %w", err)
 		}
 	}()

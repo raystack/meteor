@@ -16,7 +16,15 @@ func (f *SinkFactory) Get(name string) (plugins.Syncer, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeSink, Name: name, Available: f.names()}
+}
+
+func (f *SinkFactory) names() []string {
+	names := make([]string, 0, len(f.fnStore))
+	for n := range f.fnStore {
+		names = append(names, n)
+	}
+	return names
 }
 
 // Info returns information about a Sink.

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -34,6 +35,7 @@ func pluginsListCmd() *cobra.Command {
 		entityType string
 		edgeType   string
 		tag        string
+		format     string
 	)
 
 	cmd := &cobra.Command{
@@ -53,6 +55,7 @@ func pluginsListCmd() *cobra.Command {
 			$ meteor plugins list --entity-type table
 			$ meteor plugins list --edge-type derived_from
 			$ meteor plugins list --tag gcp
+			$ meteor plugins list --format json
 		`),
 		Annotations: map[string]string{
 			"group": "core",
@@ -67,6 +70,11 @@ func pluginsListCmd() *cobra.Command {
 				showSinks = false
 				showProcessors = false
 				showExtractors = true
+			}
+
+			if format == "json" {
+				printPluginListJSON(showExtractors, showSinks, showProcessors, entityType, edgeType, tag)
+				return
 			}
 
 			if showExtractors {
@@ -85,12 +93,16 @@ func pluginsListCmd() *cobra.Command {
 	cmd.Flags().StringVar(&entityType, "entity-type", "", "Filter extractors by entity type (e.g. table, dashboard)")
 	cmd.Flags().StringVar(&edgeType, "edge-type", "", "Filter extractors by edge type (e.g. derived_from, owned_by)")
 	cmd.Flags().StringVar(&tag, "tag", "", "Filter extractors by tag (e.g. gcp, oss, database)")
+	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
 
 	return cmd
 }
 
 func pluginsInfoCmd() *cobra.Command {
-	var full bool
+	var (
+		full   bool
+		format string
+	)
 
 	cmd := &cobra.Command{
 		Use:   "info [name]",
@@ -107,6 +119,7 @@ func pluginsInfoCmd() *cobra.Command {
 			$ meteor plugins info enrich
 			$ meteor plugins info kafka
 			$ meteor plugins info bigquery --full
+			$ meteor plugins info bigquery --format json
 		`),
 		Args: cobra.MaximumNArgs(1),
 		Annotations: map[string]string{
@@ -116,6 +129,10 @@ func pluginsInfoCmd() *cobra.Command {
 			name, err := resolvePluginName(args)
 			if err != nil {
 				return err
+			}
+
+			if format == "json" {
+				return printPluginInfoJSON(name)
 			}
 
 			found := false
@@ -166,6 +183,7 @@ func pluginsInfoCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&full, "full", false, "Show full markdown documentation")
+	cmd.Flags().StringVarP(&format, "format", "f", "table", "Output format (table, json)")
 
 	return cmd
 }
@@ -268,6 +286,146 @@ func printPluginList(label string, items map[string]plugins.Info) {
 		})
 	}
 	printer.Table(os.Stdout, report)
+}
+
+// pluginJSON is used for JSON output of plugin information.
+type pluginJSON struct {
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags,omitempty"`
+	Entities    []string `json:"entities,omitempty"`
+	Edges       []string `json:"edges,omitempty"`
+}
+
+// pluginInfoJSON is used for detailed JSON output of a single plugin.
+type pluginInfoJSON struct {
+	Name         string             `json:"name"`
+	Type         string             `json:"type"`
+	Description  string             `json:"description"`
+	Tags         []string           `json:"tags,omitempty"`
+	Entities     []plugins.EntityInfo `json:"entities,omitempty"`
+	Edges        []plugins.EdgeInfo   `json:"edges,omitempty"`
+	SampleConfig string             `json:"sample_config,omitempty"`
+}
+
+func printPluginListJSON(showExtractors, showSinks, showProcessors bool, entityType, edgeType, tag string) {
+	var result []pluginJSON
+
+	if showExtractors {
+		for n, i := range registry.Extractors.List() {
+			if !matchFilters(i, entityType, edgeType, tag) {
+				continue
+			}
+			result = append(result, pluginJSON{
+				Name:        n,
+				Type:        "extractor",
+				Description: i.Description,
+				Tags:        i.Tags,
+				Entities:    entityTypeList(i.Entities),
+				Edges:       edgeTypeList(i.Edges),
+			})
+		}
+	}
+	if showSinks {
+		for n, i := range registry.Sinks.List() {
+			result = append(result, pluginJSON{
+				Name:        n,
+				Type:        "sink",
+				Description: i.Description,
+				Tags:        i.Tags,
+			})
+		}
+	}
+	if showProcessors {
+		for n, i := range registry.Processors.List() {
+			result = append(result, pluginJSON{
+				Name:        n,
+				Type:        "processor",
+				Description: i.Description,
+				Tags:        i.Tags,
+			})
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Type != result[j].Type {
+			return result[i].Type < result[j].Type
+		}
+		return result[i].Name < result[j].Name
+	})
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(result)
+}
+
+func printPluginInfoJSON(name string) error {
+	var result []pluginInfoJSON
+
+	if info, err := registry.Extractors.Info(name); err == nil {
+		result = append(result, pluginInfoJSON{
+			Name:         name,
+			Type:         "extractor",
+			Description:  info.Description,
+			Tags:         info.Tags,
+			Entities:     info.Entities,
+			Edges:        info.Edges,
+			SampleConfig: info.SampleConfig,
+		})
+	}
+	if info, err := registry.Sinks.Info(name); err == nil {
+		result = append(result, pluginInfoJSON{
+			Name:         name,
+			Type:         "sink",
+			Description:  info.Description,
+			Tags:         info.Tags,
+			Entities:     info.Entities,
+			Edges:        info.Edges,
+			SampleConfig: info.SampleConfig,
+		})
+	}
+	if info, err := registry.Processors.Info(name); err == nil {
+		result = append(result, pluginInfoJSON{
+			Name:         name,
+			Type:         "processor",
+			Description:  info.Description,
+			Tags:         info.Tags,
+			Entities:     info.Entities,
+			Edges:        info.Edges,
+			SampleConfig: info.SampleConfig,
+		})
+	}
+
+	if len(result) == 0 {
+		return fmt.Errorf("plugin %q not found", name)
+	}
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(result)
+}
+
+func entityTypeList(entities []plugins.EntityInfo) []string {
+	if len(entities) == 0 {
+		return nil
+	}
+	names := make([]string, len(entities))
+	for i, e := range entities {
+		names[i] = e.Type
+	}
+	return names
+}
+
+func edgeTypeList(edges []plugins.EdgeInfo) []string {
+	if len(edges) == 0 {
+		return nil
+	}
+	names := make([]string, len(edges))
+	for i, e := range edges {
+		names[i] = e.Type
+	}
+	return names
 }
 
 func printStructuredPluginInfo(name, pluginType string, info plugins.Info) {

@@ -59,7 +59,7 @@ func buildConfig(configMap map[string]any, c any) (err error) {
 			key := strings.TrimPrefix(fieldErr.Namespace(), "Config.")
 			configErrors = append(configErrors, ConfigError{
 				Key:     key,
-				Message: fmt.Sprintf("validation for field '%s' failed on the '%s' tag", key, fieldErr.Tag()),
+				Message: humanizeValidationError(fieldErr, key),
 			})
 		}
 		return InvalidConfigError{
@@ -154,6 +154,31 @@ func BQErrReason(err error) string {
 	}
 
 	return reason
+}
+
+func humanizeValidationError(fe validator.FieldError, key string) string {
+	switch fe.Tag() {
+	case "required":
+		return fmt.Sprintf("field '%s' is required", key)
+	case "url":
+		return fmt.Sprintf("field '%s' must be a valid URL (e.g. https://example.com), got %q", key, fe.Value())
+	case "oneof":
+		return fmt.Sprintf("field '%s' must be one of [%s], got %q", key, fe.Param(), fe.Value())
+	case "min":
+		return fmt.Sprintf("field '%s' must be at least %s", key, fe.Param())
+	case "max":
+		return fmt.Sprintf("field '%s' must be at most %s", key, fe.Param())
+	case "gt":
+		return fmt.Sprintf("field '%s' must be greater than %s", key, fe.Param())
+	case "gte":
+		return fmt.Sprintf("field '%s' must be greater than or equal to %s", key, fe.Param())
+	case "email":
+		return fmt.Sprintf("field '%s' must be a valid email address, got %q", key, fe.Value())
+	case "hostname":
+		return fmt.Sprintf("field '%s' must be a valid hostname, got %q", key, fe.Value())
+	default:
+		return fmt.Sprintf("field '%s' failed validation: %s=%s", key, fe.Tag(), fe.Param())
+	}
 }
 
 func parseBQTableFQN(fqn string) (projectID, datasetID, tableID string, err error) {

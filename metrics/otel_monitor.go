@@ -13,7 +13,7 @@ import (
 type OtelMonitor struct {
 	recipeDuration   metric.Float64Histogram
 	extractorRetries metric.Int64Counter
-	assetsExtracted  metric.Int64Counter
+	recordsExtracted  metric.Int64Counter
 	sinkRetries      metric.Int64Counter
 }
 
@@ -26,7 +26,7 @@ func NewOtelMonitor() *OtelMonitor {
 	extractorRetries, err := meter.Int64Counter("meteor.extractor.retries")
 	handleOtelErr(err)
 
-	assetsExtracted, err := meter.Int64Counter("meteor.assets.extracted")
+	recordsExtracted, err := meter.Int64Counter("meteor.assets.extracted")
 	handleOtelErr(err)
 
 	sinkRetries, err := meter.Int64Counter("meteor.sink.retries")
@@ -35,7 +35,7 @@ func NewOtelMonitor() *OtelMonitor {
 	return &OtelMonitor{
 		recipeDuration:   recipeDuration,
 		extractorRetries: extractorRetries,
-		assetsExtracted:  assetsExtracted,
+		recordsExtracted:  recordsExtracted,
 		sinkRetries:      sinkRetries,
 	}
 }
@@ -59,8 +59,8 @@ func (m *OtelMonitor) RecordRun(ctx context.Context, run agent.Run) {
 			attribute.String("extractor", run.Recipe.Source.Name),
 		))
 
-	m.assetsExtracted.Add(ctx,
-		int64(run.AssetsExtracted),
+	m.recordsExtracted.Add(ctx,
+		int64(run.RecordsExtracted),
 		metric.WithAttributes(
 			attribute.String("recipe_name", run.Recipe.Name),
 			attribute.String("extractor", run.Recipe.Source.Name),

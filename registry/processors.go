@@ -16,7 +16,15 @@ func (f *ProcessorFactory) Get(name string) (plugins.Processor, error) {
 	if fn, ok := f.fnStore[name]; ok {
 		return fn(), nil
 	}
-	return nil, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: name}
+	return nil, plugins.NotFoundError{Type: plugins.PluginTypeProcessor, Name: name, Available: f.names()}
+}
+
+func (f *ProcessorFactory) names() []string {
+	names := make([]string, 0, len(f.fnStore))
+	for n := range f.fnStore {
+		names = append(names, n)
+	}
+	return names
 }
 
 // Info returns information about a Processor.
