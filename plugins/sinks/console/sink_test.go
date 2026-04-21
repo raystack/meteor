@@ -21,6 +21,30 @@ func TestInit(t *testing.T) {
 		err := sink.Init(context.Background(), plugins.Config{RawConfig: map[string]interface{}{}})
 		assert.NoError(t, err)
 	})
+
+	t.Run("should accept json format", func(t *testing.T) {
+		sink := console.New(testutils.Logger)
+		err := sink.Init(context.Background(), plugins.Config{RawConfig: map[string]interface{}{
+			"format": "json",
+		}})
+		assert.NoError(t, err)
+	})
+
+	t.Run("should accept markdown format", func(t *testing.T) {
+		sink := console.New(testutils.Logger)
+		err := sink.Init(context.Background(), plugins.Config{RawConfig: map[string]interface{}{
+			"format": "markdown",
+		}})
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error for invalid format", func(t *testing.T) {
+		sink := console.New(testutils.Logger)
+		err := sink.Init(context.Background(), plugins.Config{RawConfig: map[string]interface{}{
+			"format": "xml",
+		}})
+		assert.Error(t, err)
+	})
 }
 
 func TestSink(t *testing.T) {
@@ -68,6 +92,27 @@ func TestSink(t *testing.T) {
 		edges := []*meteorv1beta1.Edge{
 			models.OwnerEdge("urn:test:scope:table:t1", "urn:test:scope:user:alice", "test"),
 			models.DerivedFromEdge("urn:test:scope:table:t1", "urn:test:scope:table:upstream", "test"),
+		}
+		record := models.NewRecord(entity, edges...)
+
+		err := sink.Sink(context.Background(), []models.Record{record})
+		assert.NoError(t, err)
+	})
+
+	t.Run("should sink markdown format without error", func(t *testing.T) {
+		sink := console.New(testutils.Logger)
+		require.NoError(t, sink.Init(context.Background(), plugins.Config{RawConfig: map[string]interface{}{
+			"format": "markdown",
+		}}))
+
+		entity := models.NewEntity("urn:test:scope:table:t1", "table", "my-table", "test", map[string]any{
+			"database": "testdb",
+			"columns": []any{
+				map[string]any{"name": "id", "data_type": "integer"},
+			},
+		})
+		edges := []*meteorv1beta1.Edge{
+			models.OwnerEdge("urn:test:scope:table:t1", "urn:test:scope:user:alice", "test"),
 		}
 		record := models.NewRecord(entity, edges...)
 

@@ -159,3 +159,109 @@ func TestRecordToJSONWithMultipleEdges(t *testing.T) {
 	assert.Contains(t, s, `"owned_by"`)
 	assert.Contains(t, s, `"urn:user:bob@co.com"`)
 }
+
+func TestRecordToMarkdown(t *testing.T) {
+	t.Run("minimal entity without properties or edges", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", nil)
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		s := string(md)
+		assert.Contains(t, s, "## t1")
+		assert.Contains(t, s, "| URN | `urn:test:s:table:t1` |")
+		assert.Contains(t, s, "| Type | table |")
+		assert.Contains(t, s, "| Source | test |")
+		assert.NotContains(t, s, "### Properties")
+		assert.NotContains(t, s, "### Edges")
+	})
+
+	t.Run("entity with flat properties", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+			"database": "analytics",
+			"schema":   "public",
+		})
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		s := string(md)
+		assert.Contains(t, s, "### Properties")
+		assert.Contains(t, s, "- **database**: analytics")
+		assert.Contains(t, s, "- **schema**: public")
+	})
+
+	t.Run("entity with list-of-maps properties rendered as table", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+			"columns": []any{
+				map[string]any{"name": "id", "data_type": "integer"},
+				map[string]any{"name": "email", "data_type": "varchar"},
+			},
+		})
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		s := string(md)
+		assert.Contains(t, s, "### Columns")
+		assert.Contains(t, s, "| Data Type | Name |")
+		assert.Contains(t, s, "| integer | id |")
+		assert.Contains(t, s, "| varchar | email |")
+	})
+
+	t.Run("entity with edges", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", nil)
+		edges := []*meteorv1beta1.Edge{
+			models.OwnerEdge("urn:test:s:table:t1", "urn:user:alice", "test"),
+			models.DerivedFromEdge("urn:test:s:table:t1", "urn:test:s:table:upstream", "test"),
+		}
+		record := models.NewRecord(entity, edges...)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		s := string(md)
+		assert.Contains(t, s, "### Edges")
+		assert.Contains(t, s, "| owned_by | `urn:test:s:table:t1` | `urn:user:alice` |")
+		assert.Contains(t, s, "| derived_from | `urn:test:s:table:t1` | `urn:test:s:table:upstream` |")
+	})
+
+	t.Run("entity with description", func(t *testing.T) {
+		entity := &meteorv1beta1.Entity{
+			Urn:         "urn:test:s:table:t1",
+			Name:        "t1",
+			Type:        "table",
+			Source:      "test",
+			Description: "Event tracking table",
+		}
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		assert.Contains(t, string(md), "| Description | Event tracking table |")
+	})
+
+	t.Run("entity with nested map properties", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+			"labels": map[string]string{"env": "production", "team": "data"},
+		})
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		s := string(md)
+		assert.Contains(t, s, "- **labels**:")
+		assert.Contains(t, s, "  - **env**: production")
+		assert.Contains(t, s, "  - **team**: data")
+	})
+
+	t.Run("entity with scalar list properties", func(t *testing.T) {
+		entity := models.NewEntity("urn:test:s:table:t1", "table", "t1", "test", map[string]any{
+			"tags": []string{"important", "verified"},
+		})
+		record := models.NewRecord(entity)
+
+		md, err := models.RecordToMarkdown(record)
+		require.NoError(t, err)
+		assert.Contains(t, string(md), "- **tags**: important, verified")
+	})
+}

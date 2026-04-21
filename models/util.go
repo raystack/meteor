@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 
 	meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -116,6 +118,206 @@ func RecordToJSON(r Record) ([]byte, error) {
 	}
 
 	return json.Marshal(result)
+}
+
+// RecordToMarkdown serializes a record (entity + edges) to Markdown.
+func RecordToMarkdown(r Record) ([]byte, error) {
+	var b strings.Builder
+
+	e := r.Entity()
+	b.WriteString("## ")
+	b.WriteString(e.GetName())
+	b.WriteString("\n\n")
+
+	// Metadata table.
+	b.WriteString("| Field | Value |\n|---|---|\n")
+	b.WriteString("| URN | `")
+	b.WriteString(e.GetUrn())
+	b.WriteString("` |\n")
+	b.WriteString("| Type | ")
+	b.WriteString(e.GetType())
+	b.WriteString(" |\n")
+	b.WriteString("| Source | ")
+	b.WriteString(e.GetSource())
+	b.WriteString(" |\n")
+	if desc := e.GetDescription(); desc != "" {
+		b.WriteString("| Description | ")
+		b.WriteString(desc)
+		b.WriteString(" |\n")
+	}
+	if ct := e.GetCreateTime(); ct != nil && ct.IsValid() {
+		b.WriteString("| Created | ")
+		b.WriteString(ct.AsTime().Format("2006-01-02T15:04:05Z"))
+		b.WriteString(" |\n")
+	}
+	if ut := e.GetUpdateTime(); ut != nil && ut.IsValid() {
+		b.WriteString("| Updated | ")
+		b.WriteString(ut.AsTime().Format("2006-01-02T15:04:05Z"))
+		b.WriteString(" |\n")
+	}
+
+	// Properties.
+	if props := e.GetProperties(); props != nil {
+		m := props.AsMap()
+		if len(m) > 0 {
+			writePropertiesMarkdown(&b, m)
+		}
+	}
+
+	// Edges.
+	if edges := r.Edges(); len(edges) > 0 {
+		b.WriteString("\n### Edges\n\n")
+		b.WriteString("| Type | Source URN | Target URN |\n|---|---|---|\n")
+		for _, edge := range edges {
+			b.WriteString("| ")
+			b.WriteString(edge.GetType())
+			b.WriteString(" | `")
+			b.WriteString(edge.GetSourceUrn())
+			b.WriteString("` | `")
+			b.WriteString(edge.GetTargetUrn())
+			b.WriteString("` |\n")
+		}
+	}
+
+	return []byte(b.String()), nil
+}
+
+func writePropertiesMarkdown(b *strings.Builder, m map[string]any) {
+	keys := sortedKeys(m)
+
+	// Split into scalar and list-of-maps properties.
+	var scalarKeys []string
+	var tableKeys []string
+	for _, k := range keys {
+		if items, ok := asSliceOfMaps(m[k]); ok && len(items) > 0 {
+			_ = items
+			tableKeys = append(tableKeys, k)
+		} else {
+			scalarKeys = append(scalarKeys, k)
+		}
+	}
+
+	if len(scalarKeys) > 0 {
+		b.WriteString("\n### Properties\n\n")
+		for _, k := range scalarKeys {
+			writePropertyValue(b, k, m[k])
+		}
+	}
+
+	for _, k := range tableKeys {
+		items, _ := asSliceOfMaps(m[k])
+		writeMapSliceTable(b, k, items)
+	}
+}
+
+func writePropertyValue(b *strings.Builder, key string, val any) {
+	switch v := val.(type) {
+	case []any:
+		b.WriteString("- **")
+		b.WriteString(key)
+		b.WriteString("**: ")
+		strs := make([]string, 0, len(v))
+		for _, item := range v {
+			strs = append(strs, fmt.Sprintf("%v", item))
+		}
+		b.WriteString(strings.Join(strs, ", "))
+		b.WriteString("\n")
+	case map[string]any:
+		b.WriteString("- **")
+		b.WriteString(key)
+		b.WriteString("**:\n")
+		for _, sk := range sortedKeys(v) {
+			b.WriteString("  - **")
+			b.WriteString(sk)
+			b.WriteString("**: ")
+			b.WriteString(fmt.Sprintf("%v", v[sk]))
+			b.WriteString("\n")
+		}
+	default:
+		b.WriteString("- **")
+		b.WriteString(key)
+		b.WriteString("**: ")
+		b.WriteString(fmt.Sprintf("%v", val))
+		b.WriteString("\n")
+	}
+}
+
+func writeMapSliceTable(b *strings.Builder, title string, items []map[string]any) {
+	// Collect all headers from the union of keys.
+	headerSet := make(map[string]struct{})
+	for _, item := range items {
+		for k := range item {
+			headerSet[k] = struct{}{}
+		}
+	}
+	headers := sortedKeys(headerSet)
+
+	// Title case the section name.
+	b.WriteString("\n### ")
+	b.WriteString(titleCase(title))
+	b.WriteString("\n\n")
+
+	// Header row.
+	b.WriteString("|")
+	for _, h := range headers {
+		b.WriteString(" ")
+		b.WriteString(titleCase(strings.ReplaceAll(h, "_", " ")))
+		b.WriteString(" |")
+	}
+	b.WriteString("\n|")
+	for range headers {
+		b.WriteString("---|")
+	}
+	b.WriteString("\n")
+
+	// Data rows.
+	for _, item := range items {
+		b.WriteString("|")
+		for _, h := range headers {
+			b.WriteString(" ")
+			if v, ok := item[h]; ok {
+				b.WriteString(fmt.Sprintf("%v", v))
+			}
+			b.WriteString(" |")
+		}
+		b.WriteString("\n")
+	}
+}
+
+// asSliceOfMaps checks if val is a []any where all elements are map[string]any.
+func asSliceOfMaps(val any) ([]map[string]any, bool) {
+	slice, ok := val.([]any)
+	if !ok || len(slice) == 0 {
+		return nil, false
+	}
+	result := make([]map[string]any, 0, len(slice))
+	for _, item := range slice {
+		m, ok := item.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		result = append(result, m)
+	}
+	return result, true
+}
+
+func titleCase(s string) string {
+	words := strings.Fields(s)
+	for i, w := range words {
+		if len(w) > 0 {
+			words[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
+func sortedKeys[M ~map[string]V, V any](m M) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // sanitizeMap recursively converts typed maps (e.g., map[string]string) to
