@@ -230,14 +230,14 @@ func writePropertyValue(b *strings.Builder, key string, val any) {
 			b.WriteString("  - **")
 			b.WriteString(sk)
 			b.WriteString("**: ")
-			b.WriteString(fmt.Sprintf("%v", v[sk]))
+			fmt.Fprintf(b, "%v", v[sk])
 			b.WriteString("\n")
 		}
 	default:
 		b.WriteString("- **")
 		b.WriteString(key)
 		b.WriteString("**: ")
-		b.WriteString(fmt.Sprintf("%v", val))
+		fmt.Fprintf(b, "%v", val)
 		b.WriteString("\n")
 	}
 }
@@ -276,7 +276,7 @@ func writeMapSliceTable(b *strings.Builder, title string, items []map[string]any
 		for _, h := range headers {
 			b.WriteString(" ")
 			if v, ok := item[h]; ok {
-				b.WriteString(fmt.Sprintf("%v", v))
+				fmt.Fprintf(b, "%v", v)
 			}
 			b.WriteString(" |")
 		}
