@@ -4,8 +4,6 @@ description: Sinks define the destinations where extracted and processed metadat
 order: 6
 ---
 
-# Sink
-
 The `sinks` block of a recipe lists where Meteor sends the extracted metadata. A recipe needs at least one sink and can have many — every sink receives every record, so one job can feed a catalog, a Kafka topic, and a file at the same time.
 
 ```yaml

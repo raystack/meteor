@@ -4,8 +4,6 @@ description: Reference for all supported Meteor processors including enrich, lab
 order: 1
 ---
 
-# Processors
-
 Processors transform records in-flight between extraction and sinking. Each processor receives a record, modifies the entity, and passes it on. Edges pass through unchanged.
 
 Processors run sequentially in recipe order — the output of one becomes the input of the next:

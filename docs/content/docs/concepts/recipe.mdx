@@ -4,8 +4,6 @@ description: The recipe YAML format — every field, variables, and templating e
 order: 3
 ---
 
-# Recipe
-
 A recipe is a YAML file that defines one metadata job: extract from one source, optionally transform, and send to one or more sinks. You pass recipes to `meteor run` one file at a time or as a directory.
 
 A recipe has exactly **one source**. This keeps each job isolated: one recipe per system you extract from. It should have **at least one sink**, and processors are optional.
