@@ -1,0 +1,36 @@
+---
+title: Google Cloud Storage
+description: Save metadata records as an NDJSON object in a Google Cloud Storage bucket.
+order: 6
+---
+
+# Google Cloud Storage
+
+Writes records to a single object in a Google Cloud Storage bucket. Each record is one line of JSON (NDJSON).
+
+## Usage
+
+```yaml
+sinks:
+  - name: gcs
+    config:
+      project_id: google-project-id
+      url: gcs://bucket_name/target_folder
+      service_account_base64: ____base64_encoded_service_account____
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `project_id` | `string` | Google Cloud project ID | required |
+| `url` | `string` | Bucket and optional folder, e.g. `gcs://bucket_name/target_folder` | required |
+| `object_prefix` | `string` | Prefix added to the object name, e.g. `github-users` | optional |
+| `service_account_json` | `string` | Service account key as JSON | optional |
+| `service_account_base64` | `string` | Service account key as a base64 string | optional |
+
+Provide either `service_account_json` or `service_account_base64`. The sink fails to start without one of them.
+
+## Output format
+
+Each run creates one object named `[folder/][prefix-]<RFC3339 timestamp>.ndjson` in the bucket. Every line is the whole record as JSON: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges.

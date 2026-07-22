@@ -1,0 +1,30 @@
+---
+title: Labels
+description: Add key-value labels to each entity for categorization and filtering.
+order: 3
+---
+
+# Labels
+
+The labels processor merges configured labels into `entity.properties.labels`. Labels are useful for categorization and filtering in downstream catalog services — for example marking records by environment, domain, or sensitivity.
+
+## Usage
+
+```yaml
+processors:
+  - name: labels
+    config:
+      labels:
+        source: meteor
+        classification: internal
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `labels` | `map[string]string` | Key-value pairs merged into `entity.properties.labels`. | yes |
+
+## Behavior
+
+If the entity has no `labels` key in its properties yet, the processor creates it. Existing labels with the same key are overwritten. Edges are not changed.

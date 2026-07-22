@@ -1,0 +1,37 @@
+---
+title: Kafka
+description: Publish metadata records to an Apache Kafka topic as JSON messages.
+order: 8
+---
+
+# Kafka
+
+Publishes each record to a Kafka topic. The message value is the record as JSON.
+
+## Usage
+
+```yaml
+sinks:
+  - name: kafka
+    config:
+      brokers: "localhost:9092"
+      topic: metadata-topic
+      key_path: ".Urn"
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `brokers` | `string` | Comma-separated list of Kafka broker addresses | required |
+| `topic` | `string` | Kafka topic to publish messages to | required |
+| `key_path` | `string` | Entity field to use as the message key, e.g. `.Urn`. Only top-level string fields work. | optional |
+
+## Output format
+
+The message value is the whole record as JSON: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges. Only the message key is protobuf-encoded, and only when `key_path` is set.
+
+## Notes
+
+- The message key controls which partition a message goes to. With `key_path` set, records with the same key value land on the same partition. Without it, messages are spread across partitions.
+- `key_path` supports only one level, such as `.Urn` or `.Name`. Nested paths are not supported, and the field must be a string.

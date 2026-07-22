@@ -1,0 +1,117 @@
+---
+title: Metadata Models
+description: Reference for Meteor's Entity + Edge data model used to represent metadata records.
+order: 3
+---
+
+# Metadata model
+
+Meteor uses an **Entity + Edge** model to represent metadata. Each extractor emits **records**, and each record contains one entity and zero or more edges.
+
+## Entity
+
+An entity represents a metadata resource — a table, dashboard, topic, job, user, and so on. All entity types share a single flat structure:
+
+| Field         | Type              | Description                                             |
+|:--------------|:------------------|:--------------------------------------------------------|
+| `urn`         | `string`          | Unique resource name. Format: `urn:{source}:{scope}:{type}:{name}` |
+| `type`        | `string`          | Entity type, such as `table`, `dashboard`, `topic`, or `job` |
+| `name`        | `string`          | Human-readable name                                     |
+| `description` | `string`          | Description of the entity                               |
+| `source`      | `string`          | Source system, such as `bigquery`, `postgres`, or `kafka` |
+| `properties`  | `structpb.Struct` | Flat key-value map holding all type-specific metadata: schema, columns, charts, labels, and so on |
+
+There are no separate typed schemas per entity type — no `Table` or `Dashboard` proto. All type-specific metadata lives in `properties`, and the `type` field tells consumers what kind of resource it is.
+
+To see every entity type and which extractor emits it, check the [extractors overview](../extractors/overview#entity-types) or run:
+
+```sh
+meteor entities
+```
+
+## Edge
+
+An edge represents a relationship between two entities:
+
+| Field         | Type              | Description                                             |
+|:--------------|:------------------|:--------------------------------------------------------|
+| `source_urn`  | `string`          | URN of the source entity                                |
+| `target_urn`  | `string`          | URN of the target entity                                |
+| `type`        | `string`          | Relationship type, such as `owned_by` or `derived_from` |
+| `source`      | `string`          | Source system that reported this relationship           |
+| `properties`  | `structpb.Struct` | Additional metadata about the relationship              |
+
+The most common relationship types:
+
+- **`owned_by`** — the entity is owned by a user or team.
+- **`derived_from`** — the entity depends on or reads from the target (upstream lineage).
+- **`generates`** — the entity produces or writes to the target (downstream lineage).
+- **`member_of`** — a user belongs to a group, team, or organisation.
+- **`belongs_to`** — the entity belongs to a parent entity, such as a pod to its namespace.
+- **`child_of`** — a parent-child hierarchy, such as a sub-page within a page.
+- **`consumed_by`** — a consumer group reads from a topic.
+- **`references`** — the entity references the target, such as a foreign key to another table.
+
+The full list, with the extractors that emit each type, is in the [extractors overview](../extractors/overview#edge-types). Or run:
+
+```sh
+meteor edges
+```
+
+## Record
+
+A record is the unit of data flowing through the Meteor pipeline. It wraps an entity and its edges:
+
+- `record.Entity()` returns the entity.
+- `record.Edges()` returns the list of edges.
+
+## Building records in Go
+
+```go
+import (
+    "github.com/raystack/meteor/models"
+    meteorv1beta1 "github.com/raystack/meteor/models/raystack/meteor/v1beta1"
+    "google.golang.org/protobuf/types/known/structpb"
+)
+
+func main() {
+    // Build properties
+    props, _ := structpb.NewStruct(map[string]interface{}{
+        "schema": map[string]interface{}{
+            "columns": []interface{}{
+                map[string]interface{}{
+                    "name":        "column_name",
+                    "data_type":   "varchar",
+                    "is_nullable": true,
+                    "length":      256,
+                },
+            },
+        },
+    })
+
+    // Create an entity
+    entity := &meteorv1beta1.Entity{
+        Urn:        "urn:postgres:mydb:table:mydb.my_table",
+        Type:       "table",
+        Name:       "my_table",
+        Source:     "postgres",
+        Properties: props,
+    }
+
+    // Create ownership as an edge
+    edges := []*meteorv1beta1.Edge{
+        {
+            SourceUrn: "urn:postgres:mydb:table:mydb.my_table",
+            TargetUrn: "urn:user:myorg:user:alice",
+            Type:      "owned_by",
+            Source:    "postgres",
+        },
+    }
+
+    // Wrap in a record for the pipeline
+    record := models.NewRecord(entity, edges...)
+    _ = record
+}
+```
+
+The `models` package also has helpers: `models.NewURN`, `models.NewEntity`, and edge builders like `models.OwnerEdge` and `models.DerivedFromEdge`.

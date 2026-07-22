@@ -35,7 +35,7 @@ type Exclude struct {
 }
 
 var sampleConfig = `
-connection_url: "postgres://admin:pass123@localhost:3306/postgres?sslmode=disable"
+connection_url: "postgres://admin:pass123@localhost:5432/postgres?sslmode=disable"
 exclude:
   databases:
     - testDB

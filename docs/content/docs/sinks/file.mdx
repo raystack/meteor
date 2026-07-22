@@ -1,0 +1,31 @@
+---
+title: File
+description: Save metadata records to a local file as NDJSON or YAML.
+order: 5
+---
+
+# File
+
+Writes records to a file on the local disk. Output is NDJSON or YAML.
+
+## Usage
+
+```yaml
+sinks:
+  - name: file
+    config:
+      path: ./output.ndjson
+      format: ndjson
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `path` | `string` | Path to the output file. Must include a file name with an extension, e.g. `./out.ndjson`. | required |
+| `format` | `string` | `ndjson` writes one JSON line per record. Any other value writes the batch as a YAML list. | required |
+| `overwrite` | `boolean` | `true` (default) replaces the file on each run. `false` appends to it. | optional |
+
+## Output format
+
+Each record is the whole record: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges. With `format: ndjson`, each record is one JSON line. With any other format value, each batch is written as a YAML list of records.

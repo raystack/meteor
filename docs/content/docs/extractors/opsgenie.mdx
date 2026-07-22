@@ -1,0 +1,51 @@
+---
+title: OpsGenie
+description: Extracts service and incident metadata from OpsGenie via its REST API.
+order: 26
+---
+
+# OpsGenie
+
+Extracts services and incidents from OpsGenie using the OpsGenie REST API. It emits `service` and `incident` entities, plus edges for team ownership and impacted services.
+
+## Usage
+
+```yaml
+source:
+  name: opsgenie
+  scope: my-scope
+  config:
+    api_key: your-api-key
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `api_key` | `string` | OpsGenie API key used for authentication. | Yes |
+| `base_url` | `string` | OpsGenie API base URL. Default: `https://api.opsgenie.com`. | No |
+| `exclude` | `[]string` | Service IDs to skip during extraction. | No |
+
+## Output
+
+Two entity types are emitted:
+
+- `service` — URN pattern: `urn:opsgenie:{scope}:service:{service_id}`
+- `incident` — URN pattern: `urn:opsgenie:{scope}:incident:{incident_id}`
+
+Notable properties:
+
+- Service: `description`, `team_id`, `html_url`.
+- Incident: `status`, `priority`, `created_at`, `resolved_at`, `message`, `owner_id`, `html_url`, and `tags` (when present).
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `owned_by` | `service` | `team` |
+| `belongs_to` | `incident` | `service` |
+
+## Notes
+
+- For EU instances, set `base_url: https://api.eu.opsgenie.com`.
+- An incident with more than one impacted service gets one `belongs_to` edge per service.

@@ -1,0 +1,74 @@
+---
+title: Confluence
+description: Extracts page and space metadata from Confluence using the REST API v2.
+order: 7
+---
+
+# Confluence
+
+Extracts spaces and pages from Confluence. It emits `space` and `document` entities, plus edges for page hierarchy, ownership, and links to data assets referenced in page content.
+
+## Usage
+
+```yaml
+source:
+  name: confluence
+  scope: my-confluence
+  config:
+    base_url: https://mycompany.atlassian.net/wiki
+    username: user@company.com
+    token: your-api-token
+    spaces:
+      - ENG
+      - DATA
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `base_url` | `string` | Confluence base URL, for example `https://mycompany.atlassian.net/wiki`. Must be a valid URL. | Yes |
+| `username` | `string` | Atlassian account email for API authentication. | Yes |
+| `token` | `string` | Atlassian API token. | Yes |
+| `spaces` | `[]string` | Space keys to extract. Defaults to all spaces. | No |
+| `exclude` | `[]string` | Space keys to skip. | No |
+
+## Output
+
+Entity type: `document` (one per page)
+
+URN pattern: `urn:confluence:{scope}:document:{page_id}`
+
+| Property | Description |
+| :------- | :---------- |
+| `page_id` | Confluence page ID. |
+| `space_key` | Key of the space the page belongs to. |
+| `status` | Page status (for example `current`). |
+| `version` | Page version number. |
+| `labels` | Page labels (only when the page has labels). |
+| `created_at`, `updated_at` | Timestamps (RFC 3339). |
+| `web_url` | Link to the page. |
+
+Entity type: `space` (one per space)
+
+URN pattern: `urn:confluence:{scope}:space:{space_key}`
+
+| Property | Description |
+| :------- | :---------- |
+| `space_key` | Space key. |
+| `space_type` | Space type (for example `global`). |
+| `status` | Space status. |
+| `web_url` | Link to the space. |
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `belongs_to` | Document | Its space. |
+| `child_of` | Document | Its parent document, when the page has one. |
+| `owned_by` | Document | The page author, as `urn:confluence:{scope}:user:{author_id}`. |
+| `documented_by` | Document | Any data asset whose URN appears in the page body. |
+
+## Notes
+
+The extractor scans page content for URN strings that match `urn:service:scope:type:id`. Each match becomes a `documented_by` edge. This links business documentation to the technical assets it describes.

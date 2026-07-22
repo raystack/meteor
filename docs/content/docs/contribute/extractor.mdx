@@ -1,0 +1,222 @@
+---
+title: Write an Extractor
+description: A step-by-step tutorial for building a new Meteor extractor plugin.
+order: 3
+---
+
+# Write an extractor
+
+This tutorial walks through building a new extractor from scratch. The [CSV extractor](https://github.com/raystack/meteor/tree/main/plugins/extractors/csv) is the simplest one in the codebase; we follow its shape throughout, so keep it open as a reference.
+
+## How extractors work
+
+An extractor is a Go struct that satisfies this interface from the `plugins` package:
+
+```go
+type Extractor interface {
+    Info() Info
+    Validate(config Config) error
+    Init(ctx context.Context, config Config) error
+    Extract(ctx context.Context, emit Emit) error
+}
+```
+
+`Emit` is a callback: `func(models.Record)`. Your extractor connects to a source, builds records, and calls `emit` once per record. Meteor handles everything downstream — processors, batching, sinks, and retries.
+
+You do not implement `Info`, `Validate`, and `Init` by hand. Embedding `plugins.BaseExtractor` provides them, wired to your config struct.
+
+## 1. Create the package
+
+Create a directory under `plugins/extractors/` named after your source, for example `plugins/extractors/mysource/`. Add a `mysource.go`:
+
+```go
+package mysource
+
+import (
+    "context"
+    _ "embed"
+
+    "github.com/raystack/meteor/models"
+    "github.com/raystack/meteor/plugins"
+    "github.com/raystack/meteor/registry"
+    log "github.com/raystack/salt/observability/logger"
+)
+
+//go:embed README.md
+var summary string
+```
+
+Every extractor embeds its own `README.md` — it becomes the plugin's documentation, shown by `meteor plugins info mysource --full`.
+
+## 2. Define the config
+
+Declare a config struct with `mapstructure` tags for decoding, `validate` tags for rules, and optional `default` tags:
+
+```go
+type Config struct {
+    Host     string `mapstructure:"host" validate:"required"`
+    APIKey   string `mapstructure:"api_key" validate:"required"`
+    Timeout  int    `mapstructure:"timeout_seconds" default:"10"`
+}
+
+var sampleConfig = `
+host: https://mysource.example.com
+api_key: your-api-key
+`
+```
+
+Meteor decodes the recipe's `config` block into this struct and validates it before `Init` runs. Validation failures surface as clear errors from `meteor lint`.
+
+## 3. Declare plugin info
+
+```go
+var info = plugins.Info{
+    Description:  "Table metadata from MySource.",
+    SampleConfig: sampleConfig,
+    Summary:      summary,
+    Tags:         []string{"mysource", "extractor"},
+    Entities: []plugins.EntityInfo{
+        {Type: "table", URNPattern: "urn:mysource:{scope}:table:{name}"},
+    },
+    Edges: []plugins.EdgeInfo{
+        {Type: "owned_by", From: "table", To: "user"},
+    },
+}
+```
+
+This powers `meteor plugins list`, `meteor plugins info`, and the `entities` and `edges` commands. Keep `Entities` and `Edges` in sync with what your code actually emits.
+
+## 4. Implement the extractor
+
+```go
+type Extractor struct {
+    plugins.BaseExtractor
+    config Config
+    logger log.Logger
+}
+
+func New(logger log.Logger) *Extractor {
+    e := &Extractor{logger: logger}
+    e.BaseExtractor = plugins.NewBaseExtractor(info, &e.config)
+    return e
+}
+
+func (e *Extractor) Init(ctx context.Context, config plugins.Config) error {
+    // Decodes and validates config, and stores the URN scope.
+    if err := e.BaseExtractor.Init(ctx, config); err != nil {
+        return err
+    }
+    // Your own setup: create clients, test the connection.
+    return nil
+}
+
+func (e *Extractor) Extract(ctx context.Context, emit plugins.Emit) error {
+    tables, err := e.fetchTables(ctx)
+    if err != nil {
+        return err
+    }
+    for _, t := range tables {
+        entity := models.NewEntity(
+            models.NewURN("mysource", e.UrnScope, "table", t.Name),
+            "table", t.Name, "mysource",
+            map[string]any{"columns": t.Columns},
+        )
+        edges := []*meteorv1beta1.Edge{
+            models.OwnerEdge(entity.Urn, ownerURN, "mysource"),
+        }
+        emit(models.NewRecord(entity, edges...))
+    }
+    return nil
+}
+```
+
+Useful helpers from the `models` package:
+
+- `models.NewURN(service, scope, kind, id)` builds `urn:{service}:{scope}:{kind}:{id}`. `e.UrnScope` holds the recipe's `scope`.
+- `models.NewEntity(urn, type, name, source, properties)` builds an entity with a sanitized properties map.
+- `models.OwnerEdge`, `models.DerivedFromEdge`, `models.GeneratesEdge`, and `models.ReferencesEdge` build common edges.
+
+## 5. Register the plugin
+
+Add an `init()` at the bottom of your file:
+
+```go
+func init() {
+    if err := registry.Extractors.Register("mysource", func() plugins.Extractor {
+        return New(plugins.GetLog())
+    }); err != nil {
+        panic(err)
+    }
+}
+```
+
+Then add a blank import to `plugins/extractors/populate.go` so the `init()` runs:
+
+```go
+_ "github.com/raystack/meteor/plugins/extractors/mysource"
+```
+
+## 6. Test it
+
+Plugin tests use the `plugins` build tag. Create `mysource_test.go`:
+
+```go
+//go:build plugins
+
+package mysource_test
+```
+
+The test helpers do most of the work:
+
+- `test/mocks` has an `Emitter`: pass `emitter.Push` to `Extract`, then inspect `emitter.GetAllEntities()` and `emitter.GetAllEdges()`.
+- `test/utils` has `utils.Logger` (a quiet logger for `New`), and `AssertEqualProtos` for comparing expected and actual records.
+- If your test needs a live source, `utils.CreateContainer` spins up a Docker container with [ory/dockertest](https://github.com/ory/dockertest). See `plugins/extractors/mysql/mysql_test.go` for the pattern, and `utils.SkipIfNoDocker` to keep CI green without Docker.
+
+A minimal shape:
+
+```go
+func TestExtract(t *testing.T) {
+    extr := mysource.New(utils.Logger)
+    err := extr.Init(ctx, plugins.Config{
+        URNScope:  "test-mysource",
+        RawConfig: map[string]any{"host": host, "api_key": "test"},
+    })
+    require.NoError(t, err)
+
+    emitter := mocks.NewEmitter()
+    err = extr.Extract(ctx, emitter.Push)
+    require.NoError(t, err)
+
+    utils.AssertEqualProtos(t, expected, emitter.GetAllEntities())
+}
+```
+
+Run your tests with:
+
+```sh
+make test-plugins PLUGIN=extractors/mysource
+```
+
+## 7. Document it
+
+- Write the plugin's `README.md`: what it extracts, a usage block, a config table, and the entities and edges it emits. Look at `plugins/extractors/mysql/README.md` for the format.
+- Add a docs page at `docs/content/docs/extractors/mysource.mdx` following the format of the existing pages, and add a row to the table in `docs/content/docs/extractors/overview.mdx`.
+
+## Checklist before opening a PR
+
+- [ ] Config struct validated, with a working `sampleConfig`.
+- [ ] `plugins.Info` entities and edges match what the code emits.
+- [ ] Registered in `populate.go`.
+- [ ] Unit tests pass: `make test-plugins PLUGIN=extractors/mysource`.
+- [ ] `README.md` in the plugin directory.
+- [ ] Docs page and overview table row added.
+- [ ] `make lint` passes.
+
+## Processors and sinks
+
+Processors and sinks follow the same pattern with different interfaces — both embed `plugins.BasePlugin` directly:
+
+- A processor implements `Process(ctx, record) (record, error)` and registers with `registry.Processors.Register`.
+- A sink implements `Sink(ctx, batch []models.Record) error` and `Close() error`, and registers with `registry.Sinks.Register`. Return `plugins.NewRetryError` for errors that Meteor should retry, such as HTTP 5xx responses.
+
+The `console` sink and the `labels` processor are good small examples to copy.

@@ -1,0 +1,74 @@
+---
+title: Kafka
+description: Extracts topic and consumer group metadata from an Apache Kafka cluster.
+order: 17
+---
+
+# Kafka
+
+Extracts topics and consumer groups from a Kafka broker. Emits `topic` and `consumer_group` entities, plus edges linking consumer groups to the topics they consume.
+
+## Usage
+
+```yaml
+source:
+  name: kafka
+  scope: my-kafka-cluster
+  config:
+    broker: "localhost:9092"
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `broker` | `string` | Kafka broker address. | Yes |
+| `extract` | `[]string` | Entity types to extract. Allowed values: `topics`, `consumer_groups`. Default: both. | No |
+| `auth_config.tls.enabled` | `bool` | Enable TLS. Default: `false`. | No |
+| `auth_config.tls.insecure_skip_verify` | `bool` | Skip server certificate verification. Default: `false`. | No |
+| `auth_config.tls.cert_file` | `string` | Path to the client certificate file. Required when TLS is enabled. | No |
+| `auth_config.tls.key_file` | `string` | Path to the client key file. Required when TLS is enabled. | No |
+| `auth_config.tls.ca_file` | `string` | Path to the CA certificate file. Required when TLS is enabled. | No |
+| `auth_config.sasl.enabled` | `bool` | Enable SASL. Default: `false`. | No |
+| `auth_config.sasl.mechanism` | `string` | SASL mechanism. Required when SASL is enabled. Only `OAUTHBEARER` is wired up. | No |
+
+## Output
+
+Emits `topic` entities:
+
+```
+urn:kafka:{scope}:topic:{topic_name}
+```
+
+Notable topic properties:
+
+- `number_of_partitions` - partition count
+- `replication_factor` - replicas per partition, when available
+- `retention_ms`, `cleanup_policy`, `min_insync_replicas` - topic config values, when available
+
+The internal topics `__consumer_offsets` and `_schemas` are always skipped.
+
+Emits `consumer_group` entities:
+
+```
+urn:kafka:{scope}:consumer_group:{group_id}
+```
+
+Notable consumer group properties:
+
+- `state` - group state (e.g. `Stable`, `Empty`)
+- `protocol` and `protocol_type` - assignment protocol details
+- `num_members` - member count
+- `members` - one entry per member with `member_id`, `client_id`, and `host`
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `consumed_by` | `consumer_group` | `topic` |
+
+A consumer group gets one edge per topic found in its member assignments.
+
+## Notes
+
+- With SASL `OAUTHBEARER`, the token is read from a Kubernetes projected service account token file at `/var/run/secrets/kafka/serviceaccount/token`. Make sure a valid token exists at that path.

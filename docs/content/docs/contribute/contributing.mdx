@@ -1,0 +1,32 @@
+---
+title: Contributing
+description: How to contribute to Meteor including becoming a committer and contribution guidelines.
+order: 1
+---
+
+# Contributing
+
+We are always interested in new contributors. You do not need to be a committer to help.
+
+## What you can do
+
+- Report a bug, suggest a feature, or ask a question on [GitHub discussions](https://github.com/raystack/meteor/discussions).
+- Add a new [extractor](./extractor), [processor, or sink](./guide).
+- Improve health and monitoring metrics.
+- Update deprecated libraries or tools.
+- Improve the documentation — docs live in the code repo under `docs/`, so a docs change ships in the same PR as the code it describes.
+- Review other contributions if you are a committer.
+
+## Guidelines
+
+Follow these practices so your change merges quickly and smoothly:
+
+- Contributions must include appropriate tests (unit and integration).
+- For a new feature or a major change to an existing one, start with an RFC and get agreement on the design first.
+- Make sure your local build passes all tests and lint checks: `go test ./...` and `make lint`.
+- If your change affects user-facing behavior, protocols, or configuration, update the documentation in the same PR.
+- New plugins should follow the [adding plugins](./guide) checklists.
+
+## Becoming a committer
+
+Committers have write access to the Meteor repositories. There is no strict protocol for becoming one. Candidates are usually active contributors and community members — a series of good contributions, good taste, and an ongoing interest in the project is what we look for. Current committers and PMC members can also suggest candidates. If you would like to become a committer, start contributing, and talk to existing committers for advice and guidance.

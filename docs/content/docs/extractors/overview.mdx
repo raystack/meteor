@@ -1,0 +1,102 @@
+---
+title: Overview
+description: Reference for all supported Meteor extractors with entity types and edge support.
+order: 1
+---
+
+# Extractors
+
+Extractors are plugins that pull metadata from data sources. Each extractor connects to a source system, discovers resources, and emits records containing entities and edges.
+
+To use an extractor, add a `source` block to your [recipe](../concepts/recipe):
+
+```yaml
+source:
+  name: bigquery
+  scope: my-project
+  config:
+    project_id: my-gcp-project
+```
+
+## Supported extractors
+
+| Extractor | Entity types | Edges | Source |
+| :-------- | :----------- | :---- | :----- |
+| [`application_yaml`](./application_yaml) | `application` | `owned_by`, `derived_from`, `generates` | YAML file |
+| [`bigquery`](./bigquery) | `table` | `derived_from` | BigQuery API |
+| [`bigtable`](./bigtable) | `table` | — | Bigtable API |
+| [`cassandra`](./cassandra) | `table` | — | Cassandra |
+| [`clickhouse`](./clickhouse) | `table` | — | ClickHouse |
+| [`confluence`](./confluence) | `document`, `space` | `belongs_to`, `child_of`, `owned_by`, `documented_by` | Confluence REST API v2 |
+| [`couchdb`](./couchdb) | `table` | — | CouchDB |
+| [`csv`](./csv) | `table` | — | Local CSV files |
+| [`dbt`](./dbt) | `model`, `source` | `derived_from`, `owned_by` | dbt artifact files |
+| [`elastic`](./elastic) | `table` | — | Elasticsearch API |
+| [`gcs`](./gcs) | `bucket` | — | Google Cloud Storage API |
+| [`github`](./github) | `user`, `repository`, `team`, `document` | `member_of`, `owned_by`, `belongs_to`, `has_access_to` | GitHub API |
+| [`grafana`](./grafana) | `dashboard`, `datasource` | `derived_from` | Grafana HTTP API |
+| [`gsuite`](./gsuite) | `user` | — | Admin SDK Directory API |
+| [`http`](./http) | any (script-defined) | — | HTTP API with a Tengo script |
+| [`kafka`](./kafka) | `topic`, `consumer_group` | `consumed_by` | Kafka broker |
+| [`kubernetes`](./kubernetes) | `namespace`, `deployment`, `service`, `pod`, `job` | `belongs_to` | Kubernetes API |
+| [`mariadb`](./mariadb) | `table` | `references` | MariaDB |
+| [`metabase`](./metabase) | `dashboard` | `derived_from`, `owned_by` | Metabase API |
+| [`mongodb`](./mongodb) | `table` | — | MongoDB |
+| [`mssql`](./mssql) | `table` | `references` | Microsoft SQL Server |
+| [`mysql`](./mysql) | `table` | `references` | MySQL |
+| [`notion`](./notion) | `document` | `child_of`, `belongs_to`, `owned_by`, `documented_by` | Notion API |
+| [`openapi`](./openapi) | `api` | — | OpenAPI and protobuf spec files |
+| [`opsgenie`](./opsgenie) | `service`, `incident` | `owned_by`, `belongs_to` | OpsGenie REST API |
+| [`optimus`](./optimus) | `job` | `derived_from`, `generates`, `owned_by` | Optimus gRPC API |
+| [`oracle`](./oracle) | `table` | `references` | Oracle |
+| [`pagerduty`](./pagerduty) | `service`, `incident` | `owned_by`, `belongs_to` | PagerDuty REST API v2 |
+| [`postgres`](./postgres) | `table` | `references` | PostgreSQL |
+| [`presto`](./presto) | `table` | — | Presto |
+| [`redash`](./redash) | `dashboard` | `owned_by` | Redash REST API |
+| [`redshift`](./redshift) | `table` | — | Redshift Data API |
+| [`snowflake`](./snowflake) | `table` | `references` | Snowflake |
+| [`superset`](./superset) | `dashboard` | `owned_by` | Superset API |
+| [`tableau`](./tableau) | `dashboard` | `derived_from`, `owned_by` | Tableau REST and Metadata API |
+
+## Entity types
+
+The `http` extractor is not listed below. It emits entities of any type your script defines.
+
+| Entity type | Description | Extractors |
+| :---------- | :---------- | :--------- |
+| `api` | An API described by an OpenAPI or protobuf spec. | `openapi` |
+| `application` | A deployed application or service described in a YAML file. | `application_yaml` |
+| `bucket` | An object storage bucket. | `gcs` |
+| `consumer_group` | A Kafka consumer group. | `kafka` |
+| `dashboard` | A dashboard in a BI or visualization tool. | `grafana`, `metabase`, `redash`, `superset`, `tableau` |
+| `datasource` | A data connection that dashboards read from. | `grafana` |
+| `deployment` | A Kubernetes deployment. | `kubernetes` |
+| `document` | A page or file of documentation. | `confluence`, `github`, `notion` |
+| `incident` | An incident tracked in an on-call tool. | `opsgenie`, `pagerduty` |
+| `job` | A batch job or a scheduled pipeline job. | `kubernetes`, `optimus` |
+| `model` | A dbt model. | `dbt` |
+| `namespace` | A Kubernetes namespace. | `kubernetes` |
+| `pod` | A Kubernetes pod. | `kubernetes` |
+| `repository` | A code repository. | `github` |
+| `service` | A running service, either in Kubernetes or in an on-call tool. | `kubernetes`, `opsgenie`, `pagerduty` |
+| `source` | A dbt source table. | `dbt` |
+| `space` | A Confluence space. | `confluence` |
+| `table` | A table, index, collection, or file that holds rows of data. | `bigquery`, `bigtable`, `cassandra`, `clickhouse`, `couchdb`, `csv`, `elastic`, `mariadb`, `mongodb`, `mssql`, `mysql`, `oracle`, `postgres`, `presto`, `redshift`, `snowflake` |
+| `team` | A team of users. | `github` |
+| `topic` | A Kafka topic. | `kafka` |
+| `user` | A person's account. | `github`, `gsuite` |
+
+## Edge types
+
+| Edge type | Meaning | Extractors |
+| :-------- | :------ | :--------- |
+| `belongs_to` | The entity is part of a larger container, like a space, namespace, repository, database, or service. | `confluence`, `github`, `kubernetes`, `notion`, `opsgenie`, `pagerduty` |
+| `child_of` | The entity is nested under a parent of the same kind, like a page under a page. | `confluence`, `notion` |
+| `consumed_by` | A consumer group reads from a topic. | `kafka` |
+| `derived_from` | The entity is built from or reads the target, like a view from a table or a dashboard from a datasource. | `application_yaml`, `bigquery`, `dbt`, `grafana`, `metabase`, `optimus`, `tableau` |
+| `documented_by` | A document describes a data asset. Created when a page mentions the asset's URN. | `confluence`, `notion` |
+| `generates` | The entity produces the target, like a job writing to a table. | `application_yaml`, `optimus` |
+| `has_access_to` | A user has access to a repository, with a permission level. | `github` |
+| `member_of` | A user belongs to a team or organisation. | `github` |
+| `owned_by` | The entity is owned by a user or team. | `application_yaml`, `confluence`, `dbt`, `github`, `metabase`, `notion`, `opsgenie`, `optimus`, `pagerduty`, `redash`, `superset`, `tableau` |
+| `references` | A table points to another table through a foreign key. | `mariadb`, `mssql`, `mysql`, `oracle`, `postgres`, `snowflake` |

@@ -1,0 +1,57 @@
+---
+title: MariaDB
+description: Extracts table and column metadata from a MariaDB server.
+order: 19
+---
+
+# MariaDB
+
+Extracts tables and their columns from every database on a MariaDB server. Emits `table` entities, with `references` edges for foreign keys.
+
+## Usage
+
+```yaml
+source:
+  name: mariadb
+  scope: my-scope
+  config:
+    connection_url: admin:pass123@tcp(localhost:3306)/
+    exclude:
+      databases:
+        - database_a
+      tables:
+        - database_b.table_a
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | MariaDB connection URL, including credentials. | Yes |
+| `exclude.databases` | `[]string` | Databases to skip. The system databases `information_schema`, `mysql`, `performance_schema`, and `sys` are always skipped. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `database.table` format. | No |
+
+## Output
+
+Emits `table` entities:
+
+```
+urn:mariadb:{scope}:table:{database}.{table}
+```
+
+Notable properties:
+
+- `columns` - one entry per column, each with:
+  - `name` - column name
+  - `data_type` - column data type
+  - `is_nullable` - whether the column allows NULL
+  - `description` - column comment, if set
+  - `length` - max character length, if non-zero
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | `table` | `table` |
+
+A table gets one edge per table it points to through a foreign key.

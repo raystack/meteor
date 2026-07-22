@@ -1,0 +1,46 @@
+---
+title: Presto
+description: Extracts table metadata from a Presto server.
+order: 31
+---
+
+# Presto
+
+Extracts tables from every catalog and schema on a Presto server. It emits `table` entities with column details.
+
+## Usage
+
+```yaml
+source:
+  name: presto
+  scope: my-scope
+  config:
+    connection_url: "http://user:pass@localhost:8080"
+    exclude:
+      catalogs:
+        - memory
+        - system
+        - tpcds
+        - tpch
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | HTTP URL for the Presto server, with user and password if needed. | Yes |
+| `exclude.catalogs` | `[]string` | Catalog names to skip during extraction. | No |
+
+## Output
+
+Emits `table` entities with URN pattern `urn:presto:{scope}:table:{catalog}.{schema}.{table}`.
+
+Notable properties:
+
+- `columns` — list of columns with `name`, `data_type`, `is_nullable`, and `description` (when a comment exists)
+
+This extractor does not emit edges.
+
+## Notes
+
+- Built-in catalogs like `memory`, `system`, `tpcds`, and `tpch` are not excluded by default. Add them to `exclude.catalogs` if you do not want them.

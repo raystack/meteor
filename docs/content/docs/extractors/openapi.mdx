@@ -1,0 +1,64 @@
+---
+title: OpenAPI
+description: Extracts API schema metadata from OpenAPI and gRPC protobuf definitions.
+order: 25
+---
+
+# OpenAPI
+
+Extracts API metadata from OpenAPI (v2 or v3) spec files and gRPC `.proto` files. Emits one `api` entity per spec.
+
+## Usage
+
+```yaml
+source:
+  name: openapi
+  scope: my-api
+  config:
+    source: ./specs/petstore.yaml
+```
+
+The source can also be a URL or a glob:
+
+```yaml
+source:
+  name: openapi
+  scope: my-service
+  config:
+    source: ./protos/*.proto
+    format: protobuf
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `source` | `string` | Path or URL to the spec file. Local paths support globs, like `./specs/*.yaml`. | Yes |
+| `format` | `string` | Spec format: `openapi` or `protobuf`. Auto-detected from the file extension if omitted (`.proto` means protobuf, anything else means openapi). | No |
+| `service` | `string` | Service name override. Defaults to `info.title` for OpenAPI, or the package name for protobuf. | No |
+
+## Output
+
+Entity type: `api`
+
+URN pattern: `urn:openapi:{scope}:api:{service_name}`
+
+The service name is lowercased and made URN-safe (spaces become underscores).
+
+Properties for OpenAPI specs:
+
+- `version` - API version from `info.version`.
+- `format` - `openapi_v2` or `openapi_v3`.
+- `endpoints` - List of endpoints, each with `method`, `path`, `summary`, and `operation_id`.
+- `schemas` - Count of schema definitions.
+- `servers` - Server URLs.
+
+Properties for protobuf specs:
+
+- `version` - Syntax version, `proto2` or `proto3`.
+- `format` - `protobuf`.
+- `package` - Proto package name.
+- `services` - List of services, each with `name` and its `methods` (`name`, `input_type`, `output_type`).
+- `messages` - Count of message types.
+
+This extractor does not emit edges.

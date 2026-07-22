@@ -1,0 +1,32 @@
+---
+title: Adding Plugins
+description: Checklists for adding new extractors, processors, and sinks to Meteor.
+order: 2
+---
+
+# Adding plugins
+
+New plugins are the most common contribution to Meteor. This page is the short checklist for each plugin type; the [extractor tutorial](./extractor) walks through the full process with code.
+
+## Adding a new extractor
+
+- Follow the [write an extractor](./extractor) tutorial for the package layout, interfaces, and registration.
+- Register your extractor in [`plugins/extractors/populate.go`](https://github.com/raystack/meteor/blob/main/plugins/extractors/populate.go).
+- Write unit tests. Run them with `make test-plugins PLUGIN=extractors/<name>`.
+- Write a `README.md` in the plugin directory ([example](https://github.com/raystack/meteor/blob/main/plugins/extractors/mysql/README.md)).
+- Add a docs page under `docs/content/docs/extractors/` and a row to the overview table.
+
+## Adding a new processor
+
+- Implement `Process(ctx, record) (record, error)` and embed `plugins.BasePlugin`.
+- Register your processor in [`plugins/processors/populate.go`](https://github.com/raystack/meteor/blob/main/plugins/processors/populate.go).
+- Write unit tests. If you need a live source, use the Docker test utility in `test/utils` ([example](https://github.com/raystack/meteor/blob/main/plugins/extractors/mysql/mysql_test.go)).
+- Write a `README.md` and add a docs page under `docs/content/docs/processors/`.
+
+## Adding a new sink
+
+- Implement `Sink(ctx, batch []models.Record) error` and `Close() error`, and embed `plugins.BasePlugin`.
+- Return `plugins.NewRetryError` for errors Meteor should retry, such as HTTP 5xx responses.
+- Register your sink in [`plugins/sinks/populate.go`](https://github.com/raystack/meteor/blob/main/plugins/sinks/populate.go).
+- Write unit tests.
+- Write a `README.md` and add a docs page under `docs/content/docs/sinks/`.

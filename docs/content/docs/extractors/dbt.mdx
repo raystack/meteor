@@ -1,0 +1,63 @@
+---
+title: dbt
+description: Extracts model and source metadata, lineage, and ownership from dbt project artifacts.
+order: 10
+---
+
+# dbt
+
+Extracts metadata from a dbt project's `manifest.json`, with optional column type enrichment from `catalog.json`. It emits `model` and `source` entities, plus lineage and ownership edges.
+
+## Usage
+
+```yaml
+source:
+  name: dbt
+  scope: my-dbt-project
+  config:
+    manifest: target/manifest.json
+    catalog: target/catalog.json
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `manifest` | `string` | Path to the dbt `manifest.json` file. Must be an existing file. | Yes |
+| `catalog` | `string` | Path to the dbt `catalog.json` file. When set, column types are enriched with actual warehouse types. | No |
+
+## Output
+
+Emits two entity types:
+
+| Entity | URN pattern |
+| :----- | :---------- |
+| `model` | `urn:dbt:{scope}:model:{model_path}` |
+| `source` | `urn:dbt:{scope}:source:{source_path}` |
+
+Notable `model` properties:
+
+- `database`, `schema` - where the model is built
+- `materialization` - `table`, `view`, `incremental`, etc.
+- `sql_path` - path to the model file in the project
+- `language` - model language, if set
+- `tags`, `meta` - dbt tags and meta, if set
+- `columns` - column name, description, and data type
+
+Notable `source` properties:
+
+- `database`, `schema`, `source_name`
+- `loader` - the tool that loads the source, if set
+- `tags`, `meta`, `columns`
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | `model` | `model` or `source` it depends on |
+| `owned_by` | `model` | `user` (from `meta.owner`) |
+| `owned_by` | `source` | `user` (from `meta.owner`) |
+
+## Notes
+
+Any dbt command (`dbt run`, `dbt build`, `dbt compile`) generates `manifest.json`. `dbt docs generate` creates `catalog.json`. This works with both dbt Core (local `target/` artifacts) and dbt Cloud (download artifacts via the API or CI).

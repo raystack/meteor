@@ -52,11 +52,13 @@ var info = plugins.Info{
 		{Type: "namespace", URNPattern: "urn:kubernetes:{scope}:namespace:{name}"},
 		{Type: "deployment", URNPattern: "urn:kubernetes:{scope}:deployment:{namespace}/{name}"},
 		{Type: "service", URNPattern: "urn:kubernetes:{scope}:service:{namespace}/{name}"},
+		{Type: "pod", URNPattern: "urn:kubernetes:{scope}:pod:{namespace}/{name}"},
 		{Type: "job", URNPattern: "urn:kubernetes:{scope}:job:{namespace}/{name}"},
 	},
 	Edges: []plugins.EdgeInfo{
 		{Type: "belongs_to", From: "deployment", To: "namespace"},
 		{Type: "belongs_to", From: "service", To: "namespace"},
+		{Type: "belongs_to", From: "pod", To: "namespace"},
 		{Type: "belongs_to", From: "job", To: "namespace"},
 	},
 }

@@ -1,0 +1,42 @@
+---
+title: Script
+description: Transform entities with a Tengo script, including HTTP lookups to external services.
+order: 4
+---
+
+# Script
+
+The script processor runs a [Tengo](https://github.com/d5/tengo) script on every record. The script gets full read-write access to the entity, so you can rename fields, rewrite URNs, build descriptions, or enrich properties with data fetched over HTTP.
+
+For a walkthrough with real examples, see the [scripting guide](../guides/scripting).
+
+## Usage
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        entity.name = entity.name + " (processed)"
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `engine` | `string` | Script engine. `tengo` is the only supported value. | yes |
+| `script` | `string` | The Tengo script to run on each record. | yes |
+
+## The script environment
+
+- The script sees one global, `entity`, as a map with the fields `urn`, `type`, `name`, `description`, `source`, `properties`, `create_time`, and `update_time`. All fields can be read and written.
+- `properties` can be undefined when the extractor set none — guard with `entity.properties || {}`.
+- Setting a key outside the entity fields fails the run.
+- Edges are not exposed. They pass through the processor unchanged.
+- Scripts cannot drop a record; every record continues to the sinks.
+- Importable modules: `math`, `text`, `times`, `rand`, `fmt`, `json`, `base64`, `hex`, `enum`, plus a built-in `http` module with `http.get(url)` and `http.get(url, headers)` (GET only, 5-second timeout, returns `{code, body}`).
+
+## Error behavior
+
+The script is compiled when the recipe starts; a compile error fails the run before extraction. A runtime error in the script fails the whole run — records are not skipped, and processors are not retried.

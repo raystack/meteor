@@ -66,9 +66,10 @@ var info = plugins.Info{
 		{Type: "document", URNPattern: "urn:github:{scope}:document:{doc_id}"},
 	},
 	Edges: []plugins.EdgeInfo{
+		{Type: "member_of", From: "user", To: "org"},
 		{Type: "member_of", From: "user", To: "team"},
 		{Type: "owned_by", From: "repository", To: "user"},
-		{Type: "belongs_to", From: "repository", To: "team"},
+		{Type: "belongs_to", From: "document", To: "repository"},
 		{Type: "has_access_to", From: "user", To: "repository"},
 	},
 }

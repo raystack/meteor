@@ -1,0 +1,37 @@
+---
+title: Source
+description: Sources define where Meteor extracts metadata from using extractor plugins.
+order: 4
+---
+
+# Source
+
+The `source` block of a recipe tells Meteor where to extract metadata from. It names an extractor plugin and gives it the settings it needs to connect.
+
+```yaml
+source:
+  name: kafka
+  scope: local-kafka
+  config:
+    broker: broker:9092
+```
+
+| Key | Requirement | Description |
+|:---------|:------------|:----------------------------------------------------------|
+| `name` | required | The extractor plugin to use. Run `meteor plugins list --type extractor` for options. |
+| `scope` | required for most extractors | Namespace for the URNs this recipe produces. |
+| `config` | depends on the extractor | Connection details and extraction options. Each extractor has its own keys. |
+
+## Scope
+
+Every entity Meteor emits gets a URN of the form `urn:{source}:{scope}:{type}:{name}`. The `scope` is the second segment. Use it to keep URNs unique across environments or instances — for example `scope: staging-kafka` and `scope: prod-kafka` for two clusters that have topics with the same names.
+
+A few extractors build the scope from their own config and do not need it: `bigquery`, `bigtable`, `redshift`, and `gcs`.
+
+## Configuration
+
+Each extractor has its own config keys, since different systems need different credentials and options. Find them on the extractor's page in the [extractors reference](../extractors/overview), or run:
+
+```sh
+meteor plugins info <extractor-name>
+```

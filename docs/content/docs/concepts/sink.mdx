@@ -1,0 +1,40 @@
+---
+title: Sink
+description: Sinks define the destinations where extracted and processed metadata is sent.
+order: 6
+---
+
+# Sink
+
+The `sinks` block of a recipe lists where Meteor sends the extracted metadata. A recipe needs at least one sink and can have many — every sink receives every record, so one job can feed a catalog, a Kafka topic, and a file at the same time.
+
+```yaml
+sinks:
+  - name: compass
+    config:
+      host: https://compass.example.com
+  - name: console
+```
+
+| Key | Requirement | Description |
+|:------|:------------|:------------|
+| `name` | required | The sink plugin to use. Run `meteor plugins list --type sink` for options. |
+| `config` | depends on the sink | Destination details. Each sink has its own keys. |
+
+## How sinks handle records
+
+Each record contains an **entity** and its **edges** (ownership, lineage, and other relationships). What a sink does with them depends on the destination:
+
+- The [Compass](../sinks/compass) sink upserts the entity, then upserts each edge, so Compass can build its relationship graph.
+- The [Kafka](../sinks/kafka), [HTTP](../sinks/http), [file](../sinks/file), and object storage sinks ([GCS](../sinks/gcs), [S3](../sinks/s3), [Azure Blob](../sinks/azure_blob)) serialize the whole record — entity plus edges — as JSON.
+- The [Stencil](../sinks/stencil) sink converts column metadata into schemas and registers them.
+
+See [Metadata Models](../reference/metadata_models) for the record structure.
+
+## Behavior
+
+Each sink runs in its own goroutine and receives records in batches controlled by `SINK_BATCH_SIZE`. Sinks that talk to remote services retry on server errors. By default a sink failure is logged and the run continues; set `STOP_ON_SINK_ERROR=true` to fail the run instead. [Architecture](./architecture) covers all of this in detail.
+
+## Available sinks
+
+Meteor ships 9 sinks: Compass, Kafka, HTTP, console, file, Google Cloud Storage, Amazon S3, Azure Blob Storage, and Stencil. See the [sinks reference](../sinks/overview) for each one's configuration.

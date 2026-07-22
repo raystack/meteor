@@ -14,10 +14,10 @@ Each extractor emits **Records**. A Record contains:
 
 Ownership is represented as edges with type `owned_by`. Lineage is represented as edges with type `derived_from` (entity depends on target) and `generates` (entity produces target).
 
-- **Extractors**: 34+ plugins (bigquery, postgres, kafka, github, etc.)
+- **Extractors**: 35 plugins (bigquery, postgres, kafka, github, etc.)
 - **Processors**: Transform/enrich records in-flight
 - **Sinks**: Push to destinations (compass, kafka, file, http, etc.)
-- **Agent**: Orchestrates the pipeline with batching, retries, concurrency
+- **Runner**: Orchestrates the pipeline with batching, retries, concurrency
 
 ## Key Directories
 
@@ -27,9 +27,10 @@ plugins/
   extractors/    Source plugins (one dir per source)
   processors/    Transform plugins
   sinks/         Destination plugins (compass, kafka, file, etc.)
-agent/           Pipeline orchestration
+runner/          Pipeline orchestration (batching, retries, concurrency)
 recipe/          Recipe parsing and validation
 cmd/             CLI commands (run, lint, list, info, gen)
+docs/            Documentation site (Chronicle; content in docs/content/docs/)
 ```
 
 ## Data Model

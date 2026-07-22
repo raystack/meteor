@@ -1,0 +1,53 @@
+---
+title: Plugins
+description: List and explore Meteor's extractor, processor, and sink plugins.
+order: 1
+---
+
+# Plugins
+
+Meteor is built around three kinds of plugins:
+
+- **Extractors** pull metadata out of sources: databases, dashboards, message queues, and more.
+- **Processors** enrich or transform the metadata after extraction.
+- **Sinks** deliver the metadata to its destinations.
+
+Read more about how they fit together in [Concepts](../concepts/overview).
+
+## Exploring plugins from the CLI
+
+The fastest way to see what is available is the `plugins list` command:
+
+```sh
+# list all available plugins
+meteor plugins list
+
+# list only extractors
+meteor plugins list --type extractor
+
+# list only sinks
+meteor plugins list --type sink
+
+# list only processors
+meteor plugins list --type processor
+
+# find extractors that emit tables
+meteor plugins list --entity-type table
+
+# find extractors that emit lineage
+meteor plugins list --edge-type derived_from
+
+# filter extractors by tag
+meteor plugins list --tag gcp
+
+# output as JSON
+meteor plugins list --format json
+```
+
+To see a single plugin's description, sample config, and full documentation:
+
+```sh
+meteor plugins info bigquery --full
+```
+
+The same information is in the docs: [extractors](../extractors/overview), [processors](../processors/overview), and [sinks](../sinks/overview).

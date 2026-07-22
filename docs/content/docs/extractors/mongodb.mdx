@@ -1,0 +1,43 @@
+---
+title: MongoDB
+description: Extracts collection metadata from a MongoDB server.
+order: 21
+---
+
+# MongoDB
+
+Extracts collections from every database on a MongoDB server. Emits `table` entities, one per collection.
+
+## Usage
+
+```yaml
+source:
+  name: mongodb
+  scope: my-scope
+  config:
+    connection_url: mongodb://admin:pass123@localhost:27017
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | MongoDB connection URI. | Yes |
+| `exclude.databases` | `[]string` | Database names to skip. | No |
+| `exclude.collections` | `[]string` | Collections to skip, in `database.collection` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:mongodb:{scope}:collection:{database}.{collection}`
+
+Notable properties:
+
+- `profile.total_rows` - Estimated document count. Omitted when zero.
+
+This extractor does not emit edges.
+
+## Notes
+
+The system collections `system.users`, `system.version`, `system.sessions`, and `startup_log` are always skipped, in every database.

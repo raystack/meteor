@@ -49,6 +49,7 @@ var info = plugins.Info{
 	Tags:         []string{"oss", "bi"},
 	Entities: []plugins.EntityInfo{
 		{Type: "dashboard", URNPattern: "urn:grafana:{scope}:dashboard:{uid}"},
+		{Type: "datasource", URNPattern: "urn:grafana:{scope}:datasource:{uid}"},
 	},
 	Edges: []plugins.EdgeInfo{
 		{Type: "derived_from", From: "dashboard", To: "datasource"},

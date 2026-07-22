@@ -1,0 +1,47 @@
+---
+title: Amazon Redshift
+description: Extracts table and column metadata from Amazon Redshift clusters.
+order: 33
+---
+
+# Amazon Redshift
+
+Extracts tables and their columns from an Amazon Redshift cluster using the Redshift Data API. Emits `table` entities.
+
+This extractor does not need a `scope`. The cluster ID is used in URNs instead.
+
+## Usage
+
+```yaml
+source:
+  name: redshift
+  config:
+    cluster_id: cluster_test
+    db_name: testDB
+    db_user: testUser
+    aws_region: us-east-1
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `cluster_id` | `string` | ID of the Redshift cluster. | Yes |
+| `db_name` | `string` | Database name used to connect to the cluster. | Yes |
+| `db_user` | `string` | Database user used to connect to the cluster. | Yes |
+| `aws_region` | `string` | AWS region of the cluster, e.g. `us-east-1`. | Yes |
+| `exclude.databases` | `[]string` | Databases to skip during extraction. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:redshift:{cluster_id}:table:{cluster_id}.{database}.{table}`
+
+Notable properties:
+
+- `columns` - List of column objects. Each has `name`, `data_type`, `is_nullable`, plus `description` and `length` when available.
+
+## Notes
+
+Authentication uses the default AWS credential chain: environment variables, the shared credentials file, or an IAM role.

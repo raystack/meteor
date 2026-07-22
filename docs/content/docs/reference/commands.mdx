@@ -1,0 +1,232 @@
+---
+title: Commands
+description: Reference for all Meteor CLI commands.
+order: 1
+---
+
+# Commands
+
+Meteor supports the following commands:
+
+* [run](#running-recipes): Execute recipes for metadata extraction.
+* [lint](#linting-recipes): Validate recipe files for errors.
+* [recipe init](#creating-sample-recipes): Bootstrap a new recipe.
+* [recipe gen](#generating-multiple-recipes): Generate multiple recipes from a template.
+* [plugins list](#listing-plugins): List available extractors, sinks, and processors.
+* [plugins info](#getting-plugin-information): Display detailed information about a plugin.
+* [entities](#listing-entity-types): List entity types across all extractors.
+* [edges](#listing-edge-types): List edge types across all extractors.
+* version: Print the Meteor version.
+
+## Running recipes
+
+```sh
+# run a single recipe
+meteor run recipe.yaml
+
+# run all recipes in the specified directory
+meteor run recipes/
+
+# run all recipes in the current directory
+meteor run .
+
+# preview extracted records without sending to sinks
+meteor run recipe.yaml --dry-run
+
+# extract only the first 10 records for testing
+meteor run recipe.yaml --dry-run --limit 10
+
+# override log level for debugging
+meteor run recipe.yaml --log-level debug
+
+# use a custom config file
+meteor run recipe.yaml --config /path/to/meteor.yaml
+
+# pass recipe variables from a file
+meteor run recipe.yaml --var secrets.yaml
+```
+
+A directory run reads every file in the directory (it does not recurse into subdirectories) and runs all recipes in parallel. Files that fail to parse are skipped with a warning. Variables from `--var` override `METEOR_` environment variables.
+
+### Flags
+
+| Flag | Short | Default | Description |
+|:-----|:------|:--------|:------------|
+| `--config` | `-c` | `./meteor.yaml` | File path for agent-level config |
+| `--var` | | | Path to a YAML file with recipe variables |
+| `--log-level` | | | Override log level (debug, info, warn, error) |
+| `--dry-run` | | `false` | Extract records without sending to sinks |
+| `--limit` | | `0` | Maximum number of records to extract (0 = unlimited) |
+
+## Linting recipes
+
+```sh
+# validate a single recipe
+meteor lint recipe.yaml
+
+# lint all recipes in the specified directory
+meteor lint recipes/
+
+# lint all recipes in the current directory
+meteor lint .
+
+# lint with debug logging
+meteor lint recipe.yaml --log-level debug
+```
+
+Lint checks the recipe version, that every named plugin exists, and that each plugin's config is valid. Note that lint reads `METEOR_` environment variables only; it has no `--var` flag.
+
+### Flags
+
+| Flag | Default | Description |
+|:-----|:--------|:------------|
+| `--log-level` | | Override log level (debug, info, warn, error) |
+
+## Creating sample recipes
+
+```sh
+# bootstrap a recipe with a bigquery extractor and a console sink
+meteor recipe init sample -n mycompany -e bigquery -s console
+
+# bootstrap a recipe with multiple sinks and a processor
+meteor recipe init sample -n mycompany -e bigquery -s compass,kafka -p enrich
+
+# save the generated recipe to a file
+meteor recipe init sample -n mycompany -e postgres -s console > recipe.yaml
+
+# interactive mode (prompts for extractor, sinks, processors)
+meteor recipe init sample -n mycompany
+```
+
+The generated recipe includes each plugin's sample config, printed to stdout.
+
+### Flags
+
+| Flag | Short | Required | Description |
+|:-----|:------|:---------|:------------|
+| `--scope` | `-n` | Yes | URN namespace for the recipe |
+| `--extractor` | `-e` | No | Extractor to use (interactive if omitted) |
+| `--sinks` | `-s` | No | Comma-separated list of sinks (interactive if omitted) |
+| `--processors` | `-p` | No | Comma-separated list of processors (interactive if omitted) |
+
+## Generating multiple recipes
+
+```sh
+# generate multiple recipes from a template
+meteor recipe gen template.yaml -d data.yaml -o ./output-dir
+```
+
+The data file is a YAML list of entries, each with a `FileName` and `Data` map. Meteor writes one recipe per entry into the output directory, filling the template with that entry's data.
+
+### Flags
+
+| Flag | Short | Description |
+|:-----|:------|:------------|
+| `--output` | `-o` | Output directory |
+| `--data` | `-d` | Template data file |
+
+## Listing plugins
+
+```sh
+# list all available plugins (extractors, sinks, processors)
+meteor plugins list
+
+# list only extractors
+meteor plugins list --type extractor
+
+# list only sinks
+meteor plugins list --type sink
+
+# list only processors
+meteor plugins list --type processor
+
+# filter extractors by entity type
+meteor plugins list --entity-type table
+
+# filter extractors by edge type
+meteor plugins list --edge-type derived_from
+
+# filter extractors by tag
+meteor plugins list --tag gcp
+
+# output as JSON for scripting
+meteor plugins list --format json
+```
+
+### Flags
+
+| Flag | Short | Default | Description |
+|:-----|:------|:--------|:------------|
+| `--type` | | | Filter by plugin type (extractor, sink, processor) |
+| `--entity-type` | | | Filter extractors by entity type |
+| `--edge-type` | | | Filter extractors by edge type |
+| `--tag` | | | Filter extractors by tag |
+| `--format` | `-f` | `table` | Output format (table, json) |
+
+## Getting plugin information
+
+```sh
+# display information about a plugin
+meteor plugins info bigquery
+meteor plugins info compass
+meteor plugins info enrich
+
+# show full markdown documentation
+meteor plugins info bigquery --full
+
+# output as JSON
+meteor plugins info bigquery --format json
+
+# interactive mode (prompts for plugin selection)
+meteor plugins info
+```
+
+### Flags
+
+| Flag | Short | Default | Description |
+|:-----|:------|:--------|:------------|
+| `--full` | | `false` | Show full markdown documentation |
+| `--format` | `-f` | `table` | Output format (table, json) |
+
+## Listing entity types
+
+```sh
+# list all entity types and which extractors produce them
+meteor entities
+
+# output as JSON
+meteor entities --format json
+```
+
+### Flags
+
+| Flag | Short | Default | Description |
+|:-----|:------|:--------|:------------|
+| `--format` | `-f` | `table` | Output format (table, json) |
+
+## Listing edge types
+
+```sh
+# list all edge types and which extractors produce them
+meteor edges
+
+# output as JSON
+meteor edges --format json
+```
+
+### Flags
+
+| Flag | Short | Default | Description |
+|:-----|:------|:--------|:------------|
+| `--format` | `-f` | `table` | Output format (table, json) |
+
+## Getting help
+
+```sh
+# general help
+meteor --help
+
+# help for a specific command
+meteor run --help
+meteor plugins list --help
+```

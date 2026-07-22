@@ -1,0 +1,49 @@
+---
+title: MySQL
+description: Extracts table and column metadata from a MySQL server.
+order: 23
+---
+
+# MySQL
+
+Extracts tables and their columns from every database on a MySQL server. Emits `table` entities, plus `references` edges for foreign keys.
+
+## Usage
+
+```yaml
+source:
+  name: mysql
+  scope: my-scope
+  config:
+    connection_url: admin:pass123@tcp(localhost:3306)/
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | MySQL connection URL, in Go DSN format. | Yes |
+| `exclude.databases` | `[]string` | Database names to skip. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `database.table` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:mysql:{scope}:table:{database}.{table}`
+
+Notable properties:
+
+- `columns` - List of column objects. Each has `name`, `data_type`, `is_nullable`, `description` (the column comment, omitted when empty), and `length` (omitted when zero).
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | table | table |
+
+One `references` edge is created per foreign key, pointing from the table to the table it references.
+
+## Notes
+
+The system databases `information_schema`, `mysql`, `performance_schema`, and `sys` are always skipped.

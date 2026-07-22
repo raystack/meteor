@@ -1,0 +1,78 @@
+---
+title: Quickstart
+description: Extract metadata from a CSV file and print it to your terminal in under five minutes.
+order: 3
+---
+
+# Quickstart
+
+This guide takes you from a fresh install to your first extracted metadata in a few minutes. It uses the CSV extractor and the console sink, so you need no database or external service.
+
+## 1. Install Meteor
+
+```sh
+brew install raystack/tap/meteor
+```
+
+See [Installation](./installation) for Docker, binary, and source options.
+
+## 2. Create a sample data file
+
+Make a small CSV file for Meteor to read:
+
+```sh
+echo "id,name,email" > users.csv
+```
+
+## 3. Create a recipe
+
+A recipe is a YAML file that tells Meteor what to extract and where to send it. Generate one with the CLI:
+
+```sh
+meteor recipe init quickstart -n demo -e csv -s console > recipe.yaml
+```
+
+This creates a recipe named `quickstart` with the `csv` extractor and the `console` sink. The `-n demo` flag sets the scope, which becomes part of every URN Meteor generates.
+
+Open `recipe.yaml` and set the path to your CSV file:
+
+```yaml
+name: quickstart
+version: v1beta1
+source:
+  name: csv
+  scope: demo
+  config:
+    path: ./users.csv
+sinks:
+  - name: console
+```
+
+## 4. Validate the recipe
+
+```sh
+meteor lint recipe.yaml
+```
+
+Lint checks that the plugins exist and their configs are valid before you run anything.
+
+## 5. Run it
+
+```sh
+meteor run recipe.yaml
+```
+
+The console sink prints each record as one JSON line, and Meteor ends with a run summary:
+
+```json
+{"entity":{"urn":"urn:csv:demo:file:users.csv","type":"table","name":"users.csv","source":"csv","properties":{"columns":[{"name":"id"},{"name":"name"},{"name":"email"}]}}}
+```
+
+Each record contains an **entity** (the resource and its metadata) and, for sources that support it, **edges** (relationships like ownership and lineage).
+
+## Next steps
+
+- Point Meteor at a real source. Pick one from the [extractors list](./extractors/overview) and swap the `source` block.
+- Send metadata somewhere useful. Swap the console sink for [Compass, Kafka, or another sink](./sinks/overview).
+- Learn how recipes work in the [recipe reference](./concepts/recipe).
+- Preview any recipe safely with `meteor run recipe.yaml --dry-run --limit 10`.

@@ -1,0 +1,70 @@
+---
+title: Architecture
+description: How Meteor executes a recipe — the pipeline, concurrency, batching, retries, and error handling.
+order: 2
+---
+
+# Architecture
+
+This page explains what happens when you run `meteor run recipe.yaml`. Knowing the moving parts helps you tune throughput and debug failures.
+
+## The pipeline
+
+For each recipe, Meteor builds one pipeline:
+
+```
+                       ┌──────────────────────────────┐
+Extractor ──record──▶  │ Processor 1 → Processor 2 …  │ ──▶ Sink A
+ (goroutine)           │   (sequential, in-flight)    │ ──▶ Sink B
+                       └──────────────────────────────┘      (one goroutine each)
+```
+
+- The **extractor** runs in its own goroutine. It emits records one at a time.
+- **Processors** run in recipe order, synchronously, on every record as it passes through. There is no queue between processors.
+- **Sinks** each get their own goroutine and receive every record. Sinks run concurrently with each other and with the extractor.
+- Channels between the extractor and sinks are unbuffered. If a sink is slow, extraction slows down to match. This backpressure keeps memory use flat, but it also means the slowest sink sets the pace of the whole run.
+
+When the extractor finishes, Meteor flushes any partial batches to the sinks, closes each sink, and prints the run summary.
+
+## Batching
+
+Each sink collects records into a batch and pushes the batch in one call. The batch size is controlled by the `SINK_BATCH_SIZE` [config](../reference/configuration):
+
+- Default is `1` — every record is pushed as soon as it arrives.
+- A larger value (for example `100`) reduces API calls for sinks that talk to remote services.
+- `0` means unlimited — all records are held and pushed once at the end of the run.
+
+Batching is per sink. Every sink still receives every record.
+
+## Retries
+
+Meteor retries two things: the extractor run and each sink batch push. Processors are never retried.
+
+- Only errors a plugin marks as retryable are retried. The Compass, HTTP, and Stencil sinks mark server errors (HTTP 5xx) as retryable. Any other error fails immediately.
+- Backoff is exponential. The first wait is `RETRY_INITIAL_INTERVAL_SECONDS` (default 5), and each wait is 5 times longer than the last.
+- `MAX_RETRIES` (default 5) caps the number of attempts.
+
+## Error handling
+
+| Failure | What happens |
+| :--- | :--- |
+| Plugin setup fails (unknown name, bad config) | The run fails before extraction starts. |
+| Extractor fails after retries | The run fails. Records already extracted still reach the sinks. |
+| A processor returns an error | The whole run stops and fails. There is no skip-on-error. |
+| A sink fails after retries | By default the error is logged and the run continues and still counts as success. Set `STOP_ON_SINK_ERROR=true` to fail the run instead. |
+
+When you run a directory of recipes, all recipes run in parallel, each with its own pipeline. One failed recipe does not stop the others. The CLI reports every failure at the end and exits non-zero if any recipe failed.
+
+## Run summary
+
+After each run, Meteor reports per recipe: success or failure, duration, the number of records extracted, and a count per entity type (for example `table:12, topic:3`). Failures include the error message.
+
+## Observability
+
+Set `OTEL_ENABLED=true` to export metrics and traces over OTLP gRPC to `OTEL_COLLECTOR_ADDR`. Meteor emits:
+
+- `meteor.recipe.duration`, `meteor.assets.extracted`, `meteor.extractor.retries`, and `meteor.sink.retries` per run, tagged with the recipe, extractor, processors, sinks, and success flag.
+- `meteor.processor.duration` and `meteor.sink.duration` histograms per plugin.
+- Host and Go runtime metrics, plus HTTP and gRPC client metrics from plugins that make network calls.
+
+See [Configuration](../reference/configuration) for all knobs.

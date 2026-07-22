@@ -1,0 +1,50 @@
+---
+title: PostgreSQL
+description: Extracts table metadata from a PostgreSQL server.
+order: 30
+---
+
+# PostgreSQL
+
+Extracts tables from every database on a PostgreSQL server. It emits `table` entities with column details, user grants, and foreign key relationships.
+
+## Usage
+
+```yaml
+source:
+  name: postgres
+  scope: my-scope
+  config:
+    connection_url: "postgres://admin:pass123@localhost:5432/postgres?sslmode=disable"
+    exclude:
+      databases:
+        - testDB
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | PostgreSQL connection URL. | Yes |
+| `exclude.databases` | `[]string` | Databases to skip during extraction. | No |
+
+## Output
+
+Emits `table` entities with URN pattern `urn:postgres:{scope}:table:{database}.{table}`.
+
+Notable properties:
+
+- `columns` — list of columns with `name`, `data_type`, `is_nullable`, and `length` (when non-zero)
+- `grants` — list of user privileges, each with `user` and `privilege_types` (when available)
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | `table` | `table` |
+
+## Notes
+
+- The databases `information_schema`, `root`, and `postgres` are always excluded, in addition to any you list.
+- Only tables in the `public` schema are extracted.
+- A `references` edge is created for each foreign key that points to another table.

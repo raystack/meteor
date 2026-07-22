@@ -1,0 +1,122 @@
+---
+title: Recipe
+description: The recipe YAML format — every field, variables, and templating explained.
+order: 3
+---
+
+# Recipe
+
+A recipe is a YAML file that defines one metadata job: extract from one source, optionally transform, and send to one or more sinks. You pass recipes to `meteor run` one file at a time or as a directory.
+
+A recipe has exactly **one source**. This keeps each job isolated: one recipe per system you extract from. It should have **at least one sink**, and processors are optional.
+
+## The full format
+
+```yaml
+# Unique recipe name. Used as the job ID in logs and reports.
+# If omitted, Meteor uses the file name.
+name: main-kafka-production
+
+# Recipe format version. v1beta1 is the only accepted value.
+version: v1beta1
+
+# Where to extract metadata from. Exactly one source.
+source:
+  # Extractor plugin to use. Run `meteor plugins list --type extractor` for options.
+  name: kafka
+  # Namespace for every URN this recipe produces, e.g. urn:kafka:local-kafka:topic:orders.
+  # Use it to tell environments or instances apart (staging vs production).
+  # Required by most extractors; bigquery, bigtable, redshift, and gcs infer it.
+  scope: local-kafka
+  # Extractor-specific settings. See each extractor's page for its keys.
+  config:
+    broker: "localhost:9092"
+
+# Optional. Processors transform each record, in this order.
+processors:
+  - name: enrich
+    config:
+      attributes:
+        team: data-platform
+        environment: production
+
+# Destinations. At least one. Every sink receives every record.
+sinks:
+  - name: http
+    config:
+      method: POST
+      url: "https://example.com/metadata"
+  - name: console
+```
+
+| Field | Requirement | Description |
+|:------|:------------|:------------|
+| `name` | optional | Unique job ID. Defaults to the recipe file name. |
+| `version` | required | Must be `v1beta1`. |
+| `source` | required | One extractor with its `name`, `scope`, and `config`. See [Source](./source). |
+| `processors` | optional | List of processors, run in order. See [Processor](./processor). |
+| `sinks` | required | List of destinations. See [Sink](./sink). |
+
+Validate any recipe with `meteor lint recipe.yaml` before running it.
+
+## Variables
+
+Recipes are parsed as [Go templates](https://golang.org/pkg/text/template/), so you can keep credentials out of your recipe files and inject them at run time:
+
+```yaml
+name: sample-recipe
+version: v1beta1
+source:
+  name: mongodb
+  scope: my-mongo
+  config:
+    # Quote template values so YAML reads them as strings.
+    connection_url: "{{ .connection_url }}"
+sinks:
+  - name: console
+```
+
+There are two ways to supply values:
+
+### Environment variables
+
+Meteor picks up every environment variable with the `METEOR_` prefix. The prefix is stripped and the rest is lowercased to form the variable name:
+
+```sh
+# METEOR_CONNECTION_URL becomes {{ .connection_url }}
+export METEOR_CONNECTION_URL=mongodb://admin:pass123@localhost:27017
+meteor run sample-recipe.yaml
+```
+
+### A variables file
+
+Pass a YAML file with `--var`. Keys are flattened with underscores and do not need the `METEOR_` prefix:
+
+```yaml
+# vars.yaml — SOURCE.USERNAME becomes {{ .source_username }}
+SOURCE:
+  USERNAME: admin
+  PASSWORD: "1234"
+```
+
+```sh
+meteor run recipes/ --var vars.yaml
+```
+
+If a variable is set in both places, the `--var` file wins. Note that `meteor lint` reads environment variables only; it ignores `--var`.
+
+## Running recipes
+
+```sh
+# run one recipe
+meteor run recipe.yaml
+
+# run every recipe in a directory (not recursive)
+meteor run recipes/
+```
+
+A directory run picks up every file in the directory and runs all recipes in parallel. Files that fail to parse are skipped with a warning. One failed recipe does not stop the others; see [Architecture](./architecture) for the full error-handling rules.
+
+## Generating recipes
+
+You do not have to write recipes by hand. `meteor recipe init` scaffolds one with sample config for each plugin, and `meteor recipe gen` produces many recipes from a template. See the [commands reference](../reference/commands).

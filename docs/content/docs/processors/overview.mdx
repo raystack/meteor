@@ -1,0 +1,35 @@
+---
+title: Overview
+description: Reference for all supported Meteor processors including enrich, labels, and script.
+order: 1
+---
+
+# Processors
+
+Processors transform records in-flight between extraction and sinking. Each processor receives a record, modifies the entity, and passes it on. Edges pass through unchanged.
+
+Processors run sequentially in recipe order — the output of one becomes the input of the next:
+
+```yaml
+processors:
+  - name: enrich
+    config:
+      attributes:
+        domain: payments
+  - name: labels
+    config:
+      labels:
+        source: meteor
+```
+
+If a processor fails, the whole run stops and fails. Processors are not retried.
+
+## Supported processors
+
+| Processor | Description |
+| :--- | :--- |
+| [`enrich`](./enrich) | Add custom key-value pairs to `entity.properties` |
+| [`labels`](./labels) | Add labels into `entity.properties.labels` |
+| [`script`](./script) | Transform the entity with a [Tengo](https://github.com/d5/tengo) script |
+
+For how the pipeline runs processors, see [Architecture](../concepts/architecture). For script examples, see the [scripting guide](../guides/scripting).

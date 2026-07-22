@@ -1,0 +1,36 @@
+---
+title: Amazon S3
+description: Save metadata records as an NDJSON object in an Amazon S3 bucket.
+order: 9
+---
+
+# Amazon S3
+
+Writes records to a single object in an Amazon S3 bucket, or any S3-compatible store. Each record is one line of JSON (NDJSON).
+
+## Usage
+
+```yaml
+sinks:
+  - name: s3
+    config:
+      bucket_url: s3://bucket-name/optional-prefix
+      region: us-east-1
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `bucket_url` | `string` | Bucket and optional prefix, e.g. `s3://bucket-name/optional-prefix` | required |
+| `region` | `string` | AWS region of the bucket, e.g. `us-east-1` | required |
+| `object_prefix` | `string` | Prefix added to the object name, e.g. `github-users` | optional |
+| `access_key_id` | `string` | AWS access key ID | optional |
+| `secret_access_key` | `string` | AWS secret access key | optional |
+| `endpoint` | `string` | Custom endpoint for S3-compatible stores like MinIO, e.g. `http://localhost:9000` | optional |
+
+If `access_key_id` and `secret_access_key` are not set, the sink uses the default AWS credential chain (environment variables, shared config, IAM roles).
+
+## Output format
+
+Each run creates one object named `[prefix/][prefix-]<RFC3339 timestamp>.ndjson` in the bucket. Every line is the whole record as JSON: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges.

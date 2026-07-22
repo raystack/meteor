@@ -1,0 +1,49 @@
+---
+title: Microsoft SQL Server
+description: Extracts table and column metadata from Microsoft SQL Server databases.
+order: 22
+---
+
+# Microsoft SQL Server
+
+Extracts tables and their columns from every database on a SQL Server instance. Emits `table` entities, plus `references` edges for foreign keys.
+
+## Usage
+
+```yaml
+source:
+  name: mssql
+  scope: my-scope
+  config:
+    connection_url: sqlserver://admin:pass123@localhost:1433/
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | Connection URL for the SQL Server instance. | Yes |
+| `exclude.databases` | `[]string` | Database names to skip. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `database.table` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:mssql:{scope}:table:{database}.{table}`
+
+Notable properties:
+
+- `columns` - List of column objects. Each has `name`, `data_type`, `is_nullable`, and `length` (omitted when zero).
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | table | table |
+
+One `references` edge is created per foreign key, pointing from the table to the table it references.
+
+## Notes
+
+The system databases `master`, `msdb`, `model`, and `tempdb` are always skipped.

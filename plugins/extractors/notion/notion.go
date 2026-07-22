@@ -42,7 +42,9 @@ var info = plugins.Info{
 	},
 	Edges: []plugins.EdgeInfo{
 		{Type: "child_of", From: "document", To: "document"},
+		{Type: "belongs_to", From: "document", To: "document"},
 		{Type: "owned_by", From: "document", To: "user"},
+		{Type: "documented_by", From: "document", To: "any"},
 	},
 }
 

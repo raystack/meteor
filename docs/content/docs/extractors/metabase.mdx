@@ -1,0 +1,55 @@
+---
+title: Metabase
+description: Extracts dashboard and chart metadata from a Metabase server.
+order: 20
+---
+
+# Metabase
+
+Extracts dashboards from a Metabase server, including their charts (cards) and the upstream tables each chart reads from. Emits `dashboard` entities.
+
+## Usage
+
+```yaml
+source:
+  name: metabase
+  scope: my-scope
+  config:
+    host: http://localhost:3000
+    instance_label: my-metabase
+    username: meteor_tester
+    password: meteor_pass_1234
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | URL of the Metabase server. | Yes |
+| `instance_label` | `string` | Instance alias. Used as part of chart URNs. | Yes |
+| `username` | `string` | Username or email for authentication. | Yes, unless `session_id` is set |
+| `password` | `string` | Password for authentication. | No |
+| `session_id` | `string` | Existing Metabase session ID. When set, `username` and `password` are not needed. | No |
+
+## Output
+
+Entity type: `dashboard`
+
+URN pattern: `urn:metabase:{scope}:collection:{dashboard_id}`
+
+Notable properties:
+
+- `id` - Dashboard ID.
+- `collection_id` - Collection the dashboard belongs to.
+- `creator_id` - ID of the user who created the dashboard.
+- `create_time`, `update_time` - Timestamps (set when available).
+- `charts` - List of chart objects. Each has `urn`, `name`, `id`, `collection_id`, `creator_id`, `database_id`, `table_id`, `query_average_duration`, `display`, `archived`, and `upstreams` (resolved upstream table URNs).
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | dashboard | table |
+| `owned_by` | dashboard | user |
+
+One `derived_from` edge is created per unique upstream table resolved from the dashboard's charts. Upstream tables are resolved for postgres, mysql, bigquery, and h2 databases. The `owned_by` edge points to the dashboard creator.

@@ -1,0 +1,32 @@
+---
+title: Overview
+description: Reference for all supported Meteor sinks including Compass, Kafka, HTTP, File, and more.
+order: 1
+---
+
+# Sinks
+
+Sinks are plugins that receive records and push them to destination systems. Each record contains an entity and a list of edges representing relationships such as ownership and lineage.
+
+To use a sink, add a `sinks` block to your [recipe](../concepts/recipe):
+
+```yaml
+sinks:
+  - name: compass
+    config:
+      host: https://compass.example.com
+```
+
+## Supported sinks
+
+| Sink | Description | Output |
+| :--- | :---------- | :----- |
+| [`azure_blob`](./azure_blob) | Write records as NDJSON to a blob in an Azure Blob Storage container. | Azure Blob Storage blob |
+| [`compass`](./compass) | Send entities and edges to Raystack Compass over HTTP. | Compass catalog service |
+| [`console`](./console) | Print each record to standard output as JSON or Markdown. | Standard output |
+| [`file`](./file) | Write records to a local file as NDJSON or YAML. | Local file |
+| [`gcs`](./gcs) | Write records as NDJSON to an object in a Google Cloud Storage bucket. | GCS object |
+| [`http`](./http) | Send each record as JSON to an HTTP endpoint, with an optional Tengo script for custom payloads. | HTTP endpoint |
+| [`kafka`](./kafka) | Publish each record as JSON to a Kafka topic. | Kafka topic |
+| [`s3`](./s3) | Write records as NDJSON to an object in an Amazon S3 bucket or an S3-compatible store. | S3 object |
+| [`stencil`](./stencil) | Convert table columns into JSON Schema or Avro and send them to Raystack Stencil. | Stencil schema registry |

@@ -1,0 +1,46 @@
+---
+title: Elasticsearch
+description: Extracts index and field metadata from an Elasticsearch cluster.
+order: 11
+---
+
+# Elasticsearch
+
+Extracts every index from an Elasticsearch cluster, including field mappings and index settings. Each index is emitted as a `table` entity.
+
+## Usage
+
+```yaml
+source:
+  name: elastic
+  scope: my-scope
+  config:
+    host: http://localhost:9200
+    user: elastic
+    password: changeme
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | Address of the Elasticsearch server, including scheme. | Yes |
+| `user` | `string` | Username for authentication. | No |
+| `password` | `string` | Password for authentication. | No |
+
+## Output
+
+Emits `table` entities with the URN pattern:
+
+```
+urn:elasticsearch:{scope}:index:{index_name}
+```
+
+Notable properties:
+
+- `columns` - one entry per field in the index mapping, each with:
+  - `name` - field name
+  - `data_type` - Elasticsearch field type (e.g. `text`, `keyword`)
+- `profile.total_rows` - document count from a default search (omitted if zero)
+- `number_of_shards` - number of primary shards
+- `number_of_replicas` - number of replica shards

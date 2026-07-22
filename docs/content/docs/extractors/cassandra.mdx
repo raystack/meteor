@@ -1,0 +1,45 @@
+---
+title: Cassandra
+description: Extracts table and column metadata from an Apache Cassandra server.
+order: 5
+---
+
+# Cassandra
+
+Scans every keyspace on a Cassandra server and extracts its tables and columns. It emits `table` entities.
+
+## Usage
+
+```yaml
+source:
+  name: cassandra
+  scope: my-scope
+  config:
+    user_id: admin
+    password: "1234"
+    host: localhost
+    port: 9042
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `user_id` | `string` | User ID to access the Cassandra server. | Yes |
+| `password` | `string` | Password for the Cassandra server. | Yes |
+| `host` | `string` | Host address of the Cassandra server. | Yes |
+| `port` | `int` | Port number of the Cassandra server. Must be between 1 and 65535. | Yes |
+| `exclude.keyspaces` | `[]string` | Keyspaces to skip. System keyspaces (`system`, `system_schema`, `system_auth`, `system_distributed`, `system_traces`) are always skipped. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `keyspace.table` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:cassandra:{scope}:table:{keyspace}.{table}`
+
+Notable properties:
+
+| Property | Description |
+| :------- | :---------- |
+| `columns` | List of column objects, each with `name` and `data_type`. |

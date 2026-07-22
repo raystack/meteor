@@ -1,0 +1,51 @@
+---
+title: PagerDuty
+description: Extracts service and incident metadata from PagerDuty via its REST API v2.
+order: 29
+---
+
+# PagerDuty
+
+Extracts services and recent incidents from PagerDuty using the PagerDuty REST API v2. It emits `service` and `incident` entities, plus edges for team ownership and the service each incident belongs to.
+
+## Usage
+
+```yaml
+source:
+  name: pagerduty
+  scope: my-scope
+  config:
+    api_key: your-pagerduty-api-key
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `api_key` | `string` | PagerDuty API key used for authentication. | Yes |
+| `exclude` | `[]string` | Service IDs to skip during extraction. | No |
+| `incident_days` | `int` | How many days back to look for incidents. Default: `30`. | No |
+
+## Output
+
+Two entity types are emitted:
+
+- `service` — URN pattern: `urn:pagerduty:{scope}:service:{service_id}`
+- `incident` — URN pattern: `urn:pagerduty:{scope}:incident:{incident_id}`
+
+Notable properties:
+
+- Service: `status`, `description`, `created_at`, `updated_at`, `html_url`, `escalation_policy_id`, `alert_creation`, `incident_urgency_rule`, and `team_ids` (comma-separated, when present).
+- Incident: `status`, `urgency`, `created_at`, `html_url`, `incident_number`, `title`, plus `resolved_at` and `priority` when set.
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `owned_by` | `service` | `team` |
+| `belongs_to` | `incident` | `service` |
+
+## Notes
+
+- A service with more than one team gets one `owned_by` edge per team.
+- Incidents on excluded services are skipped along with the service.

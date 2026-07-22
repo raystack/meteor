@@ -1,5 +1,10 @@
-title: Meteor
-description: Plugin-driven metadata collection agent
+site:
+  title: Meteor
+  description: Plugin-driven metadata collection agent
+
+content:
+  - dir: docs
+    label: Docs
 
 theme:
   name: default
@@ -12,12 +17,3 @@ navigation:
 search:
   enabled: true
   placeholder: Search docs...
-
-llms:
-  enabled: true
-
-footer:
-  copyright: "Raystack"
-  links:
-    - label: GitHub
-      href: https://github.com/raystack/meteor

@@ -1,0 +1,76 @@
+---
+title: Application YAML
+description: Extracts application metadata, ownership, and lineage from a YAML file.
+order: 2
+---
+
+# Application YAML
+
+Reads a YAML file that describes an application. It emits one `application` entity, plus edges for team ownership and input/output lineage.
+
+## Usage
+
+```yaml
+source:
+  name: application_yaml
+  scope: my-scope
+  config:
+    file: "./path/to/meteor.app.yaml"
+    env_prefix: CI
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `file` | `string` | Path to the application YAML file. The file must exist. | Yes |
+| `env_prefix` | `string` | Prefix for environment variables injected as Go template variables. The prefix is stripped from the variable name. Default: `CI`. | No |
+
+The YAML file is parsed as a Go template before decoding. Environment variables that start with `env_prefix` are available as template variables with the prefix removed and the name lowercased. For example, `CI_PROJECT_NAME` becomes `{{.project_name}}`.
+
+### Application YAML format
+
+```yaml
+name: "order-manager"             # required
+id: "0adf3214-676c-..."           # required
+team:
+  id: "team-123"
+  name: "Order Team"
+  email: "order-team@example.com"
+description: "Order management service"
+url: "https://github.com/mycompany/order-manager"
+version: "d6ec883"
+inputs:                            # upstream lineage URNs
+  - urn:bigquery:bq-raw:table:project.dataset.table
+outputs:                           # downstream lineage URNs
+  - urn:kafka:my-kafka:topic:output-topic
+create_time: "2006-01-02T15:04:05Z"
+update_time: "2006-01-02T15:04:05Z"
+labels:
+  team: "Booking Experience"
+```
+
+## Output
+
+Entity type: `application`
+
+URN pattern: `urn:application_yaml:{scope}:application:{name}`
+
+Notable properties (each is set only when present in the YAML file):
+
+| Property | Description |
+| :------- | :---------- |
+| `id` | Application ID. |
+| `version` | Application version. |
+| `url` | Application URL. |
+| `create_time` | Creation timestamp (RFC 3339). |
+| `update_time` | Last update timestamp (RFC 3339). |
+| `labels` | Key-value labels. |
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `owned_by` | Application URN | `urn:user:{team.email}`, or `urn:user:{team.id}` if email is empty. Emitted only when `team.id` is set. |
+| `derived_from` | Application URN | Each URN in `inputs[]`. |
+| `generates` | Application URN | Each URN in `outputs[]`. |

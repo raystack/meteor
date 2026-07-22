@@ -1,6 +1,6 @@
 # Kafka
 
-Publish metadata as protobuf-serialized messages to an Apache Kafka topic.
+Publish metadata records as JSON messages to an Apache Kafka topic.
 
 ## Usage
 
@@ -23,9 +23,9 @@ sinks:
 
 ## Behavior
 
-Each Record's Entity is serialized as a Protocol Buffers message and published to the configured Kafka topic. Edges are not included in the message (there is currently no proto wrapper for a full Record).
+The message value is the whole Record serialized as JSON (`{"entity": {...}, "edges": [...]}`, snake_case keys, `edges` omitted when empty) and published to the configured Kafka topic.
 
-If `key_path` is set, the value of that Entity field is used as the Kafka message key, which controls partition assignment. If omitted, messages are published without a key and distributed across partitions by the producer.
+If `key_path` is set, the value of that Entity field is protobuf-encoded and used as the Kafka message key, which controls partition assignment. If omitted, messages are published without a key and distributed across partitions by the producer.
 
 ## Contributing
 

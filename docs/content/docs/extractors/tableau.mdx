@@ -1,0 +1,63 @@
+---
+title: Tableau
+description: Extracts workbook and sheet metadata from a Tableau server.
+order: 36
+---
+
+# Tableau
+
+Extracts workbooks and their sheets from a Tableau server. Emits `dashboard` entities, with lineage edges to upstream tables and an ownership edge to the workbook owner.
+
+## Usage
+
+```yaml
+source:
+  name: tableau
+  scope: my-scope
+  config:
+    host: https://server.tableau.com
+    version: "3.12"
+    username: meteor_user
+    password: xxxxxxxxxx
+    sitename: testdev550928
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | URL of the Tableau server. | Yes |
+| `version` | `string` | Tableau REST API version, e.g. `3.12`. Quote it in YAML so it stays a string. | Yes |
+| `username` | `string` | Username or email for authentication. | Yes, unless `auth_token` is set |
+| `password` | `string` | Password for authentication. | Yes, when `username` is set |
+| `auth_token` | `string` | Personal access token. Alternative to username and password. | Yes, unless `username` is set |
+| `site_id` | `string` | Site ID, used with `auth_token`. | Yes, unless `username` is set |
+| `sitename` | `string` | Tableau site name. Uses the default site when empty. | No |
+
+## Output
+
+Entity type: `dashboard`
+
+URN pattern: `urn:tableau:{scope}:workbook:{workbook_id}`
+
+Notable properties:
+
+- `id`, `name` - Workbook ID and name.
+- `project_name` - Project the workbook belongs to.
+- `uri` - Workbook URI on the Tableau server.
+- `owner_id`, `owner_name`, `owner_email` - Workbook owner details.
+- `create_time`, `update_time` - Timestamps (set when available).
+- `charts` - List of sheet objects. Each has `urn` (`urn:tableau:{scope}:sheet:{sheet_id}`), `name`, `id`, `source`, `dashboard_urn`, and timestamps when available.
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | dashboard | table |
+| `owned_by` | dashboard | user |
+
+One `derived_from` edge is created per upstream table connected to the workbook. Upstream URNs are built for database servers, cloud files, local files, and web data connectors. MaxCompute JDBC connections are detected and mapped to MaxCompute table URNs. The `owned_by` edge points to `urn:user:{owner_email}` and is only created when the owner has an email.
+
+## Notes
+
+The [Metadata API](https://help.tableau.com/current/api/metadata_api/en-us/) must be enabled on your Tableau server for this extractor to work.

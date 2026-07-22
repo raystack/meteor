@@ -1,0 +1,52 @@
+---
+title: Superset
+description: Extracts dashboard and chart metadata from an Apache Superset server.
+order: 35
+---
+
+# Superset
+
+Extracts dashboards and their charts from an Apache Superset server. Emits `dashboard` entities with ownership edges to the dashboard owners.
+
+## Usage
+
+```yaml
+source:
+  name: superset
+  scope: my-scope
+  config:
+    username: meteor_tester
+    password: meteor_pass_1234
+    host: http://localhost:3000
+    provider: db
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `username` | `string` | Username for Superset authentication. | Yes |
+| `password` | `string` | Password for Superset authentication. | Yes |
+| `host` | `string` | URL of the Superset server. | Yes |
+| `provider` | `string` | Authentication provider, e.g. `db`. | Yes |
+
+## Output
+
+Entity type: `dashboard`
+
+URN pattern: `urn:superset:{scope}:dashboard:{dashboard_id}`
+
+Notable properties:
+
+- `published` - Whether the dashboard is published.
+- `url`, `slug` - Dashboard URL and slug (set when available).
+- `changed_by` - Name of the user who last changed the dashboard (set when available).
+- `charts` - List of chart objects. Each has `urn` (`urn:superset:{scope}:chart:{slice_id}`), `name`, `source`, `url`, `data_source`, `dashboard_urn`, and `description` when set.
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `owned_by` | dashboard | user |
+
+One `owned_by` edge is created per dashboard owner (`urn:superset:{scope}:user:{owner_id}`).

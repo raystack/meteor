@@ -1,0 +1,51 @@
+---
+title: Optimus
+description: Extracts job metadata, lineage, and ownership from Raystack Optimus.
+order: 27
+---
+
+# Optimus
+
+Extracts jobs from a Raystack Optimus server over gRPC. It emits `job` entities with lineage edges to the BigQuery or MaxCompute tables each job reads and writes.
+
+## Usage
+
+```yaml
+source:
+  name: optimus
+  scope: my-scope
+  config:
+    host: optimus.com:80
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | Optimus gRPC host address. | Yes |
+| `max_size_in_mb` | `int` | Maximum gRPC message size in MB. Default: `45`. | No |
+
+## Output
+
+Emits `job` entities with URN pattern `urn:optimus:{scope}:job:{project}.{namespace}.{job_name}`.
+
+Notable properties:
+
+- `version`, `project`, `namespace`, `owner`, `interval`
+- `depends_on_past`, `task_name`, `window_size`, `window_offset`, `window_truncate_to`
+- `start_date` and `end_date` (when set)
+- `sql` — the job's `query.sql` asset (when present)
+- `task` — the task's `name`, `description`, and `image`
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | `job` | `table` |
+| `generates` | `job` | `table` |
+| `owned_by` | `job` | `user` |
+
+## Notes
+
+- Lineage targets are resolved from `bigquery://` and `maxcompute://` dependency URLs. Dependencies with other prefixes are skipped with a warning.
+- The owner edge points to `urn:user:{owner}` using the job owner from the job spec.

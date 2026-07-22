@@ -1,0 +1,38 @@
+---
+title: Compass
+description: Send entities and edges to a Raystack Compass catalog service over HTTP.
+order: 3
+---
+
+# Compass
+
+Sends each record to Raystack Compass as JSON over HTTP. It upserts the entity first, then upserts each edge one by one.
+
+## Usage
+
+```yaml
+sinks:
+  - name: compass
+    config:
+      host: https://compass.example.com
+      headers:
+        Compass-User-UUID: meteor@raystack.io
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | Base URL of the Compass service | required |
+| `headers` | `map` | Extra HTTP headers to send. Multiple values for one header are separated by commas. | optional |
+| `max_concurrency` | `int` | Maximum number of records sent at the same time per batch. `0` means no limit. | optional |
+
+## Output format
+
+For each record, the sink POSTs an `UpsertEntity` request with the entity's urn, type, name, description, source, and properties. It then sends one `UpsertEdge` POST per edge with the edge's source_urn, target_urn, type, source, and properties. If an edge has no source, the entity's source is used.
+
+## Notes
+
+- Records in a batch are sent concurrently. Use `max_concurrency` to limit this.
+- Records that only carry edges (no name, description, or properties) skip the entity upsert. Only their edges are sent.
+- Responses with a 5xx status are treated as retryable, so the agent retries them.

@@ -1,0 +1,39 @@
+---
+title: ClickHouse
+description: Extracts table and column metadata from a ClickHouse server.
+order: 6
+---
+
+# ClickHouse
+
+Lists all non-system tables on a ClickHouse server and extracts their columns. It emits `table` entities.
+
+## Usage
+
+```yaml
+source:
+  name: clickhouse
+  scope: my-scope
+  config:
+    connection_url: tcp://localhost:9000?username=admin&password=pass123&debug=true
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | ClickHouse connection URL, for example `tcp://localhost:9000?username=admin&password=pass123`. | Yes |
+| `exclude.databases` | `[]string` | Databases to skip. The `system` database is always skipped. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `database.table` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:clickhouse:{scope}:table:{database}.{table}`
+
+Notable properties:
+
+| Property | Description |
+| :------- | :---------- |
+| `columns` | List of column objects, each with `name`, `data_type`, and `description` (only when the column has a comment). |

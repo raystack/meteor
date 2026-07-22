@@ -1,0 +1,53 @@
+---
+title: HTTP
+description: Send metadata records to any HTTP endpoint as JSON.
+order: 7
+---
+
+# HTTP
+
+Sends each record to an HTTP endpoint as JSON. The URL can be a template, so each record can go to its own path.
+
+## Usage
+
+```yaml
+sinks:
+  - name: http
+    config:
+      url: https://example.com/api/{{ .Type }}/{{ .Urn }}
+      method: PUT
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `url` | `string` | Target URL. Supports Go templates with entity fields, e.g. `{{ .Type }}` and `{{ .Urn }}`. | required |
+| `method` | `string` | HTTP method to use, e.g. `POST` or `PUT` | required |
+| `headers` | `map` | Extra HTTP headers to send. Multiple values for one header are separated by commas. | optional |
+| `success_code` | `int` | Status code that counts as success. Defaults to `200`. | optional |
+| `script.engine` | `string` | Script engine. Only `tengo` is supported. | optional |
+| `script.source` | `string` | Script source code. Required when `script.engine` is set. | optional |
+
+## Output format
+
+Without a script, the request body is the whole record as JSON: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges. The URL template is filled in from the entity for each record.
+
+## Notes
+
+- With a script, the sink runs your Tengo code per record. The script sees the entity as a map named `entity` and calls `sink(payload)` to send a custom JSON body. Edges are not available to the script.
+
+```yaml
+script:
+  engine: tengo
+  source: |
+    payload := {
+      details: {
+        some_key: entity.urn,
+        another_key: entity.name
+      }
+    }
+    sink(payload)
+```
+
+- Any response other than `success_code` is an error. Responses with a 5xx status are retryable, so the agent retries them.

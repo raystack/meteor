@@ -1,0 +1,51 @@
+---
+title: Google Workspace
+description: Extracts user metadata from Google Workspace using the Admin SDK Directory API.
+order: 15
+---
+
+# Google Workspace
+
+Extracts users from a Google Workspace (G Suite) domain through the Admin SDK Directory API. Emits one `user` entity per user.
+
+## Usage
+
+```yaml
+source:
+  name: gsuite
+  scope: my-org
+  config:
+    service_account_json: '{"type":"service_account","project_id":"...","private_key":"..."}'
+    user_email: admin@example.com
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `service_account_json` | `string` | Service account JSON credential. | Yes |
+| `user_email` | `string` | Email of an admin user to impersonate when calling the Directory API. | Yes |
+
+## Output
+
+Emits `user` entities:
+
+```
+urn:gsuite:{scope}:user:{primary_email}
+```
+
+Notable properties:
+
+- `email` - primary email address
+- `full_name` - full name of the user
+- `status` - set to `suspended` when the user is suspended; omitted otherwise
+- `aliases` - comma-separated email aliases
+- `org_unit_path` - organizational unit path
+- `organizations` - organization records from Google Workspace
+- `relations` - relation records (e.g. manager)
+- `custom_schemas` - custom schema data, as JSON strings keyed by schema name
+
+## Notes
+
+- The service account must have [domain-wide delegation](https://developers.google.com/admin-sdk/directory/v1/guides/delegation#delegate_domain-wide_authority_to_your_service_account) enabled.
+- The `user_email` must belong to a user with access to the Admin APIs.

@@ -1,0 +1,45 @@
+---
+title: Processor
+description: Processors transform and enrich metadata records in-flight between extraction and sinking.
+order: 5
+---
+
+# Processor
+
+Processors transform records after extraction and before sinking. Use them to add metadata that the source system does not have — team names, environment tags, classifications — or to rewrite fields with a script.
+
+## How processors work
+
+Processors run **sequentially**, in the order the recipe defines them. The output of one becomes the input of the next:
+
+```
+Extractor → Processor 1 → Processor 2 → Sinks
+```
+
+If no processors are defined, records flow straight from the extractor to the sinks.
+
+Processors modify the **entity** (name, description, properties). Edges pass through unchanged — sinks handle them at the end of the pipeline.
+
+If a processor returns an error, the whole run stops and fails. There is no skip-on-error, and processors are not retried.
+
+## Using processors in a recipe
+
+```yaml
+processors:
+  - name: enrich
+    config:
+      attributes:
+        domain: payments
+  - name: labels
+    config:
+      labels:
+        source: meteor
+```
+
+Meteor has three processors:
+
+- [`enrich`](../processors/enrich) adds key-value attributes to each entity's properties.
+- [`labels`](../processors/labels) adds labels for categorization and filtering.
+- [`script`](../processors/script) runs a Tengo script with full control over the entity. See the [scripting guide](../guides/scripting).
+
+See the [processors reference](../processors/overview) for configuration details.

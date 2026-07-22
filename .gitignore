@@ -33,5 +33,8 @@ meteor-plugin-*
 # build
 /dist
 
+# docs (chronicle)
+docs/.vercel
+
 .playground
 .claude

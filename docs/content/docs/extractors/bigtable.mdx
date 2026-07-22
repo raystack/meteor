@@ -1,0 +1,40 @@
+---
+title: Bigtable
+description: Extracts table metadata from Google Cloud Bigtable instances.
+order: 4
+---
+
+# Bigtable
+
+Lists every instance in a GCP project and extracts its tables. It emits `table` entities with column family details.
+
+`scope` is optional for this extractor. The project ID is used as the URN scope.
+
+## Usage
+
+```yaml
+source:
+  name: bigtable
+  config:
+    project_id: google-project-id
+    service_account_base64: ____base64_encoded_service_account____
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `project_id` | `string` | GCP project ID that holds the Bigtable instances. | Yes |
+| `service_account_base64` | `string` | Base64-encoded service account JSON. If omitted, default Google credentials are used (for example, `GOOGLE_APPLICATION_CREDENTIALS`). | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:bigtable:{project_id}:table:{instance}.{table}`
+
+Notable properties:
+
+| Property | Description |
+| :------- | :---------- |
+| `column_family` | JSON-encoded list of column family info objects (name and GC policy). |

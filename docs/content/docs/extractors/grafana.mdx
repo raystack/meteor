@@ -1,0 +1,67 @@
+---
+title: Grafana
+description: Extracts dashboard and datasource metadata from a Grafana server.
+order: 14
+---
+
+# Grafana
+
+Extracts dashboards and datasources from a Grafana server through its HTTP API. Emits `dashboard` and `datasource` entities, with dashboard panels included as `charts` on the dashboard.
+
+## Usage
+
+```yaml
+source:
+  name: grafana
+  scope: my-scope
+  config:
+    base_url: https://grafana.example.com
+    api_key: your_api_key
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `base_url` | `string` | URL of the Grafana server. | Yes |
+| `api_key` | `string` | API key used to call the Grafana API. | Yes |
+| `extract` | `[]string` | Entity types to extract. Allowed values: `dashboards`, `datasources`. Default: both. | No |
+| `exclude.dashboards` | `[]string` | Dashboard UIDs to skip. | No |
+| `exclude.panels` | `[]string` | Panels to skip, in the format `{dashboard_uid}.{panel_id}`. | No |
+
+## Output
+
+Emits `dashboard` entities:
+
+```
+urn:grafana:{scope}:dashboard:{uid}
+```
+
+Notable dashboard properties:
+
+- `url` - full URL to the dashboard
+- `folder` - folder that holds the dashboard
+- `created_by` / `updated_by` - user who created or last updated it
+- `tags` - dashboard tags
+- `charts` - one entry per panel, each with `urn` (`urn:grafana:{scope}:panel:{dashboard_uid}.{panel_id}`), `name`, `type`, `url`, `data_source`, and `raw_query` when available
+
+Emits `datasource` entities:
+
+```
+urn:grafana:{scope}:datasource:{uid}
+```
+
+Notable datasource properties:
+
+- `type` - datasource type (e.g. `postgres`, `prometheus`)
+- `url` - connection URL
+- `database` - database name, if set
+- `is_default` - `true` for the default datasource
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | `dashboard` | `datasource` |
+
+A dashboard gets one edge per unique datasource used by its panels.

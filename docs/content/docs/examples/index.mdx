@@ -1,0 +1,175 @@
+---
+title: Examples
+description: Complete, copy-paste recipes for common Meteor use cases.
+order: 1
+---
+
+# Examples
+
+Complete recipes for common use cases. Each one is ready to copy — save it to a file, set the environment variables, and run it. Credentials use [recipe variables](../concepts/recipe#variables), so nothing sensitive lives in the file.
+
+## Kafka to console
+
+Extract topic metadata from a Kafka cluster and print it to stdout. Good for a first look at what an extractor emits.
+
+```yaml
+# kafka-console.yaml
+name: kafka-console
+version: v1beta1
+source:
+  name: kafka
+  scope: local-kafka
+  config:
+    broker: "{{ .kafka_broker }}"
+sinks:
+  - name: console
+```
+
+```sh
+export METEOR_KAFKA_BROKER=localhost:9092
+meteor run kafka-console.yaml
+```
+
+## BigQuery to Kafka
+
+Extract BigQuery table metadata with column profiling and view lineage, and stream it to a Kafka topic. The `key_path` keys each message by entity URN so the same table always lands on the same partition.
+
+```yaml
+# bigquery-kafka.yaml
+name: bigquery-kafka
+version: v1beta1
+source:
+  name: bigquery
+  config:
+    project_id: "{{ .bigquery_project_id }}"
+    service_account_base64: "{{ .google_service_account }}"
+    include_column_profile: true
+    build_view_lineage: true
+sinks:
+  - name: kafka
+    config:
+      brokers: "{{ .kafka_brokers }}"
+      topic: metadata-topic
+      key_path: .Urn
+```
+
+```sh
+export METEOR_BIGQUERY_PROJECT_ID=my-gcp-project
+export METEOR_GOOGLE_SERVICE_ACCOUNT=$(base64 < service-account.json)
+export METEOR_KAFKA_BROKERS=broker1:9092,broker2:9092
+meteor run bigquery-kafka.yaml
+```
+
+## Postgres to Compass
+
+Extract Postgres table metadata, label every record, and upload it to [Compass](https://github.com/raystack/compass).
+
+```yaml
+# postgres-compass.yaml
+name: postgres-compass
+version: v1beta1
+source:
+  name: postgres
+  scope: prod-postgres
+  config:
+    connection_url: "postgres://{{ .pg_user }}:{{ .pg_password }}@{{ .pg_host }}/postgres?sslmode=disable"
+processors:
+  - name: labels
+    config:
+      labels:
+        environment: production
+        team: data-platform
+sinks:
+  - name: compass
+    config:
+      host: "{{ .compass_host }}"
+      headers:
+        Compass-User-UUID: meteor@example.com
+```
+
+```sh
+export METEOR_PG_USER=meteor METEOR_PG_PASSWORD=secret
+export METEOR_PG_HOST=localhost:5432
+export METEOR_COMPASS_HOST=https://compass.example.com
+meteor run postgres-compass.yaml
+```
+
+## BigQuery to multiple sinks
+
+One extraction can feed several destinations. This recipe enriches and labels each record, then sends it to both Compass and Kafka.
+
+```yaml
+# bigquery-multi-sink.yaml
+name: bigquery-multi-sink
+version: v1beta1
+source:
+  name: bigquery
+  config:
+    project_id: "{{ .bigquery_project_id }}"
+    service_account_base64: "{{ .google_service_account }}"
+    include_column_profile: true
+    build_view_lineage: true
+processors:
+  - name: enrich
+    config:
+      attributes:
+        domain: analytics
+  - name: labels
+    config:
+      labels:
+        environment: production
+sinks:
+  - name: compass
+    config:
+      host: "{{ .compass_host }}"
+  - name: kafka
+    config:
+      brokers: "{{ .kafka_brokers }}"
+      topic: metadata-topic
+      key_path: .Urn
+```
+
+```sh
+export METEOR_BIGQUERY_PROJECT_ID=my-gcp-project
+export METEOR_GOOGLE_SERVICE_ACCOUNT=$(base64 < service-account.json)
+export METEOR_COMPASS_HOST=https://compass.example.com
+export METEOR_KAFKA_BROKERS=broker1:9092,broker2:9092
+meteor run bigquery-multi-sink.yaml
+```
+
+## Tableau to file
+
+Extract Tableau dashboard metadata and save it to a local file for inspection.
+
+```yaml
+# tableau-file.yaml
+name: tableau-file
+version: v1beta1
+source:
+  name: tableau
+  scope: my-tableau
+  config:
+    host: "{{ .tableau_host }}"
+    version: "3.12"
+    username: "{{ .tableau_username }}"
+    password: "{{ .tableau_password }}"
+    sitename: my-site
+sinks:
+  - name: file
+    config:
+      path: ./tableau-metadata.ndjson
+      format: ndjson
+```
+
+```sh
+export METEOR_TABLEAU_HOST=https://server.tableau.com
+export METEOR_TABLEAU_USERNAME=meteor_user
+export METEOR_TABLEAU_PASSWORD=secret
+meteor run tableau-file.yaml
+```
+
+## Tips
+
+- Preview any recipe without sending data: `meteor run recipe.yaml --dry-run --limit 10`.
+- Validate before running: `meteor lint recipe.yaml`.
+- Every extractor and sink page in the reference has its own usage snippet: [extractors](../extractors/overview), [sinks](../sinks/overview).

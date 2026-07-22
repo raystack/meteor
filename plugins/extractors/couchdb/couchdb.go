@@ -36,7 +36,7 @@ type Exclude struct {
 }
 
 var sampleConfig = `
-connection_url: http://admin:pass123@localhost:3306/
+connection_url: http://admin:pass123@localhost:5984/
 exclude:
   databases:
     - database_a

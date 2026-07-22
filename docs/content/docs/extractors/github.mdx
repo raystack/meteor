@@ -1,0 +1,69 @@
+---
+title: GitHub
+description: Extracts users, repositories, teams, and documents from a GitHub organisation.
+order: 13
+---
+
+# GitHub
+
+Extracts metadata from a GitHub organisation. It emits `user`, `repository`, `team`, and `document` entities, plus edges for team membership, repository ownership, and collaborator access.
+
+## Usage
+
+```yaml
+source:
+  name: github
+  scope: my-github-org
+  config:
+    org: raystack
+    token: github_token
+    extract:
+      - users
+      - repositories
+      - teams
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `org` | `string` | Name of the GitHub organisation. | Yes |
+| `token` | `string` | GitHub API access token. | Yes |
+| `extract` | `[]string` | What to extract. Allowed values: `users`, `repositories`, `teams`, `documents`, `collaborators`. Default: all five. | No |
+| `docs.repos` | `[]string` | Repositories to scan for documents. Default: all org repositories. | No |
+| `docs.paths` | `[]string` | Directory paths to scan for documents in each repository. Scanned recursively. Default: `["docs"]`. | No |
+| `docs.pattern` | `string` | Glob pattern for matching document files. Default: `*.md`. | No |
+
+## Output
+
+Emits four entity types:
+
+| Entity | URN pattern |
+| :----- | :---------- |
+| `user` | `urn:github:{scope}:user:{user_id}` |
+| `repository` | `urn:github:{scope}:repository:{repo_id}` |
+| `team` | `urn:github:{scope}:team:{team_id}` |
+| `document` | `urn:github:{scope}:document:{doc_id}` |
+
+Notable properties:
+
+- `user` - `email`, `username`, `full_name`, `company`, `location`, `bio`, `avatar_url`, `html_url`, `status`
+- `repository` - `full_name`, `description`, `html_url`, `language`, `visibility`, `default_branch`, `archived`, `fork`, `stargazers`, `forks`, `open_issues`, `topics`
+- `team` - `slug`, `description`, `privacy`, `permission`, `html_url`
+- `document` - `path`, `file_name`, `content`, `html_url`, `repo`, `size`, `sha`
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `member_of` | `user` | organisation |
+| `member_of` | `user` | `team` |
+| `owned_by` | `repository` | `user` |
+| `belongs_to` | `document` | `repository` |
+| `has_access_to` | `user` | `repository` |
+
+`has_access_to` edges carry a `permission` property with the user's highest access level: `admin`, `maintain`, `push`, `triage`, or `pull`.
+
+## Notes
+
+Document extraction (`documents`) fetches full file contents, so limit it with `docs.repos` and `docs.paths` on large organisations. Extracting `collaborators` lists collaborators for every repository in the organisation.

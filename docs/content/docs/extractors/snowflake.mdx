@@ -1,0 +1,45 @@
+---
+title: Snowflake
+description: Extracts table and column metadata from a Snowflake account.
+order: 34
+---
+
+# Snowflake
+
+Extracts tables and their columns from all databases in a Snowflake account. Emits `table` entities, with `references` edges for foreign keys.
+
+## Usage
+
+```yaml
+source:
+  name: snowflake
+  scope: my-scope
+  config:
+    connection_url: user:password@my_organization-my_account/mydb
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | Snowflake connection URL, e.g. `user:password@my_organization-my_account/mydb`. | Yes |
+| `exclude.databases` | `[]string` | Databases to skip during extraction. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `database.table` format. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:snowflake:{scope}:table:{database}.{table}`
+
+Notable properties:
+
+- `columns` - List of column objects. Each has `name`, `data_type`, `is_nullable`, plus `description` and `length` when available.
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | table | table |
+
+One `references` edge is created per table referenced through a foreign key constraint. If the foreign key lookup fails, the table is still emitted without edges.

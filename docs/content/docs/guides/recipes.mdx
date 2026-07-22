@@ -1,0 +1,46 @@
+---
+title: Recipes
+description: Create, generate, and validate Meteor recipes for metadata extraction jobs.
+order: 2
+---
+
+# Creating recipes
+
+A recipe is a YAML file that defines one metadata job. You can write recipes by hand — the [recipe reference](../concepts/recipe) covers every field — or generate them with the CLI as shown below.
+
+## Generate a recipe
+
+`meteor recipe init` scaffolds a recipe with sample config for each plugin you pick:
+
+```sh
+# a recipe with a postgres extractor, a console sink, and the enrich processor
+meteor recipe init sample -n mycompany -e postgres -s console -p enrich > recipe.yaml
+
+# multiple sinks
+meteor recipe init sample -n mycompany -e bigquery -s compass,kafka
+
+# interactive mode - prompts you to pick plugins from a list
+meteor recipe init sample -n mycompany
+```
+
+The `-n` flag sets the [scope](../concepts/source#scope). The recipe prints to stdout, so redirect it to a file.
+
+Then edit the generated config values to match your source, and validate:
+
+```sh
+meteor lint recipe.yaml
+```
+
+Lint checks that the recipe version is valid, all named plugins exist, and each plugin's config passes validation.
+
+## Generate many recipes from a template
+
+When you need many recipes that differ only in a few values — one per database, for example — write one template and a data file:
+
+```sh
+meteor recipe gen template.yaml -d data.yaml -o ./recipes
+```
+
+The data file is a YAML list of entries with a `FileName` and a `Data` map. Meteor writes one recipe per entry into the output directory.
+
+See the [commands reference](../reference/commands) for all flags.

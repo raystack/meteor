@@ -1,0 +1,46 @@
+---
+title: Running Meteor
+description: Run metadata extraction recipes using the Meteor binary or Docker.
+order: 3
+---
+
+# Running Meteor
+
+Once you have a recipe (or a folder of them), `meteor run` executes the extraction.
+
+## With the Meteor binary
+
+```sh
+# run a single recipe
+meteor run recipe.yaml
+
+# run all recipes in a directory (in parallel, not recursive)
+meteor run recipes/
+
+# run all recipes in the current directory
+meteor run .
+```
+
+## Preview without sending data
+
+Use `--dry-run` to run the extractor and processors without pushing anything to sinks. Combine it with `--limit` to stop after a few records:
+
+```sh
+meteor run recipe.yaml --dry-run --limit 10
+```
+
+This is the safest way to check a new recipe or debug a config.
+
+## With Docker
+
+```sh
+docker run --rm \
+  -v $(pwd)/recipes:/recipes \
+  raystack/meteor meteor run /recipes/
+```
+
+Mount your recipes into the container and pass credentials as environment variables with `-e METEOR_...`.
+
+## After the run
+
+Meteor prints a summary per recipe: success or failure, duration, record count, and a per-entity-type breakdown. A directory run reports every failure at the end and exits non-zero if any recipe failed. See [Architecture](../concepts/architecture) for the full error-handling rules, and [Deployment](./deployment) for running Meteor on a schedule.

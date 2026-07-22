@@ -1,0 +1,29 @@
+---
+title: Introduction
+description: Meteor is a plugin-driven agent for collecting metadata from data stores, services, and message queues.
+order: 1
+---
+
+# Introduction
+
+Meteor is a plugin-driven agent for collecting metadata. It extracts metadata from data stores, services, and message queues, transforms it, and sends it to catalog services and other destinations.
+
+Meteor runs **recipes** — YAML files that describe a job. A recipe names one **source** to extract from, an optional list of **processors** to transform records in flight, and one or more **sinks** to send the results to.
+
+Meteor ships with 35 extractors, 3 processors, and 9 sinks, and its plugin system makes it easy to add more.
+
+## Key features
+
+- **Single binary.** Written in Go. It compiles into one binary with no external dependencies.
+- **Extensible.** The plugin system makes new sources, processors, and sinks easy to add.
+- **Wide coverage.** Extract from databases, BI tools, message queues, cloud storage, code hosts, and more.
+- **Lineage and ownership.** Records carry relationship edges, not just flat metadata.
+- **Lightweight runtime.** Runs in VMs or containers with a small memory footprint.
+
+## Where to start
+
+- [Installation](./installation) — install Meteor with Homebrew, Docker, or a binary.
+- [Quickstart](./quickstart) — extract your first metadata in five minutes.
+- [Concepts](./concepts/overview) — how recipes, sources, processors, and sinks fit together.
+- [Extractors](./extractors/overview) — every supported source and its configuration.
+- [Contribute](./contribute/contributing) — help build Meteor.

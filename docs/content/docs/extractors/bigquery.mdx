@@ -1,0 +1,84 @@
+---
+title: BigQuery
+description: Extracts table metadata, schema, statistics, and view lineage from Google BigQuery.
+order: 3
+---
+
+# BigQuery
+
+Extracts table metadata from Google BigQuery: schema, partitioning, labels, preview rows, column profiles, and usage stats. It emits `table` entities, and view lineage as edges.
+
+`scope` is optional for this extractor. The project ID is used as the URN scope.
+
+## Usage
+
+```yaml
+source:
+  name: bigquery
+  config:
+    project_id: google-project-id
+    service_account_base64: ____base64_encoded_service_account____
+    exclude:
+      datasets:
+        - dataset_a
+      tables:
+        - dataset_c.table_a
+    include_column_profile: true
+    build_view_lineage: true
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `project_id` | `string` | BigQuery project ID. | Yes |
+| `service_account_base64` | `string` | Base64-encoded service account JSON. Takes precedence over `service_account_json`. | No |
+| `service_account_json` | `string` | Service account credentials as a JSON string. | No |
+| `max_page_size` | `int` | Page size hint for BigQuery API list calls. Default: `100`. | No |
+| `dataset_page_size` | `int` | Page size for listing datasets. Falls back to `max_page_size`. | No |
+| `table_page_size` | `int` | Page size for listing tables. Falls back to `max_page_size`. | No |
+| `table_pattern` | `string` | Regex pattern. Only tables whose `dataset.table` name matches are extracted. | No |
+| `exclude.datasets` | `[]string` | Dataset IDs to skip. | No |
+| `exclude.tables` | `[]string` | Tables to skip, in `datasetID.tableID` format. | No |
+| `exclude.labels` | `map[string]string` | Tables with any matching label key-value pair are skipped. | No |
+| `include_column_profile` | `bool` | Profile each column (min, max, avg, med, unique, count, top). Runs extra queries. | No |
+| `max_preview_rows` | `int` | Number of preview rows to fetch. `-1` omits the preview keys entirely. Default: `30`. | No |
+| `mix_values` | `bool` | Shuffle column values across preview rows for privacy. Default: `false`. | No |
+| `build_view_lineage` | `bool` | Parse view SQL to emit upstream lineage edges. Default: `false`. | No |
+| `collect_table_usage` | `bool` | Collect table usage statistics from BigQuery audit logs. Default: `false`. | No |
+| `usage_period_in_day` | `int` | Number of days of audit logs to scan. Default: `7`. | No |
+| `usage_project_ids` | `[]string` | GCP project IDs to scan for audit logs. Defaults to `project_id`. | No |
+| `concurrency` | `int` | Number of tables to process concurrently. Default: `10`. | No |
+
+## Output
+
+Entity type: `table`
+
+URN pattern: `urn:bigquery:{project_id}:table:{project_id}:{dataset_id}.{table_id}`
+
+Notable properties:
+
+| Property | Description |
+| :------- | :---------- |
+| `full_qualified_name` | Fully qualified table name (`project.dataset.table`). |
+| `dataset`, `project` | Dataset ID and project ID. |
+| `type` | BigQuery table type (`TABLE`, `VIEW`, `MATERIALIZED_VIEW`, and so on). |
+| `columns` | Column schema: name, data type, description, mode, nullability, policy tags, nested columns. Includes a per-column profile when `include_column_profile` is on. |
+| `partition_data` | Partition field and time or range partition settings. |
+| `clustering_fields` | Fields the table is clustered on. |
+| `sql` | View SQL query (views and materialized views only). |
+| `preview_fields`, `preview_rows` | Sample data, controlled by `max_preview_rows`. |
+| `profile` | Usage stats (row count, query count, common joins, filters) when `collect_table_usage` is on. |
+| `create_time`, `update_time` | Timestamps (RFC 3339). |
+| `labels` | BigQuery table labels. |
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `derived_from` | View or materialized view table | Each upstream table parsed from the view SQL. Emitted only when `build_view_lineage` is `true`. |
+
+## Notes
+
+- If you leave both `service_account_json` and `service_account_base64` blank, the extractor uses [Google Application Default Credentials](https://cloud.google.com/docs/authentication/production#automatically). This is the recommended setup when Meteor runs inside GCP.
+- The service account needs the `bigquery.privateLogsViewer` role to collect audit logs for table usage.

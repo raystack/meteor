@@ -1,0 +1,50 @@
+---
+title: Redash
+description: Extracts dashboard metadata from a Redash server.
+order: 32
+---
+
+# Redash
+
+Extracts dashboards from a Redash server through its REST API. Emits `dashboard` entities with an ownership edge to the dashboard creator.
+
+## Usage
+
+```yaml
+source:
+  name: redash
+  scope: my-scope
+  config:
+    base_url: https://redash.example.com
+    api_key: t33I8i8OFnVt3t9Bjj2RXr8nCBz0xyzVZ318Zwbj
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `base_url` | `string` | Base URL of the Redash server. API endpoints are appended to it. | Yes |
+| `api_key` | `string` | Redash API key used for authentication. | Yes |
+
+## Output
+
+Entity type: `dashboard`
+
+URN pattern: `urn:redash:{scope}:dashboard:{dashboard_id}`
+
+Notable properties:
+
+- `user_id` - ID of the dashboard owner.
+- `version` - Dashboard version number.
+- `slug` - Dashboard URL slug.
+- `is_archived`, `is_draft` - Dashboard state flags.
+- `tags` - Dashboard tags (set when present).
+- `created_at`, `updated_at` - Timestamps in RFC 3339 format (set when available).
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `owned_by` | dashboard | user |
+
+The `owned_by` edge points to the user who created the dashboard (`urn:redash:{scope}:user:{user_id}`).

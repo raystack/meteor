@@ -1,0 +1,56 @@
+---
+title: Google Cloud Storage
+description: Extracts bucket and blob metadata from Google Cloud Storage.
+order: 12
+---
+
+# Google Cloud Storage
+
+Extracts all buckets in a Google Cloud project, and optionally the blobs inside them. Each bucket is emitted as a `bucket` entity.
+
+The `scope` field is optional for this extractor. URNs use the project ID instead.
+
+## Usage
+
+```yaml
+source:
+  name: gcs
+  config:
+    project_id: google-project-id
+    extract_blob: true
+    service_account_base64: ____base64_encoded_service_account____
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `project_id` | `string` | Google Cloud project ID. | Yes |
+| `service_account_base64` | `string` | Base64-encoded service account JSON. Takes precedence over `service_account_json`. | No |
+| `service_account_json` | `string` | Service account JSON string. | No |
+| `extract_blob` | `bool` | Also extract blob metadata inside each bucket. | No |
+| `exclude` | `[]string` | Bucket names to skip. | No |
+
+## Output
+
+Emits `bucket` entities with the URN pattern:
+
+```
+urn:gcs:{project_id}:bucket:{bucket_name}
+```
+
+Notable properties:
+
+- `location`, `location_type` - bucket location (e.g. `US`) and type (e.g. `multi-region`)
+- `storage_type` - storage class (e.g. `STANDARD`)
+- `versioning_enabled`, `requester_pays`
+- `create_time` - bucket creation time
+- `labels` - bucket labels, if any
+- `retention_period_seconds` - retention policy period, if set
+- `default_kms_key` - default Cloud KMS key, if set
+- `log_bucket` - access log bucket, if set
+- `blobs` - blob list when `extract_blob` is true; each blob has `urn`, `name`, `size`, and `owner`, `create_time`, `update_time`, `delete_time`, `expire_time` when available
+
+## Notes
+
+If you leave both `service_account_base64` and `service_account_json` blank, the extractor uses [Google Application Default Credentials](https://cloud.google.com/docs/authentication/production#automatically). This is the recommended setup when Meteor runs inside the same GCP environment.

@@ -1,0 +1,26 @@
+---
+title: Console
+description: Print metadata records to standard output for debugging.
+order: 4
+---
+
+# Console
+
+Prints each record to standard output. Useful for testing a recipe before sending data anywhere.
+
+## Usage
+
+```yaml
+sinks:
+  - name: console
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `format` | `string` | Output format: `json` or `markdown`. Defaults to `json`. | optional |
+
+## Output format
+
+With `json` (the default), each record prints as one JSON line: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges. With `markdown`, each record prints as a readable Markdown block, and records are separated by a `---` line.

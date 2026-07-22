@@ -1,0 +1,122 @@
+---
+title: Scripting
+description: Transform metadata with Tengo scripts — variables, modules, and working examples.
+order: 4
+---
+
+# Scripting
+
+The [script processor](../processors/script) lets you transform every record with a [Tengo](https://github.com/d5/tengo) script. Tengo is a small scripting language with Go-like syntax. This guide covers what a script can see and do, with working examples.
+
+## What the script sees
+
+Your script gets one global variable: `entity`. It is a map with these fields:
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `urn` | string | Unique resource name |
+| `type` | string | Entity type, e.g. `table` |
+| `name` | string | Human-readable name |
+| `description` | string | May be undefined |
+| `source` | string | Source system, e.g. `postgres` |
+| `properties` | map | All type-specific metadata. May be undefined |
+| `create_time`, `update_time` | string | RFC 3339 timestamps |
+
+Every field can be read and written. Two rules to remember:
+
+- Fields the extractor did not set are undefined, not empty. Guard with `entity.properties || {}`.
+- You can only write to the fields above. Setting a new top-level key like `entity.foo` fails the run.
+
+Edges are not exposed to scripts. They pass through unchanged. A script also cannot drop a record — every record continues to the sinks.
+
+## Examples
+
+### Rename entities
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        entity.name = entity.name + " [" + entity.source + "]"
+```
+
+### Add properties safely
+
+Merge new keys without losing what the extractor set:
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        merge := func(m1, m2) {
+          for k, v in m2 {
+            m1[k] = v
+          }
+          return m1
+        }
+        entity.properties = merge(entity.properties || {}, {
+          domain: "payments",
+          reviewed: "true"
+        })
+```
+
+### Rewrite descriptions with text functions
+
+Import Tengo's standard modules with `import`:
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        text := import("text")
+        if !entity.description {
+          entity.description = "No description provided for " + text.to_lower(entity.name)
+        }
+```
+
+Available modules: `math`, `text`, `times`, `rand`, `fmt`, `json`, `base64`, `hex`, and `enum`. The `os` module is not available.
+
+### Enrich from an external service
+
+The built-in `http` module can fetch data during processing. It supports GET requests only, with a 5-second timeout:
+
+```yaml
+processors:
+  - name: script
+    config:
+      engine: tengo
+      script: |
+        json := import("json")
+        res := http.get("https://ownership-service.example.com/owners?urn=" + entity.urn)
+        if res.code == 200 {
+          owner := json.decode(res.body)
+          entity.properties = entity.properties || {}
+          entity.properties.owner_team = owner.team
+        }
+```
+
+`http.get` takes an optional second argument with headers: `http.get(url, {Authorization: "Bearer token"})`. It returns a map with `code` (int) and `body` (string).
+
+## Error behavior
+
+- The script compiles when the recipe starts. A syntax error fails the run before any extraction happens, so `meteor lint` catches it.
+- A runtime error (for example dividing by zero, or writing an unknown field) fails the whole run. There is no per-record skip and no retry.
+- Scripts have resource limits on allocations, so unbounded loops fail rather than hang.
+
+Test scripts safely with a dry run:
+
+```sh
+meteor run recipe.yaml --dry-run --limit 10
+```
+
+This runs the extractor and your script on the first 10 records without sending anything to sinks.
+
+## Scripts in the HTTP sink
+
+The [HTTP sink](../sinks/http) also accepts a Tengo script, but with a different job: it builds the request payload. There the script sees the entity and calls `sink(payload)` to send custom JSON. See the sink's page for details.

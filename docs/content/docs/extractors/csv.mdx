@@ -1,0 +1,38 @@
+---
+title: CSV
+description: Extracts column metadata from CSV files on the local filesystem.
+order: 9
+---
+
+# CSV
+
+Extracts column names from the header row of CSV files. Each file is emitted as a `table` entity.
+
+## Usage
+
+```yaml
+source:
+  name: csv
+  scope: my-scope
+  config:
+    path: ./path-to-a-file-or-a-directory
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `path` | `string` | Path to a `.csv` file or a directory. For a directory, all `.csv` files directly inside it are extracted (subdirectories are not scanned). | Yes |
+
+## Output
+
+Emits `table` entities with the URN pattern:
+
+```
+urn:csv:{scope}:file:{filename}
+```
+
+Notable properties:
+
+- `columns` - one entry per header column, each with:
+  - `name` - column header name

@@ -1,0 +1,74 @@
+---
+title: Kubernetes
+description: Extracts infrastructure topology from a Kubernetes cluster.
+order: 18
+---
+
+# Kubernetes
+
+Extracts namespaces, deployments, services, pods, and jobs from a Kubernetes cluster. Emits `namespace`, `deployment`, `service`, `pod`, and `job` entities, with `belongs_to` edges linking workloads to their namespace.
+
+## Usage
+
+```yaml
+source:
+  name: kubernetes
+  scope: my-cluster
+  config:
+    kubeconfig: ~/.kube/config
+    namespaces:
+      - default
+      - production
+    exclude:
+      - kube-system
+      - kube-public
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `kubeconfig` | `string` | Path to a kubeconfig file. If omitted, auth is auto-detected (see Notes). | No |
+| `namespaces` | `[]string` | Namespaces to extract from. Default: all namespaces. | No |
+| `extract` | `[]string` | Resource types to extract. Allowed values: `namespaces`, `deployments`, `services`, `pods`, `jobs`. Default: `["namespaces", "deployments", "services", "jobs"]` (pods are off by default). | No |
+| `exclude` | `[]string` | Namespaces to skip. | No |
+
+## Output
+
+URN patterns:
+
+```
+urn:kubernetes:{scope}:namespace:{name}
+urn:kubernetes:{scope}:deployment:{namespace}/{name}
+urn:kubernetes:{scope}:service:{namespace}/{name}
+urn:kubernetes:{scope}:pod:{namespace}/{name}
+urn:kubernetes:{scope}:job:{namespace}/{name}
+```
+
+All entities carry `labels` and `created_at`. Other notable properties:
+
+- `namespace` - `status` (phase, e.g. `Active`)
+- `deployment` - `namespace`, `replicas`, `ready_replicas`, `strategy`, `containers` (name/image pairs)
+- `service` - `namespace`, `type`, `cluster_ip`, `selector`, `ports`
+- `pod` - `namespace`, `status` (phase), `node_name`, `containers`
+- `job` - `namespace`, `completions`, `active`, `succeeded`, `failed`
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `belongs_to` | `deployment` | `namespace` |
+| `belongs_to` | `service` | `namespace` |
+| `belongs_to` | `pod` | `namespace` |
+| `belongs_to` | `job` | `namespace` |
+
+## Notes
+
+Authentication is tried in this order:
+
+1. Explicit `kubeconfig` path from the config
+2. The `KUBECONFIG` environment variable
+3. In-cluster service account token (when running inside a pod)
+4. `~/.kube/config`
+
+Both bearer token and client certificate authentication from kubeconfig are supported.

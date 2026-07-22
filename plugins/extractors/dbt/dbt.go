@@ -40,7 +40,9 @@ var info = plugins.Info{
 	},
 	Edges: []plugins.EdgeInfo{
 		{Type: "derived_from", From: "model", To: "model"},
+		{Type: "derived_from", From: "model", To: "source"},
 		{Type: "owned_by", From: "model", To: "user"},
+		{Type: "owned_by", From: "source", To: "user"},
 	},
 }
 

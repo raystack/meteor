@@ -1,0 +1,74 @@
+---
+title: Configuration
+description: Reference for all Meteor application configurations.
+order: 2
+---
+
+# Configuration
+
+Meteor is configured in two layers:
+
+1. **Agent settings** control the runtime — logging, retries, batching, telemetry. Set them in a YAML file (default: `./meteor.yaml`) or as environment variables with the same names.
+2. **Recipe variables** inject values like credentials into recipes. Set them as `METEOR_`-prefixed environment variables or pass a file with `--var`.
+
+## Agent settings
+
+| Key | Default | Description |
+|:----|:--------|:------------|
+| `LOG_LEVEL` | `info` | Log verbosity: `debug`, `info`, `warn`, or `error`. Can be overridden per run with `--log-level`. |
+| `MAX_RETRIES` | `5` | Maximum retry attempts for extractor runs and sink pushes. |
+| `RETRY_INITIAL_INTERVAL_SECONDS` | `5` | First wait between retries. Later waits grow exponentially. |
+| `STOP_ON_SINK_ERROR` | `false` | When `true`, a sink failure (after retries) fails the run. When `false`, the error is logged and the run continues. |
+| `SINK_BATCH_SIZE` | `1` | Records batched per sink push. `0` means hold everything and push once at the end. |
+| `APP_NAME` | `meteor` | Service name reported in OpenTelemetry data. |
+| `OTEL_ENABLED` | `false` | Enable OpenTelemetry metrics and tracing. |
+| `OTEL_COLLECTOR_ADDR` | `localhost:4317` | OpenTelemetry collector address (OTLP gRPC). |
+| `OTEL_TRACE_SAMPLE_PROBABILITY` | `1` | Trace sampling probability, `0.0` to `1.0`. |
+
+See [Architecture](../concepts/architecture) for how batching, retries, and sink errors behave.
+
+### Sample `meteor.yaml`
+
+```yaml
+LOG_LEVEL: info
+MAX_RETRIES: 5
+RETRY_INITIAL_INTERVAL_SECONDS: 5
+STOP_ON_SINK_ERROR: false
+SINK_BATCH_SIZE: 1
+OTEL_ENABLED: false
+OTEL_COLLECTOR_ADDR: localhost:4317
+```
+
+Point Meteor at a different file with `meteor run recipe.yaml --config /path/to/meteor.yaml`.
+
+## Recipe variables
+
+Meteor reads environment variables with the `METEOR_` prefix as template data for recipes. The prefix is stripped and the rest is lowercased. This lets you keep credentials out of recipe files:
+
+```yaml
+source:
+  name: bigquery
+  config:
+    project_id: "{{ .bigquery_project_id }}"
+```
+
+```sh
+export METEOR_BIGQUERY_PROJECT_ID=my-project
+meteor run recipe.yaml
+```
+
+You can also pass variables from a YAML file with `--var vars.yaml`. Values from the file override environment variables. See [recipe variables](../concepts/recipe#variables) for details.
+
+## Plugin configuration
+
+Each extractor, processor, and sink has its own config keys, documented on its own page:
+
+- [Extractors](../extractors/overview) — connection details and extraction options per source.
+- [Processors](../processors/overview) — `enrich`, `labels`, and `script`.
+- [Sinks](../sinks/overview) — destination details per sink.
+
+You can also see any plugin's config from the CLI:
+
+```sh
+meteor plugins info bigquery --full
+```

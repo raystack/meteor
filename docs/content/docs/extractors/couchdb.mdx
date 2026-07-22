@@ -1,0 +1,46 @@
+---
+title: CouchDB
+description: Extracts document and field metadata from an Apache CouchDB server.
+order: 8
+---
+
+# CouchDB
+
+Extracts document metadata from every database on a CouchDB server. Each document is emitted as a `table` entity with its fields listed as columns.
+
+## Usage
+
+```yaml
+source:
+  name: couchdb
+  scope: my-scope
+  config:
+    connection_url: http://admin:pass123@localhost:5984/
+    exclude:
+      databases:
+        - database_a
+        - database_b
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | URL to the CouchDB server, including credentials. | Yes |
+| `exclude.databases` | `[]string` | Database names to skip. The internal databases `_global_changes`, `_replicator`, and `_users` are always skipped. | No |
+
+## Output
+
+Emits `table` entities with the URN pattern:
+
+```
+urn:couchdb:{scope}:table:{database}.{doc_id}
+```
+
+Notable properties:
+
+- `columns` - one entry per document field (except `_id` and `_rev`), each with:
+  - `name` - field name
+  - `data_type` - inferred type of the field value (e.g. `string`, `float64`)
+  - `description` - the document revision string, if available
+  - `length` - the document size in bytes, if non-zero

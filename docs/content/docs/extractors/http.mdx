@@ -1,0 +1,79 @@
+---
+title: HTTP
+description: Extracts metadata from any HTTP API using a user-defined Tengo script.
+order: 16
+---
+
+# HTTP
+
+Calls an HTTP API and runs a [Tengo](https://github.com/d5/tengo) script you write against the response. The script decides what entities to build and emit, so this extractor can produce entities of any type.
+
+## Usage
+
+```yaml
+source:
+  name: http
+  scope: production
+  config:
+    request:
+      url: "https://example.com/api/v1/users"
+      method: "GET"
+      content_type: application/json
+      accept: application/json
+    script:
+      engine: tengo
+      source: |
+        for u in response.body.users {
+          entity := new_entity("user")
+          entity.urn = format("urn:my_svc:%s:user:%s", recipe_scope, u.id)
+          entity.name = u.full_name
+          entity.source = "my_svc"
+          entity.properties.email = u.email
+          emit(entity)
+        }
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `request.url` | `string` | HTTP endpoint URL. | Yes |
+| `request.method` | `string` | HTTP method, `GET` or `POST`. Default: `GET`. | No |
+| `request.headers` | `map[string]string` | HTTP request headers. | No |
+| `request.content_type` | `string` | Content type of the request body. Only `application/json` is supported. | Yes |
+| `request.accept` | `string` | Accept header and response decode format. Only `application/json` is supported. | Yes |
+| `request.body` | `object` | Request body. | No |
+| `request.query_params` | `[]{key, value}` | Query parameters appended to the URL. These win over params already in `request.url`. | No |
+| `request.route_pattern` | `string` | Route pattern used as the `http.route` metrics tag. | No |
+| `request.timeout` | `duration` | Request timeout. Default: `5s`. | No |
+| `success_codes` | `[]int` | Status codes treated as success (2xx only). Default: `[200]`. | No |
+| `concurrency` | `int` | Max concurrent requests made through `execute_request` (1-100). Default: `5`. | No |
+| `script.engine` | `string` | Script engine. Only `tengo` is supported. | Yes |
+| `script.source` | `string` | Tengo script source code. | Yes |
+| `script.max_allocs` | `int` | Max object allocations during script execution. Default: `5000`. | No |
+| `script.max_const_objects` | `int` | Max constant objects in the compiled script. Default: `500`. | No |
+| `before_script` | `object` | Optional script (same fields as `script`) that runs before the main request. It can modify `request`, for example to set an auth token. | No |
+
+## Script interface
+
+These globals are available inside the script:
+
+- `recipe_scope` - the `scope` value from the recipe
+- `request` - the request config; a `before_script` can change it before the main request runs
+- `response` - the HTTP response, with `status_code`, `header` (lower-cased names), and `body`
+- `new_entity(type)` - creates an entity map of the given type
+- `emit(entity)` - sends the entity to the pipeline as a Record
+- `execute_request(...requests)` - runs extra HTTP requests concurrently (up to `concurrency`); each request supports the same fields as `request`, and each result is a response or an error
+- `exit()` - stops the script
+
+On an entity you can set `urn`, `name`, `source`, `description`, and `properties.*`. Any other keys you set are folded into `properties`.
+
+## Output
+
+The output depends entirely on your script. It can emit zero or more entities of any type, with URNs you choose. The script runs only when the response status code matches `success_codes`.
+
+## Notes
+
+- Only `application/json` is supported for requests and responses.
+- The Tengo `os` stdlib module is not available to scripts.
+- Emitted records carry entities only. The script interface has no way to attach edges.

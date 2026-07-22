@@ -1,0 +1,51 @@
+---
+title: Notion
+description: Extracts page and database metadata from a Notion workspace.
+order: 24
+---
+
+# Notion
+
+Extracts pages and databases from a Notion workspace through the Notion API. Both are emitted as `document` entities.
+
+## Usage
+
+```yaml
+source:
+  name: notion
+  scope: my-workspace
+  config:
+    token: ntn_your_integration_token
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `token` | `string` | Notion internal integration token. | Yes |
+| `base_url` | `string` | Notion API base URL. Default: `https://api.notion.com`. | No |
+| `extract` | `[]string` | What to extract: `pages`, `databases`. Default: both. | No |
+
+## Output
+
+Entity type: `document`
+
+URN pattern: `urn:notion:{scope}:document:{page_id}`
+
+Notable properties:
+
+- Pages: `page_id`, `created_at`, `updated_at`, `archived`, `web_url`, `created_by`, `last_edited_by`.
+- Databases: `database_id`, `created_at`, `updated_at`, `archived`, `web_url`, `created_by`, `columns` (property names of the database schema).
+
+Archived pages and databases are skipped.
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `child_of` | document | document |
+| `belongs_to` | document | document |
+| `owned_by` | document | user |
+| `documented_by` | document | any entity |
+
+`child_of` links a page to its parent page. `belongs_to` links a page to its parent database. `owned_by` points to the creator. `documented_by` edges are created when the extractor finds URN strings (like `urn:bigquery:...`) in a page's content, linking the page to the data assets it documents.

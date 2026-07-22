@@ -1,0 +1,36 @@
+---
+title: Azure Blob Storage
+description: Save metadata records as an NDJSON blob in an Azure Blob Storage container.
+order: 2
+---
+
+# Azure Blob Storage
+
+Writes records to a single blob in an Azure Blob Storage container. Each record is one line of JSON (NDJSON).
+
+## Usage
+
+```yaml
+sinks:
+  - name: azure_blob
+    config:
+      storage_account_url: https://myaccount.blob.core.windows.net
+      container_name: my-container
+      account_key: ____account_key____
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `storage_account_url` | `string` | URL of the storage account, e.g. `https://myaccount.blob.core.windows.net` | required |
+| `container_name` | `string` | Name of the container to write to | required |
+| `object_prefix` | `string` | Prefix added to the blob name, e.g. `github-users` | optional |
+| `account_key` | `string` | Storage account key used to authenticate | optional |
+| `connection_string` | `string` | Full connection string, an alternative to `account_key` | optional |
+
+Provide either `account_key` or `connection_string` to authenticate.
+
+## Output format
+
+Each run creates one blob named `[prefix-]<RFC3339 timestamp>.ndjson` in the container. Every line is the whole record as JSON: `{"entity": {...}, "edges": [...]}` with snake_case keys. The `edges` field is left out when a record has no edges.

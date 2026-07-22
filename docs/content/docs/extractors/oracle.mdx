@@ -1,0 +1,45 @@
+---
+title: Oracle
+description: Extracts table metadata from an Oracle database.
+order: 28
+---
+
+# Oracle
+
+Extracts tables owned by the connecting user from an Oracle database. It emits `table` entities with column details, row counts, and foreign key relationships.
+
+## Usage
+
+```yaml
+source:
+  name: oracle
+  scope: my-scope
+  config:
+    connection_url: oracle://username:passwd@localhost:1521/xe
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `connection_url` | `string` | Connection string for the Oracle database. | Yes |
+
+## Output
+
+Emits `table` entities with URN pattern `urn:oracle:{scope}:table:{database}.{table}`.
+
+Notable properties:
+
+- `columns` — list of columns with `name`, `data_type`, `is_nullable`, `description` (when a comment exists), and `length` (when non-zero)
+- `profile.total_rows` — table row count (only when greater than 0)
+
+### Edges
+
+| Edge type | From | To |
+| :-------- | :--- | :- |
+| `references` | `table` | `table` |
+
+## Notes
+
+- Only tables owned by the connecting user are extracted.
+- A `references` edge is created for each foreign key that points to another table.

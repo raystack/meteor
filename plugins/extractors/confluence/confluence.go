@@ -48,10 +48,13 @@ var info = plugins.Info{
 	Tags:         []string{"saas", "collaboration"},
 	Entities: []plugins.EntityInfo{
 		{Type: "document", URNPattern: "urn:confluence:{scope}:document:{page_id}"},
+		{Type: "space", URNPattern: "urn:confluence:{scope}:space:{space_key}"},
 	},
 	Edges: []plugins.EdgeInfo{
+		{Type: "belongs_to", From: "document", To: "space"},
 		{Type: "child_of", From: "document", To: "document"},
 		{Type: "owned_by", From: "document", To: "user"},
+		{Type: "documented_by", From: "document", To: "any"},
 	},
 }
 

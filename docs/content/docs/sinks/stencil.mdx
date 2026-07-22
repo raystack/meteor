@@ -1,0 +1,37 @@
+---
+title: Stencil
+description: Convert table columns into JSON Schema or Avro and send them to Raystack Stencil.
+order: 10
+---
+
+# Stencil
+
+Builds a schema from each entity's columns and sends it to a Raystack Stencil schema registry. The schema format is JSON Schema or Avro.
+
+## Usage
+
+```yaml
+sinks:
+  - name: stencil
+    config:
+      host: https://stencil.example.com
+      namespace_id: myNamespace
+```
+
+## Configuration
+
+| Key | Type | Description | Required |
+| :-- | :--- | :---------- | :------- |
+| `host` | `string` | Base URL of the Stencil service | required |
+| `namespace_id` | `string` | Stencil namespace to write schemas into | required |
+| `format` | `string` | Schema format: `json` or `avro`. Defaults to `json`. | optional |
+
+## Output format
+
+For each record, the sink reads the `columns` list from the entity's properties and converts it into a JSON Schema or an Avro record schema. It POSTs the schema to `/v1beta1/namespaces/{namespace_id}/schemas/{schemaID}`, where the schema ID is the entity URN with `/` replaced by `.`. A `201 Created` response means success.
+
+## Notes
+
+- Records without a `columns` property are skipped.
+- Column types are mapped to schema types for `bigquery` and `postgres` sources. Other sources get empty types.
+- Responses with a 5xx status are retryable, so the agent retries them.

@@ -1,0 +1,55 @@
+---
+title: Installation
+description: Install Meteor using Homebrew, binary releases, Docker, or build from source.
+order: 2
+---
+
+# Installation
+
+Install Meteor in one of the following ways. Once installed, head to the [Quickstart](./quickstart) to run your first recipe.
+
+## Homebrew
+
+```sh
+brew install raystack/tap/meteor
+
+# verify the install
+meteor version
+
+# list all supported extractors, sinks, and processors
+meteor plugins list
+```
+
+## Binary releases
+
+Download the binary for your platform from the [GitHub releases](https://github.com/raystack/meteor/releases) page. There is no installer; place the binary somewhere on your `PATH` (for example `/usr/local/bin`).
+
+Verify with:
+
+```sh
+meteor version
+```
+
+## Docker
+
+```sh
+# pull the image
+docker pull raystack/meteor
+
+# see available commands
+docker run --rm raystack/meteor
+
+# list all extractors
+docker run --rm raystack/meteor meteor plugins list --type extractor
+```
+
+## Build from source
+
+Requires `git` and Go 1.26 or above.
+
+```sh
+git clone https://github.com/raystack/meteor.git
+cd meteor
+make build
+./meteor --help
+```
