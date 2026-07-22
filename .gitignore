@@ -38,3 +38,5 @@ docs/.vercel
 
 .playground
 .claude
+docs/.data/
+docs/.output/
