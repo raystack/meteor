@@ -1,0 +1,289 @@
+- generic [ref=f2e4]:
+  - navigation "Navigation Sidebar" [ref=f2e5]:
+    - banner [ref=f2e6]:
+      - button "Search" [ref=f2e10] [cursor=pointer]
+    - group "Main navigation" [ref=f2e14]:
+      - listitem [ref=f2e15] [cursor=pointer]:
+        - generic [ref=f2e16]: Introduction
+      - listitem [ref=f2e17] [cursor=pointer]:
+        - generic [ref=f2e18]: Installation
+      - listitem [ref=f2e19] [cursor=pointer]:
+        - generic [ref=f2e20]: Quickstart
+      - region "Concepts" [ref=f2e21]:
+        - list [ref=f2e24]:
+          - listitem [ref=f2e25] [cursor=pointer]:
+            - generic [ref=f2e26]: Overview
+          - listitem [ref=f2e27] [cursor=pointer]:
+            - generic [ref=f2e28]: Architecture
+          - listitem [ref=f2e29] [cursor=pointer]:
+            - generic [ref=f2e30]: Recipe
+          - listitem [ref=f2e31] [cursor=pointer]:
+            - generic [ref=f2e32]: Source
+          - listitem [ref=f2e33] [cursor=pointer]:
+            - generic [ref=f2e34]: Processor
+          - listitem [ref=f2e35] [cursor=pointer]:
+            - generic [ref=f2e36]: Sink
+          - listitem [ref=f2e37] [cursor=pointer]:
+            - generic [ref=f2e38]: Context Graph for AI
+      - region "Guides" [ref=f2e39]:
+        - list [ref=f2e42]:
+          - listitem [ref=f2e43] [cursor=pointer]:
+            - generic [ref=f2e44]: Plugins
+          - listitem [ref=f2e45] [cursor=pointer]:
+            - generic [ref=f2e46]: Recipes
+          - listitem [ref=f2e47] [cursor=pointer]:
+            - generic [ref=f2e48]: Running Meteor
+          - listitem [ref=f2e49] [cursor=pointer]:
+            - generic [ref=f2e50]: Scripting
+          - listitem [ref=f2e51] [cursor=pointer]:
+            - generic [ref=f2e52]: Deployment
+          - listitem [ref=f2e53] [cursor=pointer]:
+            - generic [ref=f2e54]: Troubleshooting
+      - listitem [ref=f2e55] [cursor=pointer]:
+        - generic [ref=f2e56]: Examples
+      - region "Extractors" [ref=f2e57]:
+        - list [ref=f2e60]:
+          - listitem [ref=f2e61] [cursor=pointer]:
+            - generic [ref=f2e62]: Overview
+          - listitem [ref=f2e63] [cursor=pointer]:
+            - generic [ref=f2e64]: Application YAML
+          - listitem [ref=f2e65] [cursor=pointer]:
+            - generic [ref=f2e66]: BigQuery
+          - listitem [ref=f2e67] [cursor=pointer]:
+            - generic [ref=f2e68]: Bigtable
+          - listitem [ref=f2e69] [cursor=pointer]:
+            - generic [ref=f2e70]: Cassandra
+          - listitem [ref=f2e71] [cursor=pointer]:
+            - generic [ref=f2e72]: ClickHouse
+          - listitem [ref=f2e73] [cursor=pointer]:
+            - generic [ref=f2e74]: Confluence
+          - listitem [ref=f2e75] [cursor=pointer]:
+            - generic [ref=f2e76]: CouchDB
+          - listitem [ref=f2e77] [cursor=pointer]:
+            - generic [ref=f2e78]: CSV
+          - listitem [ref=f2e79] [cursor=pointer]:
+            - generic [ref=f2e80]: dbt
+          - listitem [ref=f2e81] [cursor=pointer]:
+            - generic [ref=f2e82]: Elasticsearch
+          - listitem [ref=f2e83] [cursor=pointer]:
+            - generic [ref=f2e84]: Google Cloud Storage
+          - listitem [ref=f2e85] [cursor=pointer]:
+            - generic [ref=f2e86]: GitHub
+          - listitem [ref=f2e87] [cursor=pointer]:
+            - generic [ref=f2e88]: Grafana
+          - listitem [ref=f2e89] [cursor=pointer]:
+            - generic [ref=f2e90]: Google Workspace
+          - listitem [ref=f2e91] [cursor=pointer]:
+            - generic [ref=f2e92]: HTTP
+          - listitem [ref=f2e93] [cursor=pointer]:
+            - generic [ref=f2e94]: Kafka
+          - listitem [ref=f2e95] [cursor=pointer]:
+            - generic [ref=f2e96]: Kubernetes
+          - listitem [ref=f2e97] [cursor=pointer]:
+            - generic [ref=f2e98]: MariaDB
+          - listitem [ref=f2e99] [cursor=pointer]:
+            - generic [ref=f2e100]: Metabase
+          - listitem [ref=f2e101] [cursor=pointer]:
+            - generic [ref=f2e102]: MongoDB
+          - listitem [ref=f2e103] [cursor=pointer]:
+            - generic [ref=f2e104]: Microsoft SQL Server
+          - listitem [ref=f2e105] [cursor=pointer]:
+            - generic [ref=f2e106]: MySQL
+          - listitem [ref=f2e107] [cursor=pointer]:
+            - generic [ref=f2e108]: Notion
+          - listitem [ref=f2e109] [cursor=pointer]:
+            - generic [ref=f2e110]: OpenAPI
+          - listitem [ref=f2e111] [cursor=pointer]:
+            - generic [ref=f2e112]: OpsGenie
+          - listitem [ref=f2e113] [cursor=pointer]:
+            - generic [ref=f2e114]: Optimus
+          - listitem [ref=f2e115] [cursor=pointer]:
+            - generic [ref=f2e116]: Oracle
+          - listitem [ref=f2e117] [cursor=pointer]:
+            - generic [ref=f2e118]: PagerDuty
+          - listitem [ref=f2e119] [cursor=pointer]:
+            - generic [ref=f2e120]: PostgreSQL
+          - listitem [ref=f2e121] [cursor=pointer]:
+            - generic [ref=f2e122]: Presto
+          - listitem [ref=f2e123] [cursor=pointer]:
+            - generic [ref=f2e124]: Redash
+          - listitem [ref=f2e125] [cursor=pointer]:
+            - generic [ref=f2e126]: Amazon Redshift
+          - listitem [ref=f2e127] [cursor=pointer]:
+            - generic [ref=f2e128]: Snowflake
+          - listitem [ref=f2e129] [cursor=pointer]:
+            - generic [ref=f2e130]: Superset
+          - listitem [ref=f2e131] [cursor=pointer]:
+            - generic [ref=f2e132]: Tableau
+      - region "Processors" [ref=f2e133]:
+        - list [ref=f2e136]:
+          - listitem [ref=f2e137] [cursor=pointer]:
+            - generic [ref=f2e138]: Overview
+          - listitem [ref=f2e139] [cursor=pointer]:
+            - generic [ref=f2e140]: Enrich
+          - listitem [ref=f2e141] [cursor=pointer]:
+            - generic [ref=f2e142]: Labels
+          - listitem [ref=f2e143] [cursor=pointer]:
+            - generic [ref=f2e144]: Script
+      - region "Sinks" [ref=f2e145]:
+        - list [ref=f2e148]:
+          - listitem [ref=f2e149] [cursor=pointer]:
+            - generic [ref=f2e150]: Overview
+          - listitem [ref=f2e151] [cursor=pointer]:
+            - generic [ref=f2e152]: Azure Blob Storage
+          - listitem [ref=f2e153] [cursor=pointer]:
+            - generic [ref=f2e154]: Compass
+          - listitem [ref=f2e155] [cursor=pointer]:
+            - generic [ref=f2e156]: Console
+          - listitem [ref=f2e157] [cursor=pointer]:
+            - generic [ref=f2e158]: File
+          - listitem [ref=f2e159] [cursor=pointer]:
+            - generic [ref=f2e160]: Google Cloud Storage
+          - listitem [ref=f2e161] [cursor=pointer]:
+            - generic [ref=f2e162]: HTTP
+          - listitem [ref=f2e163] [cursor=pointer]:
+            - generic [ref=f2e164]: Kafka
+          - listitem [ref=f2e165] [cursor=pointer]:
+            - generic [ref=f2e166]: Amazon S3
+          - listitem [ref=f2e167] [cursor=pointer]:
+            - generic [ref=f2e168]: Stencil
+      - region "Reference" [ref=f2e169]:
+        - list [ref=f2e172]:
+          - listitem [ref=f2e173] [cursor=pointer]:
+            - generic [ref=f2e174]: Commands
+          - listitem [ref=f2e175] [cursor=pointer]:
+            - generic [ref=f2e176]: Configuration
+          - listitem [ref=f2e177] [cursor=pointer]:
+            - generic [ref=f2e178]: Metadata Models
+      - region "Contribute" [ref=f2e179]:
+        - list [ref=f2e182]:
+          - listitem [ref=f2e183] [cursor=pointer]:
+            - generic [ref=f2e184]: Contributing
+          - listitem [ref=f2e185] [cursor=pointer]:
+            - generic [ref=f2e186]: Adding Plugins
+          - listitem [ref=f2e187] [cursor=pointer]:
+            - generic [ref=f2e188]: Write an Extractor
+  - generic [ref=f2e191]:
+    - navigation [ref=f2e192]:
+      - generic [ref=f2e193]:
+        - generic [ref=f2e194]:
+          - button "Previous page" [ref=f2e195] [cursor=pointer]
+          - button "Next page" [ref=f2e199] [cursor=pointer]
+        - navigation "Breadcrumb" [ref=f2e203]:
+          - list [ref=f2e204]:
+            - listitem [ref=f2e205]:
+              - generic [ref=f2e206]: Quickstart
+      - button [ref=f2e208] [cursor=pointer]
+    - main [ref=f2e215]:
+      - generic [ref=f2e216]:
+        - article [ref=f2e217]:
+          - heading "Quickstart" [level=1] [ref=f2e218]
+          - generic [ref=f2e219]:
+            - paragraph [ref=f2e220]: This guide takes you from a fresh install to your first extracted metadata in a few minutes. It uses the CSV extractor and the console sink, so you need no database or external service.
+            - heading "1. Install Meteor" [level=2] [ref=f2e221]
+            - code [ref=f2e224]:
+              - generic [ref=f2e225]: brew install raystack/tap/meteor
+            - paragraph [ref=f2e226]:
+              - text: See
+              - link "Installation" [ref=f2e227] [cursor=pointer]:
+                - /url: /docs/installation
+              - text: for Docker, binary, and source options.
+            - heading "2. Create a sample data file" [level=2] [ref=f2e228]
+            - paragraph [ref=f2e229]: "Make a small CSV file for Meteor to read:"
+            - code [ref=f2e232]:
+              - generic [ref=f2e233]: echo "id,name,email" > users.csv
+            - heading "3. Create a recipe" [level=2] [ref=f2e234]
+            - paragraph [ref=f2e235]: "A recipe is a YAML file that tells Meteor what to extract and where to send it. Generate one with the CLI:"
+            - code [ref=f2e238]:
+              - generic [ref=f2e239]: meteor recipe init quickstart -n demo -e csv -s console > recipe.yaml
+            - paragraph [ref=f2e240]:
+              - text: This creates a recipe named
+              - code [ref=f2e241]: quickstart
+              - text: with the
+              - code [ref=f2e242]: csv
+              - text: extractor and the
+              - code [ref=f2e243]: console
+              - text: sink. The
+              - code [ref=f2e244]: "-n demo"
+              - text: flag sets the scope, which becomes part of every URN Meteor generates.
+            - paragraph [ref=f2e245]:
+              - text: Open
+              - code [ref=f2e246]: recipe.yaml
+              - text: "and set the path to your CSV file:"
+            - code [ref=f2e249]:
+              - generic [ref=f2e250]: "name: quickstart"
+              - generic [ref=f2e251]: "version: v1beta1"
+              - generic [ref=f2e252]: "source:"
+              - generic [ref=f2e253]: "name: csv"
+              - generic [ref=f2e254]: "scope: demo"
+              - generic [ref=f2e255]: "config:"
+              - generic [ref=f2e256]: "path: ./users.csv"
+              - generic [ref=f2e257]: "sinks:"
+              - generic [ref=f2e258]: "- name: console"
+            - heading "4. Validate the recipe" [level=2] [ref=f2e259]
+            - code [ref=f2e262]:
+              - generic [ref=f2e263]: meteor lint recipe.yaml
+            - paragraph [ref=f2e264]: Lint checks that the plugins exist and their configs are valid before you run anything.
+            - heading "5. Run it" [level=2] [ref=f2e265]
+            - code [ref=f2e268]:
+              - generic [ref=f2e269]: meteor run recipe.yaml
+            - paragraph [ref=f2e270]: "The console sink prints each record as one JSON line, and Meteor ends with a run summary:"
+            - code [ref=f2e273]:
+              - generic [ref=f2e274]: "{\"entity\":{\"urn\":\"urn:csv:demo:file:users.csv\",\"type\":\"table\",\"name\":\"users.csv\",\"source\":\"csv\",\"properties\":{\"columns\":[{\"name\":\"id\"},{\"name\":\"name\"},{\"name\":\"email\"}]}}}"
+            - paragraph [ref=f2e275]:
+              - text: Each record contains an
+              - strong [ref=f2e276]: entity
+              - text: (the resource and its metadata) and, for sources that support it,
+              - strong [ref=f2e277]: edges
+              - text: (relationships like ownership and lineage).
+            - heading "Next steps" [level=2] [ref=f2e278]
+            - list [ref=f2e279]:
+              - listitem [ref=f2e280]:
+                - text: Point Meteor at a real source. Pick one from the
+                - link "extractors list" [ref=f2e281] [cursor=pointer]:
+                  - /url: /docs/extractors/overview
+                - text: and swap the
+                - code [ref=f2e282]: source
+                - text: block.
+              - listitem [ref=f2e283]:
+                - text: Send metadata somewhere useful. Swap the console sink for
+                - link "Compass, Kafka, or another sink" [ref=f2e284] [cursor=pointer]:
+                  - /url: /docs/sinks/overview
+                - text: .
+              - listitem [ref=f2e285]:
+                - text: Learn how recipes work in the
+                - link "recipe reference" [ref=f2e286] [cursor=pointer]:
+                  - /url: /docs/concepts/recipe
+                - text: .
+              - listitem [ref=f2e287]:
+                - text: Preview any recipe safely with
+                - code [ref=f2e288]: meteor run recipe.yaml --dry-run --limit 10
+                - text: .
+        - complementary "Table of contents" [ref=f2e289]:
+          - generic [ref=f2e290]:
+            - link [ref=f2e291] [cursor=pointer]:
+              - /url: "#1-install-meteor"
+            - link [ref=f2e292] [cursor=pointer]:
+              - /url: "#2-create-a-sample-data-file"
+            - link [ref=f2e293] [cursor=pointer]:
+              - /url: "#3-create-a-recipe"
+            - link [ref=f2e294] [cursor=pointer]:
+              - /url: "#4-validate-the-recipe"
+            - link [ref=f2e295] [cursor=pointer]:
+              - /url: "#5-run-it"
+            - link [ref=f2e296] [cursor=pointer]:
+              - /url: "#next-steps"
+          - generic: On this page
+          - navigation:
+            - link "1. Install Meteor":
+              - /url: "#1-install-meteor"
+            - link "2. Create a sample data file":
+              - /url: "#2-create-a-sample-data-file"
+            - link "3. Create a recipe":
+              - /url: "#3-create-a-recipe"
+            - link "4. Validate the recipe":
+              - /url: "#4-validate-the-recipe"
+            - link "5. Run it":
+              - /url: "#5-run-it"
+            - link "Next steps":
+              - /url: "#next-steps"
