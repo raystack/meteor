@@ -40,3 +40,4 @@ docs/.vercel
 .claude
 docs/.data/
 docs/.output/
+.playwright-mcp/
